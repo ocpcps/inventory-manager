@@ -1,0 +1,14 @@
+{
+    "schemaName": "resource.default",
+    "fromSchema": "default",
+    "attributes": {
+        "eild": {
+            "name": "eild",
+            "variableType": "String",
+            "description": "The eild of The Element",
+            "required": false,
+            "defaultValue": null,
+            "validate": false
+        }
+    }
+}

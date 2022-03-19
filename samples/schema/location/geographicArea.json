@@ -1,0 +1,23 @@
+{
+    "schemaName": "location.geographicArea",
+    "fromSchema": "location.default",
+    "description":"This represents a geografic area that contain several locations",
+    "attributes": {
+	"code": {
+            "name": "code",
+            "variableType": "String",
+            "description": "Used if a standard code set has been defined for the GeographicArea type",
+            "required": false,
+            "defaultValue": null,
+            "validate": false
+        },
+	"type": {
+            "name": "type",
+            "variableType": "String",
+            "description": "The type of the area ex.: State,Region,City",
+            "required": true,
+            "defaultValue": null,
+            "validate": false
+        }
+    }
+}

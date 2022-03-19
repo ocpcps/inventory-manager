@@ -1,0 +1,33 @@
+{
+    "schemaName": "location.default",
+    "fromSchema": "default",
+    "description": "This is a generic location",
+    "allowAll": false,
+    "attributes": {
+        "latitude": {
+            "name": "latitude",
+            "variableType": "float",
+            "description": "The wgs84 latitude of the location",
+            "required": true,
+            "defaultValue": "0.0",
+            "validate": false
+        },
+        "longitude": {
+            "name": "longitude",
+            "variableType": "float",
+            "description": "The wgs84 longitude of the location",
+            "required": false,
+            "defaultValue": "0.0",
+            "validate": false
+        },
+        "siteStatus": {
+            "name": "siteStatus",
+            "variableType": "String",
+            "description": "The status do site",
+            "required": false,
+            "defaultValue": "active",
+            "validate": false,
+            "allowedValues": ["active", "inactive", "sleeping"]
+        }
+    }
+}

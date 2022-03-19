@@ -1,0 +1,14 @@
+{
+    "schemaName": "default",
+    "fromSchema": ".",
+    "attributes": {
+        "hostname": {
+            "name": "hostname",
+            "variableType": "String",
+            "description": "The Host Name of The Element",
+            "required": false,
+            "defaultValue": "HostName",
+            "validate": false
+        }
+    }
+}

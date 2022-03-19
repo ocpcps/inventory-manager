@@ -1,0 +1,30 @@
+{
+    "schemaName": "default",
+    "fromSchema": ".",
+    "attributes": {
+        "hostname": {
+            "name": "hostname",
+            "variableType": "String",
+            "description": "The Host Name of The Element",
+            "required": false,
+            "defaultValue": "HostName",
+            "validate": false
+        },
+        "vendor": {
+            "name": "vendor",
+            "variableType": "String",
+            "description": "The vendor of The Element",
+            "required": false,
+            "defaultValue": "vendor",
+            "validate": false
+        },
+        "model": {
+            "name": "model",
+            "variableType": "String",
+            "description": "The model of The Element",
+            "required": false,
+            "defaultValue": "model",
+            "validate": false
+        }
+    }
+}

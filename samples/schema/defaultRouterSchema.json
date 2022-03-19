@@ -1,0 +1,48 @@
+{
+  "schemaName":"defaultRouter",
+  "fromSchema":"default",
+  "attributes":{
+    "ipv4Address":{
+      "name":"ipv4Address",
+      "variableType":"String",
+      "description":"IP v4 Address",
+      "required":true,
+      "defaultValue":"0.0.0.0",
+      "validate":true,
+      "validationRegex":"\\b((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\\.|$)){4}\\b"
+    },
+    "ipv4AddressAliases":{
+      "name":"ipv4Address",
+      "variableType":"String.List",
+      "description":"IP v4 Address",
+      "required":false,
+      "defaultValue":"0.0.0.0",
+      "validate":true,
+      "validationRegex":"\\b((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(\\.|$)){4}\\b"
+    },
+    "snmpVersion":{
+      "name":"snmpVersion",
+      "variableType":"String",
+      "description":"SNMP Version",
+      "required":false,
+      "defaultValue":"v2c",
+      "allowedValues":["v1","v2c","v3"],
+      "validate":false
+    },
+    "snmpCommunity":{
+      "name":"snmpCommunity",
+      "variableType":"String",
+      "description":"SNMP Community",
+      "required":false,
+      "defaultValue":"public",
+      "validate":false
+    },
+    "ipv6Address":{
+      "name":"ipv6Address",
+      "variableType":"String",
+      "description":"IP v6 Address",
+      "required":false,
+      "validate":true
+    }
+  }
+}

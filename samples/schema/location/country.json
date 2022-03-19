@@ -1,0 +1,31 @@
+{
+    "schemaName": "location.country",
+    "fromSchema": "location.default",
+    "description":"This represents a country",
+    "attributes": {
+	"numericCode": {
+            "name": "numericCode",
+            "variableType": "int",
+            "description": "The numeric phone code of the country",
+            "required": false,
+            "defaultValue": null,
+            "validate": false
+        },
+	"iso2Code": {
+            "name": "iso2Code",
+            "variableType": "String",
+            "description": "ISO 2 letter country abbreviation. refer ISO-3166",
+            "required": false,
+            "defaultValue": null,
+            "validate": false
+        },
+	"iso3Code": {
+            "name": "iso3Code",
+            "variableType": "String",
+            "description": "ISO 3 letter country abbreviation. refer ISO-3166",
+            "required": false,
+            "defaultValue": null,
+            "validate": false
+        }
+    }
+}
