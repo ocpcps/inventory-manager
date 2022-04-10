@@ -87,6 +87,24 @@ public class InventoryApi {
     @Autowired
     private ResourceSession resourceSession;
 
+    /**
+     * Obtem o dominio
+     * @param domainName
+     * @return
+     * @throws DomainNotFoundException
+     * @throws InvalidRequestException 
+     */
+    @GetMapping(path = "/domain/{domain}", produces = "application/json")
+    public String getDomain(@PathVariable("domain") String domainName) throws DomainNotFoundException, InvalidRequestException {
+        return gson.toJson(domainSession.getDomain(domainName));
+    }
+
+    /**
+     * Teste
+     *
+     * @param reqBody
+     * @return
+     */
     @PostMapping(path = "/schema", produces = "application/json", consumes = "application/json")
     public String createSchema(@RequestBody String reqBody) {
         ResourceSchemaModel model = gson.fromJson(reqBody, ResourceSchemaModel.class);
@@ -268,6 +286,20 @@ public class InventoryApi {
         return resourceSession.createCircuitPath(request);
     }
 
+    /**
+     * Recupera um circuito
+     *
+     * @param strReq
+     * @param domain
+     * @return
+     * @throws ResourceNotFoundException
+     * @throws GenericException
+     * @throws SchemaNotFoundException
+     * @throws AttributeConstraintViolationException
+     * @throws ScriptRuleException
+     * @throws AttributeConstraintViolationException
+     * @throws DomainNotFoundException
+     */
     @PostMapping(path = "/{domain}/circuit/path", produces = "application/json", consumes = "application/json")
     public CreateCircuitPathResponse getCircuitPath(@RequestBody String strReq, @PathVariable("domain") String domain) throws ResourceNotFoundException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, AttributeConstraintViolationException, DomainNotFoundException {
         GetCircuitPathRequest request = gson.fromJson(strReq, GetCircuitPathRequest.class);
@@ -275,6 +307,20 @@ public class InventoryApi {
         return resourceSession.getCircuitPath(request);
     }
 
+    /**
+     * Aplica um filtro
+     *
+     * @param filter
+     * @param domain
+     * @return
+     * @throws ResourceNotFoundException
+     * @throws GenericException
+     * @throws SchemaNotFoundException
+     * @throws AttributeConstraintViolationException
+     * @throws ScriptRuleException
+     * @throws AttributeConstraintViolationException
+     * @throws DomainNotFoundException
+     */
     @PostMapping(path = "/{domain}/filter", produces = "application/json", consumes = "application/json")
     public FilterResponse getElementsByFilter(@RequestBody FilterRequest filter, @PathVariable("domain") String domain) throws ResourceNotFoundException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, AttributeConstraintViolationException, DomainNotFoundException {
         System.out.println(":::::::::" + gson.toJson(filter));
@@ -283,6 +329,12 @@ public class InventoryApi {
         return resourceSession.getElementsByFilter(filter);
     }
 
+    /**
+     * @todo: to be removed, método de teste
+     * @param strReq
+     * @param threads
+     * @return
+     */
     @PostMapping(path = "test/{threads}", produces = "application/json", consumes = "application/json")
     public GetCircuitPathResponse test(@RequestBody String strReq, @PathVariable("threads") Integer threads) {
         GetCircuitPathRequest request = gson.fromJson(strReq, GetCircuitPathRequest.class);

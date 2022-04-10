@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 /**
- *
+ * Cuida das Exceptions...
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 15.12.2021
  */

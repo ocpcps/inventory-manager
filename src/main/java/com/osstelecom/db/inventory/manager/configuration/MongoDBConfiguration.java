@@ -31,4 +31,75 @@ public class MongoDBConfiguration {
     private String password;
     private String database;
     private ArrayList<String> collections = new ArrayList<>();
+
+    /**
+     * @return the url
+     */
+    public String getUrl() {
+        return url;
+    }
+
+    /**
+     * @param url the url to set
+     */
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
+    /**
+     * @return the username
+     */
+    public String getUsername() {
+        return username;
+    }
+
+    /**
+     * @param username the username to set
+     */
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    /**
+     * @return the password
+     */
+    public String getPassword() {
+        return password;
+    }
+
+    /**
+     * @param password the password to set
+     */
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    /**
+     * @return the database
+     */
+    public String getDatabase() {
+        return database;
+    }
+
+    /**
+     * @param database the database to set
+     */
+    public void setDatabase(String database) {
+        this.database = database;
+    }
+
+    /**
+     * @return the collections
+     */
+    public ArrayList<String> getCollections() {
+        return collections;
+    }
+
+    /**
+     * @param collections the collections to set
+     */
+    public void setCollections(ArrayList<String> collections) {
+        this.collections = collections;
+    }
+
 }

@@ -31,8 +31,8 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -47,7 +47,7 @@ public class SchemaSession {
 
     private String schemaDir;
 
-    private org.slf4j.Logger logger = LoggerFactory.getLogger(SchemaSession.class);
+    private Logger logger = LoggerFactory.getLogger(SchemaSession.class);
 
     @Autowired
     private UtilSession utilSession;

@@ -18,11 +18,17 @@ package com.osstelecom.db.inventory.manager.operation;
 
 import com.arangodb.ArangoCursor;
 import com.arangodb.entity.DocumentCreateEntity;
+import com.arangodb.entity.DocumentUpdateEntity;
 import com.osstelecom.db.inventory.manager.configuration.ConfigurationManager;
 import com.osstelecom.db.inventory.manager.dao.ArangoDao;
 import com.osstelecom.db.inventory.manager.dto.DomainDTO;
 import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import com.osstelecom.db.inventory.manager.dto.TimerDto;
+import com.osstelecom.db.inventory.manager.events.CircuitResourceCreatedEvent;
+import com.osstelecom.db.inventory.manager.events.CircuitResourceUpdatedEvent;
+import com.osstelecom.db.inventory.manager.events.ManagedResourceConnectionCreatedEvent;
+import com.osstelecom.db.inventory.manager.events.ManagedResourceCreatedEvent;
+import com.osstelecom.db.inventory.manager.events.ResourceLocationCreatedEvent;
 import com.osstelecom.db.inventory.manager.exception.DomainAlreadyExistsException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
@@ -41,6 +47,7 @@ import com.osstelecom.db.inventory.manager.resources.exception.MetricConstraintE
 import com.osstelecom.db.inventory.manager.resources.exception.NoResourcesAvailableException;
 import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
 import com.osstelecom.db.inventory.manager.session.DynamicRuleSession;
+import com.osstelecom.db.inventory.manager.session.EventManagerSession;
 import com.osstelecom.db.inventory.manager.session.SchemaSession;
 import com.osstelecom.db.inventory.topology.DefaultTopology;
 import com.osstelecom.db.inventory.topology.ITopology;
@@ -73,30 +80,33 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class DomainManager {
-    
+
     private ReentrantLock lockManager = new ReentrantLock();
 //    private AtomicLong atomId = new AtomicLong(0);
     private ConcurrentHashMap<String, DomainDTO> domains = new ConcurrentHashMap<>();
     private ConcurrentHashMap<String, TimerDto> timers = new ConcurrentHashMap<>();
-    
+
     @Autowired
     private DynamicRuleSession dynamicRuleSession;
-    
+
     @Autowired
     private ArangoDao arangoDao;
-    
+
     @Autowired
     private SchemaSession schemaSession;
-    
+
     @Autowired
     private ConfigurationManager configuration;
-    
+
+    @Autowired
+    private EventManagerSession eventManager;
+
     private Logger logger = LoggerFactory.getLogger(DomainManager.class);
-    
+
     public DomainDTO createDomain(DomainDTO domainDto) throws DomainAlreadyExistsException {
         String timerId = startTimer("createDomain");
         try {
-            
+
             lockManager.lock();
             domainDto = arangoDao.createDomain(domainDto);
             if (domainDto.getAtomicId() == null) {
@@ -111,16 +121,16 @@ public class DomainManager {
         }
         return domainDto;
     }
-    
+
     public DomainDTO getDomain(String domainName) throws DomainNotFoundException {
         if (!domains.containsKey(domainName)) {
             throw new DomainNotFoundException("Domain :[" + domainName + "] not found");
         }
         return domains.get(domainName);
     }
-    
+
     public DomainManager() {
-        
+
     }
 
     /**
@@ -144,6 +154,11 @@ public class DomainManager {
             DocumentCreateEntity<ManagedResource> result = arangoDao.createManagedResource(resource);
             resource.setUid(result.getId());
             resource.setRevisionId(result.getRev());
+            //
+            // Aqui criou o managed resource
+            //
+            ManagedResourceCreatedEvent event = new ManagedResourceCreatedEvent(resource);
+            this.eventManager.notifyEvent(event);
             return resource;
         } finally {
             if (lockManager.isLocked()) {
@@ -151,16 +166,16 @@ public class DomainManager {
             }
             endTimer(timerId);
         }
-        
+
     }
-    
+
     public ResourceLocation createResourceLocation(ResourceLocation resource) throws GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException {
         String timerId = startTimer("createResourceLocation");
         try {
             lockManager.lock();
             resource.setUid(this.getUUID());
             resource.setAtomId(resource.getDomain().addAndGetId());
-            
+
             ResourceSchemaModel schemaModel = schemaSession.loadSchema(resource.getAttributeSchemaName());
             resource.setSchemaModel(schemaModel);
             schemaSession.validateResourceSchema(resource);
@@ -169,6 +184,11 @@ public class DomainManager {
             resource.setUid(result.getId());
             resource.setRevisionId(result.getRev());
             lockManager.unlock();
+            //
+            // Aqui de Fato Criou o ResourceLocation
+            //
+            ResourceLocationCreatedEvent event = new ResourceLocationCreatedEvent(resource);
+            this.eventManager.notifyEvent(event);
             return resource;
         } finally {
             if (lockManager.isLocked()) {
@@ -177,7 +197,7 @@ public class DomainManager {
             endTimer(timerId);
         }
     }
-    
+
     public CircuitResource createCircuitResource(CircuitResource circuit) throws GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException {
         String timerId = startTimer("createCircuitResource");
         try {
@@ -193,6 +213,11 @@ public class DomainManager {
 //            CircuitResource result = doc.getNew();
             circuit.setUid(result.getId());
             circuit.setRevisionId(result.getRev());
+            //
+            // Aqui criou o circuito
+            //
+            CircuitResourceCreatedEvent event = new CircuitResourceCreatedEvent(circuit);
+            this.eventManager.notifyEvent(event);
             return circuit;
         } finally {
             if (lockManager.isLocked()) {
@@ -201,7 +226,7 @@ public class DomainManager {
             endTimer(timerId);
         }
     }
-    
+
     public ConsumableMetric createConsumableMetric(String name) {
         String timerId = startTimer("createConsumableMetric");
         try {
@@ -216,7 +241,7 @@ public class DomainManager {
             }
             endTimer(timerId);
         }
-        
+
     }
 
     /**
@@ -238,16 +263,16 @@ public class DomainManager {
                 lockManager.unlock();
             }
             endTimer(timerId);
-            
+
         }
     }
-    
+
     public ResourceConnection createResourceConnection(ResourceConnection connection) throws ConnectionAlreadyExistsException, MetricConstraintException, NoResourcesAvailableException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, DomainNotFoundException {
         String timerId = startTimer("createResourceConnection");
         try {
             lockManager.lock();
             connection.setUid(this.getUUID());
-            
+
             DomainDTO domain = this.getDomain(connection.getDomain().getDomainName());
             ResourceSchemaModel schemaModel = schemaSession.loadSchema(connection.getAttributeSchemaName());
             connection.setSchemaModel(schemaModel);
@@ -275,7 +300,7 @@ public class DomainManager {
      * @return
      */
     public ResourceConnection createResourceConnection(BasicResource from, BasicResource to, DomainDTO domain) throws ConnectionAlreadyExistsException, MetricConstraintException, NoResourcesAvailableException, GenericException {
-        
+
         String timerId = startTimer("createResourceConnection");
         try {
             lockManager.lock();
@@ -293,6 +318,9 @@ public class DomainManager {
             DocumentCreateEntity<ResourceConnection> result = arangoDao.createConnection(connection);
             connection.setUid(result.getId());
             connection.setRevisionId(result.getRev());
+
+            ManagedResourceConnectionCreatedEvent event = new ManagedResourceConnectionCreatedEvent(from, to, connection);
+            this.eventManager.notifyEvent(event);
             return connection;
         } finally {
             if (lockManager.isLocked()) {
@@ -301,8 +329,8 @@ public class DomainManager {
             }
         }
     }
-    
-    public ResourceLocation findResourceLocation(String name, String nodeAdrress, String className, String domainName) throws ResourceNotFoundException, DomainNotFoundException {
+
+    public ResourceLocation findResourceLocation(String name, String nodeAdrress, String className, String domainName) throws ResourceNotFoundException, DomainNotFoundException, IOException {
         String timerId = startTimer("findResourceLocation");
         try {
             lockManager.lock();
@@ -316,12 +344,12 @@ public class DomainManager {
             endTimer(timerId);
         }
     }
-    
-    public ManagedResource findManagedResource(BasicResource resource) throws ResourceNotFoundException, DomainNotFoundException {
+
+    public ManagedResource findManagedResource(BasicResource resource) throws ResourceNotFoundException, DomainNotFoundException, IOException {
         return this.findManagedResource(resource.getName(), resource.getNodeAddress(), resource.getClassName(), resource.getDomain().getDomainName());
     }
-    
-    public ManagedResource findManagedResource(String name, String nodeAdrress, String className, String domainName) throws ResourceNotFoundException, DomainNotFoundException {
+
+    public ManagedResource findManagedResource(String name, String nodeAdrress, String className, String domainName) throws ResourceNotFoundException, DomainNotFoundException, IOException {
         String timerId = startTimer("findResourceLocation");
         try {
             lockManager.lock();
@@ -349,25 +377,25 @@ public class DomainManager {
      * Inicia os dominios conhecidoss
      */
     @EventListener(ApplicationReadyEvent.class)
-    private void onStartUp() {
+    private void onStartUp() throws IOException {
         this.arangoDao.getDomains().forEach(d -> {
             this.domains.put(d.getDomainName(), d);
         });
-        
+
     }
-    
+
     @PreDestroy
     private void onShutDown() {
         this.domains.forEach((domainName, domain) -> {
             this.arangoDao.updateDomain(domain);
         });
-        
+
     }
-    
+
     public void abortTransaction() throws ScriptRuleException {
         this.abortTransaction("Generic Aborted by script... no cause specified");
     }
-    
+
     public void abortTransaction(String msg) throws ScriptRuleException {
         this.abortTransaction(msg, null);
     }
@@ -386,23 +414,23 @@ public class DomainManager {
         logger.warn("Aborting Transaction..." + details);
         throw ex;
     }
-    
+
     public Boolean isLocation(BasicResource resource) {
         return resource.getObjectClass().contains("Location");
     }
-    
+
     public Boolean isConnection(BasicResource resource) {
         return resource.getObjectClass().contains("Connection");
     }
-    
+
     public Boolean isManagedResource(BasicResource resource) {
         return resource.getObjectClass().contains("ManagedResource");
     }
-    
+
     public Boolean isCircuit(BasicResource resource) {
         return resource.getObjectClass().contains("Circuit");
     }
-    
+
     private String startTimer(String operation) {
         String uid = UUID.randomUUID().toString();
         timers.put(uid, new TimerDto(uid, operation, System.currentTimeMillis()));
@@ -429,11 +457,11 @@ public class DomainManager {
                     logger.warn("Timer: [" + timer.getUid() + "] Operation:[" + timer.getOperation() + "] Took:" + tookTimer + " ms (>100ms)");
                 }
             }
-            
+
         }
     }
-    
-    public CircuitResource findCircuitResource(CircuitResource circuit) throws ResourceNotFoundException {
+
+    public CircuitResource findCircuitResource(CircuitResource circuit) throws ResourceNotFoundException, IOException {
         String timerId = startTimer("findCircuitResource");
         try {
             lockManager.lock();
@@ -445,12 +473,13 @@ public class DomainManager {
             endTimer(timerId);
         }
     }
+
     
-    public ResourceConnection findResourceConnection(ResourceConnection connection) throws ResourceNotFoundException {
+    public ResourceConnection findResourceConnection(ResourceConnection connection) throws ResourceNotFoundException, IOException {
         String timerId = startTimer("findResourceConnection");
         try {
             lockManager.lock();
-            
+
             return arangoDao.findResourceConnection(connection);
         } finally {
             if (lockManager.isLocked()) {
@@ -459,7 +488,13 @@ public class DomainManager {
             endTimer(timerId);
         }
     }
-    
+
+    /**
+     * Atualiza a conexão de um recurso
+     *
+     * @param connection
+     * @return
+     */
     public ResourceConnection updateResourceConnection(ResourceConnection connection) {
         String timerId = startTimer("updateResourceConnection");
         try {
@@ -473,13 +508,25 @@ public class DomainManager {
             endTimer(timerId);
         }
     }
-    
+
+    /**
+     * Atualiza um circuito
+     *
+     * @param resource
+     * @return
+     */
     public CircuitResource updateCircuitResource(CircuitResource resource) {
         String timerId = startTimer("updateCircuitResource");
         try {
             lockManager.lock();
             resource.setLastModifiedDate(new Date());
-            return arangoDao.updateCircuitResource(resource);
+            DocumentUpdateEntity<CircuitResource> result = arangoDao.updateCircuitResource(resource);
+            CircuitResource newResource = result.getNew();
+            CircuitResource oldResource = result.getOld();
+
+            CircuitResourceUpdatedEvent event = new CircuitResourceUpdatedEvent(oldResource, newResource);
+            this.eventManager.notifyEvent(event);
+            return newResource;
         } finally {
             if (lockManager.isLocked()) {
                 lockManager.unlock();
@@ -487,11 +534,11 @@ public class DomainManager {
             endTimer(timerId);
         }
     }
-    
-    public ArrayList<ResourceConnection> findCircuitPath(CircuitResource circuit) {
+
+    public ArrayList<ResourceConnection> findCircuitPath(CircuitResource circuit) throws IOException {
         return arangoDao.findCircuitPath(circuit);
     }
-    
+
     public void findWeakLinks(ArrayList<ResourceConnection> connections, FilterDTO filter) {
         //
         // Valida se temos dados de conexões...
@@ -503,7 +550,7 @@ public class DomainManager {
             //
 
             ArrayList<BasicResource> targets = new ArrayList<>();
-            
+
             Pattern p = Pattern.compile(filter.getTargetRegex());
             for (ResourceConnection connection : connections) {
                 Matcher sourceMatcher = p.matcher(connection.getFrom().getName());
@@ -512,7 +559,7 @@ public class DomainManager {
                         targets.add(connection.getFrom());
                     }
                 }
-                
+
                 Matcher targetMatched = p.matcher(connection.getTo().getName());
                 if (targetMatched.matches()) {
                     if (!targets.contains(connection.getFrom())) {
@@ -520,29 +567,28 @@ public class DomainManager {
                     }
                 }
             }
-            
+
             if (!targets.isEmpty()) {
                 //
                 // Ok temos algo para Trabalhar, montemos a topologia...
                 //
                 DefaultTopology topology = new DefaultTopology();
-                
+
                 targets.forEach(t -> {
                     //
                     // 
                     //
-                
+
                 });
-                
-                
+
                 connections.forEach(connection -> {
-                    
+
                 });
-                
+
             }
         }
     }
-    
+
     public void test(String filter, Integer threads) {
         String aql = "for doc in inventory_connections "
                 + " filter doc.from.name like @filter"
@@ -559,15 +605,15 @@ public class DomainManager {
             if (connection.getFrom().getName().contains("m-br") && connection.getTo().getName().contains("m-br")) {
                 INetworkNode from = topology.getNodeByName(connection.getFrom().getName());
                 INetworkNode to = topology.getNodeByName(connection.getTo().getName());
-                
+
                 if (from == null) {
                     from = createNode(connection.getFrom().getName(), id.incrementAndGet(), topology);
                 }
-                
+
                 if (to == null) {
                     to = createNode(connection.getTo().getName(), id.incrementAndGet(), topology);
                 }
-                
+
                 if (from.getName().contains("gwc")) {
 //                topology.addConnection(from, saida);
                     from.setEndPoint(true);
@@ -575,7 +621,7 @@ public class DomainManager {
                     from.setEndPoint(false);
                     from.addAttribute("erbCount", 0);
                 }
-                
+
                 if (to.getName().contains("gwc")) {
                     to.setEndPoint(true);
 //                topology.addConnection(to, saida);
@@ -583,7 +629,7 @@ public class DomainManager {
                     to.setEndPoint(false);
                     to.addAttribute("erbCount", 0);
                 }
-                
+
                 if (from.getConnectionRelated(to).isEmpty()) {
                     INetworkConnection topologyConnection = topology.addConnection(from, to);
                 }
@@ -603,7 +649,7 @@ public class DomainManager {
 //                        goAhead = false;
 //                    }
                 }
-                
+
                 if (goAhead) {
                     INetworkNode node = topology.getNodeByName(resource.getName());
                     if (node == null) {
@@ -617,7 +663,7 @@ public class DomainManager {
                     count++;
                     node.addAttribute("erbCount", count);
                 }
-                
+
             }
         });
         logger.debug("-------------------------------------------------------------");
@@ -629,7 +675,7 @@ public class DomainManager {
         for (INetworkNode node : topology.getEndPoints()) {
             logger.debug("       " + node.getName());
         }
-        
+
         Long start = System.currentTimeMillis();
         logger.debug("-------------------------------------------------------------");
         logger.debug("Weak Nodes With 1 Connection or LESS:");
@@ -640,7 +686,7 @@ public class DomainManager {
         } else {
             weak = topology.getImpactManager().getWeakNodes(1, false, threads, false);
         }
-        
+
         logger.debug("Found " + weak.size() + " Weak Nodes");
         for (INetworkNode n : weak) {
             logger.debug("  ::Weak " + n.getName() + " Connections size:" + n.getEndpointConnectionsCount() + " Impact Count:" + n.getImpactedNodes().size() + " ERBS:" + n.getAttribute("erbCount"));
@@ -648,10 +694,10 @@ public class DomainManager {
                 n.getImpactedNodes().forEach((k, v) -> {
                     logger.debug("      ::Node " + n.getName() + " Impacts:" + v.getName() + " ERBS: " + v.getAttribute("erbCount"));
                 });
-                
+
             }
         }
-        
+
         Long end = System.currentTimeMillis();
         Long took = end - start;
         logger.debug("Process took: " + took + " ms With:" + threads + " Threads");
@@ -665,22 +711,22 @@ public class DomainManager {
         //
         topology.destroyTopology();
     }
-    
+
     private INetworkNode createNode(String name, Long id, ITopology topology) {
 //        logger.debug("Created Node:" + name);
         INetworkNode node = new DefaultNode(name, id.intValue(), topology);
         return node;
     }
-    
-    public ArrayList<BasicResource> getNodesByFilter(FilterDTO filter, String domainName) throws DomainNotFoundException, ResourceNotFoundException {
+
+    public ArrayList<BasicResource> getNodesByFilter(FilterDTO filter, String domainName) throws DomainNotFoundException, ResourceNotFoundException, IOException {
         DomainDTO domain = getDomain(domainName);
         if (filter.getObjects().contains("nodes")) {
             return arangoDao.getNodesByFilter(filter, domain);
         }
         return null;
     }
-    
-    public ArrayList<ResourceConnection> getConnectionsByFilter(FilterDTO filter, String domainName) throws DomainNotFoundException, ResourceNotFoundException {
+
+    public ArrayList<ResourceConnection> getConnectionsByFilter(FilterDTO filter, String domainName) throws DomainNotFoundException, ResourceNotFoundException, IOException {
         DomainDTO domain = getDomain(domainName);
         if (filter.getObjects().contains("connections")) {
             return arangoDao.getConnectionsByFilter(filter, domain);

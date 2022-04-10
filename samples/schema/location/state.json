@@ -1,0 +1,14 @@
+{
+    "schemaName": "location.state",
+    "fromSchema": "location.default",
+    "attributes": {
+        "SC_UF_NOME": {
+            "name": "SC_UF_NOME",
+            "variableType": "String",
+            "description": "SC_UF_NOME",
+            "required": false,
+            "defaultValue": null,
+            "validate": false
+        }
+    }
+}

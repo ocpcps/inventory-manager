@@ -15,15 +15,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-
 package com.osstelecom.db.inventory.manager.session;
 
 import com.osstelecom.db.inventory.manager.exception.DomainAlreadyExistsException;
+import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
+import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.operation.DomainManager;
 
 import com.osstelecom.db.inventory.manager.request.CreateDomainRequest;
 import com.osstelecom.db.inventory.manager.response.CreateDomainResponse;
+import com.osstelecom.db.inventory.manager.response.DomainResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -34,10 +36,10 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class DomainSession {
-   
+    
     @Autowired
     private DomainManager domainManager;
-
+    
     public CreateDomainResponse createDomain(CreateDomainRequest domainRequest) throws DomainAlreadyExistsException, GenericException {
         try {
             CreateDomainResponse response = new CreateDomainResponse(this.domainManager.createDomain(domainRequest.getPayLoad()));
@@ -48,5 +50,13 @@ public class DomainSession {
             throw new GenericException(ex.getMessage());
         }
     }
-
+    
+    public DomainResponse getDomain(String domainName) throws DomainNotFoundException, InvalidRequestException {
+        if (domainName == null) {
+            throw new InvalidRequestException("domainName cannot be null");
+        }
+        DomainResponse response = new DomainResponse(domainManager.getDomain(domainName));
+        return response;
+    }
+    
 }

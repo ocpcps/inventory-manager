@@ -1,0 +1,9 @@
+{
+    "schemaName": "location.site",
+    "fromSchema": "location.default",
+    "description": "This is a generic location",
+    "allowAll": true,
+    "attributes": {
+       
+    }
+}

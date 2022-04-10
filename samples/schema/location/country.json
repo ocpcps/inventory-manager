@@ -19,6 +19,14 @@
             "defaultValue": null,
             "validate": false
         },
+	"COUNTRY": {
+            "name": "COUNTRY",
+            "variableType": "String",
+            "description": "COUNTRY",
+            "required": false,
+            "defaultValue": null,
+            "validate": false
+        },
 	"iso3Code": {
             "name": "iso3Code",
             "variableType": "String",

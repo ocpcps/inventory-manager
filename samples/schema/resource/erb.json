@@ -1,0 +1,15 @@
+{
+    "schemaName": "resource.erb",
+    "fromSchema": "default",
+    "allowAll": true,
+    "attributes": {
+        "eild": {
+            "name": "eild",
+            "variableType": "String",
+            "description": "The eild of The Element",
+            "required": false,
+            "defaultValue": null,
+            "validate": false
+        }
+    }
+}

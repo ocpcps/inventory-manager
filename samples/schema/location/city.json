@@ -1,14 +1,14 @@
 {
-    "schemaName": "location.cidadela",
+    "schemaName": "location.city",
     "fromSchema": "location.default",
     "description": "This is a generic location",
     "allowAll": false,
     "attributes": {
-        "siteRisco": {
-            "name": "siteRisco",
-            "variableType": "boolean",
+        "SC_MUNICIPIO": {
+            "name": "SC_MUNICIPIO",
+            "variableType": "string",
             "description": "é de risco",
-            "required": true,
+            "required": false,
             "validate": false
         }
     }

@@ -50,6 +50,7 @@ import com.osstelecom.db.inventory.manager.response.CreateServiceResponse;
 import com.osstelecom.db.inventory.manager.response.FilterResponse;
 import com.osstelecom.db.inventory.manager.response.GetCircuitPathResponse;
 import com.osstelecom.db.inventory.topology.DefaultTopology;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -121,7 +122,7 @@ public class ResourceSession {
      * @throws SchemaNotFoundException
      * @throws AttributeConstraintViolationException
      */
-    public CreateResourceConnectionResponse createResourceConnection(CreateConnectionRequest request) throws ResourceNotFoundException, ConnectionAlreadyExistsException, MetricConstraintException, NoResourcesAvailableException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, InvalidRequestException, DomainNotFoundException {
+    public CreateResourceConnectionResponse createResourceConnection(CreateConnectionRequest request) throws ResourceNotFoundException, ConnectionAlreadyExistsException, MetricConstraintException, NoResourcesAvailableException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, InvalidRequestException, DomainNotFoundException, IOException {
 
 //        ManagedResource from = domainManager.findManagedResource(request.getPayLoad().getFromName(), request.getPayLoad().getFromNodeAddress(), request.getPayLoad().getFromClassName(), request.getRequestDomain());
 //        ManagedResource to = domainManager.findManagedResource(request.getPayLoad().getToName(), request.getPayLoad().getToNodeAddress(), request.getPayLoad().getToClassName(), request.getRequestDomain());
@@ -174,7 +175,7 @@ public class ResourceSession {
      * @throws SchemaNotFoundException
      * @throws AttributeConstraintViolationException
      */
-    public CreateResourceConnectionResponse createResourceLocationConnection(CreateConnectionRequest request) throws ResourceNotFoundException, ConnectionAlreadyExistsException, MetricConstraintException, NoResourcesAvailableException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, DomainNotFoundException {
+    public CreateResourceConnectionResponse createResourceLocationConnection(CreateConnectionRequest request) throws ResourceNotFoundException, ConnectionAlreadyExistsException, MetricConstraintException, NoResourcesAvailableException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, DomainNotFoundException, IOException {
 
         ResourceLocation from = domainManager.findResourceLocation(request.getPayLoad().getFromName(), request.getPayLoad().getFromNodeAddress(), request.getPayLoad().getFromClassName(), request.getRequestDomain());
         ResourceLocation to = domainManager.findResourceLocation(request.getPayLoad().getToName(), request.getPayLoad().getToNodeAddress(), request.getPayLoad().getToClassName(), request.getRequestDomain());
@@ -236,7 +237,7 @@ public class ResourceSession {
         return response;
     }
 
-    public CreateCircuitPathResponse createCircuitPath(CreateCircuitPathRequest request) throws DomainNotFoundException, ResourceNotFoundException {
+    public CreateCircuitPathResponse createCircuitPath(CreateCircuitPathRequest request) throws DomainNotFoundException, ResourceNotFoundException, IOException {
         CreateCircuitPathResponse r = new CreateCircuitPathResponse(request.getPayLoad());
         //
         // Valida se temos paths...na request
@@ -292,7 +293,7 @@ public class ResourceSession {
      * @throws ScriptRuleException
      * @throws DomainNotFoundException
      */
-    public CreateCircuitResponse createCircuit(CreateCircuitRequest request) throws ResourceNotFoundException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, DomainNotFoundException {
+    public CreateCircuitResponse createCircuit(CreateCircuitRequest request) throws ResourceNotFoundException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, DomainNotFoundException, IOException {
         if (request.getPayLoad().getaPoint().getDomain() == null) {
             if (request.getPayLoad().getaPoint().getDomainName() != null) {
                 request.getPayLoad().getaPoint().setDomain(domainManager.getDomain(request.getPayLoad().getaPoint().getDomainName()));
@@ -342,7 +343,7 @@ public class ResourceSession {
      * @return
      * @throws ResourceNotFoundException
      */
-    public GetCircuitPathResponse getCircuitPath(GetCircuitPathRequest request) throws ResourceNotFoundException, DomainNotFoundException {
+    public GetCircuitPathResponse getCircuitPath(GetCircuitPathRequest request) throws ResourceNotFoundException, DomainNotFoundException, IOException {
         CircuitPathDTO circuitDto = request.getPayLoad();
         CircuitResource circuit = circuitDto.getCircuit();
         circuit.setDomain(domainManager.getDomain(circuit.getDomainName()));
@@ -368,7 +369,7 @@ public class ResourceSession {
         domainManager.test(filter, threads);
     }
 
-    public FilterResponse getElementsByFilter(FilterRequest filter) throws DomainNotFoundException, ResourceNotFoundException {
+    public FilterResponse getElementsByFilter(FilterRequest filter) throws DomainNotFoundException, ResourceNotFoundException, IOException {
 
         FilterResponse response = new FilterResponse(filter.getPayLoad());
         if (filter.getPayLoad().getObjects().contains("nodes")) {
