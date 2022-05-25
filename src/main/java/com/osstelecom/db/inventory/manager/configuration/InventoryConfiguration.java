@@ -32,8 +32,6 @@ public class InventoryConfiguration {
     private String dateFormat = "dd-MM-yyyy";
     private String dateTimeFormat = "dd-MM-yyyy hh:MM:ss";
     private Boolean trackTimers = true;
-    private Boolean historyEnabled = false;
-    private String historyDatabase = "invHistory";
 
     /**
      * @return the mongoDbConfiguration
@@ -131,33 +129,5 @@ public class InventoryConfiguration {
      */
     public void setTrackTimers(Boolean trackTimers) {
         this.trackTimers = trackTimers;
-    }
-
-    /**
-     * @return the historyEnabled
-     */
-    public Boolean getHistoryEnabled() {
-        return historyEnabled;
-    }
-
-    /**
-     * @param historyEnabled the historyEnabled to set
-     */
-    public void setHistoryEnabled(Boolean historyEnabled) {
-        this.historyEnabled = historyEnabled;
-    }
-
-    /**
-     * @return the historyDatabase
-     */
-    public String getHistoryDatabase() {
-        return historyDatabase;
-    }
-
-    /**
-     * @param historyDatabase the historyDatabase to set
-     */
-    public void setHistoryDatabase(String historyDatabase) {
-        this.historyDatabase = historyDatabase;
     }
 }
