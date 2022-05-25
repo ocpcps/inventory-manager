@@ -50,6 +50,7 @@ import com.osstelecom.db.inventory.manager.response.CreateResourceLocationRespon
 import com.osstelecom.db.inventory.manager.response.CreateServiceResponse;
 import com.osstelecom.db.inventory.manager.response.FilterResponse;
 import com.osstelecom.db.inventory.manager.response.GetCircuitPathResponse;
+import com.osstelecom.db.inventory.manager.security.model.AuthenticatedCall;
 import com.osstelecom.db.inventory.manager.session.DomainSession;
 import com.osstelecom.db.inventory.manager.session.ResourceSession;
 import com.osstelecom.db.inventory.manager.session.SchemaSession;
@@ -68,7 +69,7 @@ import com.osstelecom.db.inventory.manager.security.model.AuthenticatedCall;
 
 /**
  * Classe que representa os elementos do Inventário
- *
+ * Teste
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 14.12.2021
  */
@@ -95,6 +96,7 @@ public class InventoryApi {
      * @throws DomainNotFoundException
      * @throws InvalidRequestException 
      */
+    @AuthenticatedCall(role = "user")
     @GetMapping(path = "/domain/{domain}", produces = "application/json")
     public String getDomain(@PathVariable("domain") String domainName) throws DomainNotFoundException, InvalidRequestException {
         return gson.toJson(domainSession.getDomain(domainName));
@@ -119,6 +121,7 @@ public class InventoryApi {
      * @param schema
      * @return
      */
+    @AuthenticatedCall(role = "user")
     @GetMapping(path = "/schema/{schema}", produces = "application/json")
     public String getSchameDefinition(@PathVariable("schema") String schema) throws GenericException, SchemaNotFoundException {
         try {
@@ -143,6 +146,7 @@ public class InventoryApi {
      * @throws InvalidRequestException
      * @throws GenericException
      */
+    @AuthenticatedCall(role = "user")
     @PutMapping(path = "/domain", produces = "application/json", consumes = "application/json")
     public CreateDomainResponse createDomain(@RequestBody CreateDomainRequest request) throws DomainAlreadyExistsException, InvalidRequestException, GenericException {
         logger.info("Request For Creating a new Domain named: [" + request + "] Received");
@@ -166,6 +170,7 @@ public class InventoryApi {
      * @return
      * @throws GenericException
      */
+    @AuthenticatedCall(role = "user")
     @PutMapping(path = "/{domain}/location", produces = "application/json", consumes = "application/json")
     public CreateResourceLocationResponse createLocation(@RequestBody CreateResourceLocationRequest request, @PathVariable("domain") String domain) throws GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, InvalidRequestException, DomainNotFoundException {
         try {
@@ -181,6 +186,7 @@ public class InventoryApi {
         }
     }
 
+    @AuthenticatedCall(role = "user")
     @PutMapping(path = "/{domain}/resource", produces = "application/json", consumes = "application/json")
     public CreateManagedResourceResponse createManagedResource(@RequestBody String requestBody, @PathVariable("domain") String domain) throws GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, InvalidRequestException, DomainNotFoundException {
         try {
@@ -194,6 +200,7 @@ public class InventoryApi {
         }
     }
 
+    @AuthenticatedCall(role = "user")
     @PutMapping(path = "/{domain}/service", produces = "application/json", consumes = "application/json")
     public CreateServiceResponse createService(@RequestBody CreateServiceRequest request, @PathVariable("domain") String domain) throws GenericException {
         try {
@@ -214,6 +221,7 @@ public class InventoryApi {
      * @return
      * @throws GenericException
      */
+    @AuthenticatedCall(role = "user")
     @PutMapping(path = "/{domain}/resource/connection", produces = "application/json", consumes = "application/json")
     public CreateResourceConnectionResponse createResourceConnection(@RequestBody CreateConnectionRequest request, @PathVariable("domain") String domain) throws GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, InvalidRequestException, ResourceNotFoundException, ConnectionAlreadyExistsException, MetricConstraintException, NoResourcesAvailableException, DomainNotFoundException {
         try {
@@ -235,6 +243,7 @@ public class InventoryApi {
      * @return
      * @throws GenericException
      */
+    @AuthenticatedCall(role = "user")
     @PutMapping(path = "/{domain}/location/connection", produces = "application/json", consumes = "application/json")
     public CreateResourceConnectionResponse createResourceLocationConnection(@RequestBody CreateConnectionRequest request, @PathVariable("domain") String domain) throws GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, InvalidRequestException, ResourceNotFoundException, ConnectionAlreadyExistsException, MetricConstraintException, NoResourcesAvailableException, DomainNotFoundException {
         try {
@@ -262,6 +271,7 @@ public class InventoryApi {
      * @throws ScriptRuleException
      * @throws AttributeConstraintViolationException
      */
+    @AuthenticatedCall(role = "user")
     @PutMapping(path = "/{domain}/circuit", produces = "application/json", consumes = "application/json")
     public CreateCircuitResponse createCircuit(@RequestBody CreateCircuitRequest request, @PathVariable("domain") String domain) throws ResourceNotFoundException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, AttributeConstraintViolationException, DomainNotFoundException {
         request.setRequestDomain(domain);
@@ -281,6 +291,7 @@ public class InventoryApi {
      * @throws ScriptRuleException
      * @throws AttributeConstraintViolationException
      */
+    @AuthenticatedCall(role = "user")
     @PutMapping(path = "/{domain}/circuit/path", produces = "application/json", consumes = "application/json")
     public CreateCircuitPathResponse createCircuitPath(@RequestBody String strReq, @PathVariable("domain") String domain) throws ResourceNotFoundException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, AttributeConstraintViolationException, DomainNotFoundException {
         CreateCircuitPathRequest request = gson.fromJson(strReq, CreateCircuitPathRequest.class);
@@ -302,6 +313,7 @@ public class InventoryApi {
      * @throws AttributeConstraintViolationException
      * @throws DomainNotFoundException
      */
+    @AuthenticatedCall(role = "user")
     @PostMapping(path = "/{domain}/circuit/path", produces = "application/json", consumes = "application/json")
     public CreateCircuitPathResponse getCircuitPath(@RequestBody String strReq, @PathVariable("domain") String domain) throws ResourceNotFoundException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, AttributeConstraintViolationException, DomainNotFoundException {
         GetCircuitPathRequest request = gson.fromJson(strReq, GetCircuitPathRequest.class);
@@ -323,6 +335,7 @@ public class InventoryApi {
      * @throws AttributeConstraintViolationException
      * @throws DomainNotFoundException
      */
+    @AuthenticatedCall(role = "user")
     @PostMapping(path = "/{domain}/filter", produces = "application/json", consumes = "application/json")
     public FilterResponse getElementsByFilter(@RequestBody FilterRequest filter, @PathVariable("domain") String domain) throws ResourceNotFoundException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, AttributeConstraintViolationException, DomainNotFoundException {
         System.out.println(":::::::::" + gson.toJson(filter));
@@ -337,6 +350,7 @@ public class InventoryApi {
      * @param threads
      * @return
      */
+    @AuthenticatedCall(role = "user")
     @PostMapping(path = "test/{threads}", produces = "application/json", consumes = "application/json")
     public GetCircuitPathResponse test(@RequestBody String strReq, @PathVariable("threads") Integer threads) {
         GetCircuitPathRequest request = gson.fromJson(strReq, GetCircuitPathRequest.class);
