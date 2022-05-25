@@ -117,4 +117,9 @@ public class ConfigurationManager {
         }
         return this.configuration;
     }
+
+    public InventoryConfiguration getConfiguration() {
+        return this.loadConfiguration();
+    }
+
 }

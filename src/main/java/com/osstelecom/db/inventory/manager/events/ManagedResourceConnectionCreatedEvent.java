@@ -18,8 +18,8 @@
 package com.osstelecom.db.inventory.manager.events;
 
 import com.osstelecom.db.inventory.manager.resources.BasicResource;
-import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
+import java.util.Date;
 
 /**
  *
@@ -36,6 +36,22 @@ public class ManagedResourceConnectionCreatedEvent extends BasicEvent {
         this.from = from;
         this.to = to;
         this.connection = connection;
+    }
+
+    public BasicResource getFrom() {
+        return from;
+    }
+
+    public BasicResource getTo() {
+        return to;
+    }
+
+    public ResourceConnection getConnection() {
+        return connection;
+    }
+
+    public Date getEventDate() {
+        return eventDate;
     }
 
 }
