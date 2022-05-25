@@ -18,6 +18,7 @@
 package com.osstelecom.db.inventory.manager.events;
 
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
+import java.util.Date;
 
 /**
  *
@@ -31,6 +32,22 @@ public class ManagedResourceCreatedEvent extends BasicEvent {
     public ManagedResourceCreatedEvent(ManagedResource resource) {
         this.resource = resource;
         this.setEventDate();
+    }
+
+    public ManagedResource getResource() {
+        return resource;
+    }
+
+    public void setResource(ManagedResource resource) {
+        this.resource = resource;
+    }
+
+    public Date getEventDate() {
+        return eventDate;
+    }
+
+    public void setEventDate(Date eventDate) {
+        this.eventDate = eventDate;
     }
 
 }

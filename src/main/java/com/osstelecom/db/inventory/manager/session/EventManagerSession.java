@@ -21,9 +21,12 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.google.common.eventbus.SubscriberExceptionContext;
 import com.google.common.eventbus.SubscriberExceptionHandler;
+import com.osstelecom.db.inventory.manager.configuration.ConfigurationManager;
+import com.osstelecom.db.inventory.manager.events.ManagedResourceConnectionCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.ManagedResourceCreatedEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -39,6 +42,9 @@ public class EventManagerSession implements SubscriberExceptionHandler {
 
     private EventBus eventBus = new EventBus(this);
     private Logger logger = LoggerFactory.getLogger(EventManagerSession.class);
+
+    @Autowired
+    private ConfigurationManager configuration;
 
     @EventListener(ApplicationReadyEvent.class)
     private void registerEventBus() {
@@ -65,8 +71,29 @@ public class EventManagerSession implements SubscriberExceptionHandler {
         logger.error("Subscription Error in EventBUS:", thrwbl);
     }
 
+    /**
+     * Disparado quando um Elemento Gerenciavel é criado
+     *
+     * @param resource
+     */
     @Subscribe
     public void onManagedResourceCreatedEvent(ManagedResourceCreatedEvent resource) {
+        //
+        // Verifica se temos o histórico hábilitado..
+        //
+        if (this.isHistoryEnabled()) {
+            logger.debug("Managed Resource Created:" + resource.getResource().getId());
 
+        }
+    }
+
+    public void onManagedResourceConnectionCreatedEvent(ManagedResourceConnectionCreatedEvent resource) {
+        if (this.isHistoryEnabled()) {
+//            logger.debug("Connection Resource Created:" + resource.)
+        }
+    }
+
+    private Boolean isHistoryEnabled() {
+        return configuration.getConfiguration().getHistoryEnabled();
     }
 }
