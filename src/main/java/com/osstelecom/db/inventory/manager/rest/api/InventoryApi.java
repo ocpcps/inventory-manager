@@ -68,7 +68,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Classe que representa os elementos do Inventário
- *
+ * Teste
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 14.12.2021
  */
