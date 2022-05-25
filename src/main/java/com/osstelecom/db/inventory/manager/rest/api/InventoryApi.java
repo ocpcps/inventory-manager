@@ -64,6 +64,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import com.osstelecom.db.inventory.manager.security.model.AuthenticatedCall;
 
 /**
  * Classe que representa os elementos do Inventário
@@ -105,6 +106,7 @@ public class InventoryApi {
      * @param reqBody
      * @return
      */
+    @AuthenticatedCall(role = "user")
     @PostMapping(path = "/schema", produces = "application/json", consumes = "application/json")
     public String createSchema(@RequestBody String reqBody) {
         ResourceSchemaModel model = gson.fromJson(reqBody, ResourceSchemaModel.class);
