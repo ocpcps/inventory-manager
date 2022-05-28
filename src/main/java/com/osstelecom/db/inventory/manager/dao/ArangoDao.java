@@ -37,6 +37,7 @@ import com.osstelecom.db.inventory.manager.configuration.ConfigurationManager;
 import com.osstelecom.db.inventory.manager.configuration.InventoryConfiguration;
 import com.osstelecom.db.inventory.manager.dto.DomainDTO;
 import com.osstelecom.db.inventory.manager.dto.FilterDTO;
+import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.DomainAlreadyExistsException;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
@@ -50,6 +51,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.logging.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -119,7 +121,7 @@ public class ArangoDao {
             logger.info(".........................................");
         } catch (ArangoDBException ex) {
             logger.error("Failed GraphDB:", ex);
-        } catch (IOException ex) {
+        } catch (ArangoDaoException ex) {
             logger.error("Failed GraphDB IO:", ex);
 
         }
@@ -196,15 +198,22 @@ public class ArangoDao {
      *
      * @return
      */
-    public ArrayList<DomainDTO> getDomains() throws IOException {
-        ArrayList<DomainDTO> result = new ArrayList<>();
+    public ArrayList<DomainDTO> getDomains() throws ArangoDaoException {
         logger.debug("Domains Size is: " + this.domainsCollection.count().getCount());
         ArangoCursor<DomainDTO> cursor = this.database.query("FOR doc IN domains    RETURN doc", DomainDTO.class);
-        cursor.forEachRemaining(domain -> {
-            logger.info("Found Domain: [" + domain.getDomainName() + "]");
-            result.add(domain);
+        return getListFromCursorType(cursor);
+    }
+
+    private <T> ArrayList<T> getListFromCursorType(ArangoCursor<T> cursor) throws ArangoDaoException {
+        ArrayList<T> result = new ArrayList<>();
+        cursor.forEachRemaining(data -> {
+            result.add(data);
         });
-        cursor.close();
+        try {
+            cursor.close();
+        } catch (IOException ex) {
+            throw new ArangoDaoException("Failed to Close Cursor:", ex);
+        }
         return result;
     }
 
@@ -313,7 +322,7 @@ public class ArangoDao {
      * @return
      * @throws ResourceNotFoundException
      */
-    public ResourceLocation findResourceLocation(String name, String nodeAddress, String className, DomainDTO domain) throws ResourceNotFoundException, IOException {
+    public ResourceLocation findResourceLocation(String name, String nodeAddress, String className, DomainDTO domain) throws ResourceNotFoundException, ArangoDaoException {
         HashMap<String, Object> bindVars = new HashMap<>();
         bindVars.put("name", name);
         bindVars.put("className", className);
@@ -351,10 +360,12 @@ public class ArangoDao {
 //        if (cursor.getCount() > 0) {
         ArrayList<ResourceLocation> locations = new ArrayList<>();
 
-        cursor.forEachRemaining(location -> {
-            locations.add(location);
-        });
-        cursor.close();
+        locations.addAll(getListFromCursorType(cursor));
+
+//        cursor.forEachRemaining(location -> {
+//            locations.add(location);
+//        });
+//        cursor.close();
         if (!locations.isEmpty()) {
             return locations.get(0);
         }
@@ -370,7 +381,18 @@ public class ArangoDao {
         }
     }
 
-    public ManagedResource findManagedResource(String name, String nodeAddress, String className, DomainDTO domain) throws ResourceNotFoundException, IOException {
+    /**
+     * Find Managed Resource
+     *
+     * @param name
+     * @param nodeAddress
+     * @param className
+     * @param domain
+     * @return
+     * @throws ResourceNotFoundException
+     * @throws ArangoDaoException
+     */
+    public ManagedResource findManagedResource(String name, String nodeAddress, String className, DomainDTO domain) throws ResourceNotFoundException, ArangoDaoException {
         HashMap<String, Object> bindVars = new HashMap<>();
         bindVars.put("name", name);
         bindVars.put("className", className);
@@ -406,10 +428,8 @@ public class ArangoDao {
         ArangoCursor<ManagedResource> cursor = this.database.query(aql, bindVars, ManagedResource.class);
         ArrayList<ManagedResource> locations = new ArrayList<>();
 
-        cursor.forEachRemaining(location -> {
-            locations.add(location);
-        });
-        cursor.close();
+        locations.addAll(getListFromCursorType(cursor));
+//        cursor.close();
         if (!locations.isEmpty()) {
             return locations.get(0);
         }
@@ -423,7 +443,7 @@ public class ArangoDao {
      * @param connection
      * @return
      */
-    public ResourceConnection findResourceConnection(ResourceConnection connection) throws ResourceNotFoundException, IOException {
+    public ResourceConnection findResourceConnection(ResourceConnection connection) throws ResourceNotFoundException, ArangoDaoException {
         ArrayList<ResourceConnection> resultList = new ArrayList<>();
         String aql = "for doc in " + connection.getDomain().getConnections() + " FILTER ";
         HashMap<String, Object> bindVars = new HashMap<>();
@@ -490,11 +510,13 @@ public class ArangoDao {
         });
         ArangoCursor<ResourceConnection> cursor = this.database.query(aql, bindVars, ResourceConnection.class);
 
-        cursor.forEachRemaining(resConnection -> {
-            logger.debug("Found Connection :" + resConnection.getId());
-            resultList.add(resConnection);
-        });
-        cursor.close();
+        resultList.addAll(getListFromCursorType(cursor));
+
+//        cursor.forEachRemaining(resConnection -> {
+//            logger.debug("Found Connection :" + resConnection.getId());
+//            resultList.add(resConnection);
+//        });
+//        cursor.close();
         if (!resultList.isEmpty()) {
             return resultList.get(0);
         }
@@ -503,7 +525,15 @@ public class ArangoDao {
 
     }
 
-    public CircuitResource findCircuitResource(CircuitResource resource) throws ResourceNotFoundException, IOException {
+    /**
+     * Find Circuit Resource
+     *
+     * @param resource
+     * @return
+     * @throws ResourceNotFoundException
+     * @throws ArangoDaoException
+     */
+    public CircuitResource findCircuitResource(CircuitResource resource) throws ResourceNotFoundException, ArangoDaoException {
         HashMap<String, Object> bindVars = new HashMap<>();
         bindVars.put("name", resource.getName());
         bindVars.put("className", resource.getClassName());
@@ -535,10 +565,11 @@ public class ArangoDao {
 //        if (cursor.getCount() > 0) {
         ArrayList<CircuitResource> circuits = new ArrayList<>();
 
-        cursor.forEachRemaining(location -> {
-            circuits.add(location);
-        });
-        cursor.close();
+        circuits.addAll(getListFromCursorType(cursor));
+//        cursor.forEachRemaining(location -> {
+//            circuits.add(location);
+//        });
+//        cursor.close();
         if (!circuits.isEmpty()) {
             return circuits.get(0);
         }
@@ -547,7 +578,14 @@ public class ArangoDao {
         throw new ResourceNotFoundException("Resource With Name:[" + resource.getName() + "] and Class: [" + resource.getClassName() + "] Not Found in Domain:" + resource.getDomainName());
     }
 
-    public ArrayList<ResourceConnection> findCircuitPath(CircuitResource circuit) throws IOException {
+    /**
+     * Find Circuit Path
+     *
+     * @param circuit
+     * @return
+     * @throws ArangoDaoException
+     */
+    public ArrayList<ResourceConnection> findCircuitPath(CircuitResource circuit) throws ArangoDaoException {
         ArrayList<ResourceConnection> resultList = new ArrayList<>();
         String aql = "FOR doc IN " + circuit.getDomain().getConnections() + " \n"
                 + "   filter @circuitId in doc.circuits[*] \n"
@@ -555,20 +593,28 @@ public class ArangoDao {
         HashMap<String, Object> bindVars = new HashMap<>();
         bindVars.put("circuitId", circuit.getId());
         ArangoCursor<ResourceConnection> cursor = this.database.query(aql, bindVars, ResourceConnection.class);
-        cursor.forEachRemaining(connection -> {
-            resultList.add(connection);
-        });
-        cursor.close();
+        resultList.addAll(getListFromCursorType(cursor));
+//        cursor.forEachRemaining(connection -> {
+//            resultList.add(connection);
+//        });
+//        cursor.close();
         return resultList;
     }
 
-    public ArangoCursor<ResourceConnection> filterConnectionByAQL(String aql, HashMap<String, Object> bindings) {
-        ArangoCursor<ResourceConnection> cursor = this.database.query(aql, bindings, ResourceConnection.class);
-
-        return cursor;
-    }
-
-    public ArrayList<BasicResource> getNodesByFilter(FilterDTO filter, DomainDTO domain) throws ResourceNotFoundException, IOException {
+//    public ArangoCursor<ResourceConnection> filterConnectionByAQL(String aql, HashMap<String, Object> bindings) {
+//        ArangoCursor<ResourceConnection> cursor = this.database.query(aql, bindings, ResourceConnection.class);
+//        return cursor;
+//    }
+    /**
+     * Get Nodes By Filter
+     *
+     * @param filter
+     * @param domain
+     * @return
+     * @throws ResourceNotFoundException
+     * @throws ArangoDaoException
+     */
+    public ArrayList<BasicResource> getNodesByFilter(FilterDTO filter, DomainDTO domain) throws ResourceNotFoundException, ArangoDaoException {
         ArrayList<BasicResource> resultList = new ArrayList<>();
         String aql = "FOR doc IN " + domain.getNodes() + " \n"
                 + "   filter   doc.className  in @classes \n";
@@ -587,10 +633,8 @@ public class ArangoDao {
         bindVars.put("classes", filter.getClasses());
         ArangoCursor<BasicResource> cursor = this.database.query(aql, bindVars, BasicResource.class);
 
-        cursor.forEachRemaining(connection -> {
-            resultList.add(connection);
-        });
-        cursor.close();
+        resultList.addAll(getListFromCursorType(cursor));
+
         if (resultList.isEmpty()) {
             throw new ResourceNotFoundException("No Resource Found for Filter: [" + aql + "]");
         }
@@ -598,7 +642,16 @@ public class ArangoDao {
         return resultList;
     }
 
-    public ArrayList<ResourceConnection> getConnectionsByFilter(FilterDTO filter, DomainDTO domain) throws ResourceNotFoundException, IOException {
+    /**
+     * Get Connections By Filter
+     *
+     * @param filter
+     * @param domain
+     * @return
+     * @throws ResourceNotFoundException
+     * @throws ArangoDaoException
+     */
+    public ArrayList<ResourceConnection> getConnectionsByFilter(FilterDTO filter, DomainDTO domain) throws ResourceNotFoundException, ArangoDaoException {
         ArrayList<ResourceConnection> resultList = new ArrayList<>();
         String aql = "FOR doc IN " + domain.getConnections() + " \n"
                 + "   filter   doc.className  in @classes \n";
@@ -618,10 +671,8 @@ public class ArangoDao {
         ArangoCursor<ResourceConnection> cursor = this.database.query(aql, bindVars, ResourceConnection.class);
 
         Long start = System.currentTimeMillis();
-        cursor.forEachRemaining(connection -> {
-            resultList.add(connection);
-        });
-        cursor.close();
+        resultList.addAll(getListFromCursorType(cursor));
+
         Long end = System.currentTimeMillis();
         Long took = end - start;
         logger.debug("Query Took: " + took + " ms Total Result Found was:" + resultList.size());

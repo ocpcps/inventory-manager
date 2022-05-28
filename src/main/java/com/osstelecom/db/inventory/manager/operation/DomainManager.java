@@ -29,6 +29,7 @@ import com.osstelecom.db.inventory.manager.events.CircuitResourceUpdatedEvent;
 import com.osstelecom.db.inventory.manager.events.ManagedResourceConnectionCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.ManagedResourceCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.ResourceLocationCreatedEvent;
+import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.DomainAlreadyExistsException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
@@ -330,7 +331,7 @@ public class DomainManager {
         }
     }
 
-    public ResourceLocation findResourceLocation(String name, String nodeAdrress, String className, String domainName) throws ResourceNotFoundException, DomainNotFoundException, IOException {
+    public ResourceLocation findResourceLocation(String name, String nodeAdrress, String className, String domainName) throws ResourceNotFoundException, DomainNotFoundException, ArangoDaoException {
         String timerId = startTimer("findResourceLocation");
         try {
             lockManager.lock();
@@ -345,11 +346,11 @@ public class DomainManager {
         }
     }
 
-    public ManagedResource findManagedResource(BasicResource resource) throws ResourceNotFoundException, DomainNotFoundException, IOException {
+    public ManagedResource findManagedResource(BasicResource resource) throws ResourceNotFoundException, DomainNotFoundException, ArangoDaoException {
         return this.findManagedResource(resource.getName(), resource.getNodeAddress(), resource.getClassName(), resource.getDomain().getDomainName());
     }
 
-    public ManagedResource findManagedResource(String name, String nodeAdrress, String className, String domainName) throws ResourceNotFoundException, DomainNotFoundException, IOException {
+    public ManagedResource findManagedResource(String name, String nodeAdrress, String className, String domainName) throws ResourceNotFoundException, DomainNotFoundException, ArangoDaoException {
         String timerId = startTimer("findResourceLocation");
         try {
             lockManager.lock();
@@ -377,7 +378,7 @@ public class DomainManager {
      * Inicia os dominios conhecidoss
      */
     @EventListener(ApplicationReadyEvent.class)
-    private void onStartUp() throws IOException {
+    private void onStartUp() throws ArangoDaoException {
         this.arangoDao.getDomains().forEach(d -> {
             this.domains.put(d.getDomainName(), d);
         });
@@ -461,7 +462,7 @@ public class DomainManager {
         }
     }
 
-    public CircuitResource findCircuitResource(CircuitResource circuit) throws ResourceNotFoundException, IOException {
+    public CircuitResource findCircuitResource(CircuitResource circuit) throws ResourceNotFoundException, ArangoDaoException {
         String timerId = startTimer("findCircuitResource");
         try {
             lockManager.lock();
@@ -475,7 +476,7 @@ public class DomainManager {
     }
 
     
-    public ResourceConnection findResourceConnection(ResourceConnection connection) throws ResourceNotFoundException, IOException {
+    public ResourceConnection findResourceConnection(ResourceConnection connection) throws ResourceNotFoundException, ArangoDaoException {
         String timerId = startTimer("findResourceConnection");
         try {
             lockManager.lock();
@@ -535,7 +536,7 @@ public class DomainManager {
         }
     }
 
-    public ArrayList<ResourceConnection> findCircuitPath(CircuitResource circuit) throws IOException {
+    public ArrayList<ResourceConnection> findCircuitPath(CircuitResource circuit) throws ArangoDaoException {
         return arangoDao.findCircuitPath(circuit);
     }
 
@@ -589,128 +590,128 @@ public class DomainManager {
         }
     }
 
-    public void test(String filter, Integer threads) {
-        String aql = "for doc in inventory_connections "
-                + " filter doc.from.name like @filter"
-                + "    or  doc.to.name like @filter return doc";
-        HashMap<String, Object> bindings = new HashMap<>();
-        bindings.put("filter", filter);
-        ArangoCursor<ResourceConnection> connections = arangoDao.filterConnectionByAQL(aql, bindings);
-        DefaultTopology topology = new DefaultTopology();
-        AtomicLong id = new AtomicLong(0L);
-//        INetworkNode saida = createNode("OUTPUT", id.incrementAndGet(), topology);
-//        saida.setEndPoint(true);
-
-        connections.forEachRemaining(connection -> {
-            if (connection.getFrom().getName().contains("m-br") && connection.getTo().getName().contains("m-br")) {
-                INetworkNode from = topology.getNodeByName(connection.getFrom().getName());
-                INetworkNode to = topology.getNodeByName(connection.getTo().getName());
-
-                if (from == null) {
-                    from = createNode(connection.getFrom().getName(), id.incrementAndGet(), topology);
-                }
-
-                if (to == null) {
-                    to = createNode(connection.getTo().getName(), id.incrementAndGet(), topology);
-                }
-
-                if (from.getName().contains("gwc")) {
-//                topology.addConnection(from, saida);
-                    from.setEndPoint(true);
-                } else {
-                    from.setEndPoint(false);
-                    from.addAttribute("erbCount", 0);
-                }
-
-                if (to.getName().contains("gwc")) {
-                    to.setEndPoint(true);
-//                topology.addConnection(to, saida);
-                } else {
-                    to.setEndPoint(false);
-                    to.addAttribute("erbCount", 0);
-                }
-
-                if (from.getConnectionRelated(to).isEmpty()) {
-                    INetworkConnection topologyConnection = topology.addConnection(from, to);
-                }
-            } else if (connection.getFrom().getName().contains("m-br")
-                    || connection.getTo().getName().contains("m-br")) {
-                logger.debug("Connection From: [" + connection.getFrom().getName() + "] TO:[" + connection.getTo().getName() + "]");
-                BasicResource resource = null;
-                Boolean goAhead = true;
-                if (connection.getFrom().getName().contains("m-br")) {
-                    resource = connection.getFrom();
-//                    if (!connection.getTo().getName().contains("erb")) {
-//                        goAhead = false;
+//    public void test(String filter, Integer threads) {
+//        String aql = "for doc in inventory_connections "
+//                + " filter doc.from.name like @filter"
+//                + "    or  doc.to.name like @filter return doc";
+//        HashMap<String, Object> bindings = new HashMap<>();
+//        bindings.put("filter", filter);
+//        ArangoCursor<ResourceConnection> connections = arangoDao.filterConnectionByAQL(aql, bindings);
+//        DefaultTopology topology = new DefaultTopology();
+//        AtomicLong id = new AtomicLong(0L);
+////        INetworkNode saida = createNode("OUTPUT", id.incrementAndGet(), topology);
+////        saida.setEndPoint(true);
+//
+//        connections.forEachRemaining(connection -> {
+//            if (connection.getFrom().getName().contains("m-br") && connection.getTo().getName().contains("m-br")) {
+//                INetworkNode from = topology.getNodeByName(connection.getFrom().getName());
+//                INetworkNode to = topology.getNodeByName(connection.getTo().getName());
+//
+//                if (from == null) {
+//                    from = createNode(connection.getFrom().getName(), id.incrementAndGet(), topology);
+//                }
+//
+//                if (to == null) {
+//                    to = createNode(connection.getTo().getName(), id.incrementAndGet(), topology);
+//                }
+//
+//                if (from.getName().contains("gwc")) {
+////                topology.addConnection(from, saida);
+//                    from.setEndPoint(true);
+//                } else {
+//                    from.setEndPoint(false);
+//                    from.addAttribute("erbCount", 0);
+//                }
+//
+//                if (to.getName().contains("gwc")) {
+//                    to.setEndPoint(true);
+////                topology.addConnection(to, saida);
+//                } else {
+//                    to.setEndPoint(false);
+//                    to.addAttribute("erbCount", 0);
+//                }
+//
+//                if (from.getConnectionRelated(to).isEmpty()) {
+//                    INetworkConnection topologyConnection = topology.addConnection(from, to);
+//                }
+//            } else if (connection.getFrom().getName().contains("m-br")
+//                    || connection.getTo().getName().contains("m-br")) {
+//                logger.debug("Connection From: [" + connection.getFrom().getName() + "] TO:[" + connection.getTo().getName() + "]");
+//                BasicResource resource = null;
+//                Boolean goAhead = true;
+//                if (connection.getFrom().getName().contains("m-br")) {
+//                    resource = connection.getFrom();
+////                    if (!connection.getTo().getName().contains("erb")) {
+////                        goAhead = false;
+////                    }
+//                } else {
+//                    resource = connection.getTo();
+////                    if (!connection.getFrom().getName().contains("erb")) {
+////                        goAhead = false;
+////                    }
+//                }
+//
+//                if (goAhead) {
+//                    INetworkNode node = topology.getNodeByName(resource.getName());
+//                    if (node == null) {
+//                        node = createNode(resource.getName(), id.incrementAndGet(), topology);
+//                        node.addAttribute("erbCount", 0);
 //                    }
-                } else {
-                    resource = connection.getTo();
-//                    if (!connection.getFrom().getName().contains("erb")) {
-//                        goAhead = false;
+//                    if (node.getAttribute("erbCount") == null) {
+//                        node.addAttribute("erbCount", 0);
 //                    }
-                }
-
-                if (goAhead) {
-                    INetworkNode node = topology.getNodeByName(resource.getName());
-                    if (node == null) {
-                        node = createNode(resource.getName(), id.incrementAndGet(), topology);
-                        node.addAttribute("erbCount", 0);
-                    }
-                    if (node.getAttribute("erbCount") == null) {
-                        node.addAttribute("erbCount", 0);
-                    }
-                    Integer count = (Integer) node.getAttribute("erbCount");
-                    count++;
-                    node.addAttribute("erbCount", count);
-                }
-
-            }
-        });
-        logger.debug("-------------------------------------------------------------");
-        logger.debug("Topology Loaded! ");
-        logger.debug("Topology Size:");
-        logger.debug("   Nodes:" + topology.getNodes().size());
-        logger.debug("   Connections:" + topology.getConnections().size());
-        logger.debug("   EndPoints:" + topology.getEndPoints().size());
-        for (INetworkNode node : topology.getEndPoints()) {
-            logger.debug("       " + node.getName());
-        }
-
-        Long start = System.currentTimeMillis();
-        logger.debug("-------------------------------------------------------------");
-        logger.debug("Weak Nodes With 1 Connection or LESS:");
-        logger.debug("-------------------------------------------------------------");
-        List<INetworkNode> weak = null;
-        if (threads > 1) {
-            weak = topology.getImpactManager().getWeakNodes(1, false, threads, false);
-        } else {
-            weak = topology.getImpactManager().getWeakNodes(1, false, threads, false);
-        }
-
-        logger.debug("Found " + weak.size() + " Weak Nodes");
-        for (INetworkNode n : weak) {
-            logger.debug("  ::Weak " + n.getName() + " Connections size:" + n.getEndpointConnectionsCount() + " Impact Count:" + n.getImpactedNodes().size() + " ERBS:" + n.getAttribute("erbCount"));
-            if (!n.getImpactedNodes().isEmpty()) {
-                n.getImpactedNodes().forEach((k, v) -> {
-                    logger.debug("      ::Node " + n.getName() + " Impacts:" + v.getName() + " ERBS: " + v.getAttribute("erbCount"));
-                });
-
-            }
-        }
-
-        Long end = System.currentTimeMillis();
-        Long took = end - start;
-        logger.debug("Process took: " + took + " ms With:" + threads + " Threads");
-        try {
-            connections.close();
-        } catch (IOException ex) {
-            System.out.println("OOOOOOO Deu RUIm!");
-        }
-        //
-        // Uma vez usados todos os recursos, destroy tudo...
-        //
-        topology.destroyTopology();
-    }
+//                    Integer count = (Integer) node.getAttribute("erbCount");
+//                    count++;
+//                    node.addAttribute("erbCount", count);
+//                }
+//
+//            }
+//        });
+//        logger.debug("-------------------------------------------------------------");
+//        logger.debug("Topology Loaded! ");
+//        logger.debug("Topology Size:");
+//        logger.debug("   Nodes:" + topology.getNodes().size());
+//        logger.debug("   Connections:" + topology.getConnections().size());
+//        logger.debug("   EndPoints:" + topology.getEndPoints().size());
+//        for (INetworkNode node : topology.getEndPoints()) {
+//            logger.debug("       " + node.getName());
+//        }
+//
+//        Long start = System.currentTimeMillis();
+//        logger.debug("-------------------------------------------------------------");
+//        logger.debug("Weak Nodes With 1 Connection or LESS:");
+//        logger.debug("-------------------------------------------------------------");
+//        List<INetworkNode> weak = null;
+//        if (threads > 1) {
+//            weak = topology.getImpactManager().getWeakNodes(1, false, threads, false);
+//        } else {
+//            weak = topology.getImpactManager().getWeakNodes(1, false, threads, false);
+//        }
+//
+//        logger.debug("Found " + weak.size() + " Weak Nodes");
+//        for (INetworkNode n : weak) {
+//            logger.debug("  ::Weak " + n.getName() + " Connections size:" + n.getEndpointConnectionsCount() + " Impact Count:" + n.getImpactedNodes().size() + " ERBS:" + n.getAttribute("erbCount"));
+//            if (!n.getImpactedNodes().isEmpty()) {
+//                n.getImpactedNodes().forEach((k, v) -> {
+//                    logger.debug("      ::Node " + n.getName() + " Impacts:" + v.getName() + " ERBS: " + v.getAttribute("erbCount"));
+//                });
+//
+//            }
+//        }
+//
+//        Long end = System.currentTimeMillis();
+//        Long took = end - start;
+//        logger.debug("Process took: " + took + " ms With:" + threads + " Threads");
+//        try {
+//            connections.close();
+//        } catch (IOException ex) {
+//            System.out.println("OOOOOOO Deu RUIm!");
+//        }
+//        //
+//        // Uma vez usados todos os recursos, destroy tudo...
+//        //
+//        topology.destroyTopology();
+//    }
 
     private INetworkNode createNode(String name, Long id, ITopology topology) {
 //        logger.debug("Created Node:" + name);
@@ -718,7 +719,7 @@ public class DomainManager {
         return node;
     }
 
-    public ArrayList<BasicResource> getNodesByFilter(FilterDTO filter, String domainName) throws DomainNotFoundException, ResourceNotFoundException, IOException {
+    public ArrayList<BasicResource> getNodesByFilter(FilterDTO filter, String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
         DomainDTO domain = getDomain(domainName);
         if (filter.getObjects().contains("nodes")) {
             return arangoDao.getNodesByFilter(filter, domain);
@@ -726,7 +727,7 @@ public class DomainManager {
         return null;
     }
 
-    public ArrayList<ResourceConnection> getConnectionsByFilter(FilterDTO filter, String domainName) throws DomainNotFoundException, ResourceNotFoundException, IOException {
+    public ArrayList<ResourceConnection> getConnectionsByFilter(FilterDTO filter, String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
         DomainDTO domain = getDomain(domainName);
         if (filter.getObjects().contains("connections")) {
             return arangoDao.getConnectionsByFilter(filter, domain);

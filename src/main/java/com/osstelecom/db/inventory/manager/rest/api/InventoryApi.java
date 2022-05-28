@@ -20,6 +20,7 @@ package com.osstelecom.db.inventory.manager.rest.api;
 import com.arangodb.ArangoDBException;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.DomainAlreadyExistsException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
@@ -215,7 +216,7 @@ public class InventoryApi {
      * @throws GenericException
      */
     @PutMapping(path = "/{domain}/resource/connection", produces = "application/json", consumes = "application/json")
-    public CreateResourceConnectionResponse createResourceConnection(@RequestBody CreateConnectionRequest request, @PathVariable("domain") String domain) throws GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, InvalidRequestException, ResourceNotFoundException, ConnectionAlreadyExistsException, MetricConstraintException, NoResourcesAvailableException, DomainNotFoundException {
+    public CreateResourceConnectionResponse createResourceConnection(@RequestBody CreateConnectionRequest request, @PathVariable("domain") String domain) throws GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, InvalidRequestException, ResourceNotFoundException, ConnectionAlreadyExistsException, MetricConstraintException, NoResourcesAvailableException, DomainNotFoundException,ArangoDaoException {
         try {
             request.setRequestDomain(domain);
             return resourceSession.createResourceConnection(request);
@@ -236,7 +237,7 @@ public class InventoryApi {
      * @throws GenericException
      */
     @PutMapping(path = "/{domain}/location/connection", produces = "application/json", consumes = "application/json")
-    public CreateResourceConnectionResponse createResourceLocationConnection(@RequestBody CreateConnectionRequest request, @PathVariable("domain") String domain) throws GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, InvalidRequestException, ResourceNotFoundException, ConnectionAlreadyExistsException, MetricConstraintException, NoResourcesAvailableException, DomainNotFoundException {
+    public CreateResourceConnectionResponse createResourceLocationConnection(@RequestBody CreateConnectionRequest request, @PathVariable("domain") String domain) throws ArangoDaoException,GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, InvalidRequestException, ResourceNotFoundException, ConnectionAlreadyExistsException, MetricConstraintException, NoResourcesAvailableException, DomainNotFoundException {
         try {
             request.setRequestDomain(domain);
             return resourceSession.createResourceLocationConnection(request);
@@ -263,7 +264,7 @@ public class InventoryApi {
      * @throws AttributeConstraintViolationException
      */
     @PutMapping(path = "/{domain}/circuit", produces = "application/json", consumes = "application/json")
-    public CreateCircuitResponse createCircuit(@RequestBody CreateCircuitRequest request, @PathVariable("domain") String domain) throws ResourceNotFoundException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, AttributeConstraintViolationException, DomainNotFoundException {
+    public CreateCircuitResponse createCircuit(@RequestBody CreateCircuitRequest request, @PathVariable("domain") String domain) throws ArangoDaoException,ResourceNotFoundException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, AttributeConstraintViolationException, DomainNotFoundException {
         request.setRequestDomain(domain);
         return resourceSession.createCircuit(request);
     }
@@ -282,7 +283,7 @@ public class InventoryApi {
      * @throws AttributeConstraintViolationException
      */
     @PutMapping(path = "/{domain}/circuit/path", produces = "application/json", consumes = "application/json")
-    public CreateCircuitPathResponse createCircuitPath(@RequestBody String strReq, @PathVariable("domain") String domain) throws ResourceNotFoundException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, AttributeConstraintViolationException, DomainNotFoundException {
+    public CreateCircuitPathResponse createCircuitPath(@RequestBody String strReq, @PathVariable("domain") String domain) throws ArangoDaoException,ResourceNotFoundException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, AttributeConstraintViolationException, DomainNotFoundException {
         CreateCircuitPathRequest request = gson.fromJson(strReq, CreateCircuitPathRequest.class);
         request.setRequestDomain(domain);
         return resourceSession.createCircuitPath(request);
@@ -303,7 +304,7 @@ public class InventoryApi {
      * @throws DomainNotFoundException
      */
     @PostMapping(path = "/{domain}/circuit/path", produces = "application/json", consumes = "application/json")
-    public CreateCircuitPathResponse getCircuitPath(@RequestBody String strReq, @PathVariable("domain") String domain) throws ResourceNotFoundException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, AttributeConstraintViolationException, DomainNotFoundException {
+    public CreateCircuitPathResponse getCircuitPath(@RequestBody String strReq, @PathVariable("domain") String domain) throws ArangoDaoException, ResourceNotFoundException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, AttributeConstraintViolationException, DomainNotFoundException {
         GetCircuitPathRequest request = gson.fromJson(strReq, GetCircuitPathRequest.class);
         request.setRequestDomain(domain);
         return resourceSession.getCircuitPath(request);
@@ -324,24 +325,24 @@ public class InventoryApi {
      * @throws DomainNotFoundException
      */
     @PostMapping(path = "/{domain}/filter", produces = "application/json", consumes = "application/json")
-    public FilterResponse getElementsByFilter(@RequestBody FilterRequest filter, @PathVariable("domain") String domain) throws ResourceNotFoundException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, AttributeConstraintViolationException, DomainNotFoundException {
+    public FilterResponse getElementsByFilter(@RequestBody FilterRequest filter, @PathVariable("domain") String domain) throws ArangoDaoException,ResourceNotFoundException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, AttributeConstraintViolationException, DomainNotFoundException {
         System.out.println(":::::::::" + gson.toJson(filter));
         filter.setRequestDomain(domain);
 
         return resourceSession.getElementsByFilter(filter);
     }
 
-    /**
-     * @todo: to be removed, método de teste
-     * @param strReq
-     * @param threads
-     * @return
-     */
-    @PostMapping(path = "test/{threads}", produces = "application/json", consumes = "application/json")
-    public GetCircuitPathResponse test(@RequestBody String strReq, @PathVariable("threads") Integer threads) {
-        GetCircuitPathRequest request = gson.fromJson(strReq, GetCircuitPathRequest.class);
-        GetCircuitPathResponse resp = new GetCircuitPathResponse(request.getPayLoad());
-        resourceSession.test(request.getPayLoad().getCircuit().getNodeAddress(), threads);
-        return resp;
-    }
+//    /**
+//     * @todo: to be removed, método de teste
+//     * @param strReq
+//     * @param threads
+//     * @return
+//     */
+//    @PostMapping(path = "test/{threads}", produces = "application/json", consumes = "application/json")
+//    public GetCircuitPathResponse test(@RequestBody String strReq, @PathVariable("threads") Integer threads) {
+//        GetCircuitPathRequest request = gson.fromJson(strReq, GetCircuitPathRequest.class);
+//        GetCircuitPathResponse resp = new GetCircuitPathResponse(request.getPayLoad());
+//        resourceSession.test(request.getPayLoad().getCircuit().getNodeAddress(), threads);
+//        return resp;
+//    }
 }
