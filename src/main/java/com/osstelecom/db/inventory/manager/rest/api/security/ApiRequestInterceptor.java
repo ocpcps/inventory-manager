@@ -32,14 +32,16 @@ public class ApiRequestInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-
+        response.setHeader("x-authenticated", "false");
         HandlerMethod method = (HandlerMethod) handler;
         AuthenticatedCall callScope = method.getMethod().getAnnotation(AuthenticatedCall.class);
         if (callScope != null) {
             if (callScope.requiresAuth()) {
                 if (request.getHeader("x-auth-token") == null) {
-                    return false;
+
+                    return true;
                 } else {
+                    response.setHeader("x-authenticated", "true");
                     return true;
                 }
             } else {

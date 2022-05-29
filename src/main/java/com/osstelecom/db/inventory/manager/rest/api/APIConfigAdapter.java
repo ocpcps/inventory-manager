@@ -15,17 +15,28 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package com.osstelecom.db.inventory.manager.security.model;
+package com.osstelecom.db.inventory.manager.rest.api;
 
-import java.util.List;
+import com.osstelecom.db.inventory.manager.rest.api.security.ApiRequestInterceptor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @created 28.05.2022
  */
-public @interface AuthenticatedCall {
+@Configuration
+public class APIConfigAdapter implements WebMvcConfigurer {
 
-    boolean requiresAuth() default true;
+    @Autowired
+    private ApiRequestInterceptor apiRequestInterceptor;
 
-    String[] role() default {"default"};
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(apiRequestInterceptor);
+    }
+
 }
