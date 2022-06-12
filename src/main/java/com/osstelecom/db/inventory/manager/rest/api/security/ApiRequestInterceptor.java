@@ -20,6 +20,7 @@ package com.osstelecom.db.inventory.manager.rest.api.security;
 import com.google.common.collect.ImmutableMap;
 import com.osstelecom.db.inventory.manager.exception.ApiSecurityException;
 import com.osstelecom.db.inventory.manager.security.model.AuthenticatedCall;
+import com.osstelecom.db.inventory.manager.session.ApiSecuritySession;
 import com.osstelecom.db.inventory.manager.session.UtilSession;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -39,29 +40,24 @@ public class ApiRequestInterceptor implements HandlerInterceptor {
     @Autowired
     private UtilSession utilsSession;
 
+    @Autowired
+    private ApiSecuritySession securitySession;
+
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         HandlerMethod method = (HandlerMethod) handler;
         AuthenticatedCall authenticatedCall = method.getMethod().getAnnotation(AuthenticatedCall.class);
-        response.setHeader("x-responseid", utilsSession.getResponseId());
+        response.setHeader("x-response-id", utilsSession.getResponseId());
         if (authenticatedCall != null) {
             if (authenticatedCall.requiresAuth()) {
+                securitySession.checkApiToken(request);
                 response.setHeader("x-authenticated", "true");
-                if (request.getHeader("x-auth-token") == null) {
-                    //
-                    // So we need an api token to continue... but its null...
-                    //
-                    ApiSecurityException ex = new ApiSecurityException("API Token Not Found!");
-                    ex.setDetails(ImmutableMap.of("path", request.getRequestURI(), "method", request.getMethod(), "remoteAddress", request.getRemoteAddr()));
-                    throw ex;
-                } else {
-                    return true;
-                }
+                return true;
             } else {
+                response.setHeader("x-authenticated", "true");
                 return true;
             }
         } else {
-//            System.out.println("NULLLLL");
             response.setHeader("x-authenticated", "false");
         }
 
