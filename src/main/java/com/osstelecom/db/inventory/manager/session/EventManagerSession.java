@@ -21,7 +21,11 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
 import com.google.common.eventbus.SubscriberExceptionContext;
 import com.google.common.eventbus.SubscriberExceptionHandler;
+import com.osstelecom.db.inventory.manager.events.CircuitResourceCreatedEvent;
+import com.osstelecom.db.inventory.manager.events.ConsumableMetricCreatedEvent;
+import com.osstelecom.db.inventory.manager.events.DomainCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.ManagedResourceCreatedEvent;
+import com.osstelecom.db.inventory.manager.events.ResourceLocationCreatedEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -65,8 +69,45 @@ public class EventManagerSession implements SubscriberExceptionHandler {
         logger.error("Subscription Error in EventBUS:", thrwbl);
     }
 
+    /**
+     * Called when a Managed Resource is created
+     *
+     * @param resource
+     */
     @Subscribe
     public void onManagedResourceCreatedEvent(ManagedResourceCreatedEvent resource) {
 
+    }
+
+    /**
+     * Called When a New Domain is Created
+     *
+     * @param domain
+     */
+    @Subscribe
+    public void onDomainCreatedEvent(DomainCreatedEvent domain) {
+    }
+
+    /**
+     * Called when a Resource Location is created
+     *
+     * @param resourceLocation
+     */
+    @Subscribe
+    public void onResourceLocationCreatedEvent(ResourceLocationCreatedEvent resourceLocation) {
+    }
+
+    /**
+     * Called when a circuit resource is created 22 as 24
+     *
+     * @param circuit
+     */
+    @Subscribe
+    public void onCircuitResourceCreatedEvent(CircuitResourceCreatedEvent circuit) {
+
+    }
+
+    @Subscribe
+    public void onConsumableMetricCreatedEvent(ConsumableMetricCreatedEvent metric) {
     }
 }

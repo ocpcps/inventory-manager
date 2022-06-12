@@ -15,22 +15,38 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package com.osstelecom.db.inventory.manager.security.model;
+package com.osstelecom.db.inventory.manager.events;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import com.osstelecom.db.inventory.manager.resources.ConsumableMetric;
+import java.util.Date;
 
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @created 05.06.2022
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-public @interface AuthenticatedCall {
+public class ConsumableMetricCreatedEvent extends BasicEvent {
 
-    boolean requiresAuth() default true;
+    private ConsumableMetric createdMetric;
 
-    String[] role() default {"default"};
+    public ConsumableMetric getCreatedMetric() {
+        return createdMetric;
+    }
+
+    public void setCreatedMetric(ConsumableMetric createdMetric) {
+        this.createdMetric = createdMetric;
+    }
+
+    public Date getEventDate() {
+        return eventDate;
+    }
+
+    public void setEventDate(Date eventDate) {
+        this.eventDate = eventDate;
+    }
+
+    public ConsumableMetricCreatedEvent(ConsumableMetric createdMetric) {
+        this.createdMetric = createdMetric;
+    }
+
 }

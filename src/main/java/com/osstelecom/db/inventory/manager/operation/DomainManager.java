@@ -16,7 +16,6 @@
  */
 package com.osstelecom.db.inventory.manager.operation;
 
-import com.arangodb.ArangoCursor;
 import com.arangodb.entity.DocumentCreateEntity;
 import com.arangodb.entity.DocumentUpdateEntity;
 import com.osstelecom.db.inventory.manager.configuration.ConfigurationManager;
@@ -26,7 +25,9 @@ import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import com.osstelecom.db.inventory.manager.dto.TimerDto;
 import com.osstelecom.db.inventory.manager.events.CircuitResourceCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.CircuitResourceUpdatedEvent;
-import com.osstelecom.db.inventory.manager.events.ManagedResourceConnectionCreatedEvent;
+import com.osstelecom.db.inventory.manager.events.ConsumableMetricCreatedEvent;
+import com.osstelecom.db.inventory.manager.events.DomainCreatedEvent;
+import com.osstelecom.db.inventory.manager.events.ResourceConnectionCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.ManagedResourceCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.ResourceLocationCreatedEvent;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
@@ -52,17 +53,12 @@ import com.osstelecom.db.inventory.manager.session.EventManagerSession;
 import com.osstelecom.db.inventory.manager.session.SchemaSession;
 import com.osstelecom.db.inventory.topology.DefaultTopology;
 import com.osstelecom.db.inventory.topology.ITopology;
-import com.osstelecom.db.inventory.topology.connection.INetworkConnection;
 import com.osstelecom.db.inventory.topology.node.DefaultNode;
 import com.osstelecom.db.inventory.topology.node.INetworkNode;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -104,6 +100,13 @@ public class DomainManager {
 
     private Logger logger = LoggerFactory.getLogger(DomainManager.class);
 
+    /**
+     * Creates a Domain
+     *
+     * @param domainDto
+     * @return
+     * @throws DomainAlreadyExistsException
+     */
     public DomainDTO createDomain(DomainDTO domainDto) throws DomainAlreadyExistsException {
         String timerId = startTimer("createDomain");
         try {
@@ -120,6 +123,8 @@ public class DomainManager {
             }
             endTimer(timerId);
         }
+        DomainCreatedEvent domainCreatedEvent = new DomainCreatedEvent(domainDto);
+        eventManager.notifyEvent(domainCreatedEvent);
         return domainDto;
     }
 
@@ -170,6 +175,16 @@ public class DomainManager {
 
     }
 
+    /**
+     * Created a Resource Location
+     *
+     * @param resource
+     * @return
+     * @throws GenericException
+     * @throws SchemaNotFoundException
+     * @throws AttributeConstraintViolationException
+     * @throws ScriptRuleException
+     */
     public ResourceLocation createResourceLocation(ResourceLocation resource) throws GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException {
         String timerId = startTimer("createResourceLocation");
         try {
@@ -199,6 +214,16 @@ public class DomainManager {
         }
     }
 
+    /**
+     * Creates a Circuit Resource
+     *
+     * @param circuit
+     * @return
+     * @throws GenericException
+     * @throws SchemaNotFoundException
+     * @throws AttributeConstraintViolationException
+     * @throws ScriptRuleException
+     */
     public CircuitResource createCircuitResource(CircuitResource circuit) throws GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException {
         String timerId = startTimer("createCircuitResource");
         try {
@@ -228,6 +253,12 @@ public class DomainManager {
         }
     }
 
+    /**
+     * Creates a consumable metric
+     *
+     * @param name
+     * @return
+     */
     public ConsumableMetric createConsumableMetric(String name) {
         String timerId = startTimer("createConsumableMetric");
         try {
@@ -235,6 +266,11 @@ public class DomainManager {
             ConsumableMetric metric = new ConsumableMetric(this);
             metric.setMetricName(name);
             endTimer(timerId);
+            //
+            // Notifica o event Manager da Metrica criada
+            //
+            ConsumableMetricCreatedEvent event = new ConsumableMetricCreatedEvent(metric);
+            eventManager.notifyEvent(event);
             return metric;
         } finally {
             if (lockManager.isLocked()) {
@@ -258,7 +294,9 @@ public class DomainManager {
         try {
             lockManager.lock();
             DomainDTO domain = this.getDomain(domainName);
-            return this.createResourceConnection(from, to, domain);
+            ResourceConnection connection = this.createResourceConnection(from, to, domain); // <-- Event Handled Here
+
+            return connection;
         } finally {
             if (lockManager.isLocked()) {
                 lockManager.unlock();
@@ -283,6 +321,8 @@ public class DomainManager {
             DocumentCreateEntity<ResourceConnection> result = arangoDao.createConnection(connection);
             connection.setUid(result.getId());
             connection.setRevisionId(result.getRev());
+            ResourceConnectionCreatedEvent event = new ResourceConnectionCreatedEvent(connection.getFrom(), connection.getTo(), connection);
+            eventManager.notifyEvent(event);
             return connection;
         } finally {
             if (lockManager.isLocked()) {
@@ -320,7 +360,7 @@ public class DomainManager {
             connection.setUid(result.getId());
             connection.setRevisionId(result.getRev());
 
-            ManagedResourceConnectionCreatedEvent event = new ManagedResourceConnectionCreatedEvent(from, to, connection);
+            ResourceConnectionCreatedEvent event = new ResourceConnectionCreatedEvent(from, to, connection);
             this.eventManager.notifyEvent(event);
             return connection;
         } finally {
@@ -475,7 +515,6 @@ public class DomainManager {
         }
     }
 
-    
     public ResourceConnection findResourceConnection(ResourceConnection connection) throws ResourceNotFoundException, ArangoDaoException {
         String timerId = startTimer("findResourceConnection");
         try {
@@ -712,7 +751,6 @@ public class DomainManager {
 //        //
 //        topology.destroyTopology();
 //    }
-
     private INetworkNode createNode(String name, Long id, ITopology topology) {
 //        logger.debug("Created Node:" + name);
         INetworkNode node = new DefaultNode(name, id.intValue(), topology);

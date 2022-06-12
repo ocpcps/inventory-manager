@@ -18,7 +18,6 @@
 package com.osstelecom.db.inventory.manager.events;
 
 import com.osstelecom.db.inventory.manager.resources.BasicResource;
-import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 
 /**
@@ -26,13 +25,13 @@ import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 10.04.2022
  */
-public class ManagedResourceConnectionCreatedEvent extends BasicEvent {
+public class ResourceConnectionCreatedEvent extends BasicEvent {
 
     private BasicResource from;
     private BasicResource to;
     private ResourceConnection connection;
 
-    public ManagedResourceConnectionCreatedEvent(BasicResource from, BasicResource to, ResourceConnection connection) {
+    public ResourceConnectionCreatedEvent(BasicResource from, BasicResource to, ResourceConnection connection) {
         this.from = from;
         this.to = to;
         this.connection = connection;

@@ -17,9 +17,14 @@
  */
 package com.osstelecom.db.inventory.manager.rest.api.security;
 
+import com.google.common.collect.ImmutableMap;
+import com.osstelecom.db.inventory.manager.exception.ApiSecurityException;
 import com.osstelecom.db.inventory.manager.security.model.AuthenticatedCall;
+import com.osstelecom.db.inventory.manager.session.UtilSession;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 
@@ -28,25 +33,36 @@ import org.springframework.web.servlet.HandlerInterceptor;
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 24.05.2022
  */
+@Component
 public class ApiRequestInterceptor implements HandlerInterceptor {
+
+    @Autowired
+    private UtilSession utilsSession;
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        response.setHeader("x-authenticated", "false");
         HandlerMethod method = (HandlerMethod) handler;
-        AuthenticatedCall callScope = method.getMethod().getAnnotation(AuthenticatedCall.class);
-        if (callScope != null) {
-            if (callScope.requiresAuth()) {
+        AuthenticatedCall authenticatedCall = method.getMethod().getAnnotation(AuthenticatedCall.class);
+        response.setHeader("x-responseid", utilsSession.getResponseId());
+        if (authenticatedCall != null) {
+            if (authenticatedCall.requiresAuth()) {
+                response.setHeader("x-authenticated", "true");
                 if (request.getHeader("x-auth-token") == null) {
-
-                    return true;
+                    //
+                    // So we need an api token to continue... but its null...
+                    //
+                    ApiSecurityException ex = new ApiSecurityException("API Token Not Found!");
+                    ex.setDetails(ImmutableMap.of("path", request.getRequestURI(), "method", request.getMethod(), "remoteAddress", request.getRemoteAddr()));
+                    throw ex;
                 } else {
-                    response.setHeader("x-authenticated", "true");
                     return true;
                 }
             } else {
                 return true;
             }
+        } else {
+//            System.out.println("NULLLLL");
+            response.setHeader("x-authenticated", "false");
         }
 
         return true;

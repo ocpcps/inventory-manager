@@ -19,6 +19,7 @@ package com.osstelecom.db.inventory.manager.exception;
 
 import com.osstelecom.db.inventory.manager.request.IRequest;
 import java.io.Serializable;
+import java.util.ArrayList;
 
 /**
  *
@@ -99,6 +100,14 @@ public abstract class BasicException extends Exception implements Serializable {
      */
     public void setDetails(Object details) {
         this.details = details;
+    }
+
+    public void setDetails(Object... details) {
+        ArrayList<Object> d = new ArrayList<Object>();
+        for (Object o : details) {
+            d.add(o);
+        }
+        this.details = d;
     }
 
     /**

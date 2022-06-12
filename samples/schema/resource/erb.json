@@ -3,11 +3,11 @@
     "fromSchema": "default",
     "allowAll": true,
     "attributes": {
-        "eild": {
-            "name": "eild",
+        "erbName": {
+            "name": "erbName",
             "variableType": "String",
-            "description": "The eild of The Element",
-            "required": false,
+            "description": "The Name of The Element",
+            "required": true,
             "defaultValue": null,
             "validate": false
         }

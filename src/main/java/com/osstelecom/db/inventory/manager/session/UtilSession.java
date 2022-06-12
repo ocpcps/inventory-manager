@@ -23,6 +23,7 @@ import com.osstelecom.db.inventory.manager.configuration.InventoryConfiguration;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 /**
@@ -58,6 +59,14 @@ public class UtilSession {
 
     public Gson getGson() {
         return this.gson;
+    }
+
+    public synchronized String getRequestId() {
+        return UUID.randomUUID().toString();
+    }
+
+    public synchronized String getResponseId() {
+        return UUID.randomUUID().toString();
     }
 
 }
