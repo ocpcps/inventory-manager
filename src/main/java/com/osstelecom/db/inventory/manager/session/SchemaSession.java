@@ -54,14 +54,14 @@ import org.springframework.util.ClassUtils;
  */
 @Service
 public class SchemaSession implements RemovalListener<String, ResourceSchemaModel> {
-    
+
     private String schemaDir;
-    
+
     private Logger logger = LoggerFactory.getLogger(SchemaSession.class);
-    
+
     @Autowired
     private UtilSession utilSession;
-    
+
     @Autowired
     private ConfigurationManager configurationManager;
 
@@ -84,64 +84,103 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
      */
     public ResourceSchemaModel loadSchema(String schemaName) throws SchemaNotFoundException, GenericException {
         this.schemaDir = configurationManager.loadConfiguration().getSchemaDir();
-        return this.loadSchema(schemaName, null);
+        return this.loadSchema(schemaName, null, true);
     }
-    
-    private ResourceSchemaModel loadSchema(String schemaName, ResourceSchemaModel result) throws SchemaNotFoundException, GenericException {
-        ResourceSchemaModel cachedResult = this.schemaCache.getIfPresent(schemaName);
-        if (cachedResult != null) {
+
+    /**
+     * Smartly reads the schema definition from disk
+     * @param schemaName
+     * @param result
+     * @param loadInherited
+     * @return
+     * @throws SchemaNotFoundException
+     * @throws GenericException 
+     */
+    private ResourceSchemaModel loadSchema(String schemaName, ResourceSchemaModel result, Boolean loadInherited) throws SchemaNotFoundException, GenericException {
+        if (this.schemaDir == null) {
+            this.schemaDir = configurationManager.loadConfiguration().getSchemaDir();
+        }
+
+        if (!loadInherited) {
+            //
+            // We do not cache partitial or single file read.
+            //
+            this.schemaCache.invalidate(schemaName);
+        }
+
+        ResourceSchemaModel loadedModel = this.schemaCache.getIfPresent(schemaName);
+        if (loadedModel != null) {
             //
             // Retrieves from cache
             //
             logger.debug("Cache HIT on Schema: [" + schemaName + "]");
-            return cachedResult;
+            return loadedModel;
         }
-        schemaName = schemaName.replaceAll("\\.", "/");
-        File f = new File(this.schemaDir + "/" + schemaName + ".json");
-        logger.debug("Trying to load Schema from: [" + schemaName + "]");
-        if (f.exists()) {
-            try {
-                //
-                // Arquivo existe vamos ler os modelos
-                //
-                FileReader jsonReader = new FileReader(f);
-                ResourceSchemaModel resourceModel = utilSession.getGson().fromJson(jsonReader, ResourceSchemaModel.class);
-                if (result == null) {
-                    result = resourceModel;
-                }
-                logger.debug("Loaded  SchemaName: [" + resourceModel.getSchemaName() + "]");
-                this.schemaCache.put(resourceModel.getSchemaName(), resourceModel);
-                logger.debug("Schema :[" + schemaName + "] Saved to cache");
-                
-                jsonReader.close();
-                for (Map.Entry<String, ResourceAttributeModel> entry : resourceModel.getAttributes().entrySet()) {
-                    String key = entry.getKey();
-                    entry.getValue().setItemHash(utilSession.getMd5(resourceModel.getSchemaName() + "." + key));
-                    
-                    ResourceAttributeModel model = entry.getValue();
-                    if (model.getId() == null) {
-                        model.setId(resourceModel.getSchemaName() + "." + key);
+        if (loadedModel == null) {
+            schemaName = schemaName.replaceAll("\\.", "/");
+
+            //
+            // Não tenho no cache vou ler do disco
+            //
+            File f = new File(this.schemaDir + "/" + schemaName + ".json");
+            logger.debug("Trying to load Schema from: [" + schemaName + "] From File: " + f.toString());
+            if (f.exists()) {
+                try {
+                    //
+                    // Arquivo existe vamos ler os modelos
+                    //
+                    FileReader jsonReader = new FileReader(f);
+                    loadedModel = utilSession.getGson().fromJson(jsonReader, ResourceSchemaModel.class);
+                    jsonReader.close();
+                    if (result == null) {
+                        result = loadedModel;
                     }
-                    if (!result.getAttributes().containsKey(key)) {
-                        
-                        result.getAttributes().put(key, model);
-                    }
+//                    if (loadedModel != null) {
+//                       
+//                    }
+
+                } catch (FileNotFoundException ex) {
+                    throw new GenericException(ex.getMessage(), ex);
+                } catch (IOException ex) {
+                    throw new GenericException(ex.getMessage(), ex);
                 }
-                
-                if (!resourceModel.getFromSchema().equals(".")) {
-                    return this.loadSchema(resourceModel.getFromSchema(), result);
-                }
-                
-                return result;
-            } catch (FileNotFoundException ex) {
-                throw new GenericException(ex.getMessage(), ex);
-            } catch (IOException ex) {
-                throw new GenericException(ex.getMessage(), ex);
+
+            } else {
+                throw new SchemaNotFoundException("Schema With Name:[" + schemaName + "] was not found FILE:[" + f.toString() + "]");
             }
         } else {
-            throw new SchemaNotFoundException("Schema With Name:[" + schemaName + "] was not found");
+            result = loadedModel;
         }
-        
+        //
+        // Loaded Resource now..
+        //
+        logger.debug("Loaded  SchemaName: [" + loadedModel.getSchemaName() + "]");
+
+        logger.debug("Schema :[" + schemaName + "] Saved to cache");
+        if (loadInherited) {
+            for (Map.Entry<String, ResourceAttributeModel> entry : loadedModel.getAttributes().entrySet()) {
+                String key = entry.getKey();
+                entry.getValue().setItemHash(utilSession.getMd5(loadedModel.getSchemaName() + "." + key));
+
+                ResourceAttributeModel model = entry.getValue();
+                if (model.getId() == null) {
+                    model.setId(loadedModel.getSchemaName() + "." + key);
+                }
+                if (!result.getAttributes().containsKey(key)) {
+                    result.getAttributes().put(key, model);
+                }
+            }
+
+            if (!loadedModel.getFromSchema().equals(".")) {
+                return this.loadSchema(loadedModel.getFromSchema(), result, true);
+            }
+            //
+            // Just cache loadInherited
+            //
+            logger.debug("CACHED:" + result.getSchemaName());
+            this.schemaCache.put(result.getSchemaName(), result);
+        }
+        return result;
     }
 
     /**
@@ -150,7 +189,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
      * @param model
      */
     public ResourceSchemaModel createResourceSchemaModel(ResourceSchemaModel model) throws GenericException, SchemaNotFoundException, InvalidRequestException {
-        
+
         if (model == null) {
             throw new GenericException("Request Cannot Be Null");
         }
@@ -168,39 +207,10 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
             this.loadSchema(model.getFromSchema());
         }
 
-        //
-        // Ok lets check the target directory: 
-        //
-        String modelName = model.getSchemaName();
-        String modelPathStr = modelName.replace(".", "/");
-        Path p = Paths.get(this.configurationManager.loadConfiguration().getSchemaDir() + "/" + modelPathStr + ".json");
-        File f = p.toFile();
-        logger.debug("Checking File Path:[" + p.toString() + "]");
-        //
-        // Check if File Exists
-        //
-        if (!f.exists()) {
-            f.getParentFile().mkdirs();
-            //
-            //
-            //
-            try {
-                FileWriter writer = new FileWriter(f);
-                this.utilSession.getGson().toJson(model, writer);
-                writer.flush();
-                writer.close();
-            } catch (IOException ex) {
-                throw new GenericException(ex.getMessage(), ex);
-            }
-            //
-            // Reloads the schema and its attributes.
-            //
-            this.clearSchemaCache();
-            return this.loadSchema(model.getSchemaName());
-        } else {
-            throw new InvalidRequestException("Resource Schema Model [" + model.getSchemaName() + "] Already Exists");
-        }
-        
+        this.writeModelToDisk(model, false);
+        this.clearSchemaCache();
+        return this.loadSchema(model.getSchemaName());
+
     }
 
     /**
@@ -221,14 +231,14 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
     }
 
     /**
-     * Valida seta e faz o type casting dos atributos xD
+     * Validate the attribute typecasting setting the right values and types.
      *
      * @param resource
      * @throws AttributeConstraintViolationException
      */
     public void validateResourceSchema(BasicResource resource) throws AttributeConstraintViolationException {
         if (!resource.getSchemaModel().getAllowAll()) {
-            
+
             for (String key : resource.getAttributes().keySet()) {
                 if (!resource.getSchemaModel().getAttributes().containsKey(key)) {
                     throw new AttributeConstraintViolationException("Invalid Attribute named:[" + key + "] for model: [" + resource.getSchemaModel().getSchemaName() + "]");
@@ -288,11 +298,11 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                         // Pode Prosseguir 
                         //
                         throw new AttributeConstraintViolationException("Attribute [" + model.getName() + "] of type:" + model.getVariableType() + " Value : [" + value + "] is not allowed here Allowed vars are:[" + String.join(",", model.getAllowedValues()) + "]");
-                        
+
                     }
                 }
             }
-            
+
             if (model.getVariableType().equalsIgnoreCase("String")) {
                 //
                 // String will get the String representation as it is..
@@ -322,7 +332,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                 }
                 return Float.parseFloat(value.toString());
             } else if (model.getVariableType().equalsIgnoreCase("Date")) {
-                
+
                 SimpleDateFormat sdf = new SimpleDateFormat(configurationManager.loadConfiguration().getDateFormat());
                 sdf.setLenient(false);
                 try {
@@ -330,7 +340,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                 } catch (ParseException ex) {
                     throw new AttributeConstraintViolationException("Attribute [" + model.getName() + "] of type:" + model.getVariableType() + " Cannot Parse Date Value : [" + value + "] With Mask: [" + configurationManager.loadConfiguration().getDateFormat() + "]", ex);
                 }
-                
+
             } else if (model.getVariableType().equalsIgnoreCase("DateTime")) {
                 SimpleDateFormat sdf = new SimpleDateFormat(configurationManager.loadConfiguration().getDateTimeFormat());
                 sdf.setLenient(false);
@@ -338,7 +348,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                     return sdf.parse(value.toString());
                 } catch (ParseException ex) {
                     throw new AttributeConstraintViolationException("Attribute [" + model.getName() + "] of type:" + model.getVariableType() + " Cannot Parse Date Time Value : [" + value + "] With Mask: [" + configurationManager.loadConfiguration().getDateTimeFormat() + "]", ex);
-                    
+
                 }
             } else {
                 throw new AttributeConstraintViolationException("Attribute [" + model.getName() + "] of type:" + model.getVariableType() + " Cannot be parsed");
@@ -346,13 +356,202 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
         } catch (NumberFormatException ex) {
             throw new AttributeConstraintViolationException("Value: [" + value + "] Cannot be parsed do Number", ex);
         }
-        
+
     }
-    
+
+    /**
+     * Handles the logic to update the ResourceSchemaModel
+     *
+     * @param original
+     * @param update
+     * @return
+     * @throws InvalidRequestException
+     * @throws GenericException
+     * @throws SchemaNotFoundException
+     */
+    public ResourceSchemaModel patchSchemaModel(ResourceSchemaModel update) throws InvalidRequestException, GenericException, SchemaNotFoundException {
+
+        if (update == null) {
+            throw new InvalidRequestException("Attribute Schema Model not found");
+        }
+
+        ResourceSchemaModel original = this.loadSchema(update.getSchemaName(), null, false);
+
+        if (update.getSchemaName() != null) {
+            if (!update.getSchemaName().equals(original.getSchemaName())) {
+                //
+                // Schema Name cannot Be Changed
+                // 
+                throw new InvalidRequestException("Schema Name Cannot Ne changed...");
+            }
+        }
+
+        if (update.getFromSchema() != null) {
+            if (!update.getFromSchema().equals(original.getFromSchema())) {
+                //
+                // Changing Parent Class...are we going to allow it?
+                // 
+                original.setFromSchema(update.getFromSchema());
+                original.setAttributesChanged(true);
+            }
+        }
+
+        if (update.getAllowAll() != null) {
+            if (!update.getAllowAll().equals(original.getAllowAll())) {
+                original.setAllowAll(update.getAllowAll());
+            }
+        }
+
+        if (!update.getAttributes().isEmpty()) {
+            //
+            // The hard part of comparing and merging maps
+            //
+
+            //
+            // Compare each
+            //
+            update.getAttributes().forEach((updateAttrName, updateModel) -> {
+                //
+                //  Check if need to remove the Attribute
+                //
+                if (updateModel.getDoRemove() == null) {
+                    updateModel.setDoRemove(false);
+                }
+
+                if (updateModel.getDoRemove()) {
+                    if (original.getAttributes().containsKey(updateAttrName)) {
+                        original.getAttributes().remove(updateAttrName);
+                    }
+                } else {
+                    //
+                    // Patching
+                    //
+
+                    if (!original.getAttributes().containsKey(updateAttrName)) {
+                        //
+                        // Easy Part
+                        //
+                        original.getAttributes().put(updateAttrName, updateModel);
+                    } else {
+                        //
+                        // Hard Part
+                        //
+                        ResourceAttributeModel originalAttributeModel = original.getAttributes().get(updateAttrName);
+
+                        if (originalAttributeModel != null) {
+                            //
+                            // Compare one by one..
+                            //
+
+                            if (updateModel.getDescription() != null) {
+                                if (!updateModel.getDescription().equals(originalAttributeModel.getDescription())) {
+                                    originalAttributeModel.setDescription(updateModel.getDescription());
+                                    original.setAttributesChanged(true);
+                                }
+                            }
+
+                            if (updateModel.getRequired() != null) {
+                                if (!updateModel.getRequired().equals(originalAttributeModel.getRequired())) {
+                                    originalAttributeModel.setRequired(updateModel.getRequired());
+                                    original.setAttributesChanged(true);
+                                }
+                            }
+
+                            if (updateModel.getValidationRegex() != null) {
+                                if (!updateModel.getValidationRegex().equals(originalAttributeModel.getValidationRegex())) {
+                                    originalAttributeModel.setValidationRegex(updateModel.getValidationRegex());
+                                    original.setAttributesChanged(true);
+                                }
+                            }
+
+                            if (updateModel.getValidationScript() != null) {
+                                if (!updateModel.getValidationScript().equals(originalAttributeModel.getValidationScript())) {
+                                    originalAttributeModel.setValidationScript(updateModel.getValidationScript());
+                                    original.setAttributesChanged(true);
+                                }
+                            }
+
+                            if (updateModel.getValidate() != null) {
+                                if (!updateModel.getValidate().equals(originalAttributeModel.getValidate())) {
+                                    originalAttributeModel.setValidate(updateModel.getValidate());
+                                    original.setAttributesChanged(true);
+                                }
+                            }
+
+                        }
+                        //
+                        // Do not need to show this to the user and file..
+                        //
+                        if (originalAttributeModel.getDoRemove() != null) {
+                            originalAttributeModel.setDoRemove(false);
+                        }
+                    }
+                }
+
+            });
+
+        }
+
+        this.writeModelToDisk(original, true);
+        this.clearSchemaCache();
+        return this.loadSchema(original.getSchemaName());
+    }
+
+    /**
+     * Save the JSON Model to the disk
+     *
+     * @param model
+     * @param overwrite
+     * @throws GenericException
+     * @throws InvalidRequestException
+     */
+    private void writeModelToDisk(ResourceSchemaModel model, Boolean overwrite) throws GenericException, InvalidRequestException {
+        //
+        // Ok lets check the target directory: 
+        //
+        String modelName = model.getSchemaName();
+        String modelPathStr = modelName.replace(".", "/");
+        Path p = Paths.get(this.configurationManager.loadConfiguration().getSchemaDir() + "/" + modelPathStr + ".json");
+        File f = p.toFile();
+
+        //
+        // Check if File Exists
+        //
+        if (!f.exists() || overwrite) {
+            f.getParentFile().mkdirs();
+            //
+            //
+            //
+            try {
+                //
+                // Dont Save Attribute change flag to disk.
+                //
+                model.setAttributesChanged(null);
+
+                FileWriter writer = new FileWriter(f);
+                this.utilSession.getGson().toJson(model, writer);
+                writer.flush();
+                writer.close();
+            } catch (IOException ex) {
+                throw new GenericException(ex.getMessage(), ex);
+            }
+            //
+            // Reloads the schema and its attributes.
+            //
+            this.clearSchemaCache();
+        } else {
+            throw new InvalidRequestException("Resource Schema Model [" + model.getSchemaName() + "] Already Exists");
+        }
+    }
+
+    /**
+     * Just for Debugging
+     *
+     * @param rn
+     */
     @Override
     public void onRemoval(RemovalNotification<String, ResourceSchemaModel> rn) {
 //        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
         logger.debug("Schema: [" + rn.getKey() + "] Removed From Cache...");
-        
     }
 }

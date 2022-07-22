@@ -26,11 +26,19 @@ import java.util.HashMap;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ResourceSchemaModel {
 
+    /**
+     * @return the attributesChanged
+     */
+    public Boolean getAttributesChanged() {
+        return attributesChanged;
+    }
+
     private String schemaName;
     private String fromSchema;
     private String owner;
     private String author;
-    private Boolean allowAll = false;
+    private Boolean allowAll;
+    private Boolean attributesChanged = false;
     private HashMap<String, ResourceAttributeModel> attributes = new HashMap<>();
 
     /**
@@ -116,4 +124,13 @@ public class ResourceSchemaModel {
     public void setAllowAll(Boolean allowAll) {
         this.allowAll = allowAll;
     }
+
+    /**
+     * @param attributesChanged the attributesChanged to set
+     */
+    public void setAttributesChanged(Boolean attributesChanged) {
+        this.attributesChanged = attributesChanged;
+    }
+    
+//    public void setDoRemove(Boolean do)
 }

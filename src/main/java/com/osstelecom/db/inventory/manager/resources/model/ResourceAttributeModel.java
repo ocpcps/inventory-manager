@@ -30,11 +30,11 @@ public class ResourceAttributeModel {
     private String _id;
     private String name;
     private String variableType;
-    private String description;
+    private String description; //Updateble
     private String defaultValue;
     private ArrayList<String> allowedValues;
-    private Boolean required = false;
-    private Boolean isList= false;
+    private Boolean required;
+    private Boolean isList;
     private Boolean trackChanges;
     private Integer minOccurrences;
     private Integer maxOccurrences;
@@ -43,6 +43,8 @@ public class ResourceAttributeModel {
     private String validationPluginClass;
     private Boolean validate;
     private String itemHash;
+    private Boolean doRemove;
+    
 
     public String getVariableType() {
         return variableType;
@@ -242,6 +244,20 @@ public class ResourceAttributeModel {
      */
     public void setItemHash(String itemHash) {
         this.itemHash = itemHash;
+    }
+
+    /**
+     * @return the doRemove
+     */
+    public Boolean getDoRemove() {
+        return doRemove;
+    }
+
+    /**
+     * @param doRemove the doRemove to set
+     */
+    public void setDoRemove(Boolean doRemove) {
+        this.doRemove = doRemove;
     }
 
 }

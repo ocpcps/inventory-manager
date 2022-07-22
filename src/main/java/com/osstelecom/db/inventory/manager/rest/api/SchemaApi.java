@@ -21,6 +21,7 @@ import com.osstelecom.db.inventory.manager.exception.GenericException;
 import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.SchemaNotFoundException;
 import com.osstelecom.db.inventory.manager.request.CreateResourceSchemaModelRequest;
+import com.osstelecom.db.inventory.manager.request.PatchResourceSchemaModelRequest;
 import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
 import com.osstelecom.db.inventory.manager.response.CreateResourceSchemaModelResponse;
 import com.osstelecom.db.inventory.manager.response.EmptyOkResponse;
@@ -31,6 +32,7 @@ import com.osstelecom.db.inventory.manager.session.SchemaSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -60,6 +62,28 @@ public class SchemaApi extends BaseApi {
     public String getSchameDefinition(@PathVariable("schema") String schema) throws GenericException, SchemaNotFoundException {
         try {
             return gson.toJson(new ResourceSchemaResponse(schemaSession.loadSchema(schema)));
+        } catch (SchemaNotFoundException ex) {
+            logger.error("Failed To Load Schema", ex);
+            throw ex;
+        } catch (GenericException ex) {
+            logger.error("Generic EX  Load Schema", ex);
+            throw ex;
+        }
+    }
+
+    /**
+     * Recupera a representação do JSON do Schema
+     *
+     * @param schemaName
+     * @return
+     */
+    @AuthenticatedCall(role = {"user"})
+    @PatchMapping(path = "/{schema}", produces = "application/json")
+    public String patchSchameDefinition(@PathVariable("schema") String schemaName, @RequestBody String reqBody) throws GenericException, SchemaNotFoundException, InvalidRequestException {
+        try {
+            PatchResourceSchemaModelRequest request = gson.fromJson(reqBody, PatchResourceSchemaModelRequest.class);
+            request.getPayLoad().setSchemaName(schemaName);
+            return gson.toJson(new ResourceSchemaResponse(schemaSession.patchSchemaModel(request.getPayLoad())));
         } catch (SchemaNotFoundException ex) {
             logger.error("Failed To Load Schema", ex);
             throw ex;
