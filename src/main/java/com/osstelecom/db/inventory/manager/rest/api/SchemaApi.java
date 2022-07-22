@@ -52,7 +52,7 @@ public class SchemaApi extends BaseApi {
     private SchemaSession schemaSession;
 
     /**
-     * Recupera a representação do JSON do Schema
+     * Retrieves the schema representation
      *
      * @param schema
      * @return
@@ -72,7 +72,7 @@ public class SchemaApi extends BaseApi {
     }
 
     /**
-     * Recupera a representação do JSON do Schema
+     * Update the schema representation
      *
      * @param schemaName
      * @return
@@ -94,7 +94,7 @@ public class SchemaApi extends BaseApi {
     }
 
     /**
-     * Teste
+     * Creates a new ResourceSchemaModel
      *
      * @param reqBody
      * @return
@@ -107,6 +107,10 @@ public class SchemaApi extends BaseApi {
         return gson.toJson(new CreateResourceSchemaModelResponse(createdModel));
     }
 
+    /**
+     * clears the schema cache
+     * @return 
+     */
     @AuthenticatedCall(role = {"user", "operator"})
     @PostMapping(path = "/cache/clear", produces = "application/json")
     public String clearCachedSchema() {
@@ -114,6 +118,10 @@ public class SchemaApi extends BaseApi {
         return gson.toJson(new EmptyOkResponse());
     }
 
+    /**
+     * list cached entries
+     * @return 
+     */
     @AuthenticatedCall(role = {"user", "operator"})
     @GetMapping(path = "/cache", produces = "application/json")
     public String getCachedSchemas() {
