@@ -50,7 +50,7 @@ public class BasicResource {
     private ConsumableMetric consumableMetric;
     private ConsumableMetric consumerMetric;
 
-//    private Double currentMetricValue;
+    
     private String name;
     private String description;
     private String nodeAddress;
@@ -65,7 +65,6 @@ public class BasicResource {
     private String operationalStatus;
     private String businessStatus;
     private String node;
-//    @DocumentField(DocumentField.Type.ID)
     @DocumentField(DocumentField.Type.KEY)
     private String uid;
     @DocumentField(DocumentField.Type.ID)

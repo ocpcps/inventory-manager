@@ -33,8 +33,8 @@ public class ResourceAttributeModel {
     private String description;
     private String defaultValue;
     private ArrayList<String> allowedValues;
-    private Boolean required;
-    private Boolean isList;
+    private Boolean required = false;
+    private Boolean isList= false;
     private Boolean trackChanges;
     private Integer minOccurrences;
     private Integer maxOccurrences;

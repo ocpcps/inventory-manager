@@ -17,8 +17,6 @@
  */
 package com.osstelecom.db.inventory.manager.rest.api.security;
 
-import com.google.common.collect.ImmutableMap;
-import com.osstelecom.db.inventory.manager.exception.ApiSecurityException;
 import com.osstelecom.db.inventory.manager.security.model.AuthenticatedCall;
 import com.osstelecom.db.inventory.manager.session.ApiSecuritySession;
 import com.osstelecom.db.inventory.manager.session.UtilSession;
@@ -43,25 +41,41 @@ public class ApiRequestInterceptor implements HandlerInterceptor {
     @Autowired
     private ApiSecuritySession securitySession;
 
+    /**
+     * Handles the AUTH Token API
+     *
+     * @param request
+     * @param response
+     * @param handler
+     * @return
+     * @throws Exception
+     */
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        HandlerMethod method = (HandlerMethod) handler;
-        AuthenticatedCall authenticatedCall = method.getMethod().getAnnotation(AuthenticatedCall.class);
-        response.setHeader("x-response-id", utilsSession.getResponseId());
-        if (authenticatedCall != null) {
-            if (authenticatedCall.requiresAuth()) {
-                securitySession.checkApiToken(request);
-                response.setHeader("x-authenticated", "true");
-                return true;
+        if (handler instanceof HandlerMethod) {
+            HandlerMethod method = (HandlerMethod) handler;
+            AuthenticatedCall authenticatedCall = method.getMethod().getAnnotation(AuthenticatedCall.class);
+            response.setHeader("x-response-id", utilsSession.getResponseId());
+            if (authenticatedCall != null) {
+                if (authenticatedCall.requiresAuth()) {
+                    //
+                    // We are using an authenticated request
+                    //
+                    securitySession.checkApiToken(request);
+                    response.setHeader("x-authenticated", "true");
+                    return true;
+                } else {
+                    response.setHeader("x-authenticated", "true");
+                    return true;
+                }
             } else {
-                response.setHeader("x-authenticated", "true");
-                return true;
+                response.setHeader("x-authenticated", "false");
             }
-        } else {
-            response.setHeader("x-authenticated", "false");
-        }
 
-        return true;
+            return true;
+        } else {
+            return true;
+        }
     }
 
 }

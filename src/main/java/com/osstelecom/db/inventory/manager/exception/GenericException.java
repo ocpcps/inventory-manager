@@ -27,6 +27,16 @@ import java.io.FileNotFoundException;
  */
 public class GenericException extends BasicException {
 
+    private String parentExceptionClass;
+
+    public String getParentExceptionClass() {
+        return parentExceptionClass;
+    }
+
+    public void setParentExceptionClass(String parentExceptionClass) {
+        this.parentExceptionClass = parentExceptionClass;
+    }
+
     public GenericException() {
     }
 

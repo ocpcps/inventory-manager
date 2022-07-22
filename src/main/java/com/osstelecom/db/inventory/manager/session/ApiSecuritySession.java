@@ -36,6 +36,9 @@ public class ApiSecuritySession {
             // So we need an api token to continue... but its null...
             //
             ApiSecurityException ex = new ApiSecurityException("API Token Not Found!");
+            //
+            // Give the requester some details on the request.
+            //
             ex.setDetails(ImmutableMap.of("path", request.getRequestURI(), "method", request.getMethod(), "remoteAddress", request.getRemoteAddr()));
             throw ex;
         }

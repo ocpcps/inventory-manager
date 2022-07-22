@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Lucas Nishimura <lucas.nishimura@gmail.com>
+ * Copyright (C) 2022 Lucas Nishimura <lucas.nishimura@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,47 +17,17 @@
  */
 package com.osstelecom.db.inventory.manager.response;
 
-import java.util.List;
 import java.util.Map;
 
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
- * @created 15.12.2021
+ * @created 21.07.2022
  */
-public abstract class BasicResponse<T> implements IResponse<T> {
+public class TypedMapResponse extends BasicResponse<Map> {
 
-    private int statusCode = 200;
-    private T payLoad;
-    private int size;
-
-    public BasicResponse(T obj) {
-        this.setPayLoad(obj);
-        if (this.payLoad instanceof List) {
-            this.size = ((List) this.payLoad).size();
-        } else if (this.payLoad instanceof Map) {
-            this.size = ((Map) this.payLoad).size();
-        }
-    }
-
-    @Override
-    public void setStatusCode(int status) {
-        this.statusCode = status;
-    }
-
-    @Override
-    public int getStatusCode() {
-        return this.statusCode;
-    }
-
-    @Override
-    public T getPayLoad() {
-        return payLoad;
-    }
-
-    @Override
-    public void setPayLoad(T t) {
-        this.payLoad = t;
+    public TypedMapResponse(Map obj) {
+        super(obj);
     }
 
 }

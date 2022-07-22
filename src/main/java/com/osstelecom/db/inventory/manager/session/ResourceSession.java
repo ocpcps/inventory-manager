@@ -33,6 +33,7 @@ import com.osstelecom.db.inventory.manager.request.CreateManagedResourceRequest;
 import com.osstelecom.db.inventory.manager.request.CreateResourceLocationRequest;
 import com.osstelecom.db.inventory.manager.request.CreateServiceRequest;
 import com.osstelecom.db.inventory.manager.request.FilterRequest;
+import com.osstelecom.db.inventory.manager.request.FindManagedResourceRequest;
 import com.osstelecom.db.inventory.manager.request.GetCircuitPathRequest;
 import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
@@ -49,9 +50,8 @@ import com.osstelecom.db.inventory.manager.response.CreateResourceConnectionResp
 import com.osstelecom.db.inventory.manager.response.CreateResourceLocationResponse;
 import com.osstelecom.db.inventory.manager.response.CreateServiceResponse;
 import com.osstelecom.db.inventory.manager.response.FilterResponse;
+import com.osstelecom.db.inventory.manager.response.FindManagedResourceResponse;
 import com.osstelecom.db.inventory.manager.response.GetCircuitPathResponse;
-import com.osstelecom.db.inventory.topology.DefaultTopology;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -88,6 +88,9 @@ public class ResourceSession {
         }
 
         if (request.getPayLoad().getNodeAddress() == null) {
+            //
+            // Avaliar se podemos mudar o node address
+            //
             request.getPayLoad().setNodeAddress(request.getPayLoad().getName());
         }
 
@@ -131,6 +134,9 @@ public class ResourceSession {
         connection.setName(request.getPayLoad().getConnectionName());
         connection.setClassName(request.getPayLoad().getConnectionClass());
 
+        //
+        // Valida se é uma conexão entre location e Resource
+        //
         if (request.getPayLoad().getFromClassName().contains("location")) {
             connection.setFrom(domainManager.findResourceLocation(request.getPayLoad().getFromName(), request.getPayLoad().getFromNodeAddress(), request.getPayLoad().getFromClassName(), request.getRequestDomain()));
         } else if (request.getPayLoad().getFromClassName().contains("resource")) {
@@ -139,6 +145,9 @@ public class ResourceSession {
             throw new InvalidRequestException("Invalid From Class");
         }
 
+        //
+        // Valida se é uma conexão entre Location ou Resource
+        //
         if (request.getPayLoad().getToClassName().contains("location")) {
             connection.setTo(domainManager.findResourceLocation(request.getPayLoad().getToName(), request.getPayLoad().getToNodeAddress(), request.getPayLoad().getToClassName(), request.getRequestDomain()));
         } else if (request.getPayLoad().getToClassName().contains("resource")) {
@@ -150,7 +159,7 @@ public class ResourceSession {
         if (request.getPayLoad().getNodeAddress() != null) {
             connection.setNodeAddress(request.getPayLoad().getNodeAddress());
         } else {
-            connection.setNodeAddress(connection.getName());
+            connection.setNodeAddress(request.getPayLoad().getFromNodeAddress() + "." + request.getPayLoad().getToNodeAddress());
         }
         connection.setOperationalStatus(request.getPayLoad().getOperationalStatus());
         connection.setAttributeSchemaName(request.getPayLoad().getAttributeSchemaName());
@@ -161,6 +170,25 @@ public class ResourceSession {
         connection.setInsertedDate(new Date());
         domainManager.createResourceConnection(connection);
         return response;
+    }
+
+    /**
+     * Obtem o managed Resource By ID
+     *
+     * @param request
+     * @return
+     * @throws InvalidRequestException
+     * @throws DomainNotFoundException
+     * @throws ResourceNotFoundException
+     * @throws ArangoDaoException
+     */
+    public FindManagedResourceResponse findManagedResourceById(FindManagedResourceRequest request) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
+        if (request.getResourceId() == null) {
+            throw new InvalidRequestException("Field resourceId cannot be empty or null");
+        } else {
+            FindManagedResourceResponse response = new FindManagedResourceResponse(this.domainManager.findManagedResourceById(request, request.getRequestDomain()));
+            return response;
+        }
     }
 
     /**
@@ -213,8 +241,11 @@ public class ResourceSession {
      * @throws GenericException
      * @throws ScriptRuleException
      */
-    public CreateManagedResourceResponse createManagedResource(CreateManagedResourceRequest request) throws SchemaNotFoundException, AttributeConstraintViolationException, GenericException, ScriptRuleException, InvalidRequestException, DomainNotFoundException {
+    public CreateManagedResourceResponse createManagedResource(CreateManagedResourceRequest request) throws SchemaNotFoundException, AttributeConstraintViolationException, GenericException, ScriptRuleException, InvalidRequestException, DomainNotFoundException, ArangoDaoException {
         ManagedResource resource = request.getPayLoad();
+        if (request == null) {
+            throw new InvalidRequestException("Request is NULL!");
+        }
         request.getPayLoad().setDomain(domainManager.getDomain(request.getRequestDomain()));
 
         if (request.getPayLoad().getDomain() == null) {
@@ -228,6 +259,9 @@ public class ResourceSession {
             request.getPayLoad().setAttributeSchemaName("resource.default");
         }
 
+        //
+        // Avaliar se podemos melhorar isso, usando um nome canonico, com o className + name
+        //
         if (request.getPayLoad().getNodeAddress() == null) {
             request.getPayLoad().setNodeAddress(request.getPayLoad().getName());
         }
@@ -316,8 +350,15 @@ public class ResourceSession {
         if (request.getPayLoad().getNodeAddress() == null) {
             request.getPayLoad().setNodeAddress(request.getPayLoad().getName());
         }
-
+        
+        //
+        // The "From" Circuit Source
+        //
         ManagedResource aPoint = domainManager.findManagedResource(request.getPayLoad().getaPoint());
+        
+        //
+        // The "To" Circuit Destination
+        //
         ManagedResource zPoint = domainManager.findManagedResource(request.getPayLoad().getzPoint());
 
         CircuitResource circuit = request.getPayLoad();
@@ -365,10 +406,6 @@ public class ResourceSession {
         CreateServiceResponse result = null;
         return result;
     }
-
-//    public void test(String filter, Integer threads) {
-//        domainManager.test(filter, threads);
-//    }
 
     public FilterResponse getElementsByFilter(FilterRequest filter) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
 

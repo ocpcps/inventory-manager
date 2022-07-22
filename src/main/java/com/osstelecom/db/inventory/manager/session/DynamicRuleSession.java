@@ -29,7 +29,6 @@ import groovy.lang.Binding;
 import groovy.util.GroovyScriptEngine;
 import groovy.util.ResourceException;
 import groovy.util.ScriptException;
-import java.awt.Event;
 import java.io.File;
 import java.io.IOException;
 import java.util.LinkedHashMap;
@@ -59,8 +58,6 @@ public class DynamicRuleSession {
     @Autowired
     private ConfigurationManager configurationManager;
 
-//    @Autowired
-//    private DomainManager domainManager;
     @EventListener(ApplicationReadyEvent.class)
     private void initGse() {
         try {
@@ -145,6 +142,9 @@ public class DynamicRuleSession {
                     logger.error("Error in Groovy Context", ex);
                     throw new ScriptRuleException("Error in Groovy Context", ex);
                 } catch (Exception ex) {
+                    //
+                    // Tá um jeito bem feio né.... um dia eu melhoro isso
+                    //
                     if (ex instanceof ScriptRuleException) {
                         ScriptRuleException scex = (ScriptRuleException) ex;
                         throw scex;

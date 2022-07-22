@@ -152,6 +152,13 @@ public class ArangoDao {
             this.graphDb.db(this.dbName).collection(domainName
                     + this.inventoryConfiguration.getGraphDbConfiguration().getNodeSufix()).ensurePersistentIndex(Arrays.asList("name", "nodeAddress", "className", "domain._key"), new PersistentIndexOptions().unique(true).name("NodeUNIQIDX"));
 
+            //
+            // Performance IDX
+            //
+            this.graphDb.db(this.dbName).collection(domainName
+                    + this.inventoryConfiguration.getGraphDbConfiguration()
+                            .getNodeSufix()).ensurePersistentIndex(Arrays.asList("nodeAddress", "className", "domainName"), new PersistentIndexOptions().name("NodeSEARCHIDX"));
+
             CollectionEntity connections = this.graphDb.db(this.dbName)
                     .createCollection(domainName
                             + this.inventoryConfiguration.getGraphDbConfiguration().getNodeConnectionSufix(), new CollectionCreateOptions().type(CollectionType.EDGES));
@@ -263,14 +270,20 @@ public class ArangoDao {
      * @return
      * @throws GenericException
      */
-    public DocumentCreateEntity<ManagedResource> createManagedResource(ManagedResource resource) throws GenericException {
+    public DocumentCreateEntity<ManagedResource> createManagedResource(ManagedResource resource) throws GenericException, ArangoDaoException {
         try {
             DocumentCreateEntity<ManagedResource> result = this.database
-                    .collection(resource.getDomain().getNodes()).insertDocument(resource, new DocumentCreateOptions().returnNew(true).returnOld(true));
+                    .collection(resource.getDomain()
+                            .getNodes())
+                    .insertDocument(resource, new DocumentCreateOptions().returnNew(true).returnOld(true));
             return result;
+        } catch (ArangoDBException ex) {
+            throw new ArangoDaoException(ex.getErrorMessage());
         } catch (Exception ex) {
-            ex.printStackTrace();
-            throw new GenericException(ex.getMessage());
+//            ex.printStackTrace();
+            GenericException easd = new GenericException(ex.getMessage());
+            easd.setParentExceptionClass(ex.getClass().getName());
+            throw easd;
         }
     }
 
@@ -425,15 +438,33 @@ public class ArangoDao {
 
         });
         ArangoCursor<ManagedResource> cursor = this.database.query(aql, bindVars, ManagedResource.class);
-        ArrayList<ManagedResource> locations = new ArrayList<>();
+        ArrayList<ManagedResource> resources = new ArrayList<>();
 
-        locations.addAll(getListFromCursorType(cursor));
+        resources.addAll(getListFromCursorType(cursor));
 //        cursor.close();
-        if (!locations.isEmpty()) {
-            return locations.get(0);
+        if (!resources.isEmpty()) {
+            return resources.get(0);
         }
         logger.warn("Resource with name:[" + name + "] nodeAddress:[" + nodeAddress + "] className:[" + className + "] was not found..");
         throw new ResourceNotFoundException("Resource With Name:[" + name + "] and Class: [" + className + "] Not Found in Domain:" + domain.getDomainName());
+    }
+
+    public ManagedResource findManagedResourceById(String resourceId, DomainDTO domain) throws ResourceNotFoundException, ArangoDaoException {
+        String aql = "FOR doc IN "
+                + domain.getNodes() + " FILTER ";
+        aql += "doc._id == @id";
+        aql += "  RETURN doc ";
+        HashMap<String, Object> bindVars = new HashMap<>();
+        bindVars.put("id", resourceId);
+        ArangoCursor<ManagedResource> cursor = this.database.query(aql, bindVars, ManagedResource.class);
+        ArrayList<ManagedResource> resources = new ArrayList<>();
+
+        resources.addAll(getListFromCursorType(cursor));
+        if (!resources.isEmpty()) {
+            return resources.get(0);
+        } else {
+            throw new ResourceNotFoundException("Resource WITH id[" + resourceId + "] not found in domain:" + domain.getDomainName());
+        }
     }
 
     /**

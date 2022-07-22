@@ -37,6 +37,7 @@ import com.osstelecom.db.inventory.manager.exception.GenericException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.SchemaNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.ScriptRuleException;
+import com.osstelecom.db.inventory.manager.request.FindManagedResourceRequest;
 import com.osstelecom.db.inventory.manager.resources.BasicResource;
 import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 import com.osstelecom.db.inventory.manager.resources.ConsumableMetric;
@@ -147,7 +148,7 @@ public class DomainManager {
      * @throws AttributeConstraintViolationException
      * @throws GenericException
      */
-    public ManagedResource createManagedResource(ManagedResource resource) throws SchemaNotFoundException, AttributeConstraintViolationException, GenericException, ScriptRuleException {
+    public ManagedResource createManagedResource(ManagedResource resource) throws SchemaNotFoundException, AttributeConstraintViolationException, GenericException, ScriptRuleException, ArangoDaoException {
         String timerId = startTimer("createManagedResource");
         try {
             lockManager.lock();
@@ -155,8 +156,10 @@ public class DomainManager {
             resource.setAtomId(resource.getDomain().addAndGetId());
             ResourceSchemaModel schemaModel = schemaSession.loadSchema(resource.getAttributeSchemaName());
             resource.setSchemaModel(schemaModel);
-            schemaSession.validateResourceSchema(resource);
-            dynamicRuleSession.evalResource(resource, "I", this);
+            schemaSession.validateResourceSchema(resource);       //  
+            dynamicRuleSession.evalResource(resource, "I", this); // <--- Pode não ser verdade , se a chave for duplicada..
+                                                                  // 
+                                                                  
             DocumentCreateEntity<ManagedResource> result = arangoDao.createManagedResource(resource);
             resource.setUid(result.getId());
             resource.setRevisionId(result.getRev());
@@ -405,6 +408,23 @@ public class DomainManager {
         }
     }
 
+    public ManagedResource findManagedResourceById(FindManagedResourceRequest request, String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
+        String timerId = startTimer("findManagedResourceById");
+        try {
+            lockManager.lock();
+            DomainDTO domain = this.getDomain(domainName);
+            request.setResourceId(domain.getNodes() + "/" + request.getResourceId());
+            ManagedResource resource = arangoDao.findManagedResourceById(request.getResourceId(), domain);
+            return resource;
+        } finally {
+            if (lockManager.isLocked()) {
+                lockManager.unlock();
+            }
+            endTimer(timerId);
+        }
+
+    }
+
     /**
      * Cria um ID único para o Objeto
      *
@@ -420,6 +440,7 @@ public class DomainManager {
     @EventListener(ApplicationReadyEvent.class)
     private void onStartUp() throws ArangoDaoException {
         this.arangoDao.getDomains().forEach(d -> {
+            logger.debug("\tFound Domain: [" + d.getDomainName() + "]");
             this.domains.put(d.getDomainName(), d);
         });
 
@@ -429,6 +450,7 @@ public class DomainManager {
     private void onShutDown() {
         this.domains.forEach((domainName, domain) -> {
             this.arangoDao.updateDomain(domain);
+            logger.debug("Domain: [" + domainName + "] Updated");
         });
 
     }

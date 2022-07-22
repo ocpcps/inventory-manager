@@ -18,10 +18,7 @@
 package com.osstelecom.db.inventory.manager.rest.api;
 
 import com.arangodb.ArangoDBException;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
-import com.osstelecom.db.inventory.manager.exception.DomainAlreadyExistsException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
 import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
@@ -31,31 +28,25 @@ import com.osstelecom.db.inventory.manager.exception.ScriptRuleException;
 import com.osstelecom.db.inventory.manager.request.CreateCircuitPathRequest;
 import com.osstelecom.db.inventory.manager.request.CreateCircuitRequest;
 import com.osstelecom.db.inventory.manager.request.CreateConnectionRequest;
-import com.osstelecom.db.inventory.manager.request.CreateDomainRequest;
 import com.osstelecom.db.inventory.manager.request.CreateManagedResourceRequest;
 import com.osstelecom.db.inventory.manager.request.CreateResourceLocationRequest;
 import com.osstelecom.db.inventory.manager.request.CreateServiceRequest;
 import com.osstelecom.db.inventory.manager.request.FilterRequest;
+import com.osstelecom.db.inventory.manager.request.FindManagedResourceRequest;
 import com.osstelecom.db.inventory.manager.request.GetCircuitPathRequest;
 import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstraintViolationException;
 import com.osstelecom.db.inventory.manager.resources.exception.ConnectionAlreadyExistsException;
 import com.osstelecom.db.inventory.manager.resources.exception.MetricConstraintException;
 import com.osstelecom.db.inventory.manager.resources.exception.NoResourcesAvailableException;
-import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
 import com.osstelecom.db.inventory.manager.response.CreateCircuitPathResponse;
 import com.osstelecom.db.inventory.manager.response.CreateCircuitResponse;
-import com.osstelecom.db.inventory.manager.response.CreateDomainResponse;
 import com.osstelecom.db.inventory.manager.response.CreateManagedResourceResponse;
 import com.osstelecom.db.inventory.manager.response.CreateResourceConnectionResponse;
 import com.osstelecom.db.inventory.manager.response.CreateResourceLocationResponse;
 import com.osstelecom.db.inventory.manager.response.CreateServiceResponse;
 import com.osstelecom.db.inventory.manager.response.FilterResponse;
-import com.osstelecom.db.inventory.manager.session.DomainSession;
+import com.osstelecom.db.inventory.manager.response.FindManagedResourceResponse;
 import com.osstelecom.db.inventory.manager.session.ResourceSession;
-import com.osstelecom.db.inventory.manager.session.SchemaSession;
-import java.util.logging.Level;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -74,93 +65,12 @@ import com.osstelecom.db.inventory.manager.security.model.AuthenticatedCall;
  */
 @RestController
 @RequestMapping("inventory/v1")
-public class InventoryApi {
+public class InventoryApi extends BaseApi {
 
-    private Gson gson = new GsonBuilder().setPrettyPrinting().create();
-    private Logger logger = LoggerFactory.getLogger(InventoryApi.class);
-
-    @Autowired
-    private SchemaSession schemaSession;
-
-    @Autowired
-    private DomainSession domainSession;
+   
 
     @Autowired
     private ResourceSession resourceSession;
-
-    /**
-     * Obtem o dominio
-     *
-     * @param domainName
-     * @return
-     * @throws DomainNotFoundException
-     * @throws InvalidRequestException
-     */
-    @AuthenticatedCall(role = {"user","operator"})
-    @GetMapping(path = "/domain/{domain}", produces = "application/json")
-    public String getDomain(@PathVariable("domain") String domainName) throws DomainNotFoundException, InvalidRequestException {
-        return gson.toJson(domainSession.getDomain(domainName));
-    }
-
-    /**
-     * Teste
-     *
-     * @param reqBody
-     * @return
-     */
-    @AuthenticatedCall(role = {"user","operator"})
-    @PostMapping(path = "/schema", produces = "application/json", consumes = "application/json")
-    public String createSchema(@RequestBody String reqBody) {
-        ResourceSchemaModel model = gson.fromJson(reqBody, ResourceSchemaModel.class);
-        return gson.toJson(model);
-    }
-
-    /**
-     * Recupera a representação do JSON do Schema
-     *
-     * @param schema
-     * @return
-     */
-    @AuthenticatedCall(role = {"user"})
-    @GetMapping(path = "/schema/{schema}", produces = "application/json")
-    public String getSchameDefinition(@PathVariable("schema") String schema) throws GenericException, SchemaNotFoundException {
-        try {
-            return gson.toJson(schemaSession.loadSchema(schema));
-        } catch (SchemaNotFoundException ex) {
-            java.util.logging.Logger.getLogger(InventoryApi.class.getName()).log(Level.SEVERE, null, ex);
-            logger.error("Failed To Load Schema", ex);
-            throw ex;
-        } catch (GenericException ex) {
-            java.util.logging.Logger.getLogger(InventoryApi.class.getName()).log(Level.SEVERE, null, ex);
-            logger.error("Generic EX  Load Schema", ex);
-            throw ex;
-        }
-    }
-
-    /**
-     * Cria um novo Domain xD
-     *
-     * @param request
-     * @return
-     * @throws DomainAlreadyExistsException
-     * @throws InvalidRequestException
-     * @throws GenericException
-     */
-    @AuthenticatedCall(role = {"user"})
-    @PutMapping(path = "/domain", produces = "application/json", consumes = "application/json")
-    public CreateDomainResponse createDomain(@RequestBody CreateDomainRequest request) throws DomainAlreadyExistsException, InvalidRequestException, GenericException {
-        logger.info("Request For Creating a new Domain named: [" + request + "] Received");
-        if (request != null) {
-            if (request.getPayLoad() != null) {
-                CreateDomainResponse response = domainSession.createDomain(request);
-                return response;
-            } else {
-                throw new InvalidRequestException("Request Body is null");
-            }
-        } else {
-            throw new InvalidRequestException("Request Body is null");
-        }
-    }
 
     /**
      * Cria um novo Location
@@ -186,9 +96,22 @@ public class InventoryApi {
         }
     }
 
+    /**
+     * Cria um Managed Resource
+     *
+     * @param requestBody
+     * @param domain
+     * @return
+     * @throws GenericException
+     * @throws SchemaNotFoundException
+     * @throws AttributeConstraintViolationException
+     * @throws ScriptRuleException
+     * @throws InvalidRequestException
+     * @throws DomainNotFoundException
+     */
     @AuthenticatedCall(role = {"user"})
     @PutMapping(path = "/{domain}/resource", produces = "application/json", consumes = "application/json")
-    public CreateManagedResourceResponse createManagedResource(@RequestBody String requestBody, @PathVariable("domain") String domain) throws GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, InvalidRequestException, DomainNotFoundException {
+    public CreateManagedResourceResponse createManagedResource(@RequestBody String requestBody, @PathVariable("domain") String domain) throws GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, InvalidRequestException, DomainNotFoundException, ArangoDaoException {
         try {
             CreateManagedResourceRequest request = gson.fromJson(requestBody, CreateManagedResourceRequest.class);
             request.setRequestDomain(domain);
@@ -201,16 +124,27 @@ public class InventoryApi {
     }
 
     @AuthenticatedCall(role = {"user"})
+    @GetMapping(path = "/{domain}/resource/{resourceId}", produces = "application/json")
+    public FindManagedResourceResponse findManagedResourceById(@PathVariable("domain") String domain, @PathVariable("resourceId") String resourceId) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
+        FindManagedResourceRequest findRequest = new FindManagedResourceRequest();
+        findRequest.setResourceId(resourceId);
+        findRequest.setRequestDomain(domain);
+        return resourceSession.findManagedResourceById(findRequest);
+    }
+
+    /**
+     *
+     * @param request
+     * @param domain
+     * @return
+     * @throws GenericException
+     */
+    @AuthenticatedCall(role = {"user"})
     @PutMapping(path = "/{domain}/service", produces = "application/json", consumes = "application/json")
     public CreateServiceResponse createService(@RequestBody CreateServiceRequest request, @PathVariable("domain") String domain) throws GenericException {
-        try {
-            request.setRequestDomain(domain);
-            return resourceSession.createService(request);
-        } catch (ArangoDBException ex) {
-            GenericException exa = new GenericException(ex.getMessage());
-            exa.setStatusCode(ex.getResponseCode());
-            throw exa;
-        }
+        request.setRequestDomain(domain);
+        return resourceSession.createService(request);
+
     }
 
     /**

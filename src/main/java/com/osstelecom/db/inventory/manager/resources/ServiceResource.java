@@ -16,7 +16,6 @@
  */
 package com.osstelecom.db.inventory.manager.resources;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.osstelecom.db.inventory.manager.dto.DomainDTO;
 
 /**
