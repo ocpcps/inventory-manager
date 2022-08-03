@@ -28,10 +28,14 @@ import com.arangodb.entity.DocumentCreateEntity;
 import com.arangodb.entity.DocumentUpdateEntity;
 import com.arangodb.entity.EdgeDefinition;
 import com.arangodb.entity.GraphEntity;
+import com.arangodb.entity.ViewEntity;
+import com.arangodb.entity.ViewType;
+import com.arangodb.model.AqlQueryOptions;
 import com.arangodb.model.CollectionCreateOptions;
 import com.arangodb.model.DocumentCreateOptions;
 import com.arangodb.model.DocumentUpdateOptions;
 import com.arangodb.model.PersistentIndexOptions;
+import com.osstelecom.db.inventory.graph.arango.GraphList;
 import com.osstelecom.db.inventory.manager.configuration.ArangoDBConfiguration;
 import com.osstelecom.db.inventory.manager.configuration.ConfigurationManager;
 import com.osstelecom.db.inventory.manager.configuration.InventoryConfiguration;
@@ -50,6 +54,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -212,6 +217,7 @@ public class ArangoDao {
 
     private <T> ArrayList<T> getListFromCursorType(ArangoCursor<T> cursor) throws ArangoDaoException {
         ArrayList<T> result = new ArrayList<>();
+//        result.forEach(action);
         cursor.forEachRemaining(data -> {
             result.add(data);
         });
@@ -234,12 +240,15 @@ public class ArangoDao {
     }
 
     public ResourceConnection updateResourceConnection(ResourceConnection connection) {
-        DocumentUpdateEntity<ResourceConnection> result = this.database.collection(connection.getDomain().getConnections()).updateDocument(connection.getUid(), connection, new DocumentUpdateOptions().returnNew(true).returnOld(true), ResourceConnection.class);
+        connection.setLastModifiedDate(new Date());
+        DocumentUpdateEntity<ResourceConnection> result = this.database
+                .collection(connection.getDomain().getConnections())
+                .updateDocument(connection.getUid(), connection, new DocumentUpdateOptions().returnNew(true).returnOld(true).keepNull(false), ResourceConnection.class);
         return result.getNew();
     }
 
     public DocumentUpdateEntity<CircuitResource> updateCircuitResource(CircuitResource resource) {
-        DocumentUpdateEntity<CircuitResource> result = this.database.collection(resource.getDomain().getCircuits()).updateDocument(resource.getUid(), resource, new DocumentUpdateOptions().returnNew(true).returnOld(true), CircuitResource.class);
+        DocumentUpdateEntity<CircuitResource> result = this.database.collection(resource.getDomain().getCircuits()).updateDocument(resource.getUid(), resource, new DocumentUpdateOptions().returnNew(true).keepNull(false).returnOld(true), CircuitResource.class);
         return result;
     }
 
@@ -336,7 +345,11 @@ public class ArangoDao {
      */
     public ResourceLocation findResourceLocation(String name, String nodeAddress, String className, DomainDTO domain) throws ResourceNotFoundException, ArangoDaoException {
         HashMap<String, Object> bindVars = new HashMap<>();
-        bindVars.put("name", name);
+        if (name != null) {
+            if (!name.equals("null")) {
+                bindVars.put("name", name);
+            }
+        }
         bindVars.put("className", className);
 //        this.database.collection("").getd
         String aql = "FOR doc IN "
@@ -382,14 +395,14 @@ public class ArangoDao {
             return locations.get(0);
         }
 //        }
-        if (bindVars.containsKey("name")) {
+        if (bindVars.containsKey("name") && name != null) {
             logger.warn("Resource with name:[" + name + "] nodeAddress:[" + nodeAddress + "] className:[" + className + "] was not found..");
 
-            throw new ResourceNotFoundException("Resource With Name:[" + name + "] and Class: [" + className + "] Not Found in Domain:" + domain.getDomainName());
+            throw new ResourceNotFoundException("1 Resource With Name:[" + name + "] and Class: [" + className + "] Not Found in Domain:" + domain.getDomainName());
         } else {
             logger.warn("Resource with name:[" + name + "] nodeAddress:[" + nodeAddress + "] className:[" + className + "] was not found..");
 
-            throw new ResourceNotFoundException("Resource With Node Address:[" + nodeAddress + "] and Class: [" + className + "] Not Found in Domain:" + domain.getDomainName());
+            throw new ResourceNotFoundException("2 Resource With Node Address:[" + nodeAddress + "] and Class: [" + className + "] Not Found in Domain:" + domain.getDomainName());
         }
     }
 
@@ -406,7 +419,9 @@ public class ArangoDao {
      */
     public ManagedResource findManagedResource(String name, String nodeAddress, String className, DomainDTO domain) throws ResourceNotFoundException, ArangoDaoException {
         HashMap<String, Object> bindVars = new HashMap<>();
-        bindVars.put("name", name);
+        if (name != null) {
+            bindVars.put("name", name);
+        }
         bindVars.put("className", className);
 
         String aql = "FOR doc IN "
@@ -446,7 +461,7 @@ public class ArangoDao {
             return resources.get(0);
         }
         logger.warn("Resource with name:[" + name + "] nodeAddress:[" + nodeAddress + "] className:[" + className + "] was not found..");
-        throw new ResourceNotFoundException("Resource With Name:[" + name + "] and Class: [" + className + "] Not Found in Domain:" + domain.getDomainName());
+        throw new ResourceNotFoundException("5 Resource With Name:[" + name == null ? nodeAddress : name + "] and Class: [" + className + "] Not Found in Domain:" + domain.getDomainName());
     }
 
     public ManagedResource findManagedResourceById(String resourceId, DomainDTO domain) throws ResourceNotFoundException, ArangoDaoException {
@@ -465,6 +480,36 @@ public class ArangoDao {
         } else {
             throw new ResourceNotFoundException("Resource WITH id[" + resourceId + "] not found in domain:" + domain.getDomainName());
         }
+    }
+
+    public GraphList<ResourceConnection> findRelatedConnections(BasicResource resource) {
+        Long start = System.currentTimeMillis();
+        String aql = "for doc in " + resource.getDomain().getConnections() + " FILTER";
+        aql += " doc._from == @fromId OR doc._to == @toId return doc";
+
+//         String aql = "FOR doc IN " +resource.getDomain().getConnections() + " \n"
+//                + "   filter @resourceId in doc.relatedNodes[*] \n"
+//                + " return doc";
+//        
+        HashMap<String, Object> bindVars = new HashMap<>();
+        bindVars.put("fromId", resource.getId());
+        bindVars.put("toId", resource.getId());
+
+//        logger.debug("RUNNING: AQL:[" + aql + "]");
+//        logger.debug("\tBindings:");
+//        bindVars.forEach((k, v) -> {
+//            logger.debug("\t  [@" + k + "]=[" + v + "]");
+//
+//        });
+        ArangoCursor<ResourceConnection> cursor = this.database.query(aql,
+                bindVars, new AqlQueryOptions().count(true).batchSize(5000), ResourceConnection.class);
+        GraphList<ResourceConnection> result = new GraphList< ResourceConnection>(cursor);
+        Long end = System.currentTimeMillis();
+        Long took = end - start;
+        if (took > 100) {
+            logger.warn("TOOK [" + took + "] ms to get Related Resources");
+        }
+        return result;
     }
 
     /**
@@ -501,9 +546,9 @@ public class ArangoDao {
             if (connection.getFrom().getNodeAddress() != null
                     && connection.getFrom().getClassName() != null
                     && connection.getFrom().getDomainName() != null) {
-                aql += " and  doc.from.nodeAddress == @fromNodeAddress ";
-                aql += " and  doc.from.className   == @fromClassName ";
-                aql += " and  doc.from.domainName  == @fromDomainName ";
+                aql += " and  doc.fromResource.nodeAddress == @fromNodeAddress ";
+                aql += " and  doc.fromResource.className   == @fromClassName ";
+                aql += " and  doc.fromResource.domainName  == @fromDomainName ";
 
                 bindVars.put("fromNodeAddress", connection.getFrom().getNodeAddress());
                 bindVars.put("fromClassName", connection.getFrom().getClassName());
@@ -516,9 +561,9 @@ public class ArangoDao {
             if (connection.getTo().getNodeAddress() != null
                     && connection.getTo().getClassName() != null
                     && connection.getTo().getDomainName() != null) {
-                aql += " and  doc.to.nodeAddress == @toNodeAddress ";
-                aql += " and  doc.to.className   == @toClassName ";
-                aql += " and  doc.to.domainName  == @toDomainName ";
+                aql += " and  doc.toResource.nodeAddress == @toNodeAddress ";
+                aql += " and  doc.toResource.className   == @toClassName ";
+                aql += " and  doc.toResource.domainName  == @toDomainName ";
 
                 bindVars.put("toNodeAddress", connection.getTo().getNodeAddress());
                 bindVars.put("toClassName", connection.getTo().getClassName());
@@ -551,7 +596,7 @@ public class ArangoDao {
             return resultList.get(0);
         }
         logger.warn("Resource with name:[" + connection.getName() + "] nodeAddress:[" + connection.getNodeAddress() + "] className:[" + connection.getClassName() + "] was not found..");
-        throw new ResourceNotFoundException("Resource With Name:[" + connection.getName() + "] and Class: [" + connection.getClassName() + "] Not Found in Domain:" + connection.getDomainName());
+        throw new ResourceNotFoundException("3 Resource With Name:[" + connection.getName() + "] and Class: [" + connection.getClassName() + "] Not Found in Domain:" + connection.getDomainName());
 
     }
 
@@ -605,7 +650,7 @@ public class ArangoDao {
         }
 //        }
         logger.warn("Resource with name:[" + resource.getName() + "] nodeAddress:[" + resource.getNodeAddress() + "] className:[" + resource.getClassName() + "] was not found..");
-        throw new ResourceNotFoundException("Resource With Name:[" + resource.getName() + "] and Class: [" + resource.getClassName() + "] Not Found in Domain:" + resource.getDomainName());
+        throw new ResourceNotFoundException("4 Resource With Name:[" + resource.getName() + "] and Class: [" + resource.getClassName() + "] Not Found in Domain:" + resource.getDomainName());
     }
 
     /**
@@ -715,4 +760,75 @@ public class ArangoDao {
 
     }
 
+    /**
+     * Aqui vamos fazer a busca retorna um stream de dados
+     *
+     * @param schemaName
+     */
+    public GraphList<BasicResource> findManagedResourcesBySchemaName(String schemaName, DomainDTO domain) {
+        //
+        // Dynamic apply the query for the nodes
+        //
+        String aql = "FOR doc IN " + domain.getNodes() + " \n"
+                + "   filter   doc.attributeSchemaName  == @attributeSchemaName "
+                + "return doc \n";
+
+        HashMap<String, Object> bindVars = new HashMap<>();
+        bindVars.put("attributeSchemaName", schemaName);
+        ArangoCursor<BasicResource> cursor = this.database.query(aql, bindVars, new AqlQueryOptions().count(true).batchSize(5000), BasicResource.class);
+        GraphList<BasicResource> result = new GraphList< BasicResource>(cursor);
+
+        return result;
+    }
+
+    /**
+     * Update the Basic Resource back
+     *
+     * @param resource
+     * @return
+     */
+    public BasicResource updateBasicResource(BasicResource resource) {
+        resource.setLastModifiedDate(new Date());
+        DocumentUpdateEntity<BasicResource> result = this.database.collection(resource.getDomain().getNodes()).updateDocument(resource.getUid(), resource, new DocumentUpdateOptions().returnNew(true).returnOld(true).keepNull(false).waitForSync(false), BasicResource.class);
+        BasicResource resultResource = result.getNew();
+        //
+        // Update the related dependencies
+        //
+        try {
+            this.findRelatedConnections(resultResource).forEach((c) -> {
+                if (c.getFrom().getUid().equals(resultResource.getUid())) {
+                    //
+                    // Update from
+                    //
+                    c.setFrom(resultResource);
+//                    logger.debug("Updating Related FROM:[" + c.getFrom().getUid() + "]");
+                } else if (c.getTo().getUid().equals(resultResource.getUid())) {
+                    //
+                    // Update to
+                    //
+                    c.setTo(resultResource);
+//                    logger.debug("Updating Related TO:[" + c.getTo().getUid() + "]");
+
+                }
+
+                this.updateResourceConnection(c);
+
+            });
+        } catch (IOException | IllegalStateException ex) {
+            logger.error("Failed to Update Resource Connection Relation", ex);
+        }
+        return resultResource;
+    }
+
+    /**
+     * Update the Basic Resource back
+     *
+     * @param resource
+     * @return
+     */
+//    public ResourceConnection updateResourceConnection(ResourceConnection resource) {
+//        resource.setLastModifiedDate(new Date());
+//        DocumentUpdateEntity<BasicResource> result = this.database.collection(resource.getDomain().getNodes()).updateDocument(resource.getUid(), resource, new DocumentUpdateOptions().returnNew(true).returnOld(true).keepNull(false).waitForSync(false), BasicResource.class);
+//        return result.getNew();
+//    }
 };

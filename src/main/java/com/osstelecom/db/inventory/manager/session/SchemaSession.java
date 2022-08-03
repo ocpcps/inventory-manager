@@ -22,6 +22,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalListener;
 import com.google.common.cache.RemovalNotification;
 import com.osstelecom.db.inventory.manager.configuration.ConfigurationManager;
+import com.osstelecom.db.inventory.manager.events.ResourceSchemaUpdatedEvent;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
 import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.SchemaNotFoundException;
@@ -45,7 +46,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.util.ClassUtils;
 
 /**
  *
@@ -64,6 +64,9 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
 
     @Autowired
     private ConfigurationManager configurationManager;
+
+    @Autowired
+    private EventManagerSession eventManager;
 
     /**
      * Local Cache keeps the Schema for 1 Minute in memory
@@ -89,12 +92,13 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
 
     /**
      * Smartly reads the schema definition from disk
+     *
      * @param schemaName
      * @param result
      * @param loadInherited
      * @return
      * @throws SchemaNotFoundException
-     * @throws GenericException 
+     * @throws GenericException
      */
     private ResourceSchemaModel loadSchema(String schemaName, ResourceSchemaModel result, Boolean loadInherited) throws SchemaNotFoundException, GenericException {
         if (this.schemaDir == null) {
@@ -237,45 +241,64 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
      * @throws AttributeConstraintViolationException
      */
     public void validateResourceSchema(BasicResource resource) throws AttributeConstraintViolationException {
+        if (resource.getSchemaModel().getAllowAll() == null) {
+            resource.getSchemaModel().setAllowAll(false);
+        }
         if (!resource.getSchemaModel().getAllowAll()) {
 
             for (String key : resource.getAttributes().keySet()) {
                 if (!resource.getSchemaModel().getAttributes().containsKey(key)) {
+                    resource.getSchemaModel().setIsValid(false);
                     throw new AttributeConstraintViolationException("Invalid Attribute named:[" + key + "] for model: [" + resource.getSchemaModel().getSchemaName() + "]");
+
                 }
             }
 
             //
             // Valida os campos obrigatórios...
             //
-            for (ResourceAttributeModel entry : resource.getSchemaModel().getAttributes().values()) {
-                if (entry.getRequired()) {
-                    if (!resource.getAttributes().containsKey(entry.getName())) {
-                        if (entry.getDefaultValue() != null) {
-                            resource.getAttributes().put(entry.getName(), getAttributeValue(entry, entry.getDefaultValue()));
-                        } else {
-                            //
-                            // Lança a exception de validação
-                            //
-                            throw new AttributeConstraintViolationException("Missing Required Attribute Named:[" + entry.getName() + "]");
-                        }
-                    } else {
-                        resource.getAttributes().put(entry.getName(), getAttributeValue(entry, resource.getAttributes().get(entry.getName())));
+            try {
+                for (ResourceAttributeModel entry : resource.getSchemaModel().getAttributes().values()) {
+                    if (entry.getRequired() == null) {
+                        entry.setRequired(false);
                     }
-                } else {
-                    if (!resource.getAttributes().containsKey(entry.getName())) {
-                        if (entry.getDefaultValue() != null) {
-                            resource.getAttributes().put(entry.getName(), getAttributeValue(entry, entry.getDefaultValue()));
+                    if (entry.getRequired()) {
+                        if (!resource.getAttributes().containsKey(entry.getName())) {
+                            if (entry.getDefaultValue() != null) {
+                                resource.getAttributes().put(entry.getName(), getAttributeValue(entry, entry.getDefaultValue()));
+                            } else {
+                                //
+                                // Lança a exception de validação
+                                //
+                                resource.getSchemaModel().setIsValid(false);
+
+                                throw new AttributeConstraintViolationException("Missing Required Attribute Named:[" + entry.getName() + "]");
+                            }
                         } else {
-                            //
-                            // Isso pode gerar inconsistencia
-                            //
+                            resource.getAttributes().put(entry.getName(), getAttributeValue(entry, resource.getAttributes().get(entry.getName())));
                         }
                     } else {
-                        resource.getAttributes().put(entry.getName(), getAttributeValue(entry, resource.getAttributes().get(entry.getName())));
+                        if (!resource.getAttributes().containsKey(entry.getName())) {
+                            if (entry.getDefaultValue() != null) {
+                                resource.getAttributes().put(entry.getName(), getAttributeValue(entry, entry.getDefaultValue()));
+                            } else {
+                                //
+                                // Isso pode gerar inconsistencia
+                                //
+                            }
+                        } else {
+                            resource.getAttributes().put(entry.getName(), getAttributeValue(entry, resource.getAttributes().get(entry.getName())));
+                        }
                     }
                 }
+                resource.getSchemaModel().setIsValid(true);
+            } catch (AttributeConstraintViolationException acve) {
+                resource.getSchemaModel().setIsValid(false);
+                throw acve;
             }
+            resource.getSchemaModel().setIsValid(true);
+        } else {
+            resource.getSchemaModel().setIsValid(true);
         }
     }
 
@@ -429,9 +452,10 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
 
                     if (!original.getAttributes().containsKey(updateAttrName)) {
                         //
-                        // Easy Part
+                        // Easy Part, new attribute
                         //
                         original.getAttributes().put(updateAttrName, updateModel);
+                        original.setAttributesChanged(true);
                     } else {
                         //
                         // Hard Part
@@ -478,6 +502,13 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                                 }
                             }
 
+                            if (updateModel.getDefaultValue() != null) {
+                                if (!updateModel.getDefaultValue().equals(originalAttributeModel.getDefaultValue())) {
+                                    originalAttributeModel.setDefaultValue(updateModel.getDefaultValue());
+                                    original.setAttributesChanged(true);
+                                }
+                            }
+
                         }
                         //
                         // Do not need to show this to the user and file..
@@ -492,8 +523,15 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
 
         }
 
-        this.writeModelToDisk(original, true);
-        this.clearSchemaCache();
+        if (original.getAttributesChanged()) {
+
+            this.writeModelToDisk(original, true);
+            this.clearSchemaCache();
+            //
+            // Notifica o Message Bus da Atualização
+            // 
+            eventManager.notifyEvent(new ResourceSchemaUpdatedEvent(original));
+        }
         return this.loadSchema(original.getSchemaName());
     }
 

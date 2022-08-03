@@ -39,6 +39,7 @@ public class ResourceSchemaModel {
     private String author;
     private Boolean allowAll;
     private Boolean attributesChanged = false;
+    private Boolean isValid = true;
     private HashMap<String, ResourceAttributeModel> attributes = new HashMap<>();
 
     /**
@@ -131,6 +132,19 @@ public class ResourceSchemaModel {
     public void setAttributesChanged(Boolean attributesChanged) {
         this.attributesChanged = attributesChanged;
     }
-    
+
 //    public void setDoRemove(Boolean do)
+    /**
+     * @return the isValid
+     */
+    public Boolean getIsValid() {
+        return isValid;
+    }
+
+    /**
+     * @param isValid the isValid to set
+     */
+    public void setIsValid(Boolean isValid) {
+        this.isValid = isValid;
+    }
 }

@@ -111,9 +111,10 @@ public class InventoryApi extends BaseApi {
      */
     @AuthenticatedCall(role = {"user"})
     @PutMapping(path = "/{domain}/resource", produces = "application/json", consumes = "application/json")
-    public CreateManagedResourceResponse createManagedResource(@RequestBody String requestBody, @PathVariable("domain") String domain) throws GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, InvalidRequestException, DomainNotFoundException, ArangoDaoException {
+    public CreateManagedResourceResponse createManagedResource(@RequestBody CreateManagedResourceRequest request, @PathVariable("domain") String domain) throws GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, InvalidRequestException, DomainNotFoundException, ArangoDaoException {
         try {
-            CreateManagedResourceRequest request = gson.fromJson(requestBody, CreateManagedResourceRequest.class);
+//            CreateManagedResourceRequest request = gson.fromJson(requestBody, CreateManagedResourceRequest.class);
+            
             request.setRequestDomain(domain);
             return resourceSession.createManagedResource(request);
         } catch (ArangoDBException ex) {
@@ -123,6 +124,16 @@ public class InventoryApi extends BaseApi {
         }
     }
 
+    /**
+     * Find Managed Resource By ID
+     * @param domain
+     * @param resourceId
+     * @return
+     * @throws InvalidRequestException
+     * @throws DomainNotFoundException
+     * @throws ResourceNotFoundException
+     * @throws ArangoDaoException 
+     */
     @AuthenticatedCall(role = {"user"})
     @GetMapping(path = "/{domain}/resource/{resourceId}", produces = "application/json")
     public FindManagedResourceResponse findManagedResourceById(@PathVariable("domain") String domain, @PathVariable("resourceId") String resourceId) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
@@ -227,8 +238,8 @@ public class InventoryApi extends BaseApi {
      */
     @AuthenticatedCall(role = {"user"})
     @PutMapping(path = "/{domain}/circuit/path", produces = "application/json", consumes = "application/json")
-    public CreateCircuitPathResponse createCircuitPath(@RequestBody String strReq, @PathVariable("domain") String domain) throws ArangoDaoException, ResourceNotFoundException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, AttributeConstraintViolationException, DomainNotFoundException {
-        CreateCircuitPathRequest request = gson.fromJson(strReq, CreateCircuitPathRequest.class);
+    public CreateCircuitPathResponse createCircuitPath(@RequestBody CreateCircuitPathRequest request, @PathVariable("domain") String domain) throws ArangoDaoException, ResourceNotFoundException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, AttributeConstraintViolationException, DomainNotFoundException {
+//        CreateCircuitPathRequest request = gson.fromJson(strReq, CreateCircuitPathRequest.class);
         request.setRequestDomain(domain);
         return resourceSession.createCircuitPath(request);
     }
@@ -249,8 +260,8 @@ public class InventoryApi extends BaseApi {
      */
     @AuthenticatedCall(role = {"user"})
     @PostMapping(path = "/{domain}/circuit/path", produces = "application/json", consumes = "application/json")
-    public CreateCircuitPathResponse getCircuitPath(@RequestBody String strReq, @PathVariable("domain") String domain) throws ArangoDaoException, ResourceNotFoundException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, AttributeConstraintViolationException, DomainNotFoundException {
-        GetCircuitPathRequest request = gson.fromJson(strReq, GetCircuitPathRequest.class);
+    public CreateCircuitPathResponse getCircuitPath(@RequestBody GetCircuitPathRequest request, @PathVariable("domain") String domain) throws ArangoDaoException, ResourceNotFoundException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, AttributeConstraintViolationException, DomainNotFoundException {
+//        GetCircuitPathRequest request = gson.fromJson(strReq, GetCircuitPathRequest.class);
         request.setRequestDomain(domain);
         return resourceSession.getCircuitPath(request);
     }

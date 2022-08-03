@@ -272,6 +272,15 @@ public class ResourceSession {
         return response;
     }
 
+    /**
+     * Creates a Circuit Path, 
+     * @todo: colocar validação de A-Z Point
+     * @param request
+     * @return
+     * @throws DomainNotFoundException
+     * @throws ResourceNotFoundException
+     * @throws ArangoDaoException 
+     */
     public CreateCircuitPathResponse createCircuitPath(CreateCircuitPathRequest request) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
         CreateCircuitPathResponse r = new CreateCircuitPathResponse(request.getPayLoad());
         //
@@ -300,7 +309,7 @@ public class ResourceSession {
                         circuit = domainManager.updateCircuitResource(circuit);
                     }
                 } else {
-                    System.out.println("ALREADY HEREEE!!!");
+//                    System.out.println("ALREADY HEREEE!!!");
                 }
                 resolved.add(b);
 
@@ -428,4 +437,6 @@ public class ResourceSession {
 
         return response;
     }
+    
+    
 }

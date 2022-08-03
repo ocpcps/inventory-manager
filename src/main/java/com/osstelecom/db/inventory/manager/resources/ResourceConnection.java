@@ -17,7 +17,6 @@
 package com.osstelecom.db.inventory.manager.resources;
 
 import com.arangodb.entity.DocumentField;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.osstelecom.db.inventory.manager.dto.DomainDTO;
 import java.util.ArrayList;
 
@@ -25,11 +24,13 @@ import java.util.ArrayList;
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  */
-
 public class ResourceConnection extends BasicResource {
 
-    private BasicResource from;
-    private BasicResource to;
+    /**
+     * Renamed to avoid confusion
+     */
+    private BasicResource fromResource;
+    private BasicResource toResource;
     private Boolean propagateCapacity;
     private Boolean propagateConsuption;
     private Boolean propagateOperStatus;
@@ -39,6 +40,8 @@ public class ResourceConnection extends BasicResource {
     private String _fromUid;
     @DocumentField(DocumentField.Type.TO)
     private String _toUid;
+
+    private ArrayList<String> relatedNodes = new ArrayList<>();
 
     private ArrayList<String> circuits = new ArrayList<>();
 
@@ -55,13 +58,19 @@ public class ResourceConnection extends BasicResource {
     }
 
     public void setFrom(BasicResource resource) {
-        this.from = resource;
+        this.fromResource = resource;
         this.setFromUid(this.getDomain().getNodes() + "/" + resource.getUid());
+        if (!this.relatedNodes.contains(this.getFromUid())){
+            this.relatedNodes.add(this.getFromUid());
+        }
     }
 
     public void setTo(BasicResource resource) {
-        this.to = resource;
+        this.toResource = resource;
         this.setToUid(this.getDomain().getNodes() + "/" + resource.getUid());
+        if (!this.relatedNodes.contains(this.getToUid())){
+            this.relatedNodes.add(this.getToUid());
+        }
     }
 
     /**
@@ -72,7 +81,7 @@ public class ResourceConnection extends BasicResource {
     }
 
     /**
-     * @param propagateCapacity the propagateCapacity to set
+     * @param propagateCapacity the propagateCapacity toResource set
      */
     public void setPropagateCapacity(Boolean propagateCapacity) {
         this.propagateCapacity = propagateCapacity;
@@ -86,7 +95,7 @@ public class ResourceConnection extends BasicResource {
     }
 
     /**
-     * @param propagateConsuption the propagateConsuption to set
+     * @param propagateConsuption the propagateConsuption toResource set
      */
     public void setPropagateConsuption(Boolean propagateConsuption) {
         this.propagateConsuption = propagateConsuption;
@@ -100,7 +109,7 @@ public class ResourceConnection extends BasicResource {
     }
 
     /**
-     * @param bidirectionalConsuptions the bidirectionalConsuptions to set
+     * @param bidirectionalConsuptions the bidirectionalConsuptions toResource set
      */
     public void setBidirectionalConsuptions(Boolean bidirectionalConsuptions) {
         this.bidirectionalConsuptions = bidirectionalConsuptions;
@@ -114,7 +123,7 @@ public class ResourceConnection extends BasicResource {
     }
 
     /**
-     * @param bidirectionCapacity the bidirectionCapacity to set
+     * @param bidirectionCapacity the bidirectionCapacity toResource set
      */
     public void setBidirectionCapacity(Boolean bidirectionCapacity) {
         this.bidirectionCapacity = bidirectionCapacity;
@@ -128,7 +137,7 @@ public class ResourceConnection extends BasicResource {
     }
 
     /**
-     * @param propagateOperStatus the propagateOperStatus to set
+     * @param propagateOperStatus the propagateOperStatus toResource set
      */
     public void setPropagateOperStatus(Boolean propagateOperStatus) {
         this.propagateOperStatus = propagateOperStatus;
@@ -138,14 +147,14 @@ public class ResourceConnection extends BasicResource {
      * @return the _from
      */
     public BasicResource getFrom() {
-        return from;
+        return fromResource;
     }
 
     /**
      * @return the _to
      */
     public BasicResource getTo() {
-        return to;
+        return toResource;
     }
 
     /**
@@ -156,7 +165,7 @@ public class ResourceConnection extends BasicResource {
     }
 
     /**
-     * @param _fromUid the _fromUid to set
+     * @param _fromUid the _fromUid toResource set
      */
     public void setFromUid(String _fromUid) {
         this._fromUid = _fromUid;
@@ -170,7 +179,7 @@ public class ResourceConnection extends BasicResource {
     }
 
     /**
-     * @param _toUid the _toUid to set
+     * @param _toUid the _toUid toResource set
      */
     public void setToUid(String _toUid) {
         this._toUid = _toUid;
@@ -184,10 +193,17 @@ public class ResourceConnection extends BasicResource {
     }
 
     /**
-     * @param circuits the circuits to set
+     * @param circuits the circuits toResource set
      */
     public void setCircuits(ArrayList<String> circuits) {
         this.circuits = circuits;
+    }
+
+    /**
+     * @return the relatedNodes
+     */
+    public ArrayList<String> getRelatedNodes() {
+        return relatedNodes;
     }
 
 }

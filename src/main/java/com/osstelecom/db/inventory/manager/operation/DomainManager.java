@@ -18,6 +18,7 @@ package com.osstelecom.db.inventory.manager.operation;
 
 import com.arangodb.entity.DocumentCreateEntity;
 import com.arangodb.entity.DocumentUpdateEntity;
+import com.osstelecom.db.inventory.graph.arango.GraphList;
 import com.osstelecom.db.inventory.manager.configuration.ConfigurationManager;
 import com.osstelecom.db.inventory.manager.dao.ArangoDao;
 import com.osstelecom.db.inventory.manager.dto.DomainDTO;
@@ -30,6 +31,7 @@ import com.osstelecom.db.inventory.manager.events.DomainCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.ResourceConnectionCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.ManagedResourceCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.ResourceLocationCreatedEvent;
+import com.osstelecom.db.inventory.manager.events.ResourceSchemaUpdatedEvent;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.DomainAlreadyExistsException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
@@ -56,11 +58,14 @@ import com.osstelecom.db.inventory.topology.DefaultTopology;
 import com.osstelecom.db.inventory.topology.ITopology;
 import com.osstelecom.db.inventory.topology.node.DefaultNode;
 import com.osstelecom.db.inventory.topology.node.INetworkNode;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.PreDestroy;
@@ -136,6 +141,15 @@ public class DomainManager {
         return domains.get(domainName);
     }
 
+    public ArrayList<DomainDTO> getAllDomains() {
+        ArrayList<DomainDTO> result = new ArrayList<>();
+
+        this.domains.forEach((name, domain) -> {
+            result.add(domain);
+        });
+        return result;
+    }
+
     public DomainManager() {
 
     }
@@ -158,8 +172,8 @@ public class DomainManager {
             resource.setSchemaModel(schemaModel);
             schemaSession.validateResourceSchema(resource);       //  
             dynamicRuleSession.evalResource(resource, "I", this); // <--- Pode não ser verdade , se a chave for duplicada..
-                                                                  // 
-                                                                  
+            // 
+
             DocumentCreateEntity<ManagedResource> result = arangoDao.createManagedResource(resource);
             resource.setUid(result.getId());
             resource.setRevisionId(result.getRev());
@@ -315,15 +329,21 @@ public class DomainManager {
             lockManager.lock();
             connection.setUid(this.getUUID());
 
-            DomainDTO domain = this.getDomain(connection.getDomain().getDomainName());
+//            DomainDTO domain = this.getDomain(connection.getDomain().getDomainName());
             ResourceSchemaModel schemaModel = schemaSession.loadSchema(connection.getAttributeSchemaName());
             connection.setSchemaModel(schemaModel);
             schemaSession.validateResourceSchema(connection);
             dynamicRuleSession.evalResource(connection, "I", this);
-//            arangoDao.createConnection(connection);
+            //
+            // Creates the connection on DB
+            //
             DocumentCreateEntity<ResourceConnection> result = arangoDao.createConnection(connection);
             connection.setUid(result.getId());
             connection.setRevisionId(result.getRev());
+            //
+            // Update Edges
+            //
+
             ResourceConnectionCreatedEvent event = new ResourceConnectionCreatedEvent(connection.getFrom(), connection.getTo(), connection);
             eventManager.notifyEvent(event);
             return connection;
@@ -352,8 +372,8 @@ public class DomainManager {
             connection.setUid(this.getUUID());
             connection.setFrom(from);
             connection.setTo(to);
-//            connection.setAtomId(this.getAtomId());
 
+//            connection.setAtomId(this.getAtomId());
             connection.setAtomId(connection.getDomain().addAndGetId());
             //
             // Notifica o Elemento Origem para Computar o Consumo de recursos se necessário
@@ -393,6 +413,18 @@ public class DomainManager {
         return this.findManagedResource(resource.getName(), resource.getNodeAddress(), resource.getClassName(), resource.getDomain().getDomainName());
     }
 
+    /**
+     * Busca o Managed Resource
+     *
+     * @param name
+     * @param nodeAdrress
+     * @param className
+     * @param domainName
+     * @return
+     * @throws ResourceNotFoundException
+     * @throws DomainNotFoundException
+     * @throws ArangoDaoException
+     */
     public ManagedResource findManagedResource(String name, String nodeAdrress, String className, String domainName) throws ResourceNotFoundException, DomainNotFoundException, ArangoDaoException {
         String timerId = startTimer("findResourceLocation");
         try {
@@ -435,14 +467,15 @@ public class DomainManager {
     }
 
     /**
-     * Inicia os dominios conhecidoss
+     * Inicia os dominios conhecidos
      */
     @EventListener(ApplicationReadyEvent.class)
     private void onStartUp() throws ArangoDaoException {
         this.arangoDao.getDomains().forEach(d -> {
-            logger.debug("\tFound Domain: [" + d.getDomainName() + "]");
+            logger.debug("\tFound Domain: [" + d.getDomainName() + "] Atomic ID:[" + d.getAtomicId() + "]");
             this.domains.put(d.getDomainName(), d);
         });
+        this.eventManager.setDomainManager(this);
 
     }
 
@@ -455,6 +488,7 @@ public class DomainManager {
 
     }
 
+    
     public void abortTransaction() throws ScriptRuleException {
         this.abortTransaction("Generic Aborted by script... no cause specified");
     }
@@ -793,5 +827,56 @@ public class DomainManager {
             return arangoDao.getConnectionsByFilter(filter, domain);
         }
         return null;
+    }
+
+    public GraphList<BasicResource> findManagedResourcesBySchemaName(ResourceSchemaModel model, DomainDTO domain) {
+        return arangoDao.findManagedResourcesBySchemaName(model.getSchemaName(), domain);
+    }
+
+    public void processSchemaUpdatedEvent(ResourceSchemaUpdatedEvent update) {
+        /**
+         * Here we need to find all resources that are using the schema, update
+         * ip, check validations and save it back to the database. Schemas are
+         * shared between all domains so we need to check all Domains..
+         */
+
+        for (DomainDTO domain : this.getAllDomains()) {
+            //
+            // Update the schema on each domain
+            //
+            logger.debug("Updating Schema[" + update.getModel().getSchemaName() + "] On Domain:[" + domain.getDomainName() + "]");
+            GraphList<BasicResource> nodesToUpdate = this.findManagedResourcesBySchemaName(update.getModel(), domain);
+            logger.debug("Found " + nodesToUpdate.size() + " Elements to Update");
+
+            try {
+
+                ResourceSchemaModel model = this.schemaSession.loadSchema(update.getModel().getSchemaName());
+                AtomicLong totalProcessed = new AtomicLong(0L);
+                nodesToUpdate.forEachParallel(resource -> {
+
+                    try {
+
+                        resource.setSchemaModel(model);
+                        schemaSession.validateResourceSchema(resource);
+
+                    } catch (AttributeConstraintViolationException ex) {
+                        //
+                        // resource is invalid model.
+                        //
+
+                        logger.error("Failed to Validate Attributes", ex);
+                    }
+
+                    arangoDao.updateBasicResource(resource);
+                    if (totalProcessed.incrementAndGet() % 1000 == 0) {
+                        logger.debug("Updated " + totalProcessed.get() + " Records");
+                    }
+
+                });
+            } catch (IOException | IllegalStateException | GenericException | SchemaNotFoundException ex) {
+                logger.error("Failed to update Resource Schema Model", ex);
+            }
+            logger.debug("Updating Schema[" + update.getModel().getSchemaName() + "] On Domain:[" + domain.getDomainName() + "] DONE");
+        }
     }
 }
