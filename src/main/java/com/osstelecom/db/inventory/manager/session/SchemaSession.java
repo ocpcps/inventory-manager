@@ -100,7 +100,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
      * @throws SchemaNotFoundException
      * @throws GenericException
      */
-    private ResourceSchemaModel loadSchema(String schemaName, ResourceSchemaModel result, Boolean loadInherited) throws SchemaNotFoundException, GenericException {
+    private synchronized ResourceSchemaModel loadSchema(String schemaName, ResourceSchemaModel result, Boolean loadInherited) throws SchemaNotFoundException, GenericException {
         if (this.schemaDir == null) {
             this.schemaDir = configurationManager.loadConfiguration().getSchemaDir();
         }
@@ -117,7 +117,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
             //
             // Retrieves from cache
             //
-            logger.debug("Cache HIT on Schema: [" + schemaName + "]");
+            logger.debug("4 - Cache HIT on Schema: [" + schemaName + "] loadInherited(" + loadInherited + ")");
             return loadedModel;
         }
         if (loadedModel == null) {
@@ -127,7 +127,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
             // Não tenho no cache vou ler do disco
             //
             File f = new File(this.schemaDir + "/" + schemaName + ".json");
-            logger.debug("Trying to load Schema from: [" + schemaName + "] From File: " + f.toString());
+            logger.debug("1 - Trying to load Schema from: [" + schemaName + "] From File: " + f.toString());
             if (f.exists()) {
                 try {
                     //
@@ -158,9 +158,8 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
         //
         // Loaded Resource now..
         //
-        logger.debug("Loaded  SchemaName: [" + loadedModel.getSchemaName() + "]");
+        logger.debug("2 - Loaded  SchemaName: [" + loadedModel.getSchemaName() + "]");
 
-        logger.debug("Schema :[" + schemaName + "] Saved to cache");
         if (loadInherited) {
             for (Map.Entry<String, ResourceAttributeModel> entry : loadedModel.getAttributes().entrySet()) {
                 String key = entry.getKey();
@@ -176,13 +175,15 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
             }
 
             if (!loadedModel.getFromSchema().equals(".")) {
+                logger.debug("2.1 - Loadeding  SchemaName: [" + loadedModel.getFromSchema() + "] FROM:[" + loadedModel.getSchemaName() + "]");
                 return this.loadSchema(loadedModel.getFromSchema(), result, true);
             }
             //
             // Just cache loadInherited
             //
-            logger.debug("CACHED:" + result.getSchemaName());
+//            logger.debug("CACHED:" + result.getSchemaName());
             this.schemaCache.put(result.getSchemaName(), result);
+            logger.debug("3 - Schema :[" + schemaName + "] Saved to cache: [" + this.schemaDir + "/" + schemaName + ".json]");
         }
         return result;
     }
