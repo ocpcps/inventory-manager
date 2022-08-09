@@ -24,6 +24,7 @@ import com.osstelecom.db.inventory.manager.resources.exception.ConnectionNotFoun
 import com.osstelecom.db.inventory.manager.resources.exception.MetricConstraintException;
 import com.osstelecom.db.inventory.manager.resources.exception.NoResourcesAvailableException;
 import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
 import org.bson.codecs.pojo.annotations.BsonIgnore;
@@ -50,7 +51,6 @@ public class BasicResource {
     private ConsumableMetric consumableMetric;
     private ConsumableMetric consumerMetric;
 
-    
     private String name;
     private String description;
     private String nodeAddress;
@@ -65,6 +65,7 @@ public class BasicResource {
     private String operationalStatus;
     private String businessStatus;
     private String node;
+    private ArrayList<String> tags;
     @DocumentField(DocumentField.Type.KEY)
     private String uid;
     @DocumentField(DocumentField.Type.ID)
@@ -88,6 +89,24 @@ public class BasicResource {
     private ResourceSchemaModel schemaModel;
     @DocumentField(DocumentField.Type.REV)
     private String revisionId;
+
+    public void addTag(String tag) {
+        if (this.tags == null) {
+            this.tags = new ArrayList<>();
+        }
+        if (!this.tags.contains(tag)) {
+            this.tags.add(tag);
+        }
+    }
+
+    public void removeTag(String tag) {
+        if (this.tags.contains(tag)) {
+            this.tags.remove(tag);
+        }
+        if (this.tags.isEmpty()){
+            this.tags = null;
+        }
+    }
 
     /**
      * @param className the className to set

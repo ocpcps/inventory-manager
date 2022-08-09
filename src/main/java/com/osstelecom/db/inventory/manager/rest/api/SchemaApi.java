@@ -41,10 +41,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Handles the Dynamic Schema Mapping and Operations
+ *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 21.07.2022
- * @Changelog:
- * 02-08-2022: Removed GSON fromJson
+ * @Changelog: 02-08-2022: Removed GSON fromJson
  */
 @RestController
 @RequestMapping("inventory/v1/schema")
@@ -81,9 +81,9 @@ public class SchemaApi extends BaseApi {
      */
     @AuthenticatedCall(role = {"user"})
     @PatchMapping(path = "/{schema}", produces = "application/json")
-    public String patchSchameDefinition(@PathVariable("schema") String schemaName, @RequestBody PatchResourceSchemaModelRequest request) throws GenericException, SchemaNotFoundException, InvalidRequestException {
+    public String patchSchameDefinition(@PathVariable("schema") String schemaName, @RequestBody String reqBody) throws GenericException, SchemaNotFoundException, InvalidRequestException {
         try {
-//            PatchResourceSchemaModelRequest request = gson.fromJson(reqBody, PatchResourceSchemaModelRequest.class);
+            PatchResourceSchemaModelRequest request = gson.fromJson(reqBody, PatchResourceSchemaModelRequest.class);
             request.getPayLoad().setSchemaName(schemaName);
             return gson.toJson(new ResourceSchemaResponse(schemaSession.patchSchemaModel(request.getPayLoad())));
         } catch (SchemaNotFoundException ex) {
@@ -103,15 +103,16 @@ public class SchemaApi extends BaseApi {
      */
     @AuthenticatedCall(role = {"user", "operator"})
     @PostMapping(path = "/", produces = "application/json", consumes = "application/json")
-    public String createSchema(@RequestBody CreateResourceSchemaModelRequest model) throws GenericException, SchemaNotFoundException, InvalidRequestException {
-//        CreateResourceSchemaModelRequest model = gson.fromJson(reqBody, CreateResourceSchemaModelRequest.class);
+    public String createSchema(@RequestBody String reqBody) throws GenericException, SchemaNotFoundException, InvalidRequestException {
+        CreateResourceSchemaModelRequest model = gson.fromJson(reqBody, CreateResourceSchemaModelRequest.class);
         ResourceSchemaModel createdModel = this.schemaSession.createResourceSchemaModel(model.getPayLoad());
         return gson.toJson(new CreateResourceSchemaModelResponse(createdModel));
     }
 
     /**
      * clears the schema cache
-     * @return 
+     *
+     * @return
      */
     @AuthenticatedCall(role = {"user", "operator"})
     @PostMapping(path = "/cache/clear", produces = "application/json")
@@ -122,7 +123,8 @@ public class SchemaApi extends BaseApi {
 
     /**
      * list cached entries
-     * @return 
+     *
+     * @return
      */
     @AuthenticatedCall(role = {"user", "operator"})
     @GetMapping(path = "/cache", produces = "application/json")

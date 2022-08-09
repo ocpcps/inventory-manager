@@ -19,8 +19,11 @@ package com.osstelecom.db.inventory.graph.arango;
 
 import com.arangodb.ArangoCursor;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 /**
@@ -66,12 +69,17 @@ public class GraphList<T> implements AutoCloseable {
     public void forEach(Consumer<? super T> action) throws IOException, IllegalStateException {
         Objects.requireNonNull(action);
         if (!this.closedCursor) {
-
-            this.cursor.forEachRemaining(data -> {
-                action.accept(data);
-            });
-            this.cursor.close();
-            this.closedCursor = true;
+            try {
+                this.cursor.forEachRemaining(data -> {
+                    action.accept(data);
+                });
+            } finally {
+                //
+                // make sure the cursor is closed
+                //
+                this.cursor.close();
+                this.closedCursor = true;
+            }
         } else {
             throw new IllegalStateException("Cursor Closed");
         }
@@ -79,7 +87,7 @@ public class GraphList<T> implements AutoCloseable {
 
     public int size() {
         if (cursor.getCount() == null) {
-            return 0;
+            return -1;
         }
         return cursor.getCount();
     }
@@ -100,5 +108,19 @@ public class GraphList<T> implements AutoCloseable {
         if (!this.closedCursor) {
             this.cursor.close();
         }
+    }
+
+    public ArrayList<T> toList() {
+        ArrayList<T> list = new ArrayList<>();
+        if (!this.closedCursor) {
+            try {
+                this.forEach(e -> {
+                    list.add(e);
+                });
+            } catch (IOException | IllegalStateException ex) {
+                Logger.getLogger(GraphList.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        return list;
     }
 }

@@ -43,7 +43,11 @@ public class CircuitResource extends BasicResource {
     }
 
     private BasicResource aPoint;
+    
     private BasicResource zPoint;
+    
+    private String circuitState;
+    
     private ArrayList<String> circuitPath =new ArrayList<>();
     /**
      * @return the aPoint

@@ -17,15 +17,23 @@
 package com.osstelecom.db.inventory.manager.resources;
 
 import com.osstelecom.db.inventory.manager.dto.DomainDTO;
+import java.util.ArrayList;
 
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  */
-
 public class ServiceResource extends BasicResource {
 
-    
+    /**
+     * IDS of Services that this services depends on, like parent service.
+     */
+    private ArrayList<ServiceResource> dependsOn;
+
+    /**
+     * IDS of Circuits that support this service
+     */
+    private ArrayList<CircuitResource> circuits;
 
     public ServiceResource(String attributeSchema, DomainDTO domain) {
         super(attributeSchema, domain);

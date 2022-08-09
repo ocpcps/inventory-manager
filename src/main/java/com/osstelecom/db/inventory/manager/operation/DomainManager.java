@@ -52,7 +52,7 @@ import com.osstelecom.db.inventory.manager.resources.exception.MetricConstraintE
 import com.osstelecom.db.inventory.manager.resources.exception.NoResourcesAvailableException;
 import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
 import com.osstelecom.db.inventory.manager.session.DynamicRuleSession;
-import com.osstelecom.db.inventory.manager.session.EventManagerSession;
+import com.osstelecom.db.inventory.manager.listeners.EventManagerListener;
 import com.osstelecom.db.inventory.manager.session.SchemaSession;
 import com.osstelecom.db.inventory.topology.DefaultTopology;
 import com.osstelecom.db.inventory.topology.ITopology;
@@ -102,7 +102,7 @@ public class DomainManager {
     private ConfigurationManager configuration;
 
     @Autowired
-    private EventManagerSession eventManager;
+    private EventManagerListener eventManager;
 
     private Logger logger = LoggerFactory.getLogger(DomainManager.class);
 
@@ -440,12 +440,14 @@ public class DomainManager {
         }
     }
 
-    public ManagedResource findManagedResourceById(FindManagedResourceRequest request, String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
+    public ManagedResource findManagedResourceById(FindManagedResourceRequest request) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
         String timerId = startTimer("findManagedResourceById");
         try {
             lockManager.lock();
-            DomainDTO domain = this.getDomain(domainName);
-            request.setResourceId(domain.getNodes() + "/" + request.getResourceId());
+            DomainDTO domain = this.getDomain(request.getRequestDomain());
+            if (!request.getResourceId().contains("/")) {
+                request.setResourceId(domain.getNodes() + "/" + request.getResourceId());
+            }
             ManagedResource resource = arangoDao.findManagedResourceById(request.getResourceId(), domain);
             return resource;
         } finally {
@@ -488,7 +490,6 @@ public class DomainManager {
 
     }
 
-    
     public void abortTransaction() throws ScriptRuleException {
         this.abortTransaction("Generic Aborted by script... no cause specified");
     }
@@ -619,7 +620,6 @@ public class DomainManager {
             DocumentUpdateEntity<CircuitResource> result = arangoDao.updateCircuitResource(resource);
             CircuitResource newResource = result.getNew();
             CircuitResource oldResource = result.getOld();
-
             CircuitResourceUpdatedEvent event = new CircuitResourceUpdatedEvent(oldResource, newResource);
             this.eventManager.notifyEvent(event);
             return newResource;
@@ -631,8 +631,8 @@ public class DomainManager {
         }
     }
 
-    public ArrayList<ResourceConnection> findCircuitPath(CircuitResource circuit) throws ArangoDaoException {
-        return arangoDao.findCircuitPath(circuit);
+    public GraphList<ResourceConnection> findCircuitPath(CircuitResource circuit) throws ArangoDaoException {
+        return arangoDao.getCircuitPath(circuit);
     }
 
     public void findWeakLinks(ArrayList<ResourceConnection> connections, FilterDTO filter) {
@@ -833,6 +833,11 @@ public class DomainManager {
         return arangoDao.findManagedResourcesBySchemaName(model.getSchemaName(), domain);
     }
 
+    /**
+     * Processa a atualização de um schema, isso é altamente custoso
+     *
+     * @param update
+     */
     public void processSchemaUpdatedEvent(ResourceSchemaUpdatedEvent update) {
         /**
          * Here we need to find all resources that are using the schema, update
@@ -852,6 +857,10 @@ public class DomainManager {
 
                 ResourceSchemaModel model = this.schemaSession.loadSchema(update.getModel().getSchemaName());
                 AtomicLong totalProcessed = new AtomicLong(0L);
+
+                //
+                // We need to make this processing multithread.
+                //
                 nodesToUpdate.forEachParallel(resource -> {
 
                     try {
@@ -865,6 +874,10 @@ public class DomainManager {
                         //
 
                         logger.error("Failed to Validate Attributes", ex);
+                        //
+                        // Mark the resource schema model as invalid
+                        //      
+                        resource.getSchemaModel().setIsValid(false);
                     }
 
                     arangoDao.updateBasicResource(resource);

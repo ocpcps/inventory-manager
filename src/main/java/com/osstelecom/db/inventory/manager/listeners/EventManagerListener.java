@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package com.osstelecom.db.inventory.manager.session;
+package com.osstelecom.db.inventory.manager.listeners;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.Subscribe;
@@ -31,7 +31,6 @@ import com.osstelecom.db.inventory.manager.operation.DomainManager;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.logging.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -45,11 +44,11 @@ import org.springframework.stereotype.Service;
  * @created 10.04.2022
  */
 @Service
-public class EventManagerSession implements SubscriberExceptionHandler, Runnable {
+public class EventManagerListener implements SubscriberExceptionHandler, Runnable {
 
     private EventBus eventBus = new EventBus(this);
 
-    private Logger logger = LoggerFactory.getLogger(EventManagerSession.class);
+    private Logger logger = LoggerFactory.getLogger(EventManagerListener.class);
 
     private AtomicLong eventSeq = new AtomicLong(System.currentTimeMillis());
 
@@ -82,8 +81,6 @@ public class EventManagerSession implements SubscriberExceptionHandler, Runnable
      */
     public void notifyEvent(Object event) {
         eventQueue.offer(event);
-
-//        eventSeq.incrementAndGet()
     }
 
     /**
@@ -153,6 +150,8 @@ public class EventManagerSession implements SubscriberExceptionHandler, Runnable
         if (this.domainmanager != null) {
             //
             // Notify the schema session that a schema has changed
+            // Now, it will search for:
+            // Nodes to be updates -> Connections that relies on those nodes
             //
             this.domainmanager.processSchemaUpdatedEvent(update);
         }

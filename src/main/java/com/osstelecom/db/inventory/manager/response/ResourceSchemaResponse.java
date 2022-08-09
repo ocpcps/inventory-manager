@@ -17,7 +17,6 @@
  */
 package com.osstelecom.db.inventory.manager.response;
 
-import com.osstelecom.db.inventory.manager.resources.ServiceResource;
 import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
 
 /**

@@ -30,6 +30,8 @@ public class ConnectionDTO {
     private String fromNodeAddress;
     private String toNodeAddress;
     private String fromClassName;
+    private String fromId;
+    private String toId;
     private String toName;
     private String toClassName;
     private String connectionName;
@@ -220,5 +222,33 @@ public class ConnectionDTO {
      */
     public void setNodeAddress(String nodeAddress) {
         this.nodeAddress = nodeAddress;
+    }
+
+    /**
+     * @return the fromId
+     */
+    public String getFromId() {
+        return fromId;
+    }
+
+    /**
+     * @param fromId the fromId to set
+     */
+    public void setFromId(String fromId) {
+        this.fromId = fromId;
+    }
+
+    /**
+     * @return the toId
+     */
+    public String getToId() {
+        return toId;
+    }
+
+    /**
+     * @param toId the toId to set
+     */
+    public void setToId(String toId) {
+        this.toId = toId;
     }
 }

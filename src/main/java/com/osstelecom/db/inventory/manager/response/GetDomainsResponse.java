@@ -15,28 +15,20 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package com.osstelecom.db.inventory.manager.rest.api;
+package com.osstelecom.db.inventory.manager.response;
 
-import com.osstelecom.db.inventory.manager.rest.api.security.ApiRequestInterceptor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import com.osstelecom.db.inventory.manager.dto.DomainDTO;
+import java.util.ArrayList;
 
 /**
- * Nice config Adapter xD
+ *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
- * @created 28.05.2022
+ * @created 07.08.2022
  */
-@Configuration
-public class APIConfigAdapter implements WebMvcConfigurer {
-
-    @Autowired
-    private ApiRequestInterceptor apiRequestInterceptor;
-
-    @Override
-    public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(apiRequestInterceptor);
+public class GetDomainsResponse extends BasicResponse<ArrayList<DomainDTO>> {
+    
+    public GetDomainsResponse(ArrayList<DomainDTO> obj) {
+        super(obj);
     }
-
+    
 }

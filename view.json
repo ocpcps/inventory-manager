@@ -1,0 +1,30 @@
+{
+  "writebufferSizeMax": 33554432,
+  "writebufferIdle": 64,
+  "cleanupIntervalStep": 2,
+  "commitIntervalMsec": 1000,
+  "consolidationIntervalMsec": 1000,
+  "consolidationPolicy": {
+    "type": "tier",
+    "segmentsBytesFloor": 2097152,
+    "segmentsBytesMax": 5368709120,
+    "segmentsMax": 10,
+    "segmentsMin": 1,
+    "minScore": 0
+  },
+  "primarySortCompression": "lz4",
+  "writebufferActive": 0,
+  "links": {},
+  "globallyUniqueId": "hEEB1780583A1/53388389",
+  "id": "53388389",
+  "storedValues": [
+    {
+      "fields": [
+        "connectionId"
+      ],
+      "compression": "lz4"
+    }
+  ],
+  "primarySort": [],
+  "type": "arangosearch"
+}

@@ -26,6 +26,7 @@ import com.osstelecom.db.inventory.manager.operation.DomainManager;
 import com.osstelecom.db.inventory.manager.request.CreateDomainRequest;
 import com.osstelecom.db.inventory.manager.response.CreateDomainResponse;
 import com.osstelecom.db.inventory.manager.response.DomainResponse;
+import com.osstelecom.db.inventory.manager.response.GetDomainsResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -36,10 +37,10 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class DomainSession {
-    
+
     @Autowired
     private DomainManager domainManager;
-    
+
     public CreateDomainResponse createDomain(CreateDomainRequest domainRequest) throws DomainAlreadyExistsException, GenericException {
         try {
             CreateDomainResponse response = new CreateDomainResponse(this.domainManager.createDomain(domainRequest.getPayLoad()));
@@ -50,7 +51,12 @@ public class DomainSession {
             throw new GenericException(ex.getMessage());
         }
     }
-    
+
+    public GetDomainsResponse getAllDomains() {
+        GetDomainsResponse response = new GetDomainsResponse(this.domainManager.getAllDomains());
+        return response;
+    }
+
     public DomainResponse getDomain(String domainName) throws DomainNotFoundException, InvalidRequestException {
         if (domainName == null) {
             throw new InvalidRequestException("domainName cannot be null");
@@ -58,5 +64,5 @@ public class DomainSession {
         DomainResponse response = new DomainResponse(domainManager.getDomain(domainName));
         return response;
     }
-    
+
 }

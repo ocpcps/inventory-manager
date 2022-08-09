@@ -60,6 +60,16 @@ public class DomainApi extends BaseApi {
     }
 
     /**
+     * List all Domains created in this system
+     * @return 
+     */
+//    @AuthenticatedCall(role = {"user", "operator"})
+    @GetMapping(path = "/", produces = "application/json")
+    public String getAllDomains() {
+        return gson.toJson(domainSession.getAllDomains());
+    }
+
+    /**
      * Cria um novo Domain xD
      *
      * @param request
@@ -70,12 +80,14 @@ public class DomainApi extends BaseApi {
      */
     @AuthenticatedCall(role = {"user"})
     @PutMapping(path = "/", produces = "application/json", consumes = "application/json")
-    public CreateDomainResponse createDomain(@RequestBody CreateDomainRequest request) throws DomainAlreadyExistsException, InvalidRequestException, GenericException {
-        logger.info("Request For Creating a new Domain named: [" + request + "] Received");
-        if (request != null) {
+    public String createDomain(@RequestBody String strRequest) throws DomainAlreadyExistsException, InvalidRequestException, GenericException {
+        if (strRequest != null) {
+
+            CreateDomainRequest request = this.gson.fromJson(strRequest, CreateDomainRequest.class);
+            logger.info("Request For Creating a new Domain named: [" + request + "] Received");
             if (request.getPayLoad() != null) {
                 CreateDomainResponse response = domainSession.createDomain(request);
-                return response;
+                return this.gson.toJson(response);
             } else {
                 throw new InvalidRequestException("Request Body is null");
             }

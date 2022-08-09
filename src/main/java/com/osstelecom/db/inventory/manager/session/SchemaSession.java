@@ -17,6 +17,7 @@
  */
 package com.osstelecom.db.inventory.manager.session;
 
+import com.osstelecom.db.inventory.manager.listeners.EventManagerListener;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalListener;
@@ -66,7 +67,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
     private ConfigurationManager configurationManager;
 
     @Autowired
-    private EventManagerSession eventManager;
+    private EventManagerListener eventManager;
 
     /**
      * Local Cache keeps the Schema for 1 Minute in memory
@@ -75,7 +76,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
             .newBuilder()
             .maximumSize(5000)
             .removalListener(this)
-            .expireAfterWrite(60, TimeUnit.SECONDS).build();
+            .expireAfterWrite(30, TimeUnit.SECONDS).build(); // alterado para 10s
 
     /**
      * Loads the Schema by Name
@@ -86,8 +87,29 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
      * @throws GenericException
      */
     public ResourceSchemaModel loadSchema(String schemaName) throws SchemaNotFoundException, GenericException {
-        this.schemaDir = configurationManager.loadConfiguration().getSchemaDir();
-        return this.loadSchema(schemaName, null, true);
+        ResourceSchemaModel schema = this.schemaCache.getIfPresent(schemaName);
+        if (schema != null) {
+            logger.debug("Hit Cache on Schema: [" + schemaName + "]");
+            return schema;
+        } else {
+            this.schemaDir = configurationManager.loadConfiguration().getSchemaDir();
+            schema = this.loadSchemaFromDisk(schemaName, null);
+            this.schemaCache.put(schemaName, schema);
+            return schema;
+        }
+    }
+
+    private void mergeSchemaModelSession(ResourceSchemaModel result, ResourceSchemaModel resourceModel) {
+        for (Map.Entry<String, ResourceAttributeModel> entry : resourceModel.getAttributes().entrySet()) {
+            String key = entry.getKey();
+            entry.getValue().setItemHash(utilSession.getMd5(resourceModel.getSchemaName() + "." + key));
+            ResourceAttributeModel model = entry.getValue();
+            if (!result.getAttributes().containsKey(key)) {
+                model.setId(resourceModel.getSchemaName() + "." + key);
+                result.getAttributes().put(key, model);
+            }
+        }
+
     }
 
     /**
@@ -100,92 +122,43 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
      * @throws SchemaNotFoundException
      * @throws GenericException
      */
-    private synchronized ResourceSchemaModel loadSchema(String schemaName, ResourceSchemaModel result, Boolean loadInherited) throws SchemaNotFoundException, GenericException {
-        if (this.schemaDir == null) {
-            this.schemaDir = configurationManager.loadConfiguration().getSchemaDir();
-        }
+    private ResourceSchemaModel loadSchemaFromDisk(String schemaName, ResourceSchemaModel result) throws SchemaNotFoundException, GenericException {
+        schemaName = schemaName.replaceAll("\\.", "/");
+        File f = new File(this.schemaDir + "/" + schemaName + ".json");
+        logger.debug("Trying to load Schema from: " + schemaName);
 
-        if (!loadInherited) {
-            //
-            // We do not cache partitial or single file read.
-            //
-            this.schemaCache.invalidate(schemaName);
-        }
-
-        ResourceSchemaModel loadedModel = this.schemaCache.getIfPresent(schemaName);
-        if (loadedModel != null) {
-            //
-            // Retrieves from cache
-            //
-            logger.debug("4 - Cache HIT on Schema: [" + schemaName + "] loadInherited(" + loadInherited + ")");
-            return loadedModel;
-        }
-        if (loadedModel == null) {
-            schemaName = schemaName.replaceAll("\\.", "/");
-
-            //
-            // Não tenho no cache vou ler do disco
-            //
-            File f = new File(this.schemaDir + "/" + schemaName + ".json");
-            logger.debug("1 - Trying to load Schema from: [" + schemaName + "] From File: " + f.toString());
-            if (f.exists()) {
-                try {
-                    //
-                    // Arquivo existe vamos ler os modelos
-                    //
-                    FileReader jsonReader = new FileReader(f);
-                    loadedModel = utilSession.getGson().fromJson(jsonReader, ResourceSchemaModel.class);
-                    jsonReader.close();
-                    if (result == null) {
-                        result = loadedModel;
-                    }
-//                    if (loadedModel != null) {
-//                       
-//                    }
-
-                } catch (FileNotFoundException ex) {
-                    throw new GenericException(ex.getMessage(), ex);
-                } catch (IOException ex) {
-                    throw new GenericException(ex.getMessage(), ex);
+        if (f.exists()) {
+            try {
+                //
+                // Arquivo existe vamos ler os modelos
+                //
+                FileReader jsonReader = new FileReader(f);
+                ResourceSchemaModel resourceModel = utilSession.getGson().fromJson(jsonReader, ResourceSchemaModel.class);
+                if (result == null) {
+                    result = resourceModel;
                 }
+                logger.debug("Loaded  SchemaName: [" + resourceModel.getSchemaName() + "]");
+                jsonReader.close();
 
-            } else {
-                throw new SchemaNotFoundException("Schema With Name:[" + schemaName + "] was not found FILE:[" + f.toString() + "]");
+                this.mergeSchemaModelSession(result, resourceModel);
+
+                if (!resourceModel.getFromSchema().equals(".")) {
+                    result = this.loadSchemaFromDisk(resourceModel.getFromSchema(), result);
+                }
+                //
+                // Salva só no final
+                //
+
+                return result;
+            } catch (FileNotFoundException ex) {
+                throw new GenericException(ex.getMessage(), ex);
+            } catch (IOException ex) {
+                throw new GenericException(ex.getMessage(), ex);
             }
         } else {
-            result = loadedModel;
+            throw new SchemaNotFoundException("Schema With Name:[" + schemaName + "] was not found");
         }
-        //
-        // Loaded Resource now..
-        //
-        logger.debug("2 - Loaded  SchemaName: [" + loadedModel.getSchemaName() + "]");
 
-        if (loadInherited) {
-            for (Map.Entry<String, ResourceAttributeModel> entry : loadedModel.getAttributes().entrySet()) {
-                String key = entry.getKey();
-                entry.getValue().setItemHash(utilSession.getMd5(loadedModel.getSchemaName() + "." + key));
-
-                ResourceAttributeModel model = entry.getValue();
-                if (model.getId() == null) {
-                    model.setId(loadedModel.getSchemaName() + "." + key);
-                }
-                if (!result.getAttributes().containsKey(key)) {
-                    result.getAttributes().put(key, model);
-                }
-            }
-
-            if (!loadedModel.getFromSchema().equals(".")) {
-                logger.debug("2.1 - Loadeding  SchemaName: [" + loadedModel.getFromSchema() + "] FROM:[" + loadedModel.getSchemaName() + "]");
-                return this.loadSchema(loadedModel.getFromSchema(), result, true);
-            }
-            //
-            // Just cache loadInherited
-            //
-//            logger.debug("CACHED:" + result.getSchemaName());
-            this.schemaCache.put(result.getSchemaName(), result);
-            logger.debug("3 - Schema :[" + schemaName + "] Saved to cache: [" + this.schemaDir + "/" + schemaName + ".json]");
-        }
-        return result;
     }
 
     /**
@@ -399,7 +372,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
             throw new InvalidRequestException("Attribute Schema Model not found");
         }
 
-        ResourceSchemaModel original = this.loadSchema(update.getSchemaName(), null, false);
+        ResourceSchemaModel original = this.loadSchema(update.getSchemaName());
 
         if (update.getSchemaName() != null) {
             if (!update.getSchemaName().equals(original.getSchemaName())) {
@@ -529,7 +502,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
             this.writeModelToDisk(original, true);
             this.clearSchemaCache();
             //
-            // Notifica o Message Bus da Atualização
+            // Notifica o Message Bus da Atualização, ele vai varrar a base procurando utilizações...
             // 
             eventManager.notifyEvent(new ResourceSchemaUpdatedEvent(original));
         }
@@ -591,6 +564,6 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
     @Override
     public void onRemoval(RemovalNotification<String, ResourceSchemaModel> rn) {
 //        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-        logger.debug("Schema: [" + rn.getKey() + "] Removed From Cache...");
+        logger.debug("Schema: [" + rn.getKey() + "] Removed From Cache...[" + rn.getCause().name() + "]");
     }
 }
