@@ -22,30 +22,8 @@ import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
- * @created 08.07.2022
+ * @created 12.08.2022
  */
-public class FindManagedResourceRequest extends BasicRequest<ManagedResource> {
-
-    private String resourceId;
-
-    public FindManagedResourceRequest(String resourceId,String domainName) {
-        this.resourceId = resourceId;
-        this.setRequestDomain(domainName);
-    }
+public class PatchManagedResourceRequest extends BasicRequest<ManagedResource> {
     
-   
-    
-    /**
-     * @return the resourceId
-     */
-    public String getResourceId() {
-        return resourceId;
-    }
-
-    /**
-     * @param resourceId the resourceId to set
-     */
-    public void setResourceId(String resourceId) {
-        this.resourceId = resourceId;
-    }
 }

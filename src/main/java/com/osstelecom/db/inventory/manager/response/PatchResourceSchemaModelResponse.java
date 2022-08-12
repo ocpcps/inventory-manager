@@ -15,37 +15,19 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package com.osstelecom.db.inventory.manager.request;
+package com.osstelecom.db.inventory.manager.response;
 
-import com.osstelecom.db.inventory.manager.resources.ManagedResource;
+import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
 
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
- * @created 08.07.2022
+ * @created 12.08.2022
  */
-public class FindManagedResourceRequest extends BasicRequest<ManagedResource> {
-
-    private String resourceId;
-
-    public FindManagedResourceRequest(String resourceId,String domainName) {
-        this.resourceId = resourceId;
-        this.setRequestDomain(domainName);
+public class PatchResourceSchemaModelResponse extends BasicResponse<ResourceSchemaModel> {
+    
+    public PatchResourceSchemaModelResponse(ResourceSchemaModel obj) {
+        super(obj);
     }
     
-   
-    
-    /**
-     * @return the resourceId
-     */
-    public String getResourceId() {
-        return resourceId;
-    }
-
-    /**
-     * @param resourceId the resourceId to set
-     */
-    public void setResourceId(String resourceId) {
-        this.resourceId = resourceId;
-    }
 }

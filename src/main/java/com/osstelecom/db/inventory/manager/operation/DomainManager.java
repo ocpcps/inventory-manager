@@ -36,10 +36,10 @@ import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.DomainAlreadyExistsException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
+import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.SchemaNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.ScriptRuleException;
-import com.osstelecom.db.inventory.manager.request.FindManagedResourceRequest;
 import com.osstelecom.db.inventory.manager.resources.BasicResource;
 import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 import com.osstelecom.db.inventory.manager.resources.ConsumableMetric;
@@ -56,16 +56,17 @@ import com.osstelecom.db.inventory.manager.listeners.EventManagerListener;
 import com.osstelecom.db.inventory.manager.session.SchemaSession;
 import com.osstelecom.db.inventory.topology.DefaultTopology;
 import com.osstelecom.db.inventory.topology.ITopology;
+import com.osstelecom.db.inventory.topology.connection.INetworkConnection;
 import com.osstelecom.db.inventory.topology.node.DefaultNode;
 import com.osstelecom.db.inventory.topology.node.INetworkNode;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.PreDestroy;
@@ -409,7 +410,16 @@ public class DomainManager {
         }
     }
 
-    public ManagedResource findManagedResource(BasicResource resource) throws ResourceNotFoundException, DomainNotFoundException, ArangoDaoException {
+    public ManagedResource findManagedResource(ManagedResource resource) throws ResourceNotFoundException, DomainNotFoundException, ArangoDaoException {
+        //
+        // Se tiver o ID vai dar preferencia ao ID
+        //
+        if (resource.getId() != null && !resource.getId().trim().equals("")) {
+            return this.findManagedResourceById(resource);
+        }
+        //
+        // Se não tem o ID vai tentar achar com o nome,nodeaddress,classname, e domain
+        //
         return this.findManagedResource(resource.getName(), resource.getNodeAddress(), resource.getClassName(), resource.getDomain().getDomainName());
     }
 
@@ -440,15 +450,19 @@ public class DomainManager {
         }
     }
 
-    public ManagedResource findManagedResourceById(FindManagedResourceRequest request) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
+    public ManagedResource findManagedResourceById(String resourceid, DomainDTO domain) throws ResourceNotFoundException, ArangoDaoException {
+        return arangoDao.findManagedResourceById(resourceid, domain);
+    }
+
+    public ManagedResource findManagedResourceById(ManagedResource resource) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
         String timerId = startTimer("findManagedResourceById");
         try {
             lockManager.lock();
-            DomainDTO domain = this.getDomain(request.getRequestDomain());
-            if (!request.getResourceId().contains("/")) {
-                request.setResourceId(domain.getNodes() + "/" + request.getResourceId());
+
+            if (!resource.getId().contains("/")) {
+                resource.setId(resource.getDomain().getNodes() + "/" + resource.getId());
             }
-            ManagedResource resource = arangoDao.findManagedResourceById(request.getResourceId(), domain);
+            resource = arangoDao.findManagedResourceById(resource.getId(), resource.getDomain());
             return resource;
         } finally {
             if (lockManager.isLocked()) {
@@ -586,6 +600,28 @@ public class DomainManager {
         }
     }
 
+    public ManagedResource updateManagedResource(ManagedResource resource) throws InvalidRequestException {
+        String timerId = startTimer("updateManagedResource");
+        try {
+            lockManager.lock();
+            //
+            //
+            //
+
+            if (!resource.getOperationalStatus().equals("UP") && !resource.getOperationalStatus().equalsIgnoreCase("DOWN")) {
+                throw new InvalidRequestException("Invalid OperationalStatus:[" + resource.getOperationalStatus() + "]");
+            }
+
+            resource.setLastModifiedDate(new Date());
+            return arangoDao.updateManagedResource(resource);
+        } finally {
+            if (lockManager.isLocked()) {
+                lockManager.unlock();
+            }
+            endTimer(timerId);
+        }
+    }
+
     /**
      * Atualiza a conexão de um recurso
      *
@@ -631,8 +667,64 @@ public class DomainManager {
         }
     }
 
-    public GraphList<ResourceConnection> findCircuitPath(CircuitResource circuit) throws ArangoDaoException {
-        return arangoDao.getCircuitPath(circuit);
+    public GraphList<ResourceConnection> findCircuitPaths(CircuitResource circuit) throws ArangoDaoException {
+        return arangoDao.findCircuitPaths(circuit);
+    }
+
+    public ArrayList<String> checkBrokenGraph(ArrayList<ResourceConnection> connections, ManagedResource aPoint) {
+        ArrayList<String> result = new ArrayList<>();
+        if (!connections.isEmpty()) {
+            //
+            // Testar memória...
+            //
+            DefaultTopology topology = new DefaultTopology();
+            AtomicLong localId = new AtomicLong(0L);
+            INetworkNode target = createNode(aPoint.getId(), localId.incrementAndGet(), topology);
+            target.setEndPoint(true);
+
+            connections.forEach(connection -> {
+                INetworkNode from = topology.getNodeByName(connection.getFrom().getId());
+                INetworkNode to = topology.getNodeByName(connection.getTo().getId());
+
+                if (from == null) {
+                    from = createNode(connection.getFrom().getId(), localId.incrementAndGet(), topology);
+                }
+
+                if (to == null) {
+                    to = createNode(connection.getTo().getId(), localId.incrementAndGet(), topology);
+                }
+
+                if (connection.getOperationalStatus().equals("UP")) {
+                    topology.addConnection(from, to, connection.getId() + ".A");
+                }
+
+//                topology.addConnection(to, from, connection.getId() + ".A");
+            });
+
+            logger.debug("-------------------------------------------------------------");
+            logger.debug("Topology Loaded! ");
+            logger.debug("Topology Size:");
+            logger.debug("         Nodes:" + topology.getNodes().size());
+            logger.debug("   Connections:" + topology.getConnections().size());
+            logger.debug("     EndPoints:" + topology.getEndPoints().size());
+            for (INetworkNode node : topology.getEndPoints()) {
+                logger.debug("       " + node.getName());
+            }
+
+            List<INetworkNode> weak = topology.getImpactManager().getUnreacheableNodes();
+            logger.debug("Found " + weak.size() + " Weak Nodes");
+
+            if (!weak.isEmpty()) {
+                weak.forEach(node -> {
+                    if (!result.contains(node.getName())) {
+                        result.add(node.getName());
+                    }
+                });
+            }
+
+            topology.destroyTopology();
+        }
+        return result;
     }
 
     public void findWeakLinks(ArrayList<ResourceConnection> connections, FilterDTO filter) {
@@ -808,7 +900,6 @@ public class DomainManager {
 //        topology.destroyTopology();
 //    }
     private INetworkNode createNode(String name, Long id, ITopology topology) {
-//        logger.debug("Created Node:" + name);
         INetworkNode node = new DefaultNode(name, id.intValue(), topology);
         return node;
     }
@@ -829,7 +920,7 @@ public class DomainManager {
         return null;
     }
 
-    public GraphList<BasicResource> findManagedResourcesBySchemaName(ResourceSchemaModel model, DomainDTO domain) {
+    public GraphList<ManagedResource> findManagedResourcesBySchemaName(ResourceSchemaModel model, DomainDTO domain) {
         return arangoDao.findManagedResourcesBySchemaName(model.getSchemaName(), domain);
     }
 
@@ -850,7 +941,7 @@ public class DomainManager {
             // Update the schema on each domain
             //
             logger.debug("Updating Schema[" + update.getModel().getSchemaName() + "] On Domain:[" + domain.getDomainName() + "]");
-            GraphList<BasicResource> nodesToUpdate = this.findManagedResourcesBySchemaName(update.getModel(), domain);
+            GraphList<ManagedResource> nodesToUpdate = this.findManagedResourcesBySchemaName(update.getModel(), domain);
             logger.debug("Found " + nodesToUpdate.size() + " Elements to Update");
 
             try {
@@ -880,7 +971,8 @@ public class DomainManager {
                         resource.getSchemaModel().setIsValid(false);
                     }
 
-                    arangoDao.updateBasicResource(resource);
+                    arangoDao.updateManagedResource(resource);
+
                     if (totalProcessed.incrementAndGet() % 1000 == 0) {
                         logger.debug("Updated " + totalProcessed.get() + " Records");
                     }

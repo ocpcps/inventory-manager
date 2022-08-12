@@ -25,19 +25,18 @@ import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.SchemaNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.ScriptRuleException;
-import com.osstelecom.db.inventory.manager.request.CreateCircuitPathRequest;
-import com.osstelecom.db.inventory.manager.request.CreateCircuitRequest;
 import com.osstelecom.db.inventory.manager.request.CreateConnectionRequest;
 import com.osstelecom.db.inventory.manager.request.CreateManagedResourceRequest;
 import com.osstelecom.db.inventory.manager.request.CreateResourceLocationRequest;
 import com.osstelecom.db.inventory.manager.request.CreateServiceRequest;
 import com.osstelecom.db.inventory.manager.request.FilterRequest;
 import com.osstelecom.db.inventory.manager.request.FindManagedResourceRequest;
-import com.osstelecom.db.inventory.manager.request.GetCircuitPathRequest;
+import com.osstelecom.db.inventory.manager.request.PatchManagedResourceRequest;
 import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstraintViolationException;
 import com.osstelecom.db.inventory.manager.resources.exception.ConnectionAlreadyExistsException;
 import com.osstelecom.db.inventory.manager.resources.exception.MetricConstraintException;
 import com.osstelecom.db.inventory.manager.resources.exception.NoResourcesAvailableException;
+import com.osstelecom.db.inventory.manager.response.PatchManagedResourceResponse;
 import com.osstelecom.db.inventory.manager.session.ResourceSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -48,7 +47,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.osstelecom.db.inventory.manager.security.model.AuthenticatedCall;
-import com.osstelecom.db.inventory.manager.session.CircuitSession;
+import org.springframework.web.bind.annotation.PatchMapping;
 
 /**
  * Classe que representa os elementos do Inventário Teste
@@ -62,8 +61,6 @@ public class InventoryApi extends BaseApi {
 
     @Autowired
     private ResourceSession resourceSession;
-
-  
 
     /**
      * Cria um novo Location
@@ -131,9 +128,9 @@ public class InventoryApi extends BaseApi {
     @AuthenticatedCall(role = {"user"})
     @GetMapping(path = "/{domain}/resource/{resourceId}", produces = "application/json")
     public String findManagedResourceById(@PathVariable("domain") String domain, @PathVariable("resourceId") String resourceId) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
-        FindManagedResourceRequest findRequest = new FindManagedResourceRequest();
-        findRequest.setResourceId(resourceId);
-        findRequest.setRequestDomain(domain);
+        FindManagedResourceRequest findRequest = new FindManagedResourceRequest(resourceId, domain);
+//        findRequest.setResourceId(resourceId);
+//        findRequest.setRequestDomain(domain);
         return this.gson.toJson(resourceSession.findManagedResourceById(findRequest));
     }
 
@@ -199,10 +196,6 @@ public class InventoryApi extends BaseApi {
         }
     }
 
-   
-
-    
-
     /**
      * Aplica um filtro
      *
@@ -223,6 +216,25 @@ public class InventoryApi extends BaseApi {
         System.out.println(":::::::::" + gson.toJson(filter));
         filter.setRequestDomain(domain);
         return this.gson.toJson(resourceSession.getElementsByFilter(filter));
+    }
+    /**
+     * Atualiza um managed resource
+     * @param strReq
+     * @param domainName
+     * @param resourceId
+     * @return
+     * @throws DomainNotFoundException
+     * @throws ResourceNotFoundException
+     * @throws ArangoDaoException
+     * @throws InvalidRequestException 
+     */
+    @AuthenticatedCall(role = {"user"})
+    @PatchMapping(path = "/{domain}/resource/{resourceId}", produces = "application/json", consumes = "application/json")
+    public String patchManagedResource(@RequestBody String strReq, @PathVariable("domain") String domainName, @PathVariable("resourceId") String resourceId) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
+        PatchManagedResourceRequest request = this.gson.fromJson(strReq, PatchManagedResourceRequest.class);
+        request.setRequestDomain(domainName);
+        request.getPayLoad().setId(resourceId);
+        return this.gson.toJson(new PatchManagedResourceResponse(this.resourceSession.patchManagedResource(request)));
     }
 
 //    /**

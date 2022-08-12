@@ -42,9 +42,9 @@ public class CircuitResource extends BasicResource {
         this.circuitPath = circuitPath;
     }
 
-    private BasicResource aPoint;
+    private ManagedResource aPoint;
     
-    private BasicResource zPoint;
+    private ManagedResource zPoint;
     
     private String circuitState;
     
@@ -52,28 +52,28 @@ public class CircuitResource extends BasicResource {
     /**
      * @return the aPoint
      */
-    public BasicResource getaPoint() {
+    public ManagedResource getaPoint() {
         return aPoint;
     }
 
     /**
      * @param aPoint the aPoint to set
      */
-    public void setaPoint(BasicResource aPoint) {
+    public void setaPoint(ManagedResource aPoint) {
         this.aPoint = aPoint;
     }
 
     /**
      * @return the zPoint
      */
-    public BasicResource getzPoint() {
+    public ManagedResource getzPoint() {
         return zPoint;
     }
 
     /**
      * @param zPoint the zPoint to set
      */
-    public void setzPoint(BasicResource zPoint) {
+    public void setzPoint(ManagedResource zPoint) {
         this.zPoint = zPoint;
     }
 

@@ -36,7 +36,7 @@ public class ConnectionDTO {
     private String toClassName;
     private String connectionName;
     private String nodeAddress;
-    private String connectionClass = "connection.Default";
+    private String connectionClass = "connection.default";
     private String attributeSchemaName = "connection.default";
     private Boolean propagateOperStatus;
     private String operationalStatus = "UP";

@@ -52,12 +52,12 @@ public abstract class Topology implements ITopology {
         //
         // Destroy all Connections..
         //
-        nodes.forEach(n -> {
-            n.getConnections().forEach(c -> {
-                c.disconnect(n);
-            });
-
-        });
+//        nodes.forEach(n -> {
+//            n.getConnections().forEach(c -> {
+//                c.disconnect(n);
+//            });
+//
+//        });
 
         nodes.clear();
 

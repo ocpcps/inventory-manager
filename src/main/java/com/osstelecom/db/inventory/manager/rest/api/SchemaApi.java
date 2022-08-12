@@ -25,6 +25,7 @@ import com.osstelecom.db.inventory.manager.request.PatchResourceSchemaModelReque
 import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
 import com.osstelecom.db.inventory.manager.response.CreateResourceSchemaModelResponse;
 import com.osstelecom.db.inventory.manager.response.EmptyOkResponse;
+import com.osstelecom.db.inventory.manager.response.PatchResourceSchemaModelResponse;
 import com.osstelecom.db.inventory.manager.response.ResourceSchemaResponse;
 import com.osstelecom.db.inventory.manager.response.TypedMapResponse;
 import com.osstelecom.db.inventory.manager.security.model.AuthenticatedCall;
@@ -85,7 +86,7 @@ public class SchemaApi extends BaseApi {
         try {
             PatchResourceSchemaModelRequest request = gson.fromJson(reqBody, PatchResourceSchemaModelRequest.class);
             request.getPayLoad().setSchemaName(schemaName);
-            return gson.toJson(new ResourceSchemaResponse(schemaSession.patchSchemaModel(request.getPayLoad())));
+            return gson.toJson(new PatchResourceSchemaModelResponse(schemaSession.patchSchemaModel(request.getPayLoad())));
         } catch (SchemaNotFoundException ex) {
             logger.error("Failed To Load Schema", ex);
             throw ex;

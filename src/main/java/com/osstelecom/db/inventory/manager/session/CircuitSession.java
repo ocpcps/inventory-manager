@@ -17,6 +17,8 @@
  */
 package com.osstelecom.db.inventory.manager.session;
 
+import com.google.common.graph.MutableNetwork;
+import com.google.common.graph.NetworkBuilder;
 import com.osstelecom.db.inventory.manager.dto.CircuitPathDTO;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
@@ -135,12 +137,45 @@ public class CircuitSession {
         circuit.setDomain(domainManager.getDomain(circuit.getDomainName()));
         circuit = domainManager.findCircuitResource(circuitDto.getCircuit());
         circuitDto.setCircuit(circuit);
-        circuitDto.setPaths(domainManager.findCircuitPath(circuit).toList());
+        circuitDto.setPaths(domainManager.findCircuitPaths(circuit).toList());
+
         logger.debug("Found [" + circuitDto.getPaths().size() + "] Paths for Circuit: [" + circuit.getNodeAddress() + "]");
-        for (ResourceConnection connection : circuitDto.getPaths()) {
-            if (!connection.getOperationalStatus().equalsIgnoreCase("UP")) {
-                circuitDto.setDegrated(true);
+
+        if (!circuitDto.getPaths().isEmpty()) {
+//            MutableNetwork<String, String> network = NetworkBuilder.directed().build();
+            for (ResourceConnection connection : circuitDto.getPaths()) {
+
+//                network.addNode(connection.getFromUid());
+//                network.addNode(connection.getToUid());
+//                network.addEdge(connection.getUid(), connection.getFromUid(), connection.getToUid());
+                //
+                // get current node status
+                //
+                if (!connection.getOperationalStatus().equalsIgnoreCase("UP")) {
+                    circuitDto.setDegrated(true);
+                }
+
+//            ManagedResource from = this.domainManager.findManagedResourceById(new FindManagedResourceRequest(connection.getFromUid(),connection.getDomainName()));
+//            if (!from.getOperationalStatus().equalsIgnoreCase("UP")){
+//                circuitDto.setDegrated(true);
+//            }
+//            
+//            ManagedResource to  = this.domainManager.findManagedResourceById(new FindManagedResourceRequest(connection.getToUid(),connection.getDomainName()));
+//            if (!to.getOperationalStatus().equalsIgnoreCase("UP")){
+//                circuitDto.setDegrated(true);
+//            }
             }
+
+            ArrayList<String> brokenConnections = this.domainManager.checkBrokenGraph(circuitDto.getPaths(), circuit.getaPoint());
+            
+            if (!brokenConnections.isEmpty()){
+                //
+                // Circuit is DOWN
+                //
+                circuitDto.setBroken(true);
+                circuitDto.setBrokenConnections(brokenConnections);
+            }
+
         }
         GetCircuitPathResponse response = new GetCircuitPathResponse(circuitDto);
         return response;
@@ -169,23 +204,22 @@ public class CircuitSession {
         request.getPayLoad().setCircuit(circuit);
         if (!request.getPayLoad().getPaths().isEmpty()) {
             ArrayList<ResourceConnection> resolved = new ArrayList<>();
-            for (ResourceConnection a : request.getPayLoad().getPaths()) {
+            for (ResourceConnection requestedPath : request.getPayLoad().getPaths()) {
 
-                a.setDomain(domainManager.getDomain(a.getDomainName()));
+                requestedPath.setDomain(domainManager.getDomain(requestedPath.getDomainName()));
                 //
                 // Valida se dá para continuar
                 //
-
-                if (a.getNodeAddress() == null && (a.getFrom() == null || a.getTo() == null)) {
+                if (requestedPath.getNodeAddress() == null && (requestedPath.getFrom() == null || requestedPath.getTo() == null)) {
                     //
-                    // 
+                    // No Node Address
                     //
                     InvalidRequestException ex = new InvalidRequestException("Please give at least,nodeAddress or from and to");
-                    ex.setDetails("connection", a);
+                    ex.setDetails("connection", requestedPath);
                     throw ex;
                 }
 
-                ResourceConnection b = domainManager.findResourceConnection(a);
+                ResourceConnection b = domainManager.findResourceConnection(requestedPath);
                 if (!b.getCircuits().contains(circuit.getId())) {
                     b.getCircuits().add(circuit.getId());
                     //
