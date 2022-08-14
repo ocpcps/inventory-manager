@@ -27,6 +27,34 @@ import java.util.ArrayList;
 public class ResourceConnection extends BasicResource {
 
     /**
+     * @return the fromResource
+     */
+    public BasicResource getFromResource() {
+        return fromResource;
+    }
+
+    /**
+     * @param fromResource the fromResource to set
+     */
+    public void setFromResource(BasicResource fromResource) {
+        this.fromResource = fromResource;
+    }
+
+    /**
+     * @return the toResource
+     */
+    public BasicResource getToResource() {
+        return toResource;
+    }
+
+    /**
+     * @param toResource the toResource to set
+     */
+    public void setToResource(BasicResource toResource) {
+        this.toResource = toResource;
+    }
+
+    /**
      * Renamed to avoid confusion
      */
     private BasicResource fromResource;

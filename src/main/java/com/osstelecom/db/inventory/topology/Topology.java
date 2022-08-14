@@ -74,7 +74,6 @@ public abstract class Topology implements ITopology {
 //        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
         this.nodeNames.entrySet().parallelStream().forEach(e -> {
             e.getValue().resetEndPointConnectionsCount();
-
         });
     }
 
@@ -93,9 +92,9 @@ public abstract class Topology implements ITopology {
 
             });
 
-            for (INetworkNode t : topOut) {
-                System.out.println("Name:" + t.getName() + " T: " + t.getIncommingConnectionCount());
-            }
+//            for (INetworkNode t : topOut) {
+//                System.out.println("Name:" + t.getName() + " T: " + t.getIncommingConnectionCount());
+//            }
         }
         return topOut;
     }

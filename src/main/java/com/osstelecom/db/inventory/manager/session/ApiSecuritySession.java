@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 
 /**
  * Cuida da autenticação da API
+ *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 12.06.2022
  */
@@ -42,7 +43,6 @@ public class ApiSecuritySession {
             ex.setDetails(ImmutableMap.of("path", request.getRequestURI(), "method", request.getMethod(), "remoteAddress", request.getRemoteAddr()));
             throw ex;
         }
-//        throw new ApiSecurityException("API Token Not Found!");
     }
 
 }

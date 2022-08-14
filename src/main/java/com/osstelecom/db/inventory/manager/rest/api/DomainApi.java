@@ -23,6 +23,8 @@ import com.osstelecom.db.inventory.manager.exception.GenericException;
 import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.request.CreateDomainRequest;
 import com.osstelecom.db.inventory.manager.response.CreateDomainResponse;
+import com.osstelecom.db.inventory.manager.response.DomainResponse;
+import com.osstelecom.db.inventory.manager.response.GetDomainsResponse;
 import com.osstelecom.db.inventory.manager.security.model.AuthenticatedCall;
 import com.osstelecom.db.inventory.manager.session.DomainSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,8 +57,8 @@ public class DomainApi extends BaseApi {
      */
     @AuthenticatedCall(role = {"user", "operator"})
     @GetMapping(path = "/{domain}", produces = "application/json")
-    public String getDomain(@PathVariable("domain") String domainName) throws DomainNotFoundException, InvalidRequestException {
-        return gson.toJson(domainSession.getDomain(domainName));
+    public DomainResponse getDomain(@PathVariable("domain") String domainName) throws DomainNotFoundException, InvalidRequestException {
+        return domainSession.getDomain(domainName);
     }
 
     /**
@@ -65,8 +67,8 @@ public class DomainApi extends BaseApi {
      */
 //    @AuthenticatedCall(role = {"user", "operator"})
     @GetMapping(path = "/", produces = "application/json")
-    public String getAllDomains() {
-        return gson.toJson(domainSession.getAllDomains());
+    public GetDomainsResponse getAllDomains() {
+        return domainSession.getAllDomains();
     }
 
     /**
@@ -80,14 +82,12 @@ public class DomainApi extends BaseApi {
      */
     @AuthenticatedCall(role = {"user"})
     @PutMapping(path = "/", produces = "application/json", consumes = "application/json")
-    public String createDomain(@RequestBody String strRequest) throws DomainAlreadyExistsException, InvalidRequestException, GenericException {
-        if (strRequest != null) {
-
-            CreateDomainRequest request = this.gson.fromJson(strRequest, CreateDomainRequest.class);
+    public CreateDomainResponse createDomain(@RequestBody CreateDomainRequest request) throws DomainAlreadyExistsException, InvalidRequestException, GenericException {
+        if (request != null) {
             logger.info("Request For Creating a new Domain named: [" + request + "] Received");
             if (request.getPayLoad() != null) {
                 CreateDomainResponse response = domainSession.createDomain(request);
-                return this.gson.toJson(response);
+                return response;
             } else {
                 throw new InvalidRequestException("Request Body is null");
             }

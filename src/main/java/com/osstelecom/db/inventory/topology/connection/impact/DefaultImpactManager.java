@@ -62,22 +62,27 @@ public class DefaultImpactManager extends ImpactManager {
         return unreacheableConnections;
     }
 
+    /**
+     * Find nodes that does not reach the endpoint or endpoints
+     *
+     * @return
+     */
     @Override
     public ArrayList<INetworkNode> getUnreacheableNodes() {
         Long start = System.currentTimeMillis();
-        ArrayList<INetworkNode> ativos = new ArrayList<>();
-        ArrayList<INetworkNode> todos = new ArrayList<>(this.getTopology().getNodes());
+        ArrayList<INetworkNode> active = new ArrayList<>();
+        ArrayList<INetworkNode> allNodes = new ArrayList<>(this.getTopology().getNodes());
         for (INetworkNode endPoint : this.getTopology().getEndPoints()) {
             if (endPoint.getActive()) {
-                ativos.addAll(walkNodes(endPoint));
+                active.addAll(walkNodes(endPoint));
             }
         }
-
-        todos.removeAll(ativos);
         Long end = System.currentTimeMillis();
         Long took = end - start;
 //        System.out.println(":::getUnreacheableNodes() Took:" + took + " ms");
-        return todos;
+        allNodes.removeAll(active);
+
+        return allNodes;
     }
 
     /**
@@ -137,8 +142,12 @@ public class DefaultImpactManager extends ImpactManager {
 
         if (!walkedNodes.containsKey(node.getUuid())) {
             walkedNodes.put(node.getUuid(), new ConcurrentHashMap<>());
-//            System.out.println("");
             if (node.getConnections().size() > 0) {
+                //
+                // forConnectionStart
+                //
+//                node.getConnections().parallelStream().forEachOrdered((c) -> {
+//                });
                 for (INetworkConnection c : node.getConnections()) {
                     if (!walkedNodes.get(node.getUuid()).containsKey(c.getUuid())) {
                         walkedNodes.get(node.getUuid()).put(c.getUuid(), c);
@@ -152,32 +161,24 @@ public class DefaultImpactManager extends ImpactManager {
                                     //
                                     // Conexao de saída do node
                                     //
-//                                    System.out.print(" o-> " + node.getName() + "->" + c.getTarget().getName());
-//                                    c.getTarget().addEndPointConnection(c);
                                     walkNodes(c.getTarget(), walkedNodes, nodes);
                                 } else {
                                     //
                                     // Conexão de entrada do node
                                     //
-//                                    System.out.print(" i-> " + node.getName() + "->" + c.getSource().getName());
-//                                    c.getSource().addEndPointConnection(c);
                                     walkNodes(c.getSource(), walkedNodes, nodes);
                                 }
                             }
                         }
-                    } else {
-//                        System.out.print(node.getName() + "-x");
                     }
-//                    System.out.println("");
                 }
+
             } else {
                 //
                 // Node orfão
                 //
                 nodes.add(node);
             }
-        } else {
-//            System.out.print(" -> " + node.getName() + "-x");
         }
     }
 
@@ -261,8 +262,12 @@ public class DefaultImpactManager extends ImpactManager {
         return this.getWeakNodes(connLimit, all, threadCount, useCache, null);
     }
 
+    /**
+     * If Working get the Process Complete %
+     *
+     * @return
+     */
     public Float getCurrentWorkPerc() {
-
         weakDone.incrementAndGet();
         Long total = weakQueue.size() + weakDone.get() + workingThreads.size();
         Float percDone = weakDone.get() / total.floatValue();
@@ -270,6 +275,15 @@ public class DefaultImpactManager extends ImpactManager {
         return percDone;
     }
 
+    /**
+     *
+     * @param connLimit
+     * @param all
+     * @param threadCount
+     * @param useCache
+     * @param nodes
+     * @return
+     */
     public List<INetworkNode> getWeakNodes(Integer connLimit, Boolean all, Integer threadCount, Boolean useCache, ArrayList<INetworkNode> nodes) {
         weakDone.set(0L);
         if (threadCount > this.getTopology().getNodes().size()) {
@@ -320,6 +334,9 @@ public class DefaultImpactManager extends ImpactManager {
                 }
             }
         }
+        //
+        // Note that this is a local thread list, not really a pool
+        //
         ArrayList<Thread> threadPool = new ArrayList<>();
         for (int x = 0; x < threadCount; x++) {
             String threadName = "WEAK-" + x;

@@ -16,12 +16,15 @@
  */
 package com.osstelecom.db.inventory.manager.resources;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.osstelecom.db.inventory.manager.dto.DomainDTO;
 
 /**
+ * This class represents the Resource that needs to be managed
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  */
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ManagedResource extends BasicResource {
 
     public ManagedResource(String attributeSchema, DomainDTO domain) {

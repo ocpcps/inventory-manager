@@ -18,6 +18,8 @@ package com.osstelecom.db.inventory.manager.resources;
 
 import com.arangodb.entity.DocumentField;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.osstelecom.db.inventory.manager.dto.DomainDTO;
 import com.osstelecom.db.inventory.manager.resources.exception.ConnectionAlreadyExistsException;
 import com.osstelecom.db.inventory.manager.resources.exception.ConnectionNotFoundException;
@@ -30,10 +32,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.bson.codecs.pojo.annotations.BsonIgnore;
 
 /**
- * Classe que representa um elemento básico
+ * This is the basic resource of all resources, that can be: Location, Managed,
+ * Connection or service.
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  */
+@JsonInclude(Include.NON_NULL)
 public class BasicResource {
 
     private DomainDTO domain;
@@ -65,6 +69,7 @@ public class BasicResource {
     private String operationalStatus;
     private String businessStatus;
     private String node;
+    private String structureId;
     private ArrayList<String> tags;
     @DocumentField(DocumentField.Type.KEY)
     private String uid;
@@ -100,11 +105,13 @@ public class BasicResource {
     }
 
     public void removeTag(String tag) {
-        if (this.tags.contains(tag)) {
-            this.tags.remove(tag);
-        }
-        if (this.tags.isEmpty()){
-            this.tags = null;
+        if (this.tags != null) {
+            if (this.tags.contains(tag)) {
+                this.tags.remove(tag);
+            }
+            if (this.tags.isEmpty()) {
+                this.tags = null;
+            }
         }
     }
 
@@ -730,6 +737,27 @@ public class BasicResource {
      */
     public void setId(String id) {
         this.id = id;
+    }
+
+    /**
+     * @return the structureId
+     */
+    public String getStructureId() {
+        return structureId;
+    }
+
+    /**
+     * @param structureId the structureId to set
+     */
+    public void setStructureId(String structureId) {
+        this.structureId = structureId;
+    }
+
+    /**
+     * @return the tags
+     */
+    public ArrayList<String> getTags() {
+        return tags;
     }
 
     /**

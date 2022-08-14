@@ -28,6 +28,7 @@ import com.arangodb.entity.DocumentCreateEntity;
 import com.arangodb.entity.DocumentUpdateEntity;
 import com.arangodb.entity.EdgeDefinition;
 import com.arangodb.entity.GraphEntity;
+import com.arangodb.entity.MultiDocumentEntity;
 import com.arangodb.model.AqlQueryOptions;
 import com.arangodb.model.CollectionCreateOptions;
 import com.arangodb.model.DocumentCreateOptions;
@@ -56,6 +57,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import org.slf4j.Logger;
@@ -257,6 +259,20 @@ public class ArangoDao {
                 .updateDocument(connection.getUid(), connection,
                         new DocumentUpdateOptions().returnNew(true).returnOld(true).keepNull(false).mergeObjects(false), ResourceConnection.class);
         return result.getNew();
+    }
+
+    public ArrayList<ResourceConnection> updateResourceConnections(ArrayList<ResourceConnection> connections) {
+        ArrayList<ResourceConnection> resultDocs = new ArrayList<>();
+        ArangoCollection connectionCollection = this.database
+                .collection(connections.get(0).getDomain().getConnections());
+        MultiDocumentEntity<DocumentUpdateEntity<ResourceConnection>> results = connectionCollection.updateDocuments(connections, new DocumentUpdateOptions().returnNew(true).returnOld(true).keepNull(false).mergeObjects(false), ResourceConnection.class);
+        results.getDocuments().forEach(connection -> {
+            //
+            // Adiciona a conexão criada no documento
+            //
+            resultDocs.add(connection.getNew());
+        });
+        return resultDocs;
     }
 
     /**
@@ -906,6 +922,7 @@ public class ArangoDao {
         DocumentUpdateEntity<ManagedResource> result = this.database.collection(resource.getDomain().getNodes()).updateDocument(resource.getUid(), resource, new DocumentUpdateOptions().returnNew(true).returnOld(true).keepNull(false).waitForSync(false), ManagedResource.class);
         ManagedResource updatedResource = result.getNew();
         // ManagedResource oldResource = result.getOld();
+
         //
         // Update the related dependencies
         //
@@ -946,7 +963,6 @@ public class ArangoDao {
                 }
 
                 this.updateResourceConnection(c); // <- Atualizou a conexão no banco
-
                 //
                 // Now Update related Circuits..
                 //
@@ -976,9 +992,8 @@ public class ArangoDao {
 
                     } catch (ResourceNotFoundException ex) {
                         //
-                        // This should never happen...
+                        // This should never happen...but if happen please try to treat the error
                         //
-
                         logger.error("Inconsistent Database on Domain Please check Related Circuit Resources: ResourceID:[" + updatedResource.getId() + "]", ex);
                     } catch (ArangoDaoException ex) {
                         logger.error("Arango Level Error", ex);

@@ -46,6 +46,7 @@ import com.osstelecom.db.inventory.manager.response.CreateResourceLocationRespon
 import com.osstelecom.db.inventory.manager.response.CreateServiceResponse;
 import com.osstelecom.db.inventory.manager.response.FilterResponse;
 import com.osstelecom.db.inventory.manager.response.FindManagedResourceResponse;
+import com.osstelecom.db.inventory.manager.response.PatchManagedResourceResponse;
 import java.util.Date;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -348,7 +349,7 @@ public class ResourceSession {
      * @throws ArangoDaoException
      * @throws InvalidRequestException 
      */
-    public ManagedResource patchManagedResource(PatchManagedResourceRequest patchRequest) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
+    public PatchManagedResourceResponse patchManagedResource(PatchManagedResourceRequest patchRequest) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
         //
         //
         //
@@ -391,7 +392,7 @@ public class ResourceSession {
         }
         
         ManagedResource result = this.domainManager.updateManagedResource(fromDBResource);
-        return result;
+        return new PatchManagedResourceResponse(result);
         
     }
 }

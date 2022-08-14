@@ -27,7 +27,7 @@ import java.util.logging.Logger;
 import java.util.stream.Stream;
 
 /**
- *
+ * This is a list backed by a ArangoDB Cursor.
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 29.07.2022
  */

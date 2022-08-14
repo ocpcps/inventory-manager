@@ -17,8 +17,6 @@
  */
 package com.osstelecom.db.inventory.manager.session;
 
-import com.google.common.graph.MutableNetwork;
-import com.google.common.graph.NetworkBuilder;
 import com.osstelecom.db.inventory.manager.dto.CircuitPathDTO;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
@@ -139,15 +137,11 @@ public class CircuitSession {
         circuitDto.setCircuit(circuit);
         circuitDto.setPaths(domainManager.findCircuitPaths(circuit).toList());
 
-        logger.debug("Found [" + circuitDto.getPaths().size() + "] Paths for Circuit: [" + circuit.getNodeAddress() + "]");
+        logger.debug("Found [" + circuitDto.getPaths().size() + "] Paths for Circuit: [" + circuit.getNodeAddress() + "/" + circuit.getDomainName() + "] Class: (" + circuit.getClassName() + ")");
 
         if (!circuitDto.getPaths().isEmpty()) {
-//            MutableNetwork<String, String> network = NetworkBuilder.directed().build();
             for (ResourceConnection connection : circuitDto.getPaths()) {
 
-//                network.addNode(connection.getFromUid());
-//                network.addNode(connection.getToUid());
-//                network.addEdge(connection.getUid(), connection.getFromUid(), connection.getToUid());
                 //
                 // get current node status
                 //
@@ -155,25 +149,19 @@ public class CircuitSession {
                     circuitDto.setDegrated(true);
                 }
 
-//            ManagedResource from = this.domainManager.findManagedResourceById(new FindManagedResourceRequest(connection.getFromUid(),connection.getDomainName()));
-//            if (!from.getOperationalStatus().equalsIgnoreCase("UP")){
-//                circuitDto.setDegrated(true);
-//            }
-//            
-//            ManagedResource to  = this.domainManager.findManagedResourceById(new FindManagedResourceRequest(connection.getToUid(),connection.getDomainName()));
-//            if (!to.getOperationalStatus().equalsIgnoreCase("UP")){
-//                circuitDto.setDegrated(true);
-//            }
             }
 
-            ArrayList<String> brokenConnections = this.domainManager.checkBrokenGraph(circuitDto.getPaths(), circuit.getaPoint());
-            
-            if (!brokenConnections.isEmpty()){
+            ArrayList<String> brokenNodes = this.domainManager.checkBrokenGraph(circuitDto.getPaths(), circuit.getaPoint());
+
+            if (!brokenNodes.isEmpty()) {
                 //
-                // Circuit is DOWN
+                // Check if the broken nodes has the zPoint or aPoint,
+                // If so it means that the circuit is broken!
                 //
-                circuitDto.setBroken(true);
-                circuitDto.setBrokenConnections(brokenConnections);
+                if (brokenNodes.contains(circuit.getzPoint().getId()) || brokenNodes.contains(circuit.getaPoint().getId())) {
+                    circuitDto.setBroken(true);
+                }
+                circuitDto.setBrokenResources(brokenNodes);
             }
 
         }
@@ -200,10 +188,11 @@ public class CircuitSession {
         CircuitResource circuit = request.getPayLoad().getCircuit();
         circuit.setDomain(domainManager.getDomain(circuit.getDomainName()));
         circuit = domainManager.findCircuitResource(circuit);
-
         request.getPayLoad().setCircuit(circuit);
         if (!request.getPayLoad().getPaths().isEmpty()) {
             ArrayList<ResourceConnection> resolved = new ArrayList<>();
+            logger.debug("Paths Size:" + request.getPayLoad().getPaths().size());
+            logger.debug(utils.toJson(request.getPayLoad()));
             for (ResourceConnection requestedPath : request.getPayLoad().getPaths()) {
 
                 requestedPath.setDomain(domainManager.getDomain(requestedPath.getDomainName()));
@@ -225,23 +214,40 @@ public class CircuitSession {
                     //
                     // This needs updates
                     //
-                    b = domainManager.updateResourceConnection(b);
+//                    b = domainManager.updateResourceConnection(b);
                     if (!circuit.getCircuitPath().contains(b.getId())) {
                         circuit.getCircuitPath().add(b.getId());
-                        circuit = domainManager.updateCircuitResource(circuit);
+//                        circuit = domainManager.updateCircuitResource(circuit);
                     }
-                } else {
-//                    System.out.println("ALREADY HEREEE!!!");
+                    //
+                    // 
+                    //
+                    resolved.add(b);
                 }
-                resolved.add(b);
 
             }
             //
-            // Melhorar esta validação!
+            // Melhorar esta validação! 
+            // Dentro do processo de criação, podemos ter 
+            // recebido paths inválidos...
+            // Caso um path inválido seja passado o método 
+            // domainManager.findResourceConnection(requestedPath)
+            // Vai lançar um ResourceNotFoundException, impedindo a criação 
+            // do circuito MAS nesse ponto as conexões já foram parcialmente atualizadas
             // 
             if (resolved.size() == request.getPayLoad().getPaths().size()) {
+
+                //
+                // Valida se funciona, mas batch update é muito mais rápido xD
+                //
+                resolved = domainManager.updateResourceConnections(resolved);
                 request.getPayLoad().getPaths().clear();
                 request.getPayLoad().getPaths().addAll(resolved);
+                circuit = domainManager.updateCircuitResource(circuit);
+            } else {
+                //
+                // Aqui temos um problema que precisamos ver se precisamos tratar.
+                //
             }
         }
         return r;

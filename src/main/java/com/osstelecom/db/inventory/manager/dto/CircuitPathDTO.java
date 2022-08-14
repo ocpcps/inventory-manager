@@ -32,7 +32,7 @@ public class CircuitPathDTO {
     private ArrayList<ResourceConnection> paths = new ArrayList<>();
     private Boolean degrated = false;
     private Boolean broken = false;
-    private ArrayList<String> brokenConnections;
+    private ArrayList<String> brokenResources;
 
     /**
      * @return the circuit
@@ -91,17 +91,17 @@ public class CircuitPathDTO {
     }
 
     /**
-     * @return the brokenConnections
+     * @return the brokenResources
      */
-    public ArrayList<String> getBrokenConnections() {
-        return brokenConnections;
+    public ArrayList<String> getBrokenResources() {
+        return brokenResources;
     }
 
     /**
-     * @param brokenConnections the brokenConnections to set
+     * @param brokenConnections the brokenResources to set
      */
-    public void setBrokenConnections(ArrayList<String> brokenConnections) {
-        this.brokenConnections = brokenConnections;
+    public void setBrokenResources(ArrayList<String> brokenConnections) {
+        this.brokenResources = brokenConnections;
     }
 
 }

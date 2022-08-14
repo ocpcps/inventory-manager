@@ -56,7 +56,6 @@ import com.osstelecom.db.inventory.manager.listeners.EventManagerListener;
 import com.osstelecom.db.inventory.manager.session.SchemaSession;
 import com.osstelecom.db.inventory.topology.DefaultTopology;
 import com.osstelecom.db.inventory.topology.ITopology;
-import com.osstelecom.db.inventory.topology.connection.INetworkConnection;
 import com.osstelecom.db.inventory.topology.node.DefaultNode;
 import com.osstelecom.db.inventory.topology.node.INetworkNode;
 import java.io.IOException;
@@ -78,7 +77,13 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 /**
- * Gerência a alocação de recursos
+ * This class is the main Domain Manager it will handle all operations related
+ * to persistence and topology, acting as a adapter betweeen, the persistence
+ * layer,topology manager e businnes rules.
+ * <p>
+ * This class has a 'lockManager' instance of Reentrant lock. It is used to
+ * control de atomicity of all operations, so instead of relying the concurrency
+ * control to the persistence layer, we try to figure out it here.
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  */
@@ -86,7 +91,7 @@ import org.springframework.stereotype.Service;
 public class DomainManager {
 
     private ReentrantLock lockManager = new ReentrantLock();
-//    private AtomicLong atomId = new AtomicLong(0);
+
     private ConcurrentHashMap<String, DomainDTO> domains = new ConcurrentHashMap<>();
     private ConcurrentHashMap<String, TimerDto> timers = new ConcurrentHashMap<>();
 
@@ -135,6 +140,13 @@ public class DomainManager {
         return domainDto;
     }
 
+    /**
+     * Retrieves a domain by name
+     *
+     * @param domainName
+     * @return
+     * @throws DomainNotFoundException
+     */
     public DomainDTO getDomain(String domainName) throws DomainNotFoundException {
         if (!domains.containsKey(domainName)) {
             throw new DomainNotFoundException("Domain :[" + domainName + "] not found");
@@ -142,6 +154,11 @@ public class DomainManager {
         return domains.get(domainName);
     }
 
+    /**
+     * Get the list of all domains.
+     *
+     * @return
+     */
     public ArrayList<DomainDTO> getAllDomains() {
         ArrayList<DomainDTO> result = new ArrayList<>();
 
@@ -151,11 +168,8 @@ public class DomainManager {
         return result;
     }
 
-    public DomainManager() {
-
-    }
-
     /**
+     * Create a managed Resource
      *
      * @param resource
      * @return
@@ -454,6 +468,20 @@ public class DomainManager {
         return arangoDao.findManagedResourceById(resourceid, domain);
     }
 
+    /**
+     * <p>
+     * Find a managed resource by id, in arangodb, the ID is a combination of
+     * the collection plus id something like collection/uuid.
+     * <p>
+     * It the given resource just contains the UUID, the method will fix it to
+     * the pattern as collection/uuid based on the resource domain
+     *
+     * @param resource
+     * @return ManagedResource - The resource
+     * @throws DomainNotFoundException
+     * @throws ResourceNotFoundException
+     * @throws ArangoDaoException
+     */
     public ManagedResource findManagedResourceById(ManagedResource resource) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
         String timerId = startTimer("findManagedResourceById");
         try {
@@ -474,7 +502,7 @@ public class DomainManager {
     }
 
     /**
-     * Cria um ID único para o Objeto
+     * Generates an UUID
      *
      * @return
      */
@@ -483,7 +511,7 @@ public class DomainManager {
     }
 
     /**
-     * Inicia os dominios conhecidos
+     * Starts and fetch all available domains
      */
     @EventListener(ApplicationReadyEvent.class)
     private void onStartUp() throws ArangoDaoException {
@@ -495,6 +523,9 @@ public class DomainManager {
 
     }
 
+    /**
+     * Update the persistence layer with the current atomic id in the domain
+     */
     @PreDestroy
     private void onShutDown() {
         this.domains.forEach((domainName, domain) -> {
@@ -504,15 +535,29 @@ public class DomainManager {
 
     }
 
+    /**
+     * Just abort the current transaction on the dynamic context
+     *
+     * @throws ScriptRuleException
+     */
     public void abortTransaction() throws ScriptRuleException {
         this.abortTransaction("Generic Aborted by script... no cause specified");
     }
 
+    /**
+     * Usend inside the dynamic context to process exceptions and abort current
+     * transaction without details but a message
+     *
+     * @param msg
+     * @throws ScriptRuleException
+     */
     public void abortTransaction(String msg) throws ScriptRuleException {
         this.abortTransaction(msg, null);
     }
 
     /**
+     * Usend inside the dynamic context to process exceptions and abort current
+     * transaction with details
      *
      * @param msg
      * @param details
@@ -527,22 +572,52 @@ public class DomainManager {
         throw ex;
     }
 
+    /**
+     * Check if given object is a location
+     *
+     * @param resource
+     * @return
+     */
     public Boolean isLocation(BasicResource resource) {
         return resource.getObjectClass().contains("Location");
     }
 
+    /**
+     * Check if given object is a Connection
+     *
+     * @param resource
+     * @return
+     */
     public Boolean isConnection(BasicResource resource) {
         return resource.getObjectClass().contains("Connection");
     }
 
+    /**
+     * Check if given object is a Manged Resource
+     *
+     * @param resource
+     * @return
+     */
     public Boolean isManagedResource(BasicResource resource) {
         return resource.getObjectClass().contains("ManagedResource");
     }
 
+    /**
+     * Check if given object is a Circuit
+     *
+     * @param resource
+     * @return
+     */
     public Boolean isCircuit(BasicResource resource) {
         return resource.getObjectClass().contains("Circuit");
     }
 
+    /**
+     * Timer Util
+     *
+     * @param operation
+     * @return
+     */
     private String startTimer(String operation) {
         String uid = UUID.randomUUID().toString();
         timers.put(uid, new TimerDto(uid, operation, System.currentTimeMillis()));
@@ -550,11 +625,11 @@ public class DomainManager {
     }
 
     /**
-     * Computa os timers...
+     * Time Util, compute the time, return -1 if invalid
      *
      * @param uid
      */
-    private void endTimer(String uid) {
+    private Long endTimer(String uid) {
         Long endTimer = System.currentTimeMillis();
         if (timers.containsKey(uid)) {
             TimerDto timer = timers.remove(uid);
@@ -569,10 +644,19 @@ public class DomainManager {
                     logger.warn("Timer: [" + timer.getUid() + "] Operation:[" + timer.getOperation() + "] Took:" + tookTimer + " ms (>100ms)");
                 }
             }
-
+            return tookTimer;
         }
+        return -1L;
     }
 
+    /**
+     * Find a Circuit Instance
+     *
+     * @param circuit
+     * @return
+     * @throws ResourceNotFoundException
+     * @throws ArangoDaoException
+     */
     public CircuitResource findCircuitResource(CircuitResource circuit) throws ResourceNotFoundException, ArangoDaoException {
         String timerId = startTimer("findCircuitResource");
         try {
@@ -586,6 +670,14 @@ public class DomainManager {
         }
     }
 
+    /**
+     * Search for a resource connection
+     *
+     * @param connection
+     * @return
+     * @throws ResourceNotFoundException
+     * @throws ArangoDaoException
+     */
     public ResourceConnection findResourceConnection(ResourceConnection connection) throws ResourceNotFoundException, ArangoDaoException {
         String timerId = startTimer("findResourceConnection");
         try {
@@ -600,14 +692,20 @@ public class DomainManager {
         }
     }
 
+    /**
+     * Update a Resource
+     *
+     * @param resource
+     * @return
+     * @throws InvalidRequestException
+     */
     public ManagedResource updateManagedResource(ManagedResource resource) throws InvalidRequestException {
         String timerId = startTimer("updateManagedResource");
         try {
             lockManager.lock();
             //
+            // Mover isso para session...
             //
-            //
-
             if (!resource.getOperationalStatus().equals("UP") && !resource.getOperationalStatus().equalsIgnoreCase("DOWN")) {
                 throw new InvalidRequestException("Invalid OperationalStatus:[" + resource.getOperationalStatus() + "]");
             }
@@ -623,7 +721,7 @@ public class DomainManager {
     }
 
     /**
-     * Atualiza a conexão de um recurso
+     * Update a Resource Connection
      *
      * @param connection
      * @return
@@ -643,7 +741,30 @@ public class DomainManager {
     }
 
     /**
-     * Atualiza um circuito
+     * Update a Resource Connection
+     *
+     * @param connection
+     * @return
+     */
+    public ArrayList<ResourceConnection> updateResourceConnections(ArrayList<ResourceConnection> connections) {
+        String timerId = startTimer("updateResourceConnection");
+        try {
+            lockManager.lock();
+            connections.forEach(connection -> {
+                connection.setLastModifiedDate(new Date());
+            });
+
+            return arangoDao.updateResourceConnections(connections);
+        } finally {
+            if (lockManager.isLocked()) {
+                lockManager.unlock();
+            }
+            endTimer(timerId);
+        }
+    }
+
+    /**
+     * Update a circuit
      *
      * @param resource
      * @return
@@ -667,16 +788,32 @@ public class DomainManager {
         }
     }
 
+    /**
+     * Return the circuit connections( Paths )
+     *
+     * @param circuit
+     * @return
+     * @throws ArangoDaoException
+     */
     public GraphList<ResourceConnection> findCircuitPaths(CircuitResource circuit) throws ArangoDaoException {
         return arangoDao.findCircuitPaths(circuit);
     }
 
+    /**
+     * Computes if the the graph topology is fully connected
+     *
+     * @param connections
+     * @param aPoint
+     * @return
+     */
     public ArrayList<String> checkBrokenGraph(ArrayList<ResourceConnection> connections, ManagedResource aPoint) {
         ArrayList<String> result = new ArrayList<>();
         if (!connections.isEmpty()) {
             //
             // Testar memória...
             //
+
+            Long startTime = System.currentTimeMillis();
             DefaultTopology topology = new DefaultTopology();
             AtomicLong localId = new AtomicLong(0L);
             INetworkNode target = createNode(aPoint.getId(), localId.incrementAndGet(), topology);
@@ -712,7 +849,9 @@ public class DomainManager {
             }
 
             List<INetworkNode> weak = topology.getImpactManager().getUnreacheableNodes();
-            logger.debug("Found " + weak.size() + " Weak Nodes");
+            Long endTime = System.currentTimeMillis();
+            Long tookTime = endTime - startTime;
+            logger.debug("Found " + weak.size() + " Unrecheable Nodes IN:" + tookTime + " ms");
 
             if (!weak.isEmpty()) {
                 weak.forEach(node -> {
@@ -925,7 +1064,11 @@ public class DomainManager {
     }
 
     /**
-     * Processa a atualização de um schema, isso é altamente custoso
+     * Process the schema update Event, this is very heavy for the system, avoid
+     * this use case.
+     * <p>
+     * Once a schema is updates, all referenced objects must be updated and all
+     * rules has to be rechecked.
      *
      * @param update
      */

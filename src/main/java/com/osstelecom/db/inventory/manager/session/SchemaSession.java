@@ -31,6 +31,9 @@ import com.osstelecom.db.inventory.manager.resources.BasicResource;
 import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstraintViolationException;
 import com.osstelecom.db.inventory.manager.resources.model.ResourceAttributeModel;
 import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
+import com.osstelecom.db.inventory.manager.response.CreateResourceSchemaModelResponse;
+import com.osstelecom.db.inventory.manager.response.PatchResourceSchemaModelResponse;
+import com.osstelecom.db.inventory.manager.response.ResourceSchemaResponse;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -97,6 +100,18 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
             this.schemaCache.put(schemaName, schema);
             return schema;
         }
+    }
+
+    /**
+     * Loads the Schema by Name
+     *
+     * @param schemaName
+     * @return
+     * @throws SchemaNotFoundException
+     * @throws GenericException
+     */
+    public ResourceSchemaResponse loadSchemaByName(String schemaName) throws SchemaNotFoundException, GenericException {
+            return new ResourceSchemaResponse(this.loadSchema(schemaName));
     }
 
     private void mergeSchemaModelSession(ResourceSchemaModel result, ResourceSchemaModel resourceModel) {
@@ -166,7 +181,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
      *
      * @param model
      */
-    public ResourceSchemaModel createResourceSchemaModel(ResourceSchemaModel model) throws GenericException, SchemaNotFoundException, InvalidRequestException {
+    public CreateResourceSchemaModelResponse createResourceSchemaModel(ResourceSchemaModel model) throws GenericException, SchemaNotFoundException, InvalidRequestException {
 
         if (model == null) {
             throw new GenericException("Request Cannot Be Null");
@@ -187,7 +202,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
 
         this.writeModelToDisk(model, false);
         this.clearSchemaCache();
-        return this.loadSchema(model.getSchemaName());
+        return new CreateResourceSchemaModelResponse(this.loadSchema(model.getSchemaName()));
 
     }
 
@@ -366,7 +381,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
      * @throws GenericException
      * @throws SchemaNotFoundException
      */
-    public ResourceSchemaModel patchSchemaModel(ResourceSchemaModel update) throws InvalidRequestException, GenericException, SchemaNotFoundException {
+    public PatchResourceSchemaModelResponse patchSchemaModel(ResourceSchemaModel update) throws InvalidRequestException, GenericException, SchemaNotFoundException {
 
         if (update == null) {
             throw new InvalidRequestException("Attribute Schema Model not found");
@@ -506,7 +521,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
             // 
             eventManager.notifyEvent(new ResourceSchemaUpdatedEvent(original));
         }
-        return this.loadSchema(original.getSchemaName());
+        return new PatchResourceSchemaModelResponse(this.loadSchema(original.getSchemaName()));
     }
 
     /**

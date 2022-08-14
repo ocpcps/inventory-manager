@@ -17,6 +17,8 @@
  */
 package com.osstelecom.db.inventory.manager.resources;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.osstelecom.db.inventory.manager.dto.DomainDTO;
 import java.util.ArrayList;
 
@@ -25,7 +27,7 @@ import java.util.ArrayList;
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 04.01.2022
  */
-
+@JsonInclude(Include.NON_NULL)
 public class CircuitResource extends BasicResource {
 
     /**

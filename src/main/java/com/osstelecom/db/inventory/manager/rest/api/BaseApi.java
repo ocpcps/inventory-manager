@@ -32,7 +32,7 @@ public class BaseApi {
     /**
      * Take care of Json Serialization
      */
-    protected Gson gson = new GsonBuilder().setPrettyPrinting().create();
+//    protected Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
     protected Logger logger = LoggerFactory.getLogger(this.getClass());
 }

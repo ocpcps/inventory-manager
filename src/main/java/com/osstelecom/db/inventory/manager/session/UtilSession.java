@@ -17,6 +17,8 @@
  */
 package com.osstelecom.db.inventory.manager.session;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.osstelecom.db.inventory.manager.configuration.InventoryConfiguration;
@@ -24,6 +26,8 @@ import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.springframework.stereotype.Service;
 
 /**
@@ -37,6 +41,7 @@ public class UtilSession {
     private MessageDigest md;
     private InventoryConfiguration configuration;
     private Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    private ObjectMapper objectMapper = new ObjectMapper();
 
     public String getMd5(String input) {
         try {
@@ -69,4 +74,12 @@ public class UtilSession {
         return UUID.randomUUID().toString();
     }
 
+    public String toJson(Object obj){
+        try {
+            return objectMapper.writeValueAsString(obj);
+        } catch (JsonProcessingException ex) {
+            Logger.getLogger(UtilSession.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return "{}";
+    }
 }

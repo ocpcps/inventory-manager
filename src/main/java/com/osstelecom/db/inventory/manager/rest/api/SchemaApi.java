@@ -62,9 +62,9 @@ public class SchemaApi extends BaseApi {
      */
     @AuthenticatedCall(role = {"user"})
     @GetMapping(path = "/{schema}", produces = "application/json")
-    public String getSchameDefinition(@PathVariable("schema") String schema) throws GenericException, SchemaNotFoundException {
+    public ResourceSchemaResponse getSchameDefinition(@PathVariable("schema") String schema) throws GenericException, SchemaNotFoundException {
         try {
-            return gson.toJson(new ResourceSchemaResponse(schemaSession.loadSchema(schema)));
+            return schemaSession.loadSchemaByName(schema);
         } catch (SchemaNotFoundException ex) {
             logger.error("Failed To Load Schema", ex);
             throw ex;
@@ -82,11 +82,10 @@ public class SchemaApi extends BaseApi {
      */
     @AuthenticatedCall(role = {"user"})
     @PatchMapping(path = "/{schema}", produces = "application/json")
-    public String patchSchameDefinition(@PathVariable("schema") String schemaName, @RequestBody String reqBody) throws GenericException, SchemaNotFoundException, InvalidRequestException {
+    public PatchResourceSchemaModelResponse patchSchameDefinition(@PathVariable("schema") String schemaName, @RequestBody PatchResourceSchemaModelRequest request) throws GenericException, SchemaNotFoundException, InvalidRequestException {
         try {
-            PatchResourceSchemaModelRequest request = gson.fromJson(reqBody, PatchResourceSchemaModelRequest.class);
             request.getPayLoad().setSchemaName(schemaName);
-            return gson.toJson(new PatchResourceSchemaModelResponse(schemaSession.patchSchemaModel(request.getPayLoad())));
+            return schemaSession.patchSchemaModel(request.getPayLoad());
         } catch (SchemaNotFoundException ex) {
             logger.error("Failed To Load Schema", ex);
             throw ex;
@@ -104,10 +103,8 @@ public class SchemaApi extends BaseApi {
      */
     @AuthenticatedCall(role = {"user", "operator"})
     @PostMapping(path = "/", produces = "application/json", consumes = "application/json")
-    public String createSchema(@RequestBody String reqBody) throws GenericException, SchemaNotFoundException, InvalidRequestException {
-        CreateResourceSchemaModelRequest model = gson.fromJson(reqBody, CreateResourceSchemaModelRequest.class);
-        ResourceSchemaModel createdModel = this.schemaSession.createResourceSchemaModel(model.getPayLoad());
-        return gson.toJson(new CreateResourceSchemaModelResponse(createdModel));
+    public CreateResourceSchemaModelResponse createSchema(@RequestBody CreateResourceSchemaModelRequest model) throws GenericException, SchemaNotFoundException, InvalidRequestException {
+        return this.schemaSession.createResourceSchemaModel(model.getPayLoad());
     }
 
     /**
@@ -117,9 +114,9 @@ public class SchemaApi extends BaseApi {
      */
     @AuthenticatedCall(role = {"user", "operator"})
     @PostMapping(path = "/cache/clear", produces = "application/json")
-    public String clearCachedSchema() {
+    public EmptyOkResponse clearCachedSchema() {
         this.schemaSession.clearSchemaCache();
-        return gson.toJson(new EmptyOkResponse());
+        return new EmptyOkResponse();
     }
 
     /**
@@ -129,8 +126,8 @@ public class SchemaApi extends BaseApi {
      */
     @AuthenticatedCall(role = {"user", "operator"})
     @GetMapping(path = "/cache", produces = "application/json")
-    public String getCachedSchemas() {
-        return gson.toJson(new TypedMapResponse(this.schemaSession.getCachedSchemas()));
+    public TypedMapResponse getCachedSchemas() {
+        return new TypedMapResponse(this.schemaSession.getCachedSchemas());
     }
 
 }
