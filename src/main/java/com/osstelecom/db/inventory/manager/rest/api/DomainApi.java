@@ -22,12 +22,15 @@ import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
 import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.request.CreateDomainRequest;
+import com.osstelecom.db.inventory.manager.request.DeleteDomainRequest;
 import com.osstelecom.db.inventory.manager.response.CreateDomainResponse;
+import com.osstelecom.db.inventory.manager.response.DeleteDomainResponse;
 import com.osstelecom.db.inventory.manager.response.DomainResponse;
 import com.osstelecom.db.inventory.manager.response.GetDomainsResponse;
 import com.osstelecom.db.inventory.manager.security.model.AuthenticatedCall;
 import com.osstelecom.db.inventory.manager.session.DomainSession;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -62,10 +65,25 @@ public class DomainApi extends BaseApi {
     }
 
     /**
-     * List all Domains created in this system
-     * @return 
+     * Deleta um dominio
+     *
+     * @param domainName
+     * @return
+     * @throws DomainNotFoundException
      */
-//    @AuthenticatedCall(role = {"user", "operator"})
+    @AuthenticatedCall(role = {"user", "operator"})
+    @DeleteMapping(path = "/{domainName}", produces = "application/json")
+    public DeleteDomainResponse deleteDomain(@PathVariable("domainName") String domainName) throws DomainNotFoundException {
+        DeleteDomainRequest request = new DeleteDomainRequest(domainName);
+        return domainSession.deleteDomain(request);
+    }
+
+    /**
+     * List all Domains created in this system
+     *
+     * @return
+     */
+    @AuthenticatedCall(role = {"user", "operator"})
     @GetMapping(path = "/", produces = "application/json")
     public GetDomainsResponse getAllDomains() {
         return domainSession.getAllDomains();

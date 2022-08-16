@@ -24,7 +24,9 @@ import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.operation.DomainManager;
 
 import com.osstelecom.db.inventory.manager.request.CreateDomainRequest;
+import com.osstelecom.db.inventory.manager.request.DeleteDomainRequest;
 import com.osstelecom.db.inventory.manager.response.CreateDomainResponse;
+import com.osstelecom.db.inventory.manager.response.DeleteDomainResponse;
 import com.osstelecom.db.inventory.manager.response.DomainResponse;
 import com.osstelecom.db.inventory.manager.response.GetDomainsResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +42,11 @@ public class DomainSession {
 
     @Autowired
     private DomainManager domainManager;
+
+    public DeleteDomainResponse deleteDomain(DeleteDomainRequest request) throws DomainNotFoundException {
+        DeleteDomainResponse response = new DeleteDomainResponse(domainManager.deleteDomain(request.getPayLoad()));
+        return response;
+    }
 
     public CreateDomainResponse createDomain(CreateDomainRequest domainRequest) throws DomainAlreadyExistsException, GenericException {
         try {

@@ -18,6 +18,7 @@
 package com.osstelecom.db.inventory.manager.dto;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  *
@@ -28,7 +29,8 @@ public class FilterDTO {
 
     private ArrayList<String> classes;
     private ArrayList<String> objects;
-    private String filter;
+    private String aqlFilter;
+    private HashMap<String, Object> bindings;
     private String targetRegex;
     private Boolean computeWeakLinks = false;
     private Integer computeThreads = 8;
@@ -60,20 +62,6 @@ public class FilterDTO {
      */
     public void setObjects(ArrayList<String> objects) {
         this.objects = objects;
-    }
-
-    /**
-     * @return the filter
-     */
-    public String getFilter() {
-        return filter;
-    }
-
-    /**
-     * @param filter the filter to set
-     */
-    public void setFilter(String filter) {
-        this.filter = filter;
     }
 
     /**
@@ -130,5 +118,33 @@ public class FilterDTO {
      */
     public void setMinCuts(Integer minCuts) {
         this.minCuts = minCuts;
+    }
+
+    /**
+     * @return the aqlFilter
+     */
+    public String getAqlFilter() {
+        return aqlFilter;
+    }
+
+    /**
+     * @param aqlFilter the aqlFilter to set
+     */
+    public void setAqlFilter(String aqlFilter) {
+        this.aqlFilter = aqlFilter;
+    }
+
+    /**
+     * @return the bindings
+     */
+    public HashMap<String, Object> getBindings() {
+        return bindings;
+    }
+
+    /**
+     * @param bindings the bindings to set
+     */
+    public void setBindings(HashMap<String, Object> bindings) {
+        this.bindings = bindings;
     }
 }

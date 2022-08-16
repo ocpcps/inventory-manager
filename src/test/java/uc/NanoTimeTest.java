@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Lucas Nishimura <lucas.nishimura@gmail.com>
+ * Copyright (C) 2021 Lucas Nishimura <lucas.nishimura@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -15,22 +15,26 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package com.osstelecom.db.inventory.manager.rest.api;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+package uc;
 
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
- * @created 21.07.2022
  */
-public class BaseApi {
+public class NanoTimeTest {
 
-    /**
-     * Take care of Json Serialization
-     */
-//    protected Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    public static void main(String[] args) throws Exception {
+//        while (true) {
+//            Long n = System.nanoTime();
+//            System.out.println(n);
+//        }
 
-    protected Logger logger = LoggerFactory.getLogger(this.getClass());
+        try {
+            System.out.println("Nishi");
+            return;
+        } finally {
+            System.out.println("Nishi 2");
+        }
+       
+    }
 }

@@ -140,6 +140,18 @@ public class DomainManager {
         return domainDto;
     }
 
+    public DomainDTO deleteDomain(DomainDTO domain) throws DomainNotFoundException {
+        try {
+            lockManager.lock();
+            domain = this.getDomain(domain.getDomainName());
+            return this.arangoDao.deleteDomain(domain);
+        } finally {
+            if (lockManager.isLocked()) {
+                lockManager.unlock();
+            }
+        }
+    }
+
     /**
      * Retrieves a domain by name
      *
@@ -1043,20 +1055,20 @@ public class DomainManager {
         return node;
     }
 
-    public ArrayList<BasicResource> getNodesByFilter(FilterDTO filter, String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
+    public ArrayList<ManagedResource> getNodesByFilter(FilterDTO filter, String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
         DomainDTO domain = getDomain(domainName);
         if (filter.getObjects().contains("nodes")) {
             return arangoDao.getNodesByFilter(filter, domain);
         }
-        return null;
+        throw new InvalidRequestException("getNodesByFilter() can only retrieve nodes objects");
     }
 
-    public ArrayList<ResourceConnection> getConnectionsByFilter(FilterDTO filter, String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
+    public ArrayList<ResourceConnection> getConnectionsByFilter(FilterDTO filter, String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
         DomainDTO domain = getDomain(domainName);
         if (filter.getObjects().contains("connections")) {
             return arangoDao.getConnectionsByFilter(filter, domain);
         }
-        return null;
+         throw new InvalidRequestException("getConnectionsByFilter() can only retrieve connections objects");
     }
 
     public GraphList<ManagedResource> findManagedResourcesBySchemaName(ResourceSchemaModel model, DomainDTO domain) {

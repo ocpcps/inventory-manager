@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.osstelecom.db.inventory.topology.test;
+package uc;
 
 import com.osstelecom.db.inventory.topology.connection.impact.IImpactManager;
 import com.osstelecom.db.inventory.topology.node.DefaultNode;

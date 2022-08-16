@@ -15,22 +15,21 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package com.osstelecom.db.inventory.manager.rest.api;
+package com.osstelecom.db.inventory.manager.request;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.osstelecom.db.inventory.manager.dto.DomainDTO;
 
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
- * @created 21.07.2022
+ * @created 14.08.2022
  */
-public class BaseApi {
-
-    /**
-     * Take care of Json Serialization
-     */
-//    protected Gson gson = new GsonBuilder().setPrettyPrinting().create();
-
-    protected Logger logger = LoggerFactory.getLogger(this.getClass());
+public class DeleteDomainRequest extends BasicRequest<DomainDTO> {
+    
+    public DeleteDomainRequest(String domainName) {
+        DomainDTO domain = new DomainDTO();
+        domain.setDomainName(domainName);
+        this.setPayLoad(domain);
+    }
+    
 }

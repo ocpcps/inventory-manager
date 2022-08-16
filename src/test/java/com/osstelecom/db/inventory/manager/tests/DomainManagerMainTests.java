@@ -15,22 +15,27 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package com.osstelecom.db.inventory.manager.rest.api;
+package com.osstelecom.db.inventory.manager.tests;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.osstelecom.db.inventory.manager.session.ResourceSession;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
- * @created 21.07.2022
+ * @created 14.08.2022
  */
-public class BaseApi {
+@SpringBootTest
+public class DomainManagerMainTests {
 
-    /**
-     * Take care of Json Serialization
-     */
-//    protected Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    @Autowired
+    private ResourceSession resourceSession;
 
-    protected Logger logger = LoggerFactory.getLogger(this.getClass());
+    @Test
+    public void contextLoads() throws Exception {
+        assertThat(resourceSession).isNotNull();
+    }
 }

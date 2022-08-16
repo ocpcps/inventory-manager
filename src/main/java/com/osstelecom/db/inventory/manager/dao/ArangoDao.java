@@ -34,8 +34,6 @@ import com.arangodb.model.CollectionCreateOptions;
 import com.arangodb.model.DocumentCreateOptions;
 import com.arangodb.model.DocumentUpdateOptions;
 import com.arangodb.model.PersistentIndexOptions;
-import com.arangodb.velocypack.VPack;
-import com.arangodb.velocypack.VPackSlice;
 import com.osstelecom.db.inventory.graph.arango.GraphList;
 import com.osstelecom.db.inventory.manager.configuration.ArangoDBConfiguration;
 import com.osstelecom.db.inventory.manager.configuration.ConfigurationManager;
@@ -44,6 +42,7 @@ import com.osstelecom.db.inventory.manager.dto.DomainDTO;
 import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.DomainAlreadyExistsException;
+import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.resources.BasicResource;
@@ -57,9 +56,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -137,6 +133,32 @@ public class ArangoDao {
 
     public ArangoCollection getCollectionByName(String name) {
         return this.graphDb.db(this.dbName).collection(name);
+    }
+
+    /**
+     * Deletes the domain from the system
+     *
+     * @param domain
+     * @return
+     * @throws DomainNotFoundException
+     */
+    public DomainDTO deleteDomain(DomainDTO domain) throws DomainNotFoundException {
+        if (this.domainsCollection.documentExists(domain.getDomainName())) {
+            /**
+             * Now we know that the domain exists. Lets delete it all
+             */
+
+            this.graphDb.db(this.dbName).collection(domain.getNodes()).drop();
+            this.graphDb.db(this.dbName).collection(domain.getCircuits()).drop();
+            this.graphDb.db(this.dbName).collection(domain.getConnections()).drop();
+            this.graphDb.db(this.dbName).collection(domain.getServices()).drop();
+            this.graphDb.db(this.dbName).graph(domain.getConnectionLayer()).drop();
+            this.domainsCollection.deleteDocument(domain.getDomainName());
+            logger.debug("Domain :[" + domain.getDomainName() + "] Deleted");
+            return domain;
+        } else {
+            throw new DomainNotFoundException("Domain with name:[" + domain.getDomainName() + "] not found");
+        }
     }
 
     /**
@@ -778,24 +800,45 @@ public class ArangoDao {
      * @throws ResourceNotFoundException
      * @throws ArangoDaoException
      */
-    public ArrayList<BasicResource> getNodesByFilter(FilterDTO filter, DomainDTO domain) throws ResourceNotFoundException, ArangoDaoException {
-        ArrayList<BasicResource> resultList = new ArrayList<>();
+    public ArrayList<ManagedResource> getNodesByFilter(FilterDTO filter, DomainDTO domain) throws ResourceNotFoundException, ArangoDaoException {
+        ArrayList<ManagedResource> resultList = new ArrayList<>();
+        HashMap<String, Object> bindVars = new HashMap<>();
+
         String aql = "FOR doc IN " + domain.getNodes() + " \n"
-                + "   filter   doc.className  in @classes \n";
+                + "   filter   1==1 ";
 
-        if (filter.getFilter() != null) {
-            if (!filter.getFilter().trim().equals("")) {
+        if (filter.getClasses() != null) {
+            if (!filter.getClasses().isEmpty()) {
+                aql += "and doc.className  in @classes \n";
+                bindVars.put("classes", filter.getClasses());
+            }
+        }
+        if (filter.getAqlFilter() != null) {
+            if (!filter.getAqlFilter().trim().equals("")) {
                 //
                 //
                 //
 
-                aql += " and " + filter.getFilter();
+                aql += " and " + filter.getAqlFilter();
             }
         }
         aql += " return doc";
-        HashMap<String, Object> bindVars = new HashMap<>();
-        bindVars.put("classes", filter.getClasses());
-        ArangoCursor<BasicResource> cursor = this.database.query(aql, bindVars, BasicResource.class);
+
+        if (filter.getBindings() != null) {
+            if (!filter.getBindings().isEmpty()) {
+                bindVars.putAll(filter.getBindings());
+            }
+        }
+
+        logger.info("(getNodesByFilter) RUNNING: AQL:[" + aql + "]");
+        logger.info("\tBindings:");
+
+        bindVars.forEach((k, v) -> {
+            logger.info("\t  [@" + k + "]=[" + v + "]");
+
+        });
+
+        ArangoCursor<ManagedResource> cursor = this.database.query(aql, bindVars, ManagedResource.class);
 
         resultList.addAll(getListFromCursorType(cursor));
 
@@ -817,20 +860,33 @@ public class ArangoDao {
      */
     public ArrayList<ResourceConnection> getConnectionsByFilter(FilterDTO filter, DomainDTO domain) throws ResourceNotFoundException, ArangoDaoException {
         ArrayList<ResourceConnection> resultList = new ArrayList<>();
+        HashMap<String, Object> bindVars = new HashMap<>();
         String aql = "FOR doc IN " + domain.getConnections() + " \n"
-                + "   filter   doc.className  in @classes \n";
+                + "   filter   1==1 ";
 
-        if (filter.getFilter() != null) {
-            if (!filter.getFilter().trim().equals("")) {
+        if (filter.getClasses() != null) {
+            if (!filter.getClasses().isEmpty()) {
+                aql += "doc.className  in @classes \n";
+                bindVars.put("classes", filter.getClasses());
+            }
+        }
+
+        if (filter.getAqlFilter() != null) {
+            if (!filter.getAqlFilter().trim().equals("")) {
                 //
                 //
                 //
-                aql += " and " + filter.getFilter();
+                aql += " and " + filter.getAqlFilter();
             }
         }
         aql += " return doc";
-        HashMap<String, Object> bindVars = new HashMap<>();
-        bindVars.put("classes", filter.getClasses());
+
+        if (filter.getBindings() != null) {
+            if (!filter.getBindings().isEmpty()) {
+                bindVars.putAll(filter.getBindings());
+            }
+        }
+
         ArangoCursor<ResourceConnection> cursor = this.database.query(aql, bindVars, ResourceConnection.class);
 
         Long start = System.currentTimeMillis();
@@ -884,7 +940,7 @@ public class ArangoDao {
         String aql = "FOR path\n"
                 + "  IN 1..@dLimit ANY k_paths\n"
                 + "  @aPoint TO @zPoint\n"
-                + "  GRAPH 'showcase_connections_layer'\n"
+                + "  GRAPH '" + circuit.getDomain().getConnectionLayer() + "'\n"
                 + "    for v in  path.edges\n"
                 + "      filter @circuitId  in v.circuits[*] \n"
                 + "        \n"

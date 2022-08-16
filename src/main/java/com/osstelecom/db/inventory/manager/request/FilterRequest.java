@@ -18,13 +18,12 @@
 package com.osstelecom.db.inventory.manager.request;
 
 import com.osstelecom.db.inventory.manager.dto.FilterDTO;
-import com.osstelecom.db.inventory.manager.resources.ServiceResource;
 
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 26.01.2022
  */
-public class FilterRequest extends BasicRequest<FilterDTO> {
+ public class FilterRequest extends BasicRequest<FilterDTO> {
 
 }

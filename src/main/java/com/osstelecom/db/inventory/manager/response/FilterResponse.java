@@ -19,6 +19,7 @@ package com.osstelecom.db.inventory.manager.response;
 
 import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import com.osstelecom.db.inventory.manager.resources.BasicResource;
+import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import java.util.ArrayList;
 
@@ -29,9 +30,10 @@ import java.util.ArrayList;
  */
 public class FilterResponse extends BasicResponse<FilterDTO> {
 
-    private ArrayList<BasicResource> nodes;
+    private ArrayList<ManagedResource> nodes;
     private ArrayList<ResourceConnection> connections;
     private Integer nodeCount = 0;
+    private Integer connectionsCount = 0;
 
     public FilterResponse(FilterDTO obj) {
         super(obj);
@@ -40,14 +42,14 @@ public class FilterResponse extends BasicResponse<FilterDTO> {
     /**
      * @return the nodes
      */
-    public ArrayList<BasicResource> getNodes() {
+    public ArrayList<ManagedResource> getNodes() {
         return nodes;
     }
 
     /**
      * @param nodes the nodes to set
      */
-    public void setNodes(ArrayList<BasicResource> nodes) {
+    public void setNodes(ArrayList<ManagedResource> nodes) {
         this.nodes = nodes;
     }
 
@@ -77,6 +79,23 @@ public class FilterResponse extends BasicResponse<FilterDTO> {
      */
     public void setConnections(ArrayList<ResourceConnection> connections) {
         this.connections = connections;
+        if (this.connections != null) {
+            this.setConnectionsCount(this.connections.size());
+        }
+    }
+
+    /**
+     * @return the connectionsCount
+     */
+    public Integer getConnectionsCount() {
+        return connectionsCount;
+    }
+
+    /**
+     * @param connectionsCount the connectionsCount to set
+     */
+    public void setConnectionsCount(Integer connectionsCount) {
+        this.connectionsCount = connectionsCount;
     }
 
 }

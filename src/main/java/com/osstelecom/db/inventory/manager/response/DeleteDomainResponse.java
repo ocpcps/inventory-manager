@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Lucas Nishimura <lucas.nishimura@gmail.com>
+ * Copyright (C) 2022 Lucas Nishimura <lucas.nishimura@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -15,26 +15,19 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package com.osstelecom.db.inventory.manager.test;
+package com.osstelecom.db.inventory.manager.response;
+
+import com.osstelecom.db.inventory.manager.dto.DomainDTO;
 
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @created 14.08.2022
  */
-public class NanoTimeTest {
-
-    public static void main(String[] args) throws Exception {
-//        while (true) {
-//            Long n = System.nanoTime();
-//            System.out.println(n);
-//        }
-
-        try {
-            System.out.println("Nishi");
-            return;
-        } finally {
-            System.out.println("Nishi 2");
-        }
-       
+public class DeleteDomainResponse extends BasicResponse<DomainDTO> {
+    
+    public DeleteDomainResponse(DomainDTO obj) {
+        super(obj);
     }
+    
 }

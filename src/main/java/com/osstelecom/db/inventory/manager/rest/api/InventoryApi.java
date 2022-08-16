@@ -211,10 +211,9 @@ public class InventoryApi extends BaseApi {
      */
     @AuthenticatedCall(role = {"user"})
     @PostMapping(path = "/{domain}/filter", produces = "application/json", consumes = "application/json")
-    public FilterResponse getElementsByFilter(@RequestBody FilterRequest filter, @PathVariable("domain") String domain) throws ArangoDaoException, ResourceNotFoundException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, AttributeConstraintViolationException, DomainNotFoundException {
-//        System.out.println(":::::::::" + gson.toJson(filter));
+    public FilterResponse findManagedResourceByFilter(@RequestBody FilterRequest filter, @PathVariable("domain") String domain) throws ArangoDaoException, ResourceNotFoundException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, AttributeConstraintViolationException, DomainNotFoundException, InvalidRequestException {
         filter.setRequestDomain(domain);
-        return resourceSession.getElementsByFilter(filter);
+        return resourceSession.findManagedResourceByFilter(filter);
     }
 
     /**
