@@ -17,6 +17,8 @@
  */
 package com.osstelecom.db.inventory.manager.dto;
 
+import com.osstelecom.db.inventory.manager.resources.ManagedResource;
+import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -35,6 +37,45 @@ public class FilterDTO {
     private Boolean computeWeakLinks = false;
     private Integer computeThreads = 8;
     private Integer minCuts = 1;
+    private ArrayList<ManagedResource> nodes;
+    private ArrayList<ResourceConnection> connections;
+    private Integer nodeCount = 0;
+    private Integer connectionsCount = 0;
+
+    public ArrayList<ManagedResource> getNodes() {
+        return nodes;
+    }
+
+    public void setNodes(ArrayList<ManagedResource> nodes) {
+        this.nodes = nodes;
+    }
+
+    public ArrayList<ResourceConnection> getConnections() {
+        return connections;
+    }
+
+    public void setConnections(ArrayList<ResourceConnection> connections) {
+        this.connections = connections;
+        if (this.connections != null) {
+            this.setConnectionsCount(this.connections.size());
+        }
+    }
+
+    public Integer getNodeCount() {
+        return nodeCount;
+    }
+
+    public void setNodeCount(Integer nodeCount) {
+        this.nodeCount = nodeCount;
+    }
+
+    public Integer getConnectionsCount() {
+        return connectionsCount;
+    }
+
+    public void setConnectionsCount(Integer connectionsCount) {
+        this.connectionsCount = connectionsCount;
+    }
 
     /**
      * @return the classes

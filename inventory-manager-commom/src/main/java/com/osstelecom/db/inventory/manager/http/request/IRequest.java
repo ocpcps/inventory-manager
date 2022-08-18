@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Lucas Nishimura <lucas.nishimura@gmail.com>
+ * Copyright (C) 2021 Lucas Nishimura <lucas.nishimura@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -15,22 +15,24 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package com.osstelecom.db.inventory.manager.response;
-
-import com.osstelecom.db.inventory.manager.dto.FilterDTO;
+package com.osstelecom.db.inventory.manager.http.request;
 
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
- * @created 26.01.2022
  */
-public class FilterResponse extends BasicResponse<FilterDTO> {
+public interface IRequest<T> {
 
-  
+    public String getRequestToken();
 
-    public FilterResponse(FilterDTO obj) {
-        super(obj);
-    }
+    public String getRequestTarget();
 
+    public T getPayLoad();
+
+    public void setPayLoad(T payLoad);
+
+    public String getRequestDomain();
+
+    public void setRequestDomain(String domain);
 
 }

@@ -17,20 +17,17 @@
  */
 package com.osstelecom.db.inventory.manager.response;
 
-import com.osstelecom.db.inventory.manager.dto.FilterDTO;
+import com.osstelecom.db.inventory.manager.resources.ServiceResource;
 
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
- * @created 26.01.2022
+ * @created 18.08.2022
  */
-public class FilterResponse extends BasicResponse<FilterDTO> {
-
-  
-
-    public FilterResponse(FilterDTO obj) {
+public class GetServiceResponse extends BasicResponse<ServiceResource> {
+    
+    public GetServiceResponse(ServiceResource obj) {
         super(obj);
     }
-
-
+    
 }

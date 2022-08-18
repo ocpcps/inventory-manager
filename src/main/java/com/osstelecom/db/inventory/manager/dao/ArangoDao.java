@@ -838,7 +838,7 @@ public class ArangoDao {
 
         });
 
-        ArangoCursor<ManagedResource> cursor = this.database.query(aql, bindVars, ManagedResource.class);
+        ArangoCursor<ManagedResource> cursor = this.database.query(aql, bindVars,new AqlQueryOptions(), ManagedResource.class);
 
         resultList.addAll(getListFromCursorType(cursor));
 

@@ -15,22 +15,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package com.osstelecom.db.inventory.manager.response;
+package com.osstelecom.db.inventory.manager.request;
 
-import com.osstelecom.db.inventory.manager.dto.FilterDTO;
+import com.osstelecom.db.inventory.manager.resources.ServiceResource;
 
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
- * @created 26.01.2022
+ * @created 18.08.2022
  */
-public class FilterResponse extends BasicResponse<FilterDTO> {
-
-  
-
-    public FilterResponse(FilterDTO obj) {
-        super(obj);
-    }
-
-
+public class GetServiceRequest extends BasicRequest<ServiceResource> {
 }

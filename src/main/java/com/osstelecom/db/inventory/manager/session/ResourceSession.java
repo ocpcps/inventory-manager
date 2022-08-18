@@ -318,12 +318,12 @@ public class ResourceSession {
 
         FilterResponse response = new FilterResponse(filter.getPayLoad());
         if (filter.getPayLoad().getObjects().contains("nodes")) {
-            response.setNodes(domainManager.getNodesByFilter(filter.getPayLoad(), filter.getRequestDomain()));
-            response.setNodeCount(response.getNodes().size());
+            response.getPayLoad().setNodes(domainManager.getNodesByFilter(filter.getPayLoad(), filter.getRequestDomain()));
+            response.getPayLoad().setNodeCount(response.getPayLoad().getNodes().size());
         }
 
         if (filter.getPayLoad().getObjects().contains("connections")) {
-            response.setConnections(domainManager.getConnectionsByFilter(filter.getPayLoad(), filter.getRequestDomain()));
+            response.getPayLoad().setConnections(domainManager.getConnectionsByFilter(filter.getPayLoad(), filter.getRequestDomain()));
             if (filter.getPayLoad().getComputeWeakLinks()) {
                 //
                 // Se vamos computar os links fracos monta um fake "in memory" topology

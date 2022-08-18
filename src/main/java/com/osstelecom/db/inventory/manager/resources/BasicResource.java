@@ -40,8 +40,16 @@ import org.bson.codecs.pojo.annotations.BsonIgnore;
 @JsonInclude(Include.NON_NULL)
 public class BasicResource {
 
+    /**
+     * Mandatory
+     */
     private DomainDTO domain;
+
+    /**
+     * Mandatory
+     */
     private String domainName;
+
     private Date installationDate;
     private Date activationDate;
     private Date inactivationDate;
@@ -55,8 +63,15 @@ public class BasicResource {
     private ConsumableMetric consumableMetric;
     private ConsumableMetric consumerMetric;
 
+    /**
+     * Mandatory
+     */
     private String name;
     private String description;
+
+    /**
+     * Mandatory
+     */
     private String nodeAddress;
     private String vendor;
     private String version;
@@ -75,6 +90,10 @@ public class BasicResource {
     private String uid;
     @DocumentField(DocumentField.Type.ID)
     private String id;
+
+    /**
+     * Mandatory
+     */
     private String className = "Default";
     private ConcurrentHashMap<String, Object> attributes = new ConcurrentHashMap<>();
     /**

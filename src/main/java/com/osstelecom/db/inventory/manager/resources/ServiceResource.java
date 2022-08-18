@@ -26,6 +26,7 @@ import java.util.ArrayList;
 public class ServiceResource extends BasicResource {
 
     /**
+     * 
      * IDS of Services that this services depends on, like parent service.
      */
     private ArrayList<ServiceResource> dependsOn;
@@ -41,6 +42,10 @@ public class ServiceResource extends BasicResource {
 
     public ServiceResource(DomainDTO domain) {
         super(domain);
+    }
+    
+    public ServiceResource(String id){
+        this.setId(id);
     }
 
 }
