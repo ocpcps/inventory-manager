@@ -517,7 +517,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
             this.writeModelToDisk(original, true);
             this.clearSchemaCache();
             //
-            // Notifica o Message Bus da Atualização, ele vai varrar a base procurando utilizações...
+            // Notifica o Message Bus da Atualização, ele vai varrer a base procurando utilizações...
             // 
             eventManager.notifyEvent(new ResourceSchemaUpdatedEvent(original));
         }

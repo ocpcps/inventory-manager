@@ -838,7 +838,7 @@ public class ArangoDao {
 
         });
 
-        ArangoCursor<ManagedResource> cursor = this.database.query(aql, bindVars,new AqlQueryOptions(), ManagedResource.class);
+        ArangoCursor<ManagedResource> cursor = this.database.query(aql, bindVars, new AqlQueryOptions(), ManagedResource.class);
 
         resultList.addAll(getListFromCursorType(cursor));
 
@@ -858,8 +858,8 @@ public class ArangoDao {
      * @throws ResourceNotFoundException
      * @throws ArangoDaoException
      */
-    public ArrayList<ResourceConnection> getConnectionsByFilter(FilterDTO filter, DomainDTO domain) throws ResourceNotFoundException, ArangoDaoException {
-        ArrayList<ResourceConnection> resultList = new ArrayList<>();
+    public GraphList<ResourceConnection> getConnectionsByFilter(FilterDTO filter, DomainDTO domain) throws ResourceNotFoundException, ArangoDaoException {
+//        ArrayList<ResourceConnection> resultList = new ArrayList<>();
         HashMap<String, Object> bindVars = new HashMap<>();
         String aql = "FOR doc IN " + domain.getConnections() + " \n"
                 + "   filter   1==1 ";
@@ -887,17 +887,18 @@ public class ArangoDao {
             }
         }
 
-        ArangoCursor<ResourceConnection> cursor = this.database.query(aql, bindVars, ResourceConnection.class);
-
+        ArangoCursor<ResourceConnection> cursor = this.database.query(aql, bindVars, new AqlQueryOptions().fullCount(true).count(true), ResourceConnection.class);
+        GraphList<ResourceConnection> resultList
+                = new GraphList(cursor);
         Long start = System.currentTimeMillis();
-        resultList.addAll(getListFromCursorType(cursor));
+//        resultList.addAll(getListFromCursorType(cursor));
 
         Long end = System.currentTimeMillis();
         Long took = end - start;
         logger.debug("Query Took: " + took + " ms Total Result Found was:" + resultList.size());
         logger.debug("AQL: [" + aql + "]");
-        if (resultList.isEmpty()) {
-            throw new ResourceNotFoundException("No Resource Found for Filter: [" + aql + "]");
+        if (resultList.size() < 1) {
+            throw new ResourceNotFoundException("No Resource Found for Filter: [" + aql + "] Total:[" + resultList.size() + "]");
         }
         logger.debug("Found:" + resultList.size());
         return resultList;

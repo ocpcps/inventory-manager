@@ -35,4 +35,5 @@ public interface IRequest<T> {
 
     public void setRequestDomain(String domain);
 
+    public String getClassName();
 }

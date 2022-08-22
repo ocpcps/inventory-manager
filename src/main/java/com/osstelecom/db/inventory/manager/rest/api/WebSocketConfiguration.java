@@ -17,27 +17,23 @@
  */
 package com.osstelecom.db.inventory.manager.rest.api;
 
-import com.osstelecom.db.inventory.manager.rest.api.security.ApiRequestInterceptor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.socket.config.annotation.EnableWebSocket;
+import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
+import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 
 /**
- * Nice config Adapter xD
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
- * @created 28.05.2022
+ * @created 18.08.2022
  */
 @Configuration
-public class APIConfigAdapter implements WebMvcConfigurer {
-
-    @Autowired
-    private ApiRequestInterceptor apiRequestInterceptor;
+@EnableWebSocket
+public class WebSocketConfiguration implements WebSocketConfigurer {
 
     @Override
-    public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(apiRequestInterceptor);
+    public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
+        registry.addHandler(new WSApiHandler(), "/socket");
     }
 
 }

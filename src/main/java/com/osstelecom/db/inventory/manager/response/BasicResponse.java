@@ -30,6 +30,17 @@ public abstract class BasicResponse<T> implements IResponse<T> {
     private int statusCode = 200;
     private T payLoad;
     private int size;
+    private String className;
+
+    public String getClassName() {
+        if (this.className==null){
+            this.className = this.getClass().getName();
+        }
+        return className;
+    }
+    
+    
+    
 
     public BasicResponse(T obj) {
         this.setPayLoad(obj);

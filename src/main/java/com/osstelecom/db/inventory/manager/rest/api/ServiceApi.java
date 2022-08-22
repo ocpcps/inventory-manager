@@ -17,6 +17,7 @@
  */
 package com.osstelecom.db.inventory.manager.rest.api;
 
+import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.ServiceNotFoundException;
 import com.osstelecom.db.inventory.manager.request.GetServiceRequest;
 import com.osstelecom.db.inventory.manager.resources.ServiceResource;
@@ -43,11 +44,11 @@ public class ServiceApi {
 
     @AuthenticatedCall(role = {"user"})
     @GetMapping(path = "/{domain}/{serviceId}", produces = "application/json")
-    public GetServiceResponse getServiceById(@PathVariable("domain") String domainName, @PathVariable("serviceId") String serviceId) throws ServiceNotFoundException {
+    public GetServiceResponse getServiceById(@PathVariable("domain") String domainName, @PathVariable("serviceId") String serviceId) throws ServiceNotFoundException, InvalidRequestException {
         GetServiceRequest request = new GetServiceRequest();
         request.setRequestDomain(domainName);
         request.setPayLoad(new ServiceResource(serviceId));
         return serviceSession.getServiceByServiceId(request);
-        
+
     }
 }

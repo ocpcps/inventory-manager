@@ -1063,7 +1063,7 @@ public class DomainManager {
         throw new InvalidRequestException("getNodesByFilter() can only retrieve nodes objects");
     }
 
-    public ArrayList<ResourceConnection> getConnectionsByFilter(FilterDTO filter, String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
+    public GraphList<ResourceConnection> getConnectionsByFilter(FilterDTO filter, String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
         DomainDTO domain = getDomain(domainName);
         if (filter.getObjects().contains("connections")) {
             return arangoDao.getConnectionsByFilter(filter, domain);

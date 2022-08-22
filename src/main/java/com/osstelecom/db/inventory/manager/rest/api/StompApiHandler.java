@@ -17,27 +17,31 @@
  */
 package com.osstelecom.db.inventory.manager.rest.api;
 
-import com.osstelecom.db.inventory.manager.rest.api.security.ApiRequestInterceptor;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.HashMap;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.stereotype.Controller;
 
 /**
- * Nice config Adapter xD
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
- * @created 28.05.2022
+ * @created 18.08.2022
  */
-@Configuration
-public class APIConfigAdapter implements WebMvcConfigurer {
+@Controller
+public class StompApiHandler {
 
     @Autowired
-    private ApiRequestInterceptor apiRequestInterceptor;
+    private SimpMessagingTemplate simpMessagingTemplate;
+    private ObjectMapper om = new ObjectMapper();
 
-    @Override
-    public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(apiRequestInterceptor);
+    @MessageMapping("/requests")
+    @SendTo("/topic/response")
+    public String processRequest(@Payload String request) {
+        System.out.println("Hello:" + request);
+        return request;
     }
-
 }

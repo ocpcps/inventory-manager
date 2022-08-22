@@ -73,6 +73,8 @@ public class ResourceConnection extends BasicResource {
 
     private ArrayList<String> circuits = new ArrayList<>();
 
+   
+
     public ResourceConnection(String attributeSchema, DomainDTO domain) {
         super(attributeSchema, domain);
 
@@ -88,7 +90,7 @@ public class ResourceConnection extends BasicResource {
     public void setFrom(BasicResource resource) {
         this.fromResource = resource;
         this.setFromUid(this.getDomain().getNodes() + "/" + resource.getUid());
-        if (!this.relatedNodes.contains(this.getFromUid())){
+        if (!this.relatedNodes.contains(this.getFromUid())) {
             this.relatedNodes.add(this.getFromUid());
         }
     }
@@ -96,7 +98,7 @@ public class ResourceConnection extends BasicResource {
     public void setTo(BasicResource resource) {
         this.toResource = resource;
         this.setToUid(this.getDomain().getNodes() + "/" + resource.getUid());
-        if (!this.relatedNodes.contains(this.getToUid())){
+        if (!this.relatedNodes.contains(this.getToUid())) {
             this.relatedNodes.add(this.getToUid());
         }
     }
@@ -137,7 +139,8 @@ public class ResourceConnection extends BasicResource {
     }
 
     /**
-     * @param bidirectionalConsuptions the bidirectionalConsuptions toResource set
+     * @param bidirectionalConsuptions the bidirectionalConsuptions toResource
+     * set
      */
     public void setBidirectionalConsuptions(Boolean bidirectionalConsuptions) {
         this.bidirectionalConsuptions = bidirectionalConsuptions;

@@ -17,27 +17,30 @@
  */
 package com.osstelecom.db.inventory.manager.rest.api;
 
-import com.osstelecom.db.inventory.manager.rest.api.security.ApiRequestInterceptor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.messaging.simp.config.MessageBrokerRegistry;
+import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
+import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
+import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 
 /**
- * Nice config Adapter xD
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
- * @created 28.05.2022
+ * @created 18.08.2022
  */
 @Configuration
-public class APIConfigAdapter implements WebMvcConfigurer {
-
-    @Autowired
-    private ApiRequestInterceptor apiRequestInterceptor;
+@EnableWebSocketMessageBroker
+public class StompBrokerConfiguration implements WebSocketMessageBrokerConfigurer {
 
     @Override
-    public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(apiRequestInterceptor);
+    public void registerStompEndpoints(StompEndpointRegistry registry) {
+        registry.addEndpoint("/stomp")
+                .setAllowedOrigins("*");
     }
 
+    @Override
+    public void configureMessageBroker(MessageBrokerRegistry config) {
+        config.enableSimpleBroker("/topic/", "/queue/");
+        config.setApplicationDestinationPrefixes("/app");
+    }
 }

@@ -28,8 +28,15 @@ public abstract class BasicRequest<T> implements IRequest<T> {
     private String requestToken;
     private String requestTarget;
     private String requestDomain;
-
+    private String className;
     private T payLoad;
+
+    public String getClassName() {
+        if (this.className == null) {
+            this.className = this.getClass().getName();
+        }
+        return className;
+    }
 
     @Override
     public String getRequestToken() {

@@ -323,7 +323,7 @@ public class ResourceSession {
         }
 
         if (filter.getPayLoad().getObjects().contains("connections")) {
-            response.getPayLoad().setConnections(domainManager.getConnectionsByFilter(filter.getPayLoad(), filter.getRequestDomain()));
+            response.getPayLoad().setConnections(domainManager.getConnectionsByFilter(filter.getPayLoad(), filter.getRequestDomain()).toList());
             if (filter.getPayLoad().getComputeWeakLinks()) {
                 //
                 // Se vamos computar os links fracos monta um fake "in memory" topology
