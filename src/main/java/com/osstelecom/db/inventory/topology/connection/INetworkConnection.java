@@ -6,7 +6,7 @@
 package com.osstelecom.db.inventory.topology.connection;
 
 import com.osstelecom.db.inventory.topology.node.INetworkNode;
-import com.osstelecom.db.nventory.topology.object.DefaultNetworkObject;
+import com.osstelecom.db.inventory.topology.object.DefaultNetworkObject;
 import com.osstelecom.db.inventory.topology.ITopology;
 import java.util.ArrayList;
 
@@ -43,11 +43,9 @@ public interface INetworkConnection extends DefaultNetworkObject {
     public ArrayList<ArrayList<INetworkNode>> addPathList(ArrayList<INetworkNode> list);
 
     public void printPathList();
-    
+
     public Boolean isRelatedToNode(INetworkNode node);
-    
-    
+
     public void disconnect(INetworkNode node);
-   
 
 }

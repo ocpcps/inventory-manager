@@ -17,29 +17,28 @@
  */
 package com.osstelecom.db.inventory.manager.events;
 
-import com.osstelecom.db.inventory.manager.resources.ManagedResource;
+import com.osstelecom.db.inventory.manager.resources.ServiceResource;
 
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 10.04.2022
  */
-public class ManagedResourceCreatedEvent extends BasicEvent {
+public class ServiceResourceCreatedEvent extends BasicEvent {
 
-    private ManagedResource resource;
+    private ServiceResource service;
 
-    public ManagedResourceCreatedEvent(ManagedResource resource) {
-        this.resource = resource;
+    public ServiceResourceCreatedEvent(ServiceResource service) {
+        this.service = service;
         this.setEventDate();
     }
 
-    public ManagedResource getResource() {
-        return resource;
+    public ServiceResource getService() {
+        return service;
     }
 
-    public void setResource(ManagedResource resource) {
-        this.resource = resource;
+    public void setService(ServiceResource service) {
+        this.service = service;
     }
-
     
 }

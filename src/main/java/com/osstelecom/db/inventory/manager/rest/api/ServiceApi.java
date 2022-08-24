@@ -17,18 +17,32 @@
  */
 package com.osstelecom.db.inventory.manager.rest.api;
 
-import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
-import com.osstelecom.db.inventory.manager.exception.ServiceNotFoundException;
-import com.osstelecom.db.inventory.manager.request.GetServiceRequest;
-import com.osstelecom.db.inventory.manager.resources.ServiceResource;
-import com.osstelecom.db.inventory.manager.response.GetServiceResponse;
-import com.osstelecom.db.inventory.manager.security.model.AuthenticatedCall;
-import com.osstelecom.db.inventory.manager.session.ServiceSession;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
+import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
+import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
+import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
+import com.osstelecom.db.inventory.manager.exception.ServiceNotFoundException;
+import com.osstelecom.db.inventory.manager.request.CreateServiceRequest;
+import com.osstelecom.db.inventory.manager.request.DeleteServiceRequest;
+import com.osstelecom.db.inventory.manager.request.GetServiceRequest;
+import com.osstelecom.db.inventory.manager.request.PatchServiceRequest;
+import com.osstelecom.db.inventory.manager.resources.ServiceResource;
+import com.osstelecom.db.inventory.manager.response.CreateServiceResponse;
+import com.osstelecom.db.inventory.manager.response.DeleteServiceResponse;
+import com.osstelecom.db.inventory.manager.response.GetServiceResponse;
+import com.osstelecom.db.inventory.manager.response.PatchServiceResponse;
+import com.osstelecom.db.inventory.manager.security.model.AuthenticatedCall;
+import com.osstelecom.db.inventory.manager.session.ServiceSession;
 
 /**
  *
@@ -42,13 +56,36 @@ public class ServiceApi {
     @Autowired
     private ServiceSession serviceSession;
 
-    @AuthenticatedCall(role = {"user"})
+    @AuthenticatedCall(role = { "user" })
     @GetMapping(path = "/{domain}/{serviceId}", produces = "application/json")
-    public GetServiceResponse getServiceById(@PathVariable("domain") String domainName, @PathVariable("serviceId") String serviceId) throws ServiceNotFoundException, InvalidRequestException {
+    public GetServiceResponse getServiceById(@PathVariable("domain") String domainName,
+            @PathVariable("serviceId") String serviceId) throws InvalidRequestException, ServiceNotFoundException, DomainNotFoundException, ArangoDaoException {
         GetServiceRequest request = new GetServiceRequest();
         request.setRequestDomain(domainName);
         request.setPayLoad(new ServiceResource(serviceId));
         return serviceSession.getServiceByServiceId(request);
-
     }
+
+    @AuthenticatedCall(role = {"user"})
+    @DeleteMapping(path = "/{domainName}/{serviceId}", produces = "application/json")
+    public DeleteServiceResponse deletService(@PathVariable("serviceId") String serviceId,@PathVariable("domainName") String domainName) throws DomainNotFoundException, ArangoDaoException {
+        DeleteServiceRequest request = new DeleteServiceRequest(serviceId, domainName);
+        return serviceSession.deleteService(request);
+    }
+
+    @AuthenticatedCall(role = {"user"})
+    @PutMapping(path = "/{domain}", produces = "application/json", consumes = "application/json")
+    public CreateServiceResponse createService(@RequestBody CreateServiceRequest request, @PathVariable("domain") String domain) throws InvalidRequestException, ServiceNotFoundException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException  {
+        request.setRequestDomain(domain);
+        return serviceSession.createService(request);
+    }
+
+    @AuthenticatedCall(role = {"user"})
+    @PatchMapping(path = "/{domain}/{serviceId}", produces = "application/json", consumes = "application/json")
+    public PatchServiceResponse patchManagedResource(@RequestBody PatchServiceRequest request, @PathVariable("domain") String domainName, @PathVariable("resourceId") String resourceId) throws InvalidRequestException, ServiceNotFoundException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
+        request.setRequestDomain(domainName);
+        request.getPayLoad().setId(resourceId);
+        return serviceSession.updateService(request);
+    }
+
 }
