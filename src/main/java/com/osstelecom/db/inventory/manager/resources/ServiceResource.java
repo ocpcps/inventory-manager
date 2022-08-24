@@ -17,7 +17,7 @@
 package com.osstelecom.db.inventory.manager.resources;
 
 import com.osstelecom.db.inventory.manager.dto.DomainDTO;
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -29,12 +29,12 @@ public class ServiceResource extends BasicResource {
      * 
      * IDS of Services that this services depends on, like parent service.
      */
-    private ArrayList<ServiceResource> dependsOn;
+    private List<ServiceResource> dependencies;
 
     /**
      * IDS of Circuits that support this service
      */
-    private ArrayList<CircuitResource> circuits;
+    private List<CircuitResource> circuits;
 
     public ServiceResource(String attributeSchema, DomainDTO domain) {
         super(attributeSchema, domain);
@@ -47,5 +47,21 @@ public class ServiceResource extends BasicResource {
     public ServiceResource(String id){
         this.setId(id);
     }
+
+    public List<ServiceResource> getDependencies() {
+        return dependencies;
+    }
+
+    public void setDependencies(List<ServiceResource> dependencies) {
+        this.dependencies = dependencies;
+    }
+
+    public List<CircuitResource> getCircuits() {
+        return circuits;
+    }
+
+    public void setCircuits(List<CircuitResource> circuits) {
+        this.circuits = circuits;
+    }    
 
 }
