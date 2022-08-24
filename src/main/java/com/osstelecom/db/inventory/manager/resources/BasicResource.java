@@ -99,15 +99,6 @@ public class BasicResource {
     /**
      * Cuidado com os campos a seguir!
      */
-
-    /**
-     * Introduced to represent the dependecy of the multi domain relation. For
-     * instance lets say you have a Virtual Datacenter Cluster and your node is
-     * a Virtual Machine, it will rely on the Virtual Datacenter Cluster service
-     * The dependency can only exists between different domains
-     */
-    private ServiceResource dependsOn;
-
     @JsonIgnore
     @BsonIgnore
     private ConcurrentHashMap<String, ResourceConnection> connections = new ConcurrentHashMap<>();

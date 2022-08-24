@@ -6,7 +6,7 @@
 package com.osstelecom.db.inventory.topology.node;
 
 import com.osstelecom.db.inventory.topology.connection.INetworkConnection;
-import com.osstelecom.db.nventory.topology.object.DefaultNetworkObject;
+import com.osstelecom.db.inventory.topology.object.DefaultNetworkObject;
 import com.osstelecom.db.inventory.topology.ITopology;
 import java.util.ArrayList;
 import java.util.List;

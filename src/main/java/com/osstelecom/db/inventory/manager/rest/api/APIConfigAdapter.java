@@ -25,7 +25,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
  * Nice config Adapter xD
- *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 28.05.2022
  */

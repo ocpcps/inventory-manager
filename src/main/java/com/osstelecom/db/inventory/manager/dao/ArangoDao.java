@@ -45,17 +45,22 @@ import com.osstelecom.db.inventory.manager.exception.DomainAlreadyExistsExceptio
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
+import com.osstelecom.db.inventory.manager.exception.ServiceNotFoundException;
 import com.osstelecom.db.inventory.manager.resources.BasicResource;
 import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import com.osstelecom.db.inventory.manager.resources.ResourceLocation;
+import com.osstelecom.db.inventory.manager.resources.ServiceResource;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+
+import org.apache.catalina.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -564,6 +569,79 @@ public class ArangoDao {
     }
 
     /**
+     * Find a service by ID
+     *
+     * @param serviceId
+     * @param domain
+     * @return
+     * @throws ResourceNotFoundException
+     * @throws ArangoDaoException
+     */
+    public ServiceResource findServiceById(ServiceResource service) throws ServiceNotFoundException, ArangoDaoException {
+        String aql = "FOR doc IN "
+                + service.getDomain().getServices() + " FILTER ";
+        aql += "doc._id == @id or doc._key == @id";
+        aql += "  RETURN doc ";
+        HashMap<String, Object> bindVars = new HashMap<>();
+        bindVars.put("id", service.getId());
+        ArangoCursor<ServiceResource> cursor = this.database.query(aql, bindVars, ServiceResource.class);
+        ArrayList<ServiceResource> resources = new ArrayList<>();
+        logger.info("(findServiceById) RUNNING: AQL:[{}]",aql);
+        logger.info("\tBindings:");
+        bindVars.forEach((k, v) -> {
+            logger.info("\t  [@{}]=[{}]", k, v);
+
+        });
+        resources.addAll(getListFromCursorType(cursor));
+        if (!resources.isEmpty()) {
+            return resources.get(0);
+        } else {
+            throw new ServiceNotFoundException("Service WITH id[" + service.getId() + "] not found in domain:" + service.getDomain().getDomainName());
+        }
+    }
+
+    /**
+     * Deletes the domain from the system
+     *
+     * @param service
+     * @return
+     * @throws DomainNotFoundException
+     */
+    public ServiceResource deleteService(ServiceResource service) throws ArangoDaoException{
+        DomainDTO domain = service.getDomain();                  
+        this.graphDb.db(this.dbName).collection(domain.getServices()).deleteDocument(service.getId());
+        logger.debug("Service :[{}] Deleted", service.getId());
+        return service;        
+    }
+
+    /**
+     * 
+     * @param service
+     * @return
+     * @throws GenericException
+     * @throws ArangoDaoException
+     */
+    public DocumentCreateEntity<ServiceResource> createService(ServiceResource service) throws GenericException, ArangoDaoException {
+        try {
+            return this.database
+                    .collection(service.getDomain()
+                            .getNodes())
+                    .insertDocument(service, new DocumentCreateOptions().returnNew(true).returnOld(true));
+        } catch (ArangoDBException ex) {
+            throw new ArangoDaoException(ex.getErrorMessage());
+        } catch (Exception ex) {
+            GenericException easd = new GenericException(ex.getMessage());
+            easd.setParentExceptionClass(ex.getClass().getName());
+            throw easd;
+        }
+    }
+    
+    public DocumentUpdateEntity<ServiceResource> updateService(ServiceResource service) {
+        return this.database.collection(service.getDomain().getServices()).updateDocument(service.getUid(), service,
+                    new DocumentUpdateOptions().returnNew(true).keepNull(false).returnOld(true).mergeObjects(false), ServiceResource.class);
+    }
+
+    /**
      * Find the node related connections
      *
      * @param resource
@@ -685,6 +763,11 @@ public class ArangoDao {
      * @throws ArangoDaoException
      */
     public CircuitResource findCircuitResource(CircuitResource resource) throws ResourceNotFoundException, ArangoDaoException {
+        
+        if(resource.getId()!= null){
+            return findCircuitResourceById(resource.getId(), resource.getDomain());
+        }
+
         HashMap<String, Object> bindVars = new HashMap<>();
         bindVars.put("name", resource.getName());
         bindVars.put("className", resource.getClassName());
@@ -978,6 +1061,7 @@ public class ArangoDao {
 
         ManagedResource updatedResource = result.getNew();
         // ManagedResource oldResource = result.getOld();
+
 
         return result;
     }

@@ -16,6 +16,26 @@
  */
 package com.osstelecom.db.inventory.manager.operation;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.annotation.PreDestroy;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
+import org.springframework.stereotype.Service;
+
 import com.arangodb.entity.DocumentCreateEntity;
 import com.arangodb.entity.DocumentUpdateEntity;
 import com.osstelecom.db.inventory.graph.arango.GraphList;
@@ -28,12 +48,14 @@ import com.osstelecom.db.inventory.manager.events.CircuitResourceCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.CircuitResourceUpdatedEvent;
 import com.osstelecom.db.inventory.manager.events.ConsumableMetricCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.DomainCreatedEvent;
-import com.osstelecom.db.inventory.manager.events.ResourceConnectionCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.ManagedResourceCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.ManagedResourceUpdatedEvent;
 import com.osstelecom.db.inventory.manager.events.ProcessCircuityIntegrityEvent;
+import com.osstelecom.db.inventory.manager.events.ResourceConnectionCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.ResourceLocationCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.ResourceSchemaUpdatedEvent;
+import com.osstelecom.db.inventory.manager.events.ServiceResourceCreatedEvent;
+import com.osstelecom.db.inventory.manager.events.ServiceResourceUpdatedEvent;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.DomainAlreadyExistsException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
@@ -42,41 +64,26 @@ import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.SchemaNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.ScriptRuleException;
+import com.osstelecom.db.inventory.manager.exception.ServiceNotFoundException;
+import com.osstelecom.db.inventory.manager.listeners.EventManagerListener;
 import com.osstelecom.db.inventory.manager.resources.BasicResource;
 import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 import com.osstelecom.db.inventory.manager.resources.ConsumableMetric;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import com.osstelecom.db.inventory.manager.resources.ResourceLocation;
+import com.osstelecom.db.inventory.manager.resources.ServiceResource;
 import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstraintViolationException;
 import com.osstelecom.db.inventory.manager.resources.exception.ConnectionAlreadyExistsException;
 import com.osstelecom.db.inventory.manager.resources.exception.MetricConstraintException;
 import com.osstelecom.db.inventory.manager.resources.exception.NoResourcesAvailableException;
 import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
 import com.osstelecom.db.inventory.manager.session.DynamicRuleSession;
-import com.osstelecom.db.inventory.manager.listeners.EventManagerListener;
 import com.osstelecom.db.inventory.manager.session.SchemaSession;
 import com.osstelecom.db.inventory.topology.DefaultTopology;
 import com.osstelecom.db.inventory.topology.ITopology;
 import com.osstelecom.db.inventory.topology.node.DefaultNode;
 import com.osstelecom.db.inventory.topology.node.INetworkNode;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import javax.annotation.PreDestroy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
-import org.springframework.stereotype.Service;
 
 /**
  * This class is the main Domain Manager it will handle all operations related
@@ -181,6 +188,82 @@ public class DomainManager {
         });
         return result;
     }
+
+    /**
+     * Retrieves a domain by name
+     *
+     * @param domainName
+     * @return
+     * @throws DomainNotFoundException
+     * @throws ArangoDaoException
+     * @throws ServiceNotFoundException
+     */
+    public ServiceResource getService(ServiceResource service) throws ServiceNotFoundException, ArangoDaoException {
+        return this.arangoDao.findServiceById(service);
+    }
+
+    public ServiceResource deleteService(ServiceResource service) throws ArangoDaoException {
+        try {
+            lockManager.lock();
+            return this.arangoDao.deleteService(service);
+        } finally {
+            if (lockManager.isLocked()) {
+                lockManager.unlock();
+            }
+        }
+    }
+    
+    public ServiceResource createService(ServiceResource service) throws ArangoDaoException {
+        String timerId = startTimer("createServiceResource");
+        
+        try {
+            lockManager.lock();
+            service.setUid(this.getUUID());
+            service.setAtomId(service.getDomain().addAndGetId());
+            ResourceSchemaModel schemaModel = schemaSession.loadSchema(service.getAttributeSchemaName());
+            service.setSchemaModel(schemaModel);
+            schemaSession.validateResourceSchema(service);
+            dynamicRuleSession.evalResource(service, "I", this); // <--- Pode não ser verdade , se a chave for duplicada..
+            
+            DocumentCreateEntity<ServiceResource> result = arangoDao.createService(service);
+            service.setUid(result.getId());
+            service.setRevisionId(result.getRev());
+            //
+            // Aqui criou o managed resource
+            //
+            ServiceResourceCreatedEvent event = new ServiceResourceCreatedEvent(service);
+            this.eventManager.notifyEvent(event);
+            return service;
+        } catch( Exception e){
+            throw new ArangoDaoException("Error while creating ServiceResource", e);
+        } finally {
+            if (lockManager.isLocked()) {
+                lockManager.unlock();
+            }
+            endTimer(timerId);
+        }
+
+    }
+
+    public ServiceResource updateService(ServiceResource resource) {
+        String timerId = startTimer("updateServiceResource");
+        try {
+            lockManager.lock();
+            resource.setLastModifiedDate(new Date());
+            DocumentUpdateEntity<ServiceResource> result = arangoDao.updateService(resource);
+            ServiceResource newService = result.getNew();
+            ServiceResource oldService = result.getOld();
+            ServiceResourceUpdatedEvent event = new ServiceResourceUpdatedEvent(oldService, newService);
+            this.eventManager.notifyEvent(event);
+            return newService;
+        } finally {
+            if (lockManager.isLocked()) {
+                lockManager.unlock();
+            }
+            endTimer(timerId);
+        }
+    }
+    
 
     /**
      * Create a managed Resource
@@ -607,7 +690,7 @@ public class DomainManager {
     }
 
     /**
-     * Check if given object is a Manged Resource
+     * Check if given object is a Managed Resource
      *
      * @param resource
      * @return
@@ -1170,7 +1253,7 @@ public class DomainManager {
         if (filter.getObjects().contains("connections")) {
             return arangoDao.getConnectionsByFilter(filter, domain);
         }
-        throw new InvalidRequestException("getConnectionsByFilter() can only retrieve connections objects");
+         throw new InvalidRequestException("getConnectionsByFilter() can only retrieve connections objects");
     }
 
     public GraphList<ManagedResource> findManagedResourcesBySchemaName(ResourceSchemaModel model, DomainDTO domain) {
