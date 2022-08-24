@@ -1,0 +1,8 @@
+/**
+  * For a Given Vertex: 'network_nodes/80dc7eb1-2b01-49e4-bf26-d5ddcf702723'
+  * in Graph 'network_connections_layer' Search for connected className called 'resource.router.ragg'
+  */
+FOR v, e, p IN 1..64 ANY 'network_nodes/80dc7eb1-2b01-49e4-bf26-d5ddcf702723' GRAPH 'network_connections_layer'
+      filter v.className =='resource.router.ragg'
+       COLLECT className = v.className, id = v._id,attr = v.attributes.name
+       RETURN {className,id,attr}

@@ -30,6 +30,8 @@ import com.osstelecom.db.inventory.manager.events.ConsumableMetricCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.DomainCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.ResourceConnectionCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.ManagedResourceCreatedEvent;
+import com.osstelecom.db.inventory.manager.events.ManagedResourceUpdatedEvent;
+import com.osstelecom.db.inventory.manager.events.ProcessCircuityIntegrityEvent;
 import com.osstelecom.db.inventory.manager.events.ResourceLocationCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.ResourceSchemaUpdatedEvent;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
@@ -723,7 +725,101 @@ public class DomainManager {
             }
 
             resource.setLastModifiedDate(new Date());
-            return arangoDao.updateManagedResource(resource);
+            DocumentUpdateEntity<ManagedResource> updatedEntity = arangoDao.updateManagedResource(resource);
+            ManagedResource updatedResource = updatedEntity.getNew();
+            //
+            // Update the related dependencies
+            //
+            try {
+                ArrayList<String> relatedCircuits = new ArrayList<>();
+                this.arangoDao.findRelatedConnections(updatedResource).forEach((c) -> {
+
+                    if (c.getFrom().getUid().equals(updatedResource.getUid())) {
+                        //
+                        // Update from
+                        //
+
+                        c.setFrom(updatedResource);
+                        //
+                        // validando 
+                        //
+
+                    } else if (c.getTo().getUid().equals(updatedResource.getUid())) {
+                        //
+                        // Update to
+                        //
+                        c.setTo(updatedResource);
+
+                    }
+
+                    //
+                    // Avalia o status final da Conexão
+                    //
+                    if (c.getFrom().getOperationalStatus().equals("UP")
+                            && c.getTo().getOperationalStatus().equals("UP")) {
+                        if (c.getOperationalStatus().equals("DOWN")) {
+                            c.setOperationalStatus("UP");
+                        }
+                    } else {
+                        if (c.getOperationalStatus().equals("UP")) {
+                            c.setOperationalStatus("DOWN");
+                        }
+                    }
+
+                    this.updateResourceConnection(c); // <- Atualizou a conexão no banco
+                    //
+                    // Now Update related Circuits..
+                    //
+                    if (c.getCircuits() != null) {
+                        if (!c.getCircuits().isEmpty()) {
+                            for (String circuitId : c.getCircuits()) {
+                                if (!relatedCircuits.contains(circuitId)) {
+                                    //
+                                    // Garante que só incluímos o mesmo circuito uma vez
+                                    //
+                                    relatedCircuits.add(circuitId);
+                                }
+                            }
+                        }
+                    }
+
+                });
+
+                if (!relatedCircuits.isEmpty()) {
+                    for (String circuitId : relatedCircuits) {
+                        try {
+                            CircuitResource circuit = this.arangoDao.findCircuitResourceById(circuitId, updatedResource.getDomain());
+                            if (circuit.getaPoint().getId().equals(updatedResource.getUid())) {
+                                circuit.setaPoint(updatedResource);
+                                circuit = this.updateCircuitResource(circuit);
+                            } else if (circuit.getzPoint().getId().equals(updatedResource.getUid())) {
+                                circuit.setzPoint(updatedResource);
+                                circuit = this.updateCircuitResource(circuit);
+                            }
+
+                            //
+                            // Circuit Integrity must be checked here,
+                            // So we fire an event that will later request that
+                            //
+                            this.eventManager.notifyEvent(new ProcessCircuityIntegrityEvent(circuit));
+
+                        } catch (ResourceNotFoundException ex) {
+                            //
+                            // This should never happen...but if happen please try to treat the error
+                            //
+                            logger.error("Inconsistent Database on Domain Please check Related Circuit Resources: ResourceID:[" + updatedResource.getId() + "]", ex);
+                        } catch (ArangoDaoException ex) {
+                            logger.error("Arango Level Error", ex);
+                        }
+                    }
+                }
+
+            } catch (IOException | IllegalStateException ex) {
+                logger.error("Failed to Update Resource Connection Relation", ex);
+            }
+
+            eventManager.notifyEvent(new ManagedResourceUpdatedEvent(updatedEntity.getOld(), updatedEntity.getNew()));
+            return updatedResource;
         } finally {
             if (lockManager.isLocked()) {
                 lockManager.unlock();
@@ -791,6 +887,7 @@ public class DomainManager {
             CircuitResource oldResource = result.getOld();
             CircuitResourceUpdatedEvent event = new CircuitResourceUpdatedEvent(oldResource, newResource);
             this.eventManager.notifyEvent(event);
+//            logger.debug("Circuit Updated");
             return newResource;
         } finally {
             if (lockManager.isLocked()) {
@@ -812,7 +909,8 @@ public class DomainManager {
     }
 
     /**
-     * Computes if the the graph topology is fully connected
+     * Computes if the the graph topology is fully connected, will return
+     * isolated nodes
      *
      * @param connections
      * @param aPoint
@@ -822,13 +920,15 @@ public class DomainManager {
         ArrayList<String> result = new ArrayList<>();
         if (!connections.isEmpty()) {
             //
-            // Testar memória...
+            // @Todo:Testar memória...
             //
-
             Long startTime = System.currentTimeMillis();
             DefaultTopology topology = new DefaultTopology();
             AtomicLong localId = new AtomicLong(0L);
             INetworkNode target = createNode(aPoint.getId(), localId.incrementAndGet(), topology);
+            //
+            // this is the A Point from the circuit, will mark as endPoint. meaning all nodes must reach this one
+            //
             target.setEndPoint(true);
 
             connections.forEach(connection -> {
@@ -844,7 +944,7 @@ public class DomainManager {
                 }
 
                 if (connection.getOperationalStatus().equals("UP")) {
-                    topology.addConnection(from, to, connection.getId() + ".A");
+                    topology.addConnection(from, to, "Connection: " + connection.getId());
                 }
 
 //                topology.addConnection(to, from, connection.getId() + ".A");
@@ -872,7 +972,9 @@ public class DomainManager {
                     }
                 });
             }
-
+            //
+            // Try to free the memory
+            //
             topology.destroyTopology();
         }
         return result;
@@ -1068,7 +1170,7 @@ public class DomainManager {
         if (filter.getObjects().contains("connections")) {
             return arangoDao.getConnectionsByFilter(filter, domain);
         }
-         throw new InvalidRequestException("getConnectionsByFilter() can only retrieve connections objects");
+        throw new InvalidRequestException("getConnectionsByFilter() can only retrieve connections objects");
     }
 
     public GraphList<ManagedResource> findManagedResourcesBySchemaName(ResourceSchemaModel model, DomainDTO domain) {

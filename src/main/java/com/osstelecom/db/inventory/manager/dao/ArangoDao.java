@@ -974,94 +974,15 @@ public class ArangoDao {
      * @param resource
      * @return
      */
-    public ManagedResource updateManagedResource(ManagedResource resource) {
+    public DocumentUpdateEntity<ManagedResource> updateManagedResource(ManagedResource resource) {
         resource.setLastModifiedDate(new Date());
         DocumentUpdateEntity<ManagedResource> result = this.database.collection(resource.getDomain().getNodes()).updateDocument(resource.getUid(), resource, new DocumentUpdateOptions().returnNew(true).returnOld(true).keepNull(false).waitForSync(false), ManagedResource.class);
+        
         ManagedResource updatedResource = result.getNew();
         // ManagedResource oldResource = result.getOld();
 
-        //
-        // Update the related dependencies
-        //
-        try {
-            ArrayList<String> relatedCircuits = new ArrayList<>();
-            this.findRelatedConnections(updatedResource).forEach((c) -> {
-
-                if (c.getFrom().getUid().equals(updatedResource.getUid())) {
-                    //
-                    // Update from
-                    //
-
-                    c.setFrom(updatedResource);
-                    //
-                    // validando 
-                    //
-
-                } else if (c.getTo().getUid().equals(updatedResource.getUid())) {
-                    //
-                    // Update to
-                    //
-                    c.setTo(updatedResource);
-
-                }
-
-                //
-                // Avalia o status final da Conexão
-                //
-                if (c.getFrom().getOperationalStatus().equals("UP")
-                        && c.getTo().getOperationalStatus().equals("UP")) {
-                    if (c.getOperationalStatus().equals("DOWN")) {
-                        c.setOperationalStatus("UP");
-                    }
-                } else {
-                    if (c.getOperationalStatus().equals("UP")) {
-                        c.setOperationalStatus("DOWN");
-                    }
-                }
-
-                this.updateResourceConnection(c); // <- Atualizou a conexão no banco
-                //
-                // Now Update related Circuits..
-                //
-                if (c.getCircuits() != null) {
-                    if (!c.getCircuits().isEmpty()) {
-                        for (String circuitId : c.getCircuits()) {
-                            if (!relatedCircuits.contains(circuitId)) {
-                                relatedCircuits.add(circuitId);
-                            }
-                        }
-                    }
-                }
-
-            });
-
-            if (!relatedCircuits.isEmpty()) {
-                for (String circuitId : relatedCircuits) {
-                    try {
-                        CircuitResource circuit = this.findCircuitResourceById(circuitId, updatedResource.getDomain());
-                        if (circuit.getaPoint().getId().equals(updatedResource.getUid())) {
-                            circuit.setaPoint(updatedResource);
-                            this.updateCircuitResource(circuit);
-                        } else if (circuit.getzPoint().getId().equals(updatedResource.getUid())) {
-                            circuit.setzPoint(updatedResource);
-                            this.updateCircuitResource(circuit);
-                        }
-
-                    } catch (ResourceNotFoundException ex) {
-                        //
-                        // This should never happen...but if happen please try to treat the error
-                        //
-                        logger.error("Inconsistent Database on Domain Please check Related Circuit Resources: ResourceID:[" + updatedResource.getId() + "]", ex);
-                    } catch (ArangoDaoException ex) {
-                        logger.error("Arango Level Error", ex);
-                    }
-                }
-            }
-
-        } catch (IOException | IllegalStateException ex) {
-            logger.error("Failed to Update Resource Connection Relation", ex);
-        }
-        return updatedResource;
+        
+        return result;
     }
 
     /**

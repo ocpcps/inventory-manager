@@ -45,12 +45,21 @@ public class CircuitResource extends BasicResource {
     }
 
     private ManagedResource aPoint;
-    
+
     private ManagedResource zPoint;
-    
-    private String circuitState;
-    
-    private ArrayList<String> circuitPath =new ArrayList<>();
+
+    /**
+     * Services (IDS) Carried By this Circuit
+     */
+    private ArrayList<String> services = new ArrayList<>();
+
+    /**
+     * Will be used by the impact manager to check if the circuit is reliable
+     */
+    private Integer minRedundancyCount = 1;
+
+    private ArrayList<String> circuitPath = new ArrayList<>();
+
     /**
      * @return the aPoint
      */

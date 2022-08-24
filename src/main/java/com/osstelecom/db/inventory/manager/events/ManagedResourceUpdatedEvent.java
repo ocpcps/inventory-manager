@@ -17,30 +17,29 @@
  */
 package com.osstelecom.db.inventory.manager.events;
 
-import com.osstelecom.db.inventory.manager.resources.CircuitResource;
+import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
- * @created 10.04.2022
+ * @created 23.08.2022
  */
-public class CircuitResourceUpdatedEvent extends BasicEvent {
+public class ManagedResourceUpdatedEvent extends BasicEvent {
 
-    private final CircuitResource oldResource;
-    private final CircuitResource newResource;
+    private final ManagedResource oldResource;
+    private final ManagedResource newResource;
 
-    public CircuitResource getOldResource() {
+    public ManagedResourceUpdatedEvent(ManagedResource oldResource, ManagedResource newResource) {
+        this.oldResource = oldResource;
+        this.newResource = newResource;
+    }
+
+    public ManagedResource getOldResource() {
         return oldResource;
     }
 
-    public CircuitResource getNewResource() {
+    public ManagedResource getNewResource() {
         return newResource;
-    }
-
-    public CircuitResourceUpdatedEvent(CircuitResource oldResource, CircuitResource newResource) {
-        this.oldResource = oldResource;
-        this.newResource = newResource;
-        this.setEventDate();
     }
 
 }

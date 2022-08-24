@@ -114,6 +114,12 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
             return new ResourceSchemaResponse(this.loadSchema(schemaName));
     }
 
+    /**
+     * Merge a schema name, the result model is the output
+     * 
+     * @param result
+     * @param resourceModel 
+     */
     private void mergeSchemaModelSession(ResourceSchemaModel result, ResourceSchemaModel resourceModel) {
         for (Map.Entry<String, ResourceAttributeModel> entry : resourceModel.getAttributes().entrySet()) {
             String key = entry.getKey();
@@ -154,7 +160,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                 }
                 logger.debug("Loaded  SchemaName: [" + resourceModel.getSchemaName() + "]");
                 jsonReader.close();
-
+                
                 this.mergeSchemaModelSession(result, resourceModel);
 
                 if (!resourceModel.getFromSchema().equals(".")) {
@@ -163,7 +169,6 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                 //
                 // Salva só no final
                 //
-
                 return result;
             } catch (FileNotFoundException ex) {
                 throw new GenericException(ex.getMessage(), ex);

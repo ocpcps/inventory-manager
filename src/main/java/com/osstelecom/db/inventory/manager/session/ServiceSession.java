@@ -37,7 +37,6 @@ public class ServiceSession {
             InvalidRequestException ex =  new InvalidRequestException("ID Field Missing");
             throw ex;
         }
-        
         if (false) {
             throw new ServiceNotFoundException("Service with Id:[" + request.getPayLoad().getId() + "] not found");
         }

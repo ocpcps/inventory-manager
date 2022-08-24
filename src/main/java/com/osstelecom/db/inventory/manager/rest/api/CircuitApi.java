@@ -113,6 +113,6 @@ public class CircuitApi extends BaseApi {
     public GetCircuitPathResponse getCircuitPath(@RequestBody GetCircuitPathRequest request, @PathVariable("domain") String domain) throws ArangoDaoException, ResourceNotFoundException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, AttributeConstraintViolationException, DomainNotFoundException {
 //        GetCircuitPathRequest request = gson.fromJson(strReq, GetCircuitPathRequest.class);
         request.setRequestDomain(domain);
-        return circuitSession.getCircuitPath(request);
+        return circuitSession.findCircuitPath(request);
     }
 }

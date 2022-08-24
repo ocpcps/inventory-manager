@@ -22,7 +22,6 @@ import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.SchemaNotFoundException;
 import com.osstelecom.db.inventory.manager.request.CreateResourceSchemaModelRequest;
 import com.osstelecom.db.inventory.manager.request.PatchResourceSchemaModelRequest;
-import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
 import com.osstelecom.db.inventory.manager.response.CreateResourceSchemaModelResponse;
 import com.osstelecom.db.inventory.manager.response.EmptyOkResponse;
 import com.osstelecom.db.inventory.manager.response.PatchResourceSchemaModelResponse;

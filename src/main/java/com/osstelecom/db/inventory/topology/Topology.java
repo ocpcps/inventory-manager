@@ -58,7 +58,6 @@ public abstract class Topology implements ITopology {
 //            });
 //
 //        });
-
         nodes.clear();
 
         connections.clear();
@@ -152,10 +151,19 @@ public abstract class Topology implements ITopology {
 
     @Override
     public INetworkConnection addConnection(INetworkNode source, INetworkNode target, String name) {
-        DefaultNetworkConnection networkConnection = new DefaultNetworkConnection(source, target, name, this);
-        connectionNames.put(name, networkConnection);
-        getConnections().add(networkConnection);
-        return networkConnection;
+
+        //
+        // Prevents duplicated Connections
+        //
+        if (!connectionNames.containsKey(name)) {
+            DefaultNetworkConnection networkConnection = new DefaultNetworkConnection(source, target, name, this);
+            connectionNames.put(name, networkConnection);
+            getConnections().add(networkConnection);
+            return networkConnection;
+        } else {
+            return connectionNames.get(name);
+        }
+
     }
 
     @Override

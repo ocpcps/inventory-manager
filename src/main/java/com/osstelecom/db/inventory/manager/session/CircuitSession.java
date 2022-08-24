@@ -128,7 +128,7 @@ public class CircuitSession {
      * @return
      * @throws ResourceNotFoundException
      */
-    public GetCircuitPathResponse getCircuitPath(GetCircuitPathRequest request) throws ResourceNotFoundException, DomainNotFoundException, ArangoDaoException {
+    public GetCircuitPathResponse findCircuitPath(GetCircuitPathRequest request) throws ResourceNotFoundException, DomainNotFoundException, ArangoDaoException {
         CircuitPathDTO circuitDto = request.getPayLoad();
         CircuitResource circuit = circuitDto.getCircuit();
         circuit.setDomainName(request.getRequestDomain());

@@ -22,9 +22,12 @@ import com.google.common.eventbus.Subscribe;
 import com.google.common.eventbus.SubscriberExceptionContext;
 import com.google.common.eventbus.SubscriberExceptionHandler;
 import com.osstelecom.db.inventory.manager.events.CircuitResourceCreatedEvent;
+import com.osstelecom.db.inventory.manager.events.CircuitResourceUpdatedEvent;
 import com.osstelecom.db.inventory.manager.events.ConsumableMetricCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.DomainCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.ManagedResourceCreatedEvent;
+import com.osstelecom.db.inventory.manager.events.ManagedResourceUpdatedEvent;
+import com.osstelecom.db.inventory.manager.events.ProcessCircuityIntegrityEvent;
 import com.osstelecom.db.inventory.manager.events.ResourceLocationCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.ResourceSchemaUpdatedEvent;
 import com.osstelecom.db.inventory.manager.operation.DomainManager;
@@ -157,12 +160,31 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
         }
     }
 
+    @Subscribe
+    public void onManagedResourceUpdatedEvent(ManagedResourceUpdatedEvent updateEvent) {
+        logger.debug("Managed Resource [" + updateEvent.getOldResource().getId() + "] Updated: ");
+    }
+
+    @Subscribe
+    public void onCircuitResourceUpdatedEvent(CircuitResourceUpdatedEvent updateEvent) {
+        logger.debug("Resource Connection[" + updateEvent.getOldResource().getId() + "] Updated ");
+    }
+
+    @Subscribe
+    public void onProcessCircuityIntegrityEvent(ProcessCircuityIntegrityEvent processEvent) {
+        logger.debug("A Circuit Dependency has updated Integrity Needs to be recalculated");
+        //
+        // Now we should Notify the ImpactManagerSession
+        //
+    }
+
     @Override
     public void run() {
         while (running) {
             try {
-                Object event = eventQueue.poll(1, TimeUnit.SECONDS);
+                Object event = eventQueue.poll(100, TimeUnit.MILLISECONDS);
                 if (event != null) {
+                    logger.debug("Processing Event: [" + event.getClass().getCanonicalName() + "]");
                     eventBus.post(event);
                 }
             } catch (InterruptedException ex) {
