@@ -192,7 +192,7 @@ public class CircuitSession {
         if (!request.getPayLoad().getPaths().isEmpty()) {
             ArrayList<ResourceConnection> resolved = new ArrayList<>();
             logger.debug("Paths Size:" + request.getPayLoad().getPaths().size());
-            logger.debug(utils.toJson(request.getPayLoad()));
+//            logger.debug(utils.toJson(request.getPayLoad()));
             for (ResourceConnection requestedPath : request.getPayLoad().getPaths()) {
 
                 requestedPath.setDomain(domainManager.getDomain(requestedPath.getDomainName()));
@@ -222,8 +222,11 @@ public class CircuitSession {
                     //
                     // 
                     //
-                    resolved.add(b);
+
+                } else {
+                    logger.warn("Connection: [" + b.getId() + "] Already Has Circuit:" + circuit.getId());
                 }
+                resolved.add(b);
 
             }
             //
@@ -248,6 +251,7 @@ public class CircuitSession {
                 //
                 // Aqui temos um problema que precisamos ver se precisamos tratar.
                 //
+                logger.warn("Resolved Path Differs from Request:" + resolved.size());
             }
         }
         return r;

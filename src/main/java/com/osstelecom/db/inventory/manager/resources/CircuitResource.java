@@ -54,7 +54,7 @@ public class CircuitResource extends BasicResource {
     private ArrayList<String> services = new ArrayList<>();
 
     /**
-     * Will be used by the impact manager to check if the circuit is reliable
+     * Later Will be used by the impact manager to check if the circuit is reliable
      */
     private Integer minRedundancyCount = 1;
 

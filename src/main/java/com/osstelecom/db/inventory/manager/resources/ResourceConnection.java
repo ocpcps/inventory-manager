@@ -62,7 +62,7 @@ public class ResourceConnection extends BasicResource {
     private Boolean propagateCapacity;
     private Boolean propagateConsuption;
     private Boolean propagateOperStatus;
-    private Boolean bidirectionalConsuptions;
+    private Boolean bidirectionalConsuption;
     private Boolean bidirectionCapacity;
     @DocumentField(DocumentField.Type.FROM)
     private String _fromUid;
@@ -134,16 +134,16 @@ public class ResourceConnection extends BasicResource {
     /**
      * @return the bidirectionalConsuptions
      */
-    public Boolean getBidirectionalConsuptions() {
-        return bidirectionalConsuptions;
+    public Boolean getBidirectionalConsuption() {
+        return bidirectionalConsuption;
     }
 
     /**
      * @param bidirectionalConsuptions the bidirectionalConsuptions toResource
      * set
      */
-    public void setBidirectionalConsuptions(Boolean bidirectionalConsuptions) {
-        this.bidirectionalConsuptions = bidirectionalConsuptions;
+    public void setBidirectionalConsuptions(Boolean bidirectionalConsuption) {
+        this.bidirectionalConsuption = bidirectionalConsuption;
     }
 
     /**

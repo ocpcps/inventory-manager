@@ -616,8 +616,6 @@ public class ArangoDao {
                 bindVars.put("nodeAddress", connection.getNodeAddress());
                 aql += "  and doc.nodeAddress == @nodeAddress ";
             }
-        } else {
-            logger.warn("(findResourceConnection) nodeAddress is NULL");
         }
 
         if (connection.getFrom() != null) {
@@ -977,11 +975,10 @@ public class ArangoDao {
     public DocumentUpdateEntity<ManagedResource> updateManagedResource(ManagedResource resource) {
         resource.setLastModifiedDate(new Date());
         DocumentUpdateEntity<ManagedResource> result = this.database.collection(resource.getDomain().getNodes()).updateDocument(resource.getUid(), resource, new DocumentUpdateOptions().returnNew(true).returnOld(true).keepNull(false).waitForSync(false), ManagedResource.class);
-        
+
         ManagedResource updatedResource = result.getNew();
         // ManagedResource oldResource = result.getOld();
 
-        
         return result;
     }
 
