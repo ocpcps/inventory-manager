@@ -625,10 +625,10 @@ public class ArangoDao {
         try {
             return this.database
                     .collection(service.getDomain()
-                            .getNodes())
+                            .getServices())
                     .insertDocument(service, new DocumentCreateOptions().returnNew(true).returnOld(true));
         } catch (ArangoDBException ex) {
-            throw new ArangoDaoException(ex.getErrorMessage());
+            throw new ArangoDaoException(ex.getMessage(), ex);
         } catch (Exception ex) {
             GenericException easd = new GenericException(ex.getMessage());
             easd.setParentExceptionClass(ex.getClass().getName());
@@ -637,7 +637,7 @@ public class ArangoDao {
     }
     
     public DocumentUpdateEntity<ServiceResource> updateService(ServiceResource service) {
-        return this.database.collection(service.getDomain().getServices()).updateDocument(service.getUid(), service,
+        return this.database.collection(service.getDomain().getServices()).updateDocument(service.getId(), service,
                     new DocumentUpdateOptions().returnNew(true).keepNull(false).returnOld(true).mergeObjects(false), ServiceResource.class);
     }
 

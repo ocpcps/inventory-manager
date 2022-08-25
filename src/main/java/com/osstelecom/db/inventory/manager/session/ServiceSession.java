@@ -17,6 +17,9 @@
  */
 package com.osstelecom.db.inventory.manager.session;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -85,18 +88,30 @@ public class ServiceSession {
             throw new InvalidRequestException("Please give at least one circuit or dependency");
         }
 
+        List<CircuitResource> circuits = new ArrayList<>();
         if (payload.getCircuits() != null && !payload.getCircuits().isEmpty()) {
             for (CircuitResource item : payload.getCircuits()) {
                 item.setDomain(domainManager.getDomain(request.getRequestDomain()));
-                domainManager.findCircuitResource(item);        
+                circuits.add(domainManager.findCircuitResource(item));        
             }
         }
+        payload.setCircuits(circuits);
 
+        List<ServiceResource> dependencies = new ArrayList<>();
         if (payload.getDependencies() != null && !payload.getCircuits().isEmpty()) {
             for (ServiceResource item : payload.getDependencies()) {
                 item.setDomain(domainManager.getDomain(request.getRequestDomain()));
-                domainManager.getService(item);        
+                dependencies.add(domainManager.getService(item));        
             }
+        }
+        payload.setDependencies(dependencies);
+
+        if (payload.getAttributeSchemaName().equalsIgnoreCase("default")) {
+            payload.setAttributeSchemaName("Service.default");
+        }
+
+        if (payload.getClassName().equalsIgnoreCase("Default")) {
+            payload.setClassName("Service.Default");
         }
                 
         return new CreateServiceResponse(domainManager.createService(payload));
@@ -107,9 +122,6 @@ public class ServiceSession {
             throw new InvalidRequestException("ID Field Missing");
         }
 
-        if (request.getRequestDomain() == null) {
-            throw new DomainNotFoundException("Domain With Name:[" + request.getRequestDomain() + "] not found");
-        }
         request.getPayLoad().setDomain(domainManager.getDomain(request.getRequestDomain()));
 
         ServiceResource payload = request.getPayLoad();
@@ -122,18 +134,30 @@ public class ServiceSession {
             throw new InvalidRequestException("Please give at least one circuit or dependency");
         }
 
+        List<CircuitResource> circuits = new ArrayList<>();
         if (payload.getCircuits() != null && !payload.getCircuits().isEmpty()) {
             for (CircuitResource item : payload.getCircuits()) {
                 item.setDomain(domainManager.getDomain(request.getRequestDomain()));
-                domainManager.findCircuitResource(item);        
+                circuits.add(domainManager.findCircuitResource(item));        
             }
         }
+        payload.setCircuits(circuits);
 
+        List<ServiceResource> dependencies = new ArrayList<>();
         if (payload.getDependencies() != null && !payload.getCircuits().isEmpty()) {
             for (ServiceResource item : payload.getDependencies()) {
                 item.setDomain(domainManager.getDomain(request.getRequestDomain()));
-                domainManager.getService(item);        
+                dependencies.add(domainManager.getService(item));        
             }
+        }
+        payload.setDependencies(dependencies);
+        
+        if (payload.getAttributeSchemaName().equalsIgnoreCase("default")) {
+            payload.setAttributeSchemaName("Service.default");
+        }
+
+        if (payload.getClassName().equalsIgnoreCase("Default")) {
+            payload.setClassName("Service.Default");
         }
         
         return new PatchServiceResponse(domainManager.updateService(payload));
