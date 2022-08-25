@@ -1,0 +1,24 @@
+{
+    "mongoDbConfiguration": {
+      "collections": []
+    },
+    "graphDbConfiguration": {
+      "databaseName": "inventory",
+      "nodeSufix": "_nodes",
+      "serviceSufix": "_services",
+      "nodeConnectionSufix": "_connections",
+      "serviceConnectionSufix": "_srv_connections",
+      "connectionLayerSufix": "_connections_layer",
+      "serviceLayerSufix": "_services_layer",
+      "host": "66.94.96.207",
+      "port": 8529,
+      "user": "inventory",
+      "password": "dev@inventory",
+      "domainsCollection": "domains"
+    },
+    "schemaDir": "samples/schema/",
+    "rulesDir": "rules/",
+    "dateFormat": "dd-MM-yyyy",
+    "dateTimeFormat": "dd-MM-yyyy hh:MM:ss",
+    "trackTimers": true
+  }

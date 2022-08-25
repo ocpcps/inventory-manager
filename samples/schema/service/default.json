@@ -1,0 +1,14 @@
+{
+    "schemaName": "resource.default",
+    "fromSchema": "default",
+    "attributes": {
+        "equiIP": {
+            "name": "equiIP",
+            "variableType": "String",
+            "description": "The IP of The element",
+            "required": false,
+            "defaultValue": "0.0.0.0",
+            "validate": false
+        }
+    }
+}
