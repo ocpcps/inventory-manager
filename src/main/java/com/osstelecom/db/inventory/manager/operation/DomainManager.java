@@ -235,7 +235,7 @@ public class DomainManager {
             this.eventManager.notifyEvent(event);
             return service;
         } catch( Exception e){
-            throw new ArangoDaoException(e.getMessage(), e);
+            throw new ArangoDaoException("Error while creating ServiceResource", e);
         } finally {
             if (lockManager.isLocked()) {
                 lockManager.unlock();

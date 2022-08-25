@@ -35,12 +35,18 @@ public class ServiceResource extends BasicResource {
      * IDS of Circuits that support this service
      */
     private List<CircuitResource> circuits;
+
+    public ServiceResource(String attributeSchema, DomainDTO domain) {
+        super(attributeSchema, domain);
+    }
+
+    public ServiceResource(DomainDTO domain) {
+        super(domain);
+    }
     
     public ServiceResource(String id){
         this.setId(id);
     }
-
-    public ServiceResource(){}
 
     public List<ServiceResource> getDependencies() {
         return dependencies;
