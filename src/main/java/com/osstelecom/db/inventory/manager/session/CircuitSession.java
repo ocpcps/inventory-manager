@@ -38,6 +38,7 @@ import com.osstelecom.db.inventory.manager.response.CreateCircuitResponse;
 import com.osstelecom.db.inventory.manager.response.GetCircuitPathResponse;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -146,11 +147,13 @@ public class CircuitSession {
                 // get current node status
                 //
                 if (!connection.getOperationalStatus().equalsIgnoreCase("UP")) {
-                    circuitDto.setDegrated(true);
+                    circuit.setDegrated(true);
                 }
 
             }
-
+            //
+            // Checks the current state of the circuit
+            //
             ArrayList<String> brokenNodes = this.domainManager.checkBrokenGraph(circuitDto.getPaths(), circuit.getaPoint());
 
             if (!brokenNodes.isEmpty()) {
@@ -159,15 +162,113 @@ public class CircuitSession {
                 // If so it means that the circuit is broken!
                 //
                 if (brokenNodes.contains(circuit.getzPoint().getId()) || brokenNodes.contains(circuit.getaPoint().getId())) {
-                    circuitDto.setBroken(true);
+                    circuit.setBroken(true);
                 }
-                circuitDto.setBrokenResources(brokenNodes);
+                circuit.setBrokenResources(brokenNodes);
             }
 
         }
         GetCircuitPathResponse response = new GetCircuitPathResponse(circuitDto);
         return response;
     }
+
+    /**
+     * Check if a circuit is OK or Not, if the transition happen, we should
+     * update it
+     *
+     * @param circuit
+     * @param connections
+     * @param target
+     */
+    public void computeCircuitIntegrity(CircuitResource circuit) throws ArangoDaoException {
+        //
+        // Forks with the logic of checking integrity
+        //
+        Long start = System.currentTimeMillis();
+        Boolean stateChanged = false;
+        List<ResourceConnection> connections = this.domainManager.findCircuitPaths(circuit).toList();
+        Boolean degratedFlag = false;
+        for (ResourceConnection connection : connections) {
+
+            //
+            // get current node status
+            //
+            if (!connection.getOperationalStatus().equalsIgnoreCase("UP")) {
+                if (!circuit.getDegrated()) {
+                    //
+                    // Transitou de normal para degradado
+                    //
+                    degratedFlag = true;
+
+                }
+            }
+
+        }
+
+        if (circuit.getDegrated()) {
+            if (!degratedFlag) {
+                //
+                // Estava degradado e agora normalizou
+                //
+                circuit.setDegrated(false);
+                stateChanged = true;
+            }
+        } else {
+            if (degratedFlag) {
+                //
+                // Estava bom e agora degradou
+                //
+                circuit.setDegrated(true);
+                stateChanged = true;
+            }
+        }
+
+        //
+        // Checks the current state of the circuit
+        //
+        ArrayList<String> brokenNodes = this.domainManager.checkBrokenGraph(connections, circuit.getaPoint());
+
+        //
+        //
+        //
+        if (!brokenNodes.isEmpty()) {
+            //
+            // Check if the broken nodes has the zPoint or aPoint,
+            // If so it means that the circuit is broken!
+            //
+            if (brokenNodes.contains(circuit.getzPoint().getId()) || brokenNodes.contains(circuit.getaPoint().getId())) {
+                if (!circuit.getBroken()) {
+                    //
+                    // Transitou para Broken..
+                    //
+                    circuit.setBroken(true);
+                    stateChanged = true;
+                }
+            } else if (circuit.getBroken()) {
+                //
+                // Normalizou
+                //
+                circuit.setBroken(false);
+                stateChanged = true;
+
+            }
+
+            circuit.setBrokenResources(brokenNodes);
+        } else if (circuit.getBroken()) {
+            //
+            // Normalizou
+            //
+            circuit.setBroken(false);
+            stateChanged = true;
+        }
+
+        Long end = System.currentTimeMillis();
+        Long took = end - start;
+        logger.debug("Check Circuit Integrity for [" + circuit.getId() + "] Took: " + took + " ms State Changed: " + stateChanged);
+        if (stateChanged){
+            this.domainManager.updateCircuitResource(circuit);
+        }
+    }   
 
     /**
      * Creates a Circuit Path,

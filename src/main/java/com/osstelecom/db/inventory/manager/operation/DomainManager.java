@@ -212,10 +212,10 @@ public class DomainManager {
             }
         }
     }
-    
+
     public ServiceResource createService(ServiceResource service) throws ArangoDaoException {
         String timerId = startTimer("createServiceResource");
-        
+
         try {
             lockManager.lock();
             service.setUid(this.getUUID());
@@ -224,7 +224,7 @@ public class DomainManager {
             service.setSchemaModel(schemaModel);
             schemaSession.validateResourceSchema(service);
             dynamicRuleSession.evalResource(service, "I", this); // <--- Pode não ser verdade , se a chave for duplicada..
-            
+
             DocumentCreateEntity<ServiceResource> result = arangoDao.createService(service);
             service.setUid(result.getId());
             service.setRevisionId(result.getRev());
@@ -234,7 +234,8 @@ public class DomainManager {
             ServiceResourceCreatedEvent event = new ServiceResourceCreatedEvent(service);
             this.eventManager.notifyEvent(event);
             return service;
-        } catch( Exception e){
+        } catch (Exception e) {
+            e.printStackTrace();
             throw new ArangoDaoException("Error while creating ServiceResource", e);
         } finally {
             if (lockManager.isLocked()) {
@@ -263,7 +264,6 @@ public class DomainManager {
             endTimer(timerId);
         }
     }
-    
 
     /**
      * Create a managed Resource
@@ -790,7 +790,7 @@ public class DomainManager {
     }
 
     /**
-     * Update a Resource
+     * Update a Resource,
      *
      * @param resource
      * @return
@@ -838,29 +838,33 @@ public class DomainManager {
                     //
                     // Avalia o status final da Conexão
                     //
+                    Boolean circuitStateChanged = false;
                     if (c.getFrom().getOperationalStatus().equals("UP")
                             && c.getTo().getOperationalStatus().equals("UP")) {
                         if (c.getOperationalStatus().equals("DOWN")) {
                             c.setOperationalStatus("UP");
+                            circuitStateChanged = true;
                         }
                     } else {
                         if (c.getOperationalStatus().equals("UP")) {
                             c.setOperationalStatus("DOWN");
+                            circuitStateChanged = true;
                         }
                     }
-
-                    this.updateResourceConnection(c); // <- Atualizou a conexão no banco
-                    //
-                    // Now Update related Circuits..
-                    //
-                    if (c.getCircuits() != null) {
-                        if (!c.getCircuits().isEmpty()) {
-                            for (String circuitId : c.getCircuits()) {
-                                if (!relatedCircuits.contains(circuitId)) {
-                                    //
-                                    // Garante que só incluímos o mesmo circuito uma vez
-                                    //
-                                    relatedCircuits.add(circuitId);
+                    if (circuitStateChanged) {
+                        this.updateResourceConnection(c); // <- Atualizou a conexão no banco
+                        //
+                        // Now Update related Circuits..
+                        //
+                        if (c.getCircuits() != null) {
+                            if (!c.getCircuits().isEmpty()) {
+                                for (String circuitId : c.getCircuits()) {
+                                    if (!relatedCircuits.contains(circuitId)) {
+                                        //
+                                        // Garante que só incluímos o mesmo circuito uma vez
+                                        //
+                                        relatedCircuits.add(circuitId);
+                                    }
                                 }
                             }
                         }
@@ -999,7 +1003,7 @@ public class DomainManager {
      * @param aPoint
      * @return
      */
-    public ArrayList<String> checkBrokenGraph(ArrayList<ResourceConnection> connections, ManagedResource aPoint) {
+    public ArrayList<String> checkBrokenGraph(List<ResourceConnection> connections, ManagedResource aPoint) {
         ArrayList<String> result = new ArrayList<>();
         if (!connections.isEmpty()) {
             //
@@ -1253,7 +1257,7 @@ public class DomainManager {
         if (filter.getObjects().contains("connections")) {
             return arangoDao.getConnectionsByFilter(filter, domain);
         }
-         throw new InvalidRequestException("getConnectionsByFilter() can only retrieve connections objects");
+        throw new InvalidRequestException("getConnectionsByFilter() can only retrieve connections objects");
     }
 
     public GraphList<ManagedResource> findManagedResourcesBySchemaName(ResourceSchemaModel model, DomainDTO domain) {

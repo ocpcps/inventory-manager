@@ -43,6 +43,9 @@ public class ServiceResource extends BasicResource {
     public ServiceResource(DomainDTO domain) {
         super(domain);
     }
+
+    public ServiceResource() {
+    }
     
     public ServiceResource(String id){
         this.setId(id);

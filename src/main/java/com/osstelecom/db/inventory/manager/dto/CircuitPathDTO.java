@@ -30,9 +30,9 @@ public class CircuitPathDTO {
 
     private CircuitResource circuit;
     private ArrayList<ResourceConnection> paths = new ArrayList<>();
-    private Boolean degrated = false;
-    private Boolean broken = false;
-    private ArrayList<String> brokenResources;
+//    private Boolean degrated = false;
+//    private Boolean broken = false;
+   
 
     /**
      * @return the circuit
@@ -62,46 +62,46 @@ public class CircuitPathDTO {
         this.paths = paths;
     }
 
-    /**
-     * @return the degrated
-     */
-    public Boolean getDegrated() {
-        return degrated;
-    }
+//    /**
+//     * @return the degrated
+//     */
+//    public Boolean getDegrated() {
+//        return degrated;
+//    }
 
-    /**
-     * @param degrated the degrated to set
-     */
-    public void setDegrated(Boolean degrated) {
-        this.degrated = degrated;
-    }
+//    /**
+//     * @param degrated the degrated to set
+//     */
+//    public void setDegrated(Boolean degrated) {
+//        this.degrated = degrated;
+//    }
+//
+//    /**
+//     * @return the broken
+//     */
+//    public Boolean getBroken() {
+//        return broken;
+//    }
+//
+//    /**
+//     * @param broken the broken to set
+//     */
+//    public void setBroken(Boolean broken) {
+//        this.broken = broken;
+//    }
 
-    /**
-     * @return the broken
-     */
-    public Boolean getBroken() {
-        return broken;
-    }
-
-    /**
-     * @param broken the broken to set
-     */
-    public void setBroken(Boolean broken) {
-        this.broken = broken;
-    }
-
-    /**
-     * @return the brokenResources
-     */
-    public ArrayList<String> getBrokenResources() {
-        return brokenResources;
-    }
-
-    /**
-     * @param brokenConnections the brokenResources to set
-     */
-    public void setBrokenResources(ArrayList<String> brokenConnections) {
-        this.brokenResources = brokenConnections;
-    }
+//    /**
+//     * @return the brokenResources
+//     */
+//    public ArrayList<String> getBrokenResources() {
+//        return brokenResources;
+//    }
+//
+//    /**
+//     * @param brokenConnections the brokenResources to set
+//     */
+//    public void setBrokenResources(ArrayList<String> brokenConnections) {
+//        this.brokenResources = brokenConnections;
+//    }
 
 }

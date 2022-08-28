@@ -17,6 +17,7 @@
  */
 package com.osstelecom.db.inventory.manager.session;
 
+import com.osstelecom.db.inventory.manager.dto.DomainDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -36,6 +37,8 @@ import com.osstelecom.db.inventory.manager.response.CreateServiceResponse;
 import com.osstelecom.db.inventory.manager.response.DeleteServiceResponse;
 import com.osstelecom.db.inventory.manager.response.GetServiceResponse;
 import com.osstelecom.db.inventory.manager.response.PatchServiceResponse;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -47,9 +50,9 @@ public class ServiceSession {
 
     @Autowired
     private DomainManager domainManager;
-        
-    public GetServiceResponse getServiceByServiceId(GetServiceRequest request) throws ServiceNotFoundException, DomainNotFoundException,ArangoDaoException, InvalidRequestException {
-        if (request.getPayLoad().getId()==null){
+
+    public GetServiceResponse getServiceByServiceId(GetServiceRequest request) throws ServiceNotFoundException, DomainNotFoundException, ArangoDaoException, InvalidRequestException {
+        if (request.getPayLoad().getId() == null) {
             throw new InvalidRequestException("ID Field Missing");
         }
 
@@ -57,7 +60,7 @@ public class ServiceSession {
             throw new DomainNotFoundException("Domain With Name:[" + request.getRequestDomain() + "] not found");
         }
         request.getPayLoad().setDomain(domainManager.getDomain(request.getRequestDomain()));
-       
+
         return new GetServiceResponse(domainManager.getService(request.getPayLoad()));
     }
 
@@ -66,7 +69,7 @@ public class ServiceSession {
             throw new DomainNotFoundException("Domain With Name:[" + request.getRequestDomain() + "] not found");
         }
         request.getPayLoad().setDomain(domainManager.getDomain(request.getRequestDomain()));
-        
+
         return new DeleteServiceResponse(domainManager.deleteService(request.getPayLoad()));
     }
 
@@ -74,8 +77,11 @@ public class ServiceSession {
         if (request.getRequestDomain() == null) {
             throw new DomainNotFoundException("Domain With Name:[" + request.getRequestDomain() + "] not found");
         }
+        if (request == null || request.getPayLoad() == null) {
+            throw new InvalidRequestException("Request is null please send a valid request");
+        }
         request.getPayLoad().setDomain(domainManager.getDomain(request.getRequestDomain()));
-        
+
         ServiceResource payload = request.getPayLoad();
         if (payload == null) {
             throw new InvalidRequestException("Payload not found");
@@ -86,24 +92,18 @@ public class ServiceSession {
         }
 
         if (payload.getCircuits() != null && !payload.getCircuits().isEmpty()) {
-            for (CircuitResource item : payload.getCircuits()) {
-                item.setDomain(domainManager.getDomain(request.getRequestDomain()));
-                domainManager.findCircuitResource(item);        
-            }
+            this.resolveCircuits(payload.getCircuits(), request.getPayLoad().getDomain());
         }
 
         if (payload.getDependencies() != null && !payload.getCircuits().isEmpty()) {
-            for (ServiceResource item : payload.getDependencies()) {
-                item.setDomain(domainManager.getDomain(request.getRequestDomain()));
-                domainManager.getService(item);        
-            }
+            this.resolveServices(payload.getDependencies());
         }
-                
+
         return new CreateServiceResponse(domainManager.createService(payload));
     }
 
-    public PatchServiceResponse updateService(PatchServiceRequest request) throws InvalidRequestException, ServiceNotFoundException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException{
-        if (request.getPayLoad().getId()==null){
+    public PatchServiceResponse updateService(PatchServiceRequest request) throws InvalidRequestException, ServiceNotFoundException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
+        if (request.getPayLoad().getId() == null && request.getPayLoad().getNodeAddress() == null && request.getPayLoad().getDomain() == null) {
             throw new InvalidRequestException("ID Field Missing");
         }
 
@@ -115,7 +115,7 @@ public class ServiceSession {
         ServiceResource payload = request.getPayLoad();
         if (payload == null) {
             throw new InvalidRequestException("Payload not found");
-        }        
+        }
         domainManager.getService(payload);
 
         if ((payload.getCircuits() == null || payload.getCircuits().isEmpty()) && (payload.getDependencies() == null || payload.getDependencies().isEmpty())) {
@@ -123,23 +123,52 @@ public class ServiceSession {
         }
 
         if (payload.getCircuits() != null && !payload.getCircuits().isEmpty()) {
-            for (CircuitResource item : payload.getCircuits()) {
-                item.setDomain(domainManager.getDomain(request.getRequestDomain()));
-                domainManager.findCircuitResource(item);        
-            }
+            this.resolveCircuits(payload.getCircuits(), request.getPayLoad().getDomain());
         }
 
         if (payload.getDependencies() != null && !payload.getCircuits().isEmpty()) {
-            for (ServiceResource item : payload.getDependencies()) {
-                item.setDomain(domainManager.getDomain(request.getRequestDomain()));
-                domainManager.getService(item);        
-            }
+            this.resolveServices(payload.getDependencies());
         }
-        
+
         return new PatchServiceResponse(domainManager.updateService(payload));
     }
 
+    /**
+     * Resolve as entidades com suas referencias do banco
+     *
+     * @param circuits
+     * @throws ResourceNotFoundException
+     * @throws ArangoDaoException
+     */
+    private void resolveCircuits(List<CircuitResource> circuits, DomainDTO domain) throws ResourceNotFoundException, ArangoDaoException {
+        List<CircuitResource> resolvedCircuits = new ArrayList<>();
+        for (CircuitResource circuit : circuits) {
+            if (circuit.getDomain() == null) {
+                circuit.setDomain(domain);
+            }
+            CircuitResource resolved = this.domainManager.findCircuitResource(circuit);
+            resolvedCircuits.add(resolved);
+        }
+        circuits.clear();
+        circuits.addAll(resolvedCircuits);
 
+    }
 
+    /**
+     * Resolve o serviço com suas referencias do DB
+     *
+     * @param serviceResources
+     * @throws ServiceNotFoundException
+     * @throws ArangoDaoException
+     */
+    private void resolveServices(List<ServiceResource> serviceResources) throws ServiceNotFoundException, ArangoDaoException {
+        List<ServiceResource> resolvedServices = new ArrayList<>();
+        for (ServiceResource service : serviceResources) {
+            ServiceResource resolved = this.domainManager.getService(service);
+            resolvedServices.add(service);
+        }
+        serviceResources.clear();
+        serviceResources.addAll(resolvedServices);
+    }
 
 }

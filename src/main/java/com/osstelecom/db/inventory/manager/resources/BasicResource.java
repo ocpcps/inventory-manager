@@ -17,6 +17,7 @@
 package com.osstelecom.db.inventory.manager.resources;
 
 import com.arangodb.entity.DocumentField;
+import com.arangodb.entity.Key;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -114,6 +115,8 @@ public class BasicResource {
     @DocumentField(DocumentField.Type.REV)
     private String revisionId;
 
+    
+    
     public void addTag(String tag) {
         if (this.tags == null) {
             this.tags = new ArrayList<>();

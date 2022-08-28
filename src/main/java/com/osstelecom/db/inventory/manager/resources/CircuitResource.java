@@ -30,6 +30,26 @@ import java.util.ArrayList;
 @JsonInclude(Include.NON_NULL)
 public class CircuitResource extends BasicResource {
 
+    private Boolean degrated = false;
+    private Boolean broken = false;
+    private ArrayList<String> brokenResources;
+
+    public Boolean getDegrated() {
+        return degrated;
+    }
+
+    public void setDegrated(Boolean degrated) {
+        this.degrated = degrated;
+    }
+
+    public Boolean getBroken() {
+        return broken;
+    }
+
+    public void setBroken(Boolean broken) {
+        this.broken = broken;
+    }
+
     /**
      * @return the circuitPath
      */
@@ -54,9 +74,10 @@ public class CircuitResource extends BasicResource {
     private ArrayList<String> services = new ArrayList<>();
 
     /**
-     * Later Will be used by the impact manager to check if the circuit is reliable
+     * Later Will be used by the impact manager to check if the circuit is
+     * reliable
      */
-    private Integer minRedundancyCount = 1;
+    private Integer minRedundancyCount = 3;
 
     private ArrayList<String> circuitPath = new ArrayList<>();
 
@@ -97,5 +118,19 @@ public class CircuitResource extends BasicResource {
     }
 
     public CircuitResource() {
+    }
+
+    /**
+     * @return the brokenResources
+     */
+    public ArrayList<String> getBrokenResources() {
+        return brokenResources;
+    }
+
+    /**
+     * @param brokenResources the brokenResources to set
+     */
+    public void setBrokenResources(ArrayList<String> brokenResources) {
+        this.brokenResources = brokenResources;
     }
 }

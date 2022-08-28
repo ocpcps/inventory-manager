@@ -30,12 +30,15 @@ import com.osstelecom.db.inventory.manager.events.ManagedResourceUpdatedEvent;
 import com.osstelecom.db.inventory.manager.events.ProcessCircuityIntegrityEvent;
 import com.osstelecom.db.inventory.manager.events.ResourceLocationCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.ResourceSchemaUpdatedEvent;
+import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.operation.DomainManager;
+import com.osstelecom.db.inventory.manager.session.CircuitSession;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
@@ -57,7 +60,16 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
 
     private LinkedBlockingQueue<Object> eventQueue = new LinkedBlockingQueue<>(1000);
 
+    /**
+     * *
+     * Valida se precisar ser o domain manager, me parece que o correto seria
+     * descer pela session.
+     */
     private DomainManager domainmanager;
+
+    @Autowired
+    private CircuitSession circuitSession;
+
     private Boolean running = false;
 
     private Thread me = new Thread(this);
@@ -83,7 +95,11 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
      * @param event
      */
     public void notifyEvent(Object event) {
+        //
+        // the queue is limited to 1000 Events
+        //
         eventQueue.offer(event);
+
     }
 
     /**
@@ -171,18 +187,19 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
     }
 
     @Subscribe
-    public void onProcessCircuityIntegrityEvent(ProcessCircuityIntegrityEvent processEvent) {
-        logger.debug("A Circuit Dependency has updated Integrity Needs to be recalculated");
+    public void onProcessCircuityIntegrityEvent(ProcessCircuityIntegrityEvent processEvent) throws ArangoDaoException {
+        logger.debug("A Circuit[" + processEvent.getCircuit().getId() + "] Dependency has been updated ,Integrity Needs to be recalculated");
         //
         // Now we should Notify the ImpactManagerSession
         //
+        this.circuitSession.computeCircuitIntegrity(processEvent.getCircuit());
     }
 
     @Override
     public void run() {
         while (running) {
             try {
-                Object event = eventQueue.poll(100, TimeUnit.MILLISECONDS);
+                Object event = eventQueue.poll(5, TimeUnit.SECONDS);
                 if (event != null) {
                     logger.debug("Processing Event: [" + event.getClass().getCanonicalName() + "]");
                     eventBus.post(event);
