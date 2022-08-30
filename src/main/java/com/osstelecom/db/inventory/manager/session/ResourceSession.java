@@ -19,6 +19,7 @@ package com.osstelecom.db.inventory.manager.session;
 
 import com.osstelecom.db.inventory.manager.dto.DomainDTO;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
+import com.osstelecom.db.inventory.manager.exception.BasicException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
 import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
@@ -321,11 +322,11 @@ public class ResourceSession {
         return result;
     }
 
-    public FilterResponse findManagedResourceByFilter(FilterRequest filter) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
+    public FilterResponse findManagedResourceByFilter(FilterRequest filter) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, BasicException {
 
         FilterResponse response = new FilterResponse(filter.getPayLoad());
         if (filter.getPayLoad().getObjects().contains("nodes")) {
-            response.getPayLoad().setNodes(domainManager.getNodesByFilter(filter.getPayLoad(), filter.getRequestDomain()));
+            response.getPayLoad().setNodes(domainManager.getNodesByFilter(filter.getPayLoad(), filter.getRequestDomain()).toList());
             response.getPayLoad().setNodeCount(response.getPayLoad().getNodes().size());
         }
 

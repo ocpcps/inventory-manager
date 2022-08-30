@@ -15,14 +15,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-
 package com.osstelecom.db.inventory.manager.exception;
 
 import com.osstelecom.db.inventory.manager.request.IRequest;
 
 /**
  *
- * @author  Lucas Nishimura <lucas.nishimura@gmail.com> 
+ * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 24.05.2022
  */
 public class ArangoDaoException extends BasicException {
@@ -32,6 +31,10 @@ public class ArangoDaoException extends BasicException {
 
     public ArangoDaoException(String msg) {
         super(msg);
+    }
+
+    public ArangoDaoException(Throwable thrwbl) {
+        super(thrwbl);
     }
 
     public ArangoDaoException(IRequest<?> request) {

@@ -34,6 +34,12 @@ public abstract class BasicException extends Exception implements Serializable {
     protected Integer statusCode = 500;
     private Object details;
 
+    public BasicException(Throwable thrwbl) {
+        super(thrwbl);
+    }
+    
+    
+
     public void addDetails(String key, Object obj) {
         if (this.details == null) {
             Map<String, Object> map = new ConcurrentHashMap<String, Object>();

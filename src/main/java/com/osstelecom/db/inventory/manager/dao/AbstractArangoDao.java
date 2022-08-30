@@ -20,6 +20,7 @@ package com.osstelecom.db.inventory.manager.dao;
 import com.arangodb.ArangoDatabase;
 import com.arangodb.entity.DocumentCreateEntity;
 import com.arangodb.entity.DocumentDeleteEntity;
+import com.arangodb.entity.DocumentUpdateEntity;
 import com.arangodb.model.AqlQueryOptions;
 import com.osstelecom.db.inventory.graph.arango.GraphList;
 import com.osstelecom.db.inventory.manager.dto.DomainDTO;
@@ -27,6 +28,7 @@ import com.osstelecom.db.inventory.manager.exception.BasicException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.resources.BasicResource;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
+import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,17 +49,28 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
 
     public abstract DocumentCreateEntity<T> upsertResource(T resource) throws BasicException;
 
+    public abstract DocumentUpdateEntity<T> updateResource(T resource) throws BasicException;
+
     public abstract DocumentDeleteEntity<ManagedResource> deleteResource(T resource) throws BasicException;
 
     public abstract GraphList<T> findResourcesBySchemaName(String schemaName, DomainDTO domain) throws BasicException;
 
     public abstract GraphList<T> findResourcesByClassName(String className, DomainDTO domain) throws BasicException;
 
+    public abstract GraphList<T> findResourceByFilter(String aql, Map<String, Object> bindVars, DomainDTO domain) throws BasicException;
+
     protected String buildAqlFromBindings(String aql, Map<String, Object> bindVars) {
         StringBuffer buffer = new StringBuffer(aql);
         bindVars.forEach((k, v) -> {
             if (!k.equalsIgnoreCase("domainName")) {
-                buffer.append(" and doc." + k + " == @" + k);
+                //
+                // Deal with list types
+                //
+                if (v instanceof List || v.getClass().isArray()) {
+                    buffer.append(" and doc." + k + " in @" + k);
+                } else {
+                    buffer.append(" and doc." + k + " == @" + k);
+                }
             }
         });
         buffer.append(" return doc");

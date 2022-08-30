@@ -58,6 +58,7 @@ import com.osstelecom.db.inventory.manager.events.ResourceSchemaUpdatedEvent;
 import com.osstelecom.db.inventory.manager.events.ServiceResourceCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.ServiceResourceUpdatedEvent;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
+import com.osstelecom.db.inventory.manager.exception.BasicException;
 import com.osstelecom.db.inventory.manager.exception.DomainAlreadyExistsException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
@@ -86,6 +87,7 @@ import com.osstelecom.db.inventory.topology.DefaultTopology;
 import com.osstelecom.db.inventory.topology.ITopology;
 import com.osstelecom.db.inventory.topology.node.DefaultNode;
 import com.osstelecom.db.inventory.topology.node.INetworkNode;
+import java.util.HashMap;
 
 /**
  * This class is the main Domain Manager it will handle all operations related
@@ -289,6 +291,9 @@ public class DomainManager {
         String timerId = startTimer("createManagedResource");
         try {
             lockManager.lock();
+            //
+            // Subir as validações para session
+            //
             if (resource.getUid() == null) {
                 resource.setUid(this.getUUID());
             }
@@ -770,7 +775,7 @@ public class DomainManager {
      * @return
      * @throws InvalidRequestException
      */
-    public ManagedResource updateManagedResource(ManagedResource resource) throws InvalidRequestException {
+    public ManagedResource updateManagedResource(ManagedResource resource) throws InvalidRequestException, ArangoDaoException {
         String timerId = startTimer("updateManagedResource");
         try {
             lockManager.lock();
@@ -782,7 +787,7 @@ public class DomainManager {
             }
 
             resource.setLastModifiedDate(new Date());
-            DocumentUpdateEntity<ManagedResource> updatedEntity = arangoDao.updateManagedResource(resource);
+            DocumentUpdateEntity<ManagedResource> updatedEntity = this.managedResourceDao.updateResource(resource);
             ManagedResource updatedResource = updatedEntity.getNew();
             //
             // Update the related dependencies
@@ -1216,10 +1221,20 @@ public class DomainManager {
         return node;
     }
 
-    public List<ManagedResource> getNodesByFilter(FilterDTO filter, String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
+    public GraphList<ManagedResource> getNodesByFilter(FilterDTO filter, String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, BasicException {
         DomainDTO domain = getDomain(domainName);
         if (filter.getObjects().contains("nodes")) {
-            return arangoDao.getNodesByFilter(filter, domain);
+            HashMap<String, Object> bindVars = new HashMap<>();
+
+            if (filter.getClasses() != null && !filter.getClasses().isEmpty()) {
+
+                bindVars.put("classes", filter.getClasses());
+            }
+
+            if (filter.getBindings() != null && !filter.getBindings().isEmpty()) {
+                bindVars.putAll(filter.getBindings());
+            }
+            return this.managedResourceDao.findResourceByFilter(filter.getAqlFilter(), bindVars, domain);
         }
         throw new InvalidRequestException("getNodesByFilter() can only retrieve nodes objects");
     }
@@ -1232,7 +1247,7 @@ public class DomainManager {
         throw new InvalidRequestException("getConnectionsByFilter() can only retrieve connections objects");
     }
 
-    public GraphList<ManagedResource> findManagedResourcesBySchemaName(ResourceSchemaModel model, DomainDTO domain) throws ResourceNotFoundException {
+    public GraphList<ManagedResource> findManagedResourcesBySchemaName(ResourceSchemaModel model, DomainDTO domain) throws ResourceNotFoundException, ArangoDaoException {
         return this.managedResourceDao.findResourcesBySchemaName(model.getSchemaName(), domain);
     }
 
@@ -1286,15 +1301,17 @@ public class DomainManager {
                         //      
                         resource.getSchemaModel().setIsValid(false);
                     }
-
-                    arangoDao.updateManagedResource(resource);
-
+                    try {
+                        this.managedResourceDao.updateResource(resource);
+                    } catch (ArangoDaoException ex) {
+                        logger.error("Failed to Update resource:[{}]", resource.getUid(), ex);
+                    }
                     if (totalProcessed.incrementAndGet() % 1000 == 0) {
                         logger.debug("Updated {} Records", totalProcessed.get());
                     }
 
                 });
-            } catch (IOException | IllegalStateException | GenericException | SchemaNotFoundException ex) {
+            } catch (IOException | IllegalStateException | GenericException | SchemaNotFoundException | ArangoDaoException ex) {
                 logger.error("Failed to update Resource Schema Model", ex);
             } catch (ResourceNotFoundException ex) {
                 logger.error("Domain Has No Resources on Schema:[{}]", update.getModel(), ex);
