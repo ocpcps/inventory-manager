@@ -261,14 +261,18 @@ public class CircuitSession {
             circuit.setBroken(false);
             stateChanged = true;
         }
-
+        if (circuit.getBroken()) {
+            circuit.setOperationalStatus("DOWN");
+        } else {
+            circuit.setOperationalStatus("UP");
+        }
         Long end = System.currentTimeMillis();
         Long took = end - start;
         logger.debug("Check Circuit Integrity for [" + circuit.getId() + "] Took: " + took + " ms State Changed: " + stateChanged);
-        if (stateChanged){
+        if (stateChanged) {
             this.domainManager.updateCircuitResource(circuit);
         }
-    }   
+    }
 
     /**
      * Creates a Circuit Path,

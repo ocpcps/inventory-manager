@@ -20,6 +20,7 @@ package com.osstelecom.db.inventory.manager.resources;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.osstelecom.db.inventory.manager.dto.DomainDTO;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.ArrayList;
 
 /**
@@ -30,8 +31,11 @@ import java.util.ArrayList;
 @JsonInclude(Include.NON_NULL)
 public class CircuitResource extends BasicResource {
 
+    @Schema(description = "If true, indicates that the circuit has some broken connections")
     private Boolean degrated = false;
+    @Schema(description = "If true, indicates that the circuit has some broken connections, and it is broken")
     private Boolean broken = false;
+    @Schema(description = "The ID List of the broken connections")
     private ArrayList<String> brokenResources;
 
     public Boolean getDegrated() {

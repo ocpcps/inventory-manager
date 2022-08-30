@@ -17,25 +17,28 @@
  */
 package com.osstelecom.db.inventory.manager.tests;
 
-import com.osstelecom.db.inventory.manager.session.ResourceSession;
+import com.osstelecom.db.inventory.manager.operation.DomainManager;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
- * @created 14.08.2022
+ * @created 30.08.2022
  */
 @SpringBootTest
-public class DomainManagerMainTests {
+@RunWith(SpringJUnit4ClassRunner.class)
+public class DomainManagerTest {
 
     @Autowired
-    private ResourceSession resourceSession;
+    private DomainManager domainmanager;
 
     @Test
-    public void contextLoads() throws Exception {
-        assertThat(resourceSession).isNotNull();
+    public void testIfDomainManagerExists() {
+        assertThat(domainmanager).isNotNull();
     }
 }

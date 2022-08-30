@@ -18,6 +18,7 @@ package com.osstelecom.db.inventory.manager.resources;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.osstelecom.db.inventory.manager.dto.DomainDTO;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * This class represents the Resource that needs to be managed
@@ -25,6 +26,7 @@ import com.osstelecom.db.inventory.manager.dto.DomainDTO;
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@Schema(description = "This Represents a Managed Object (node) in the dependecies network")
 public class ManagedResource extends BasicResource {
 
     public ManagedResource(String attributeSchema, DomainDTO domain) {

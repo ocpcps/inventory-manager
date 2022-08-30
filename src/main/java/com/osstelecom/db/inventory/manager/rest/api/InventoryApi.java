@@ -236,6 +236,13 @@ public class InventoryApi extends BaseApi {
         return this.resourceSession.patchManagedResource(request);
     }
 
+    @AuthenticatedCall(role = {"user"})
+    @PatchMapping(path = "/{domain}/resource/", produces = "application/json", consumes = "application/json")
+    public PatchManagedResourceResponse patchManagedResource(@RequestBody PatchManagedResourceRequest request, @PathVariable("domain") String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
+        request.setRequestDomain(domainName);
+        return this.resourceSession.patchManagedResource(request);
+    }
+
 //    /**
 //     * @todo: to be removed, método de teste
 //     * @param strReq

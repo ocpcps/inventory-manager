@@ -218,7 +218,12 @@ public class DomainManager {
 
         try {
             lockManager.lock();
-            service.setUid(this.getUUID());
+            //
+            // key Previsibility
+            //
+            if (service.getUid() == null) {
+                service.setUid(this.getUUID());
+            }
             service.setAtomId(service.getDomain().addAndGetId());
             ResourceSchemaModel schemaModel = schemaSession.loadSchema(service.getAttributeSchemaName());
             service.setSchemaModel(schemaModel);
@@ -278,7 +283,9 @@ public class DomainManager {
         String timerId = startTimer("createManagedResource");
         try {
             lockManager.lock();
-            resource.setUid(this.getUUID());
+            if (resource.getUid() == null) {
+                resource.setUid(this.getUUID());
+            }
             resource.setAtomId(resource.getDomain().addAndGetId());
             ResourceSchemaModel schemaModel = schemaSession.loadSchema(resource.getAttributeSchemaName());
             resource.setSchemaModel(schemaModel);
@@ -973,8 +980,10 @@ public class DomainManager {
             CircuitResource newResource = result.getNew();
             CircuitResource oldResource = result.getOld();
             CircuitResourceUpdatedEvent event = new CircuitResourceUpdatedEvent(oldResource, newResource);
+            //
+            // Emits the transitional event
+            //
             this.eventManager.notifyEvent(event);
-//            logger.debug("Circuit Updated");
             return newResource;
         } finally {
             if (lockManager.isLocked()) {

@@ -17,6 +17,7 @@
  */
 package com.osstelecom.db.inventory.manager.events;
 
+import com.osstelecom.db.inventory.manager.dto.UpdateSourceEventDTO;
 import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 
 /**
@@ -28,6 +29,7 @@ public class CircuitResourceUpdatedEvent extends BasicEvent {
 
     private final CircuitResource oldResource;
     private final CircuitResource newResource;
+    private UpdateSourceEventDTO sourceEvent;
 
     public CircuitResource getOldResource() {
         return oldResource;
@@ -42,5 +44,12 @@ public class CircuitResourceUpdatedEvent extends BasicEvent {
         this.newResource = newResource;
         this.setEventDate();
     }
+
+    public CircuitResourceUpdatedEvent(CircuitResource oldResource, CircuitResource newResource, UpdateSourceEventDTO sourceEvent) {
+        this.oldResource = oldResource;
+        this.newResource = newResource;
+        this.sourceEvent = sourceEvent;
+    }
+    
 
 }

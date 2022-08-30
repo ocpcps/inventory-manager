@@ -19,23 +19,31 @@ package com.osstelecom.db.inventory.manager.resources;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.osstelecom.db.inventory.manager.operation.DomainManager;
 import com.osstelecom.db.inventory.manager.resources.exception.MetricConstraintException;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Classe que representa uma métrica
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  */
-
 public class ConsumableMetric {
 
     private final DomainManager domain;
+    @Schema(description = "The Consumable Metric Name", example = "Megabytes,Gigabytes,Meters,Units,Kilemeters")
     private String metricName;
+    @Schema(description = "The Consumable Metric String code, or abreviation", example = "MB,GB,M,U,KM")
     private String metricShort;
+    @Schema(description = "The Consumable Metric Description", example = "The amount of Megabytes configured")
     private String metricDescription;
+    @Schema(description = "The Consumable Metric Value", example = "1024")
     private Double metricValue = 0D;
+    @Schema(description = "The Consumable Metric Minimum Value", example = "1")
     private Double minValue;
+    @Schema(description = "The Consumable Metric Maximun Value", example = "10240")
     private Double maxValue;
+    @Schema(description = "The Consumable Metric Unity value", example = "1")
     private Double unitValue;
+     @Schema(description = "The Consumable Metric Category", example = "Interface Speed")
     private String category;
 
     public ConsumableMetric(DomainManager domain) {

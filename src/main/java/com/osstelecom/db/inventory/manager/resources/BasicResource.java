@@ -17,7 +17,6 @@
 package com.osstelecom.db.inventory.manager.resources;
 
 import com.arangodb.entity.DocumentField;
-import com.arangodb.entity.Key;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -27,6 +26,7 @@ import com.osstelecom.db.inventory.manager.resources.exception.ConnectionNotFoun
 import com.osstelecom.db.inventory.manager.resources.exception.MetricConstraintException;
 import com.osstelecom.db.inventory.manager.resources.exception.NoResourcesAvailableException;
 import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
@@ -49,19 +49,32 @@ public class BasicResource {
     /**
      * Mandatory
      */
+    @Schema(description = "The name of the Domain", example = "network")
     private String domainName;
 
+    @Schema(description = "The date representation of the installed date")
     private Date installationDate;
+    @Schema(description = "The date representation of the activation date")
     private Date activationDate;
+    @Schema(description = "The date representation of the inactivation date")
     private Date inactivationDate;
+    @Schema(description = "The date representation of the Last Modidified date, this is automatically set by the API")
     private Date lastModifiedDate;
+    @Schema(description = "The date representation of the insert date")
     private Date insertedDate;
+    @Schema(description = "If True we should consider this resource as deleted.")
     private Boolean deleted;
+    @Schema(description = "If True no updates will be allowed")
     private Boolean readOnly;
+
     private Boolean isLeaf;
+    @Schema(description = "Indicates if a resrouce is consumable or not")
     private Boolean isConsumable;
+    @Schema(description = "Indicates if a resrouce is a consumer or not")
     private Boolean isConsumer = false; //revisar
+    @Schema(description = "The associated Consumable Metric")
     private ConsumableMetric consumableMetric;
+    @Schema(description = "The associated Consumer Metric")
     private ConsumableMetric consumerMetric;
 
     /**
@@ -115,8 +128,6 @@ public class BasicResource {
     @DocumentField(DocumentField.Type.REV)
     private String revisionId;
 
-    
-    
     public void addTag(String tag) {
         if (this.tags == null) {
             this.tags = new ArrayList<>();

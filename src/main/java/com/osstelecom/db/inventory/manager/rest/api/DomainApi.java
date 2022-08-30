@@ -29,6 +29,7 @@ import com.osstelecom.db.inventory.manager.response.DomainResponse;
 import com.osstelecom.db.inventory.manager.response.GetDomainsResponse;
 import com.osstelecom.db.inventory.manager.security.model.AuthenticatedCall;
 import com.osstelecom.db.inventory.manager.session.DomainSession;
+import io.swagger.annotations.Api;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -45,6 +46,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("inventory/v1/domain")
+//@Api(tags = "Domain API")
 public class DomainApi extends BaseApi {
 
     @Autowired

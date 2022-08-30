@@ -82,17 +82,16 @@ public class ServiceApi {
 
     @AuthenticatedCall(role = {"user"})
     @PatchMapping(path = "/{domain}/{serviceId}", produces = "application/json", consumes = "application/json")
-    public PatchServiceResponse patchManagedResourceById(@RequestBody PatchServiceRequest request, @PathVariable("domain") String domainName, @PathVariable("resourceId") String resourceId) throws InvalidRequestException, ServiceNotFoundException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
+    public PatchServiceResponse patchManagedResourceById(@RequestBody PatchServiceRequest request, @PathVariable("domain") String domainName, @PathVariable("serviceId") String serviceId) throws InvalidRequestException, ServiceNotFoundException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
         request.setRequestDomain(domainName);
-        request.getPayLoad().setId(resourceId);
+        request.getPayLoad().setId(serviceId);
         return serviceSession.updateService(request);
     }
 
     @AuthenticatedCall(role = {"user"})
     @PatchMapping(path = "/{domain}", produces = "application/json", consumes = "application/json")
-    public PatchServiceResponse patchManagedResource(@RequestBody PatchServiceRequest request, @PathVariable("domain") String domainName, @PathVariable("resourceId") String resourceId) throws InvalidRequestException, ServiceNotFoundException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
+    public PatchServiceResponse patchManagedResource(@RequestBody PatchServiceRequest request, @PathVariable("domain") String domainName) throws InvalidRequestException, ServiceNotFoundException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
         request.setRequestDomain(domainName);
-        request.getPayLoad().setId(resourceId);
         return serviceSession.updateService(request);
     }
 }
