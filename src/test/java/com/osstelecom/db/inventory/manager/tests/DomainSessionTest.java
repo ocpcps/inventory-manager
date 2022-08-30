@@ -36,6 +36,9 @@ import static org.assertj.core.api.Assertions.from;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import org.junit.Test;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.TestMethodOrder;
 
 /**
  * Testes de Unidade do négocio de criação de Domains..
@@ -45,13 +48,27 @@ import org.junit.jupiter.api.DisplayName;
  */
 @SpringBootTest
 @RunWith(SpringJUnit4ClassRunner.class)
+@TestMethodOrder(OrderAnnotation.class)
 public class DomainSessionTest {
 
     @Autowired
     private DomainSession domainSession;
 
     @Test
+    @Order(1)
+    public void testIfDomainSessionExists() {
+        assertThat(domainSession).isNotNull();
+    }
+
+    /**
+     * Cria um dominio
+     *
+     * @throws DomainAlreadyExistsException
+     * @throws GenericException
+     */
+    @Test
     @DisplayName("Test if Create Domain is ok")
+    @Order(2)
     public void createDomainTest() throws DomainAlreadyExistsException, GenericException {
         CreateDomainRequest createDomainRequest = new CreateDomainRequest();
         createDomainRequest.setPayLoad(new DomainDTO());
@@ -62,8 +79,16 @@ public class DomainSessionTest {
                 .doesNotReturn(null, from(CreateDomainResponse::getPayLoad));
     }
 
+    /**
+     * Apaga um dominio.
+     *
+     * @throws DomainAlreadyExistsException
+     * @throws GenericException
+     * @throws DomainNotFoundException
+     */
     @Test
     @DisplayName("Test if Domain deletion is ok")
+    @Order(3)
     public void deleteDomainTest() throws DomainAlreadyExistsException, GenericException, DomainNotFoundException {
         DeleteDomainRequest deleteRequest = new DeleteDomainRequest("AutomatedTest");
         DeleteDomainResponse response = domainSession.deleteDomain(deleteRequest);
@@ -71,15 +96,23 @@ public class DomainSessionTest {
                 .doesNotReturn(null, from(DeleteDomainResponse::getPayLoad));
     }
 
+    /**
+     * Tenta pegar um dominio inexistente
+     */
     @Test
+    @Order(4)
     public void getInexistentDomain() {
         assertThatThrownBy(() -> {
             domainSession.getDomain("xpty");
         }).isInstanceOf(DomainNotFoundException.class);
 
     }
-    
+
+    /**
+     * Obtem todos os dominios
+     */
     @Test
+    @Order(5)
     public void getAllDomains() {
         assertThat(domainSession.getAllDomains())
                 .returns(200, from(GetDomainsResponse::getStatusCode));

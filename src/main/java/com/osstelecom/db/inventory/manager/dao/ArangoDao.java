@@ -203,6 +203,7 @@ public class ArangoDao {
             this.graphDb.db(this.dbName).collection(connections.getName()
             ).ensurePersistentIndex(Arrays.asList("name", "nodeAddress", "className", "domain._key"), new PersistentIndexOptions().unique(true).name("ConnectionUNIQIDX"));
             
+           
             this.graphDb.db(this.dbName).collection(connections.getName()
             ).ensurePersistentIndex(Arrays.asList("circuits[*]"), new PersistentIndexOptions().unique(false).name("circuitsIDX"));
             
