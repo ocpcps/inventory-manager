@@ -143,12 +143,12 @@ public class ResourceSession {
             DomainDTO fromDomain = this.domainManager.getDomain(fromResourceRequest.getRequestDomain());
 
             fromResourceRequest.setRequestDomain(request.getRequestDomain());
-            ManagedResource fromResource = domainManager.findManagedResourceById(fromResourceRequest.getResourceId(), fromDomain);
+            ManagedResource fromResource = domainManager.findManagedResource(new ManagedResource(fromDomain, fromResourceRequest.getResourceId()));
 
             FindManagedResourceRequest toResourceRequest = new FindManagedResourceRequest(request.getPayLoad().getToId(), request.getRequestDomain());
             DomainDTO toDomain = this.domainManager.getDomain(toResourceRequest.getRequestDomain());
             toResourceRequest.setRequestDomain(request.getRequestDomain());
-            ManagedResource toResource = domainManager.findManagedResourceById(toResourceRequest.getResourceId(), toDomain);
+            ManagedResource toResource = domainManager.findManagedResource(new ManagedResource(toDomain, toResourceRequest.getResourceId()));
 
             connection.setFrom(fromResource);
             connection.setTo(toResource);
@@ -157,10 +157,12 @@ public class ResourceSession {
             //
             // Valida se é uma conexão entre location e Resource por nodeAddress
             //
+            DomainDTO requestDomain = this.domainManager.getDomain(request.getRequestDomain());
             if (request.getPayLoad().getFromClassName().contains("location")) {
                 connection.setFrom(domainManager.findResourceLocation(request.getPayLoad().getFromName(), request.getPayLoad().getFromNodeAddress(), request.getPayLoad().getFromClassName(), request.getRequestDomain()));
             } else if (request.getPayLoad().getFromClassName().contains("resource")) {
-                connection.setFrom(domainManager.findManagedResource(request.getPayLoad().getFromName(), request.getPayLoad().getFromNodeAddress(), request.getPayLoad().getFromClassName(), request.getRequestDomain()));
+
+                connection.setFrom(domainManager.findManagedResource(new ManagedResource(requestDomain, request.getPayLoad().getFromName(), request.getPayLoad().getFromNodeAddress(), request.getPayLoad().getFromClassName())));
             } else {
                 throw new InvalidRequestException("Invalid From Class");
             }
@@ -171,7 +173,9 @@ public class ResourceSession {
             if (request.getPayLoad().getToClassName().contains("location")) {
                 connection.setTo(domainManager.findResourceLocation(request.getPayLoad().getToName(), request.getPayLoad().getToNodeAddress(), request.getPayLoad().getToClassName(), request.getRequestDomain()));
             } else if (request.getPayLoad().getToClassName().contains("resource")) {
-                connection.setTo(domainManager.findManagedResource(request.getPayLoad().getToName(), request.getPayLoad().getToNodeAddress(), request.getPayLoad().getToClassName(), request.getRequestDomain()));
+//                connection.setTo(domainManager.findManagedResource(request.getPayLoad().getToName(), request.getPayLoad().getToNodeAddress(), request.getPayLoad().getToClassName(), request.getRequestDomain()));
+                connection.setTo(domainManager.findManagedResource(new ManagedResource(requestDomain, request.getPayLoad().getToName(), request.getPayLoad().getToNodeAddress(), request.getPayLoad().getToClassName())));
+
             } else {
                 throw new InvalidRequestException("Invalid TO Class");
             }
@@ -210,7 +214,7 @@ public class ResourceSession {
             try {
                 UUID uuid = UUID.fromString(request.getResourceId());
                 DomainDTO domainDto = this.domainManager.getDomain(request.getRequestDomain());
-                FindManagedResourceResponse response = new FindManagedResourceResponse(this.domainManager.findManagedResourceById(request.getResourceId(), domainDto));
+                FindManagedResourceResponse response = new FindManagedResourceResponse(this.domainManager.findManagedResource(new ManagedResource(domainDto, request.getResourceId())));
                 return response;
             } catch (IllegalArgumentException exception) {
                 throw new InvalidRequestException("ResourceId Invalid UUID:[" + request.getResourceId() + "]");
@@ -283,8 +287,12 @@ public class ResourceSession {
             throw new InvalidRequestException("Please Give a name");
         }
 
-        if (request.getPayLoad().getAttributeSchemaName().equals("default")) {
+        if (request.getPayLoad().getAttributeSchemaName() == null) {
             request.getPayLoad().setAttributeSchemaName("resource.default");
+        }
+
+        if (request.getPayLoad().getClassName() == null) {
+            request.getPayLoad().setClassName("resource.Default");
         }
 
         if (request.getPayLoad().getOperationalStatus() == null) {

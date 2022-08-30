@@ -62,6 +62,10 @@ public class GraphList<T> implements AutoCloseable {
         }
     }
 
+    public boolean isEmpty() {
+        return this.cursor.getCount() <= 0;
+    }
+
     /**
      * Dynamic Consumer the cursor...
      *
@@ -119,5 +123,12 @@ public class GraphList<T> implements AutoCloseable {
             }
         }
         return list;
+    }
+
+    public T getOne() {
+        if (!this.closedCursor) {
+            return this.cursor.next();
+        }
+        return null;
     }
 }

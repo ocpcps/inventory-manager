@@ -33,8 +33,32 @@ public class ManagedResource extends BasicResource {
         super(attributeSchema, domain);
     }
 
+    public ManagedResource(DomainDTO domain, String uid, String id) {
+        super(domain, uid, id);
+        this.setClassName(null);
+        this.setAttributeSchemaName(null);
+    }
+
+    public ManagedResource(DomainDTO domain, String id) {
+        super(domain, id);
+        //
+        // Prioritize ID
+        //
+        this.setClassName(null);
+        this.setAttributeSchemaName(null);
+    }
+
     public ManagedResource(DomainDTO domain) {
         super(domain);
+    }
+
+    public ManagedResource(DomainDTO domain, String name, String nodeAddress, String className) {
+        super(domain, name, nodeAddress, className);
+        //
+        // Prioritize name,nodeAddress
+        //
+        this.setClassName(null);
+        this.setAttributeSchemaName(null);
     }
 
     public ManagedResource() {

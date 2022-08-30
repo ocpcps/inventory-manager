@@ -20,6 +20,8 @@ package com.osstelecom.db.inventory.manager.exception;
 import com.osstelecom.db.inventory.manager.request.IRequest;
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  *
@@ -31,6 +33,19 @@ public abstract class BasicException extends Exception implements Serializable {
     protected IRequest<?> request;
     protected Integer statusCode = 500;
     private Object details;
+
+    public void addDetails(String key, Object obj) {
+        if (this.details == null) {
+            Map<String, Object> map = new ConcurrentHashMap<String, Object>();
+            map.put(key, obj);
+            this.details = map;
+        } else if (this.details instanceof Map) {
+            Map<String, Object> map = (Map<String, Object>) this.details;
+            map.put(key, obj);
+        } else {
+            this.details = obj;
+        }
+    }
 
     public BasicException() {
     }

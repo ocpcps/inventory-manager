@@ -37,7 +37,7 @@ import com.osstelecom.db.inventory.manager.session.DynamicRuleSession;
 import com.osstelecom.db.inventory.manager.session.SchemaSession;
 
 @Service
-public class ServiceManager extends Manager{
+public class ServiceManager extends Manager {
 
     @Autowired
     private DynamicRuleSession dynamicRuleSession;
@@ -53,7 +53,7 @@ public class ServiceManager extends Manager{
 
     @Autowired
     private ReentrantLock lockManager;
-    
+
     /**
      * Retrieves a domain by name
      *
@@ -77,19 +77,24 @@ public class ServiceManager extends Manager{
             }
         }
     }
-    
+
     public ServiceResource createService(ServiceResource service) throws ArangoDaoException {
         String timerId = startTimer("createServiceResource");
-        
+
         try {
             lockManager.lock();
-            service.setUid(this.getUUID());
+            //
+            // Garante que o Merge Funcione
+            //
+            if (service.getUid() == null) {
+                service.setUid(this.getUUID());
+            }
             service.setAtomId(service.getDomain().addAndGetId());
             ResourceSchemaModel schemaModel = schemaSession.loadSchema(service.getAttributeSchemaName());
             service.setSchemaModel(schemaModel);
             schemaSession.validateResourceSchema(service);
             dynamicRuleSession.evalResource(service, "I", this); // <--- Pode não ser verdade , se a chave for duplicada..
-            
+
             DocumentCreateEntity<ServiceResource> result = arangoDao.createService(service);
             service.setUid(result.getId());
             service.setRevisionId(result.getRev());
@@ -99,7 +104,7 @@ public class ServiceManager extends Manager{
             ServiceResourceCreatedEvent event = new ServiceResourceCreatedEvent(service);
             this.eventManager.notifyEvent(event);
             return service;
-        } catch( Exception e){
+        } catch (Exception e) {
             throw new ArangoDaoException("Error while creating ServiceResource", e);
         } finally {
             if (lockManager.isLocked()) {

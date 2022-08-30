@@ -92,7 +92,7 @@ public class BasicResource {
     private String owner;
     private String author;
     private String resourceType;
-    private String attributeSchemaName = "default";
+    private String attributeSchemaName = null;
     private String category;
     private String adminStatus;
     private String operationalStatus;
@@ -108,7 +108,8 @@ public class BasicResource {
     /**
      * Mandatory
      */
-    private String className = "Default";
+    private String className = null;
+
     private ConcurrentHashMap<String, Object> attributes = new ConcurrentHashMap<>();
     /**
      * Cuidado com os campos a seguir!
@@ -235,6 +236,24 @@ public class BasicResource {
         this.domain = domain;
     }
 
+    public BasicResource(DomainDTO domain, String uid, String id) {
+        this.domain = domain;
+        this.uid = uid;
+        this.id = id;
+    }
+
+    public BasicResource(DomainDTO domain, String name, String nodeAddress, String className) {
+        this.domain = domain;
+        this.name = name;
+        this.nodeAddress = nodeAddress;
+        this.className = className;
+    }
+
+    public BasicResource(DomainDTO domain, String id) {
+        this.domain = domain;
+        this.id = id;
+    }
+
     public BasicResource() {
 
     }
@@ -286,7 +305,7 @@ public class BasicResource {
             // Temos recursos  para Consumir
             //
             connection.getFrom().getConsumableMetric().setMetricValue(connection.getFrom().getConsumableMetric().getMetricValue() - connection.getTo().getConsumerMetric().getUnitValue());
-                        
+
         }
     }
 

@@ -41,6 +41,7 @@ import com.arangodb.entity.DocumentUpdateEntity;
 import com.osstelecom.db.inventory.graph.arango.GraphList;
 import com.osstelecom.db.inventory.manager.configuration.ConfigurationManager;
 import com.osstelecom.db.inventory.manager.dao.ArangoDao;
+import com.osstelecom.db.inventory.manager.dao.ManagedResourceDao;
 import com.osstelecom.db.inventory.manager.dto.DomainDTO;
 import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import com.osstelecom.db.inventory.manager.dto.TimerDto;
@@ -86,8 +87,6 @@ import com.osstelecom.db.inventory.topology.ITopology;
 import com.osstelecom.db.inventory.topology.node.DefaultNode;
 import com.osstelecom.db.inventory.topology.node.INetworkNode;
 
-
-
 /**
  * This class is the main Domain Manager it will handle all operations related
  * to persistence and topology, acting as a adapter betweeen, the persistence
@@ -122,6 +121,9 @@ public class DomainManager {
 
     @Autowired
     private EventManagerListener eventManager;
+
+    @Autowired
+    private ManagedResourceDao managedResourceDao;
 
     private Logger logger = LoggerFactory.getLogger(DomainManager.class);
 
@@ -297,7 +299,8 @@ public class DomainManager {
             dynamicRuleSession.evalResource(resource, "I", this); // <--- Pode não ser verdade , se a chave for duplicada..
             // 
 
-            DocumentCreateEntity<ManagedResource> result = arangoDao.createManagedResource(resource);
+//            DocumentCreateEntity<ManagedResource> result = arangoDao.createManagedResource(resource);
+            DocumentCreateEntity<ManagedResource> result = this.managedResourceDao.insertResource(resource);
             resource.setUid(result.getId());
             resource.setRevisionId(result.getRev());
             //
@@ -533,47 +536,7 @@ public class DomainManager {
     }
 
     public ManagedResource findManagedResource(ManagedResource resource) throws ResourceNotFoundException, DomainNotFoundException, ArangoDaoException {
-        //
-        // Se tiver o ID vai dar preferencia ao ID
-        //
-        if (resource.getId() != null && !resource.getId().trim().equals("")) {
-            return this.findManagedResourceById(resource);
-        }
-        //
-        // Se não tem o ID vai tentar achar com o nome,nodeaddress,classname, e domain
-        //
-        return this.findManagedResource(resource.getName(), resource.getNodeAddress(), resource.getClassName(), resource.getDomain().getDomainName());
-    }
-
-    /**
-     * Busca o Managed Resource
-     *
-     * @param name
-     * @param nodeAdrress
-     * @param className
-     * @param domainName
-     * @return
-     * @throws ResourceNotFoundException
-     * @throws DomainNotFoundException
-     * @throws ArangoDaoException
-     */
-    public ManagedResource findManagedResource(String name, String nodeAdrress, String className, String domainName) throws ResourceNotFoundException, DomainNotFoundException, ArangoDaoException {
-        String timerId = startTimer("findResourceLocation");
-        try {
-            lockManager.lock();
-            DomainDTO domain = this.getDomain(domainName);
-            ManagedResource resource = arangoDao.findManagedResource(name, nodeAdrress, className, domain);
-            return resource;
-        } finally {
-            if (lockManager.isLocked()) {
-                lockManager.unlock();
-            }
-            endTimer(timerId);
-        }
-    }
-
-    public ManagedResource findManagedResourceById(String resourceid, DomainDTO domain) throws ResourceNotFoundException, ArangoDaoException {
-        return arangoDao.findManagedResourceById(resourceid, domain);
+        return this.managedResourceDao.findResource(resource);
     }
 
     /**
@@ -598,7 +561,7 @@ public class DomainManager {
             if (!resource.getId().contains("/")) {
                 resource.setId(resource.getDomain().getNodes() + "/" + resource.getId());
             }
-            resource = arangoDao.findManagedResourceById(resource.getId(), resource.getDomain());
+            resource = this.managedResourceDao.findResource(resource);
             return resource;
         } finally {
             if (lockManager.isLocked()) {
@@ -1269,8 +1232,8 @@ public class DomainManager {
         throw new InvalidRequestException("getConnectionsByFilter() can only retrieve connections objects");
     }
 
-    public GraphList<ManagedResource> findManagedResourcesBySchemaName(ResourceSchemaModel model, DomainDTO domain) {
-        return arangoDao.findManagedResourcesBySchemaName(model.getSchemaName(), domain);
+    public GraphList<ManagedResource> findManagedResourcesBySchemaName(ResourceSchemaModel model, DomainDTO domain) throws ResourceNotFoundException {
+        return this.managedResourceDao.findResourcesBySchemaName(model.getSchemaName(), domain);
     }
 
     /**
@@ -1294,10 +1257,10 @@ public class DomainManager {
             // Update the schema on each domain
             //
             logger.debug("Updating Schema[{}] On Domain:[{}]", update.getModel().getSchemaName(), domain.getDomainName());
-            GraphList<ManagedResource> nodesToUpdate = this.findManagedResourcesBySchemaName(update.getModel(), domain);
-            logger.debug("Found {} Elements to Update", nodesToUpdate.size());
 
             try {
+                GraphList<ManagedResource> nodesToUpdate = this.findManagedResourcesBySchemaName(update.getModel(), domain);
+                logger.debug("Found {} Elements to Update", nodesToUpdate.size());
 
                 ResourceSchemaModel model = this.schemaSession.loadSchema(update.getModel().getSchemaName());
                 AtomicLong totalProcessed = new AtomicLong(0L);
@@ -1333,8 +1296,10 @@ public class DomainManager {
                 });
             } catch (IOException | IllegalStateException | GenericException | SchemaNotFoundException ex) {
                 logger.error("Failed to update Resource Schema Model", ex);
+            } catch (ResourceNotFoundException ex) {
+                logger.error("Domain Has No Resources on Schema:[{}]", update.getModel(), ex);
             }
-            logger.debug("Updating Schema[{}] On Domain:[{}] DONE", update.getModel().getSchemaName(),domain.getDomainName());
+            logger.debug("Updating Schema[{}] On Domain:[{}] DONE", update.getModel().getSchemaName(), domain.getDomainName());
         }
     }
 }

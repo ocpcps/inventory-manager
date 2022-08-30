@@ -107,11 +107,11 @@ public class CircuitSession {
         ManagedResource zPoint = domainManager.findManagedResource(request.getPayLoad().getzPoint());
 
         CircuitResource circuit = request.getPayLoad();
-        if (circuit.getAttributeSchemaName().equalsIgnoreCase("default")) {
+        if (circuit.getAttributeSchemaName() == null) {
             circuit.setAttributeSchemaName("circuit.default");
         }
 
-        if (circuit.getClassName().equalsIgnoreCase("Default")) {
+        if (circuit.getClassName() == null) {
             circuit.setClassName("circuit.Default");
         }
 
