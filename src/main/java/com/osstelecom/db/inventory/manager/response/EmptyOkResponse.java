@@ -18,7 +18,6 @@
 package com.osstelecom.db.inventory.manager.response;
 
 import com.osstelecom.db.inventory.manager.dto.EmptyDTO;
-import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 
 /**
  *

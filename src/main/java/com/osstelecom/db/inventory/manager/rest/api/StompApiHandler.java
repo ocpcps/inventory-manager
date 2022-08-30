@@ -18,7 +18,6 @@
 package com.osstelecom.db.inventory.manager.rest.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.HashMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;

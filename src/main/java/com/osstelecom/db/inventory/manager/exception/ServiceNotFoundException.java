@@ -33,11 +33,11 @@ public class ServiceNotFoundException extends BasicException {
         super(msg);
     }
 
-    public ServiceNotFoundException(IRequest request) {
+    public ServiceNotFoundException(IRequest<?> request) {
         super(request);
     }
 
-    public ServiceNotFoundException(IRequest request, String message) {
+    public ServiceNotFoundException(IRequest<?> request, String message) {
         super(request, message);
     }
 
@@ -45,15 +45,15 @@ public class ServiceNotFoundException extends BasicException {
         super(msg, cause);
     }
 
-    public ServiceNotFoundException(IRequest request, String message, Throwable cause) {
+    public ServiceNotFoundException(IRequest<?> request, String message, Throwable cause) {
         super(request, message, cause);
     }
 
-    public ServiceNotFoundException(IRequest request, Throwable cause) {
+    public ServiceNotFoundException(IRequest<?> request, Throwable cause) {
         super(request, cause);
     }
 
-    public ServiceNotFoundException(IRequest request, String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public ServiceNotFoundException(IRequest<?> request, String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(request, message, cause, enableSuppression, writableStackTrace);
     }
 

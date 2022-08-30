@@ -48,6 +48,8 @@ public class ServiceResource extends BasicResource {
         this.setId(id);
     }
 
+    public ServiceResource(){}
+
     public List<ServiceResource> getDependencies() {
         return dependencies;
     }

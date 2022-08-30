@@ -17,6 +17,9 @@
  */
 package com.osstelecom.db.inventory.manager.session;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +29,7 @@ import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.ServiceNotFoundException;
 import com.osstelecom.db.inventory.manager.operation.DomainManager;
+import com.osstelecom.db.inventory.manager.operation.ServiceManager;
 import com.osstelecom.db.inventory.manager.request.CreateServiceRequest;
 import com.osstelecom.db.inventory.manager.request.DeleteServiceRequest;
 import com.osstelecom.db.inventory.manager.request.GetServiceRequest;
@@ -46,6 +50,9 @@ import com.osstelecom.db.inventory.manager.response.PatchServiceResponse;
 public class ServiceSession {
 
     @Autowired
+    private ServiceManager serviceManager;
+
+    @Autowired
     private DomainManager domainManager;
         
     public GetServiceResponse getServiceByServiceId(GetServiceRequest request) throws ServiceNotFoundException, DomainNotFoundException,ArangoDaoException, InvalidRequestException {
@@ -58,7 +65,7 @@ public class ServiceSession {
         }
         request.getPayLoad().setDomain(domainManager.getDomain(request.getRequestDomain()));
        
-        return new GetServiceResponse(domainManager.getService(request.getPayLoad()));
+        return new GetServiceResponse(serviceManager.getService(request.getPayLoad()));
     }
 
     public DeleteServiceResponse deleteService(DeleteServiceRequest request) throws DomainNotFoundException, ArangoDaoException {
@@ -67,7 +74,7 @@ public class ServiceSession {
         }
         request.getPayLoad().setDomain(domainManager.getDomain(request.getRequestDomain()));
         
-        return new DeleteServiceResponse(domainManager.deleteService(request.getPayLoad()));
+        return new DeleteServiceResponse(serviceManager.deleteService(request.getPayLoad()));
     }
 
     public CreateServiceResponse createService(CreateServiceRequest request) throws InvalidRequestException, ServiceNotFoundException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
@@ -85,21 +92,26 @@ public class ServiceSession {
             throw new InvalidRequestException("Please give at least one circuit or dependency");
         }
 
+        
         if (payload.getCircuits() != null && !payload.getCircuits().isEmpty()) {
+            List<CircuitResource> circuits = new ArrayList<>();
             for (CircuitResource item : payload.getCircuits()) {
                 item.setDomain(domainManager.getDomain(request.getRequestDomain()));
-                domainManager.findCircuitResource(item);        
+                circuits.add(domainManager.findCircuitResource(item));        
             }
+            payload.setCircuits(circuits);
         }
 
         if (payload.getDependencies() != null && !payload.getCircuits().isEmpty()) {
+            List<ServiceResource> dependencies = new ArrayList<>();
             for (ServiceResource item : payload.getDependencies()) {
                 item.setDomain(domainManager.getDomain(request.getRequestDomain()));
-                domainManager.getService(item);        
+                dependencies.add(serviceManager.getService(item));        
             }
+            payload.setDependencies(dependencies);
         }
                 
-        return new CreateServiceResponse(domainManager.createService(payload));
+        return new CreateServiceResponse(serviceManager.createService(payload));
     }
 
     public PatchServiceResponse updateService(PatchServiceRequest request) throws InvalidRequestException, ServiceNotFoundException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException{
@@ -116,30 +128,30 @@ public class ServiceSession {
         if (payload == null) {
             throw new InvalidRequestException("Payload not found");
         }        
-        domainManager.getService(payload);
+        serviceManager.getService(payload);
 
         if ((payload.getCircuits() == null || payload.getCircuits().isEmpty()) && (payload.getDependencies() == null || payload.getDependencies().isEmpty())) {
             throw new InvalidRequestException("Please give at least one circuit or dependency");
         }
 
         if (payload.getCircuits() != null && !payload.getCircuits().isEmpty()) {
+            List<CircuitResource> circuits = new ArrayList<>();
             for (CircuitResource item : payload.getCircuits()) {
                 item.setDomain(domainManager.getDomain(request.getRequestDomain()));
-                domainManager.findCircuitResource(item);        
+                circuits.add(domainManager.findCircuitResource(item));        
             }
+            payload.setCircuits(circuits);
         }
 
         if (payload.getDependencies() != null && !payload.getCircuits().isEmpty()) {
+            List<ServiceResource> dependencies = new ArrayList<>();
             for (ServiceResource item : payload.getDependencies()) {
                 item.setDomain(domainManager.getDomain(request.getRequestDomain()));
-                domainManager.getService(item);        
+                dependencies.add(serviceManager.getService(item));        
             }
+            payload.setDependencies(dependencies);
         }
         
-        return new PatchServiceResponse(domainManager.updateService(payload));
+        return new PatchServiceResponse(serviceManager.updateService(payload));
     }
-
-
-
-
 }

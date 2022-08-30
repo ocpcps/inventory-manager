@@ -20,6 +20,7 @@ package com.osstelecom.db.inventory.graph.arango;
 import com.arangodb.ArangoCursor;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.logging.Level;
@@ -36,7 +37,7 @@ import java.util.stream.Stream;
 public class GraphList<T> implements AutoCloseable {
 
     private final ArangoCursor<T> cursor;
-    private Boolean closedCursor = false;
+    private boolean closedCursor = false;
 
     public GraphList(ArangoCursor<T> cursor) {
         this.cursor = cursor;
@@ -52,9 +53,7 @@ public class GraphList<T> implements AutoCloseable {
         Objects.requireNonNull(action);
         if (!this.closedCursor) {
 
-            this.cursor.stream().parallel().forEachOrdered(data -> {
-                action.accept(data);
-            });
+            this.cursor.stream().parallel().forEachOrdered(action::accept);
 
             this.cursor.close();
             this.closedCursor = true;
@@ -72,9 +71,7 @@ public class GraphList<T> implements AutoCloseable {
         Objects.requireNonNull(action);
         if (!this.closedCursor) {
             try {
-                this.cursor.forEachRemaining(data -> {
-                    action.accept(data);
-                });
+                this.cursor.forEachRemaining(action::accept);
             } finally {
                 //
                 // make sure the cursor is closed
@@ -97,7 +94,7 @@ public class GraphList<T> implements AutoCloseable {
     /**
      * @return the cursor
      */
-    private ArangoCursor<T> getCursor() {
+    public ArangoCursor<T> getCursor() {
         return cursor;
     }
 
@@ -112,13 +109,11 @@ public class GraphList<T> implements AutoCloseable {
         }
     }
 
-    public ArrayList<T> toList() {
-        ArrayList<T> list = new ArrayList<>();
+    public List<T> toList() {
+        List<T> list = new ArrayList<>();
         if (!this.closedCursor) {
             try {
-                this.forEach(e -> {
-                    list.add(e);
-                });
+                this.forEach(list::add);
             } catch (IOException | IllegalStateException ex) {
                 Logger.getLogger(GraphList.class.getName()).log(Level.SEVERE, null, ex);
             }

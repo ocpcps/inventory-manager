@@ -114,7 +114,6 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
      */
     @Subscribe
     public void onDomainCreatedEvent(DomainCreatedEvent domain) {
-
     }
 
     /**

@@ -26,7 +26,7 @@ import com.osstelecom.db.inventory.manager.request.IRequest;
  */
 public class DomainAlreadyExistsException extends BasicException {
 
-    public DomainAlreadyExistsException(IRequest request) {
+    public DomainAlreadyExistsException(IRequest<?> request) {
         super(request);
     }
 
@@ -34,23 +34,23 @@ public class DomainAlreadyExistsException extends BasicException {
         super(msg);
     }
 
-    public DomainAlreadyExistsException(String message, IRequest request) {
+    public DomainAlreadyExistsException(String message, IRequest<?> request) {
         super(request, message);
     }
 
-    public DomainAlreadyExistsException(IRequest request, String message) {
+    public DomainAlreadyExistsException(IRequest<?> request, String message) {
         super(request, message);
     }
 
-    public DomainAlreadyExistsException(IRequest request, String message, Throwable cause) {
+    public DomainAlreadyExistsException(IRequest<?> request, String message, Throwable cause) {
         super(request, message, cause);
     }
 
-    public DomainAlreadyExistsException(IRequest request, Throwable cause) {
+    public DomainAlreadyExistsException(IRequest<?> request, Throwable cause) {
         super(request, cause);
     }
 
-    public DomainAlreadyExistsException(IRequest request, String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public DomainAlreadyExistsException(IRequest<?> request, String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(request, message, cause, enableSuppression, writableStackTrace);
     }
 

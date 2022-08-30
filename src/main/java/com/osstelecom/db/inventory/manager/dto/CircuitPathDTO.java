@@ -20,6 +20,7 @@ package com.osstelecom.db.inventory.manager.dto;
 import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -29,10 +30,10 @@ import java.util.ArrayList;
 public class CircuitPathDTO {
 
     private CircuitResource circuit;
-    private ArrayList<ResourceConnection> paths = new ArrayList<>();
+    private List<ResourceConnection> paths = new ArrayList<>();
     private Boolean degrated = false;
     private Boolean broken = false;
-    private ArrayList<String> brokenResources;
+    private List<String> brokenResources;
 
     /**
      * @return the circuit
@@ -51,14 +52,14 @@ public class CircuitPathDTO {
     /**
      * @return the paths
      */
-    public ArrayList<ResourceConnection> getPaths() {
+    public List<ResourceConnection> getPaths() {
         return paths;
     }
 
     /**
      * @param paths the paths to set
      */
-    public void setPaths(ArrayList<ResourceConnection> paths) {
+    public void setPaths(List<ResourceConnection> paths) {
         this.paths = paths;
     }
 
@@ -93,14 +94,14 @@ public class CircuitPathDTO {
     /**
      * @return the brokenResources
      */
-    public ArrayList<String> getBrokenResources() {
+    public List<String> getBrokenResources() {
         return brokenResources;
     }
 
     /**
      * @param brokenConnections the brokenResources to set
      */
-    public void setBrokenResources(ArrayList<String> brokenConnections) {
+    public void setBrokenResources(List<String> brokenConnections) {
         this.brokenResources = brokenConnections;
     }
 

@@ -19,7 +19,6 @@
 package com.osstelecom.db.inventory.manager.response;
 
 import com.osstelecom.db.inventory.manager.dto.DomainDTO;
-import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 
 /**
  *

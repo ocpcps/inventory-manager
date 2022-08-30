@@ -108,8 +108,7 @@ public class ResourceSession {
         }
         request.getPayLoad().setInsertedDate(new Date());
         domainManager.createResourceLocation(request.getPayLoad());
-        CreateResourceLocationResponse response = new CreateResourceLocationResponse(request.getPayLoad());
-        return response;
+        return new CreateResourceLocationResponse(request.getPayLoad());
     }
 
     /**

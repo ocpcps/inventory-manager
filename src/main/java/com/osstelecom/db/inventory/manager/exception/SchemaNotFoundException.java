@@ -33,23 +33,23 @@ public class SchemaNotFoundException extends BasicException {
         super(msg);
     }
 
-    public SchemaNotFoundException(IRequest request) {
+    public SchemaNotFoundException(IRequest<?> request) {
         super(request);
     }
 
-    public SchemaNotFoundException(IRequest request, String message) {
+    public SchemaNotFoundException(IRequest<?> request, String message) {
         super(request, message);
     }
 
-    public SchemaNotFoundException(IRequest request, String message, Throwable cause) {
+    public SchemaNotFoundException(IRequest<?> request, String message, Throwable cause) {
         super(request, message, cause);
     }
 
-    public SchemaNotFoundException(IRequest request, Throwable cause) {
+    public SchemaNotFoundException(IRequest<?> request, Throwable cause) {
         super(request, cause);
     }
 
-    public SchemaNotFoundException(IRequest request, String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public SchemaNotFoundException(IRequest<?> request, String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(request, message, cause, enableSuppression, writableStackTrace);
     }
 
