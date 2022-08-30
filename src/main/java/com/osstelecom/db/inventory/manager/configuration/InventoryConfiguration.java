@@ -31,7 +31,7 @@ public class InventoryConfiguration {
     private String rulesDir = "rules/";
     private String dateFormat = "dd-MM-yyyy";
     private String dateTimeFormat = "dd-MM-yyyy hh:MM:ss";
-    private Boolean trackTimers = true;
+    private boolean trackTimers = true;
 
     /**
      * @return the mongoDbConfiguration
@@ -120,14 +120,14 @@ public class InventoryConfiguration {
     /**
      * @return the trackTimers
      */
-    public Boolean getTrackTimers() {
+    public boolean getTrackTimers() {
         return trackTimers;
     }
 
     /**
      * @param trackTimers the trackTimers to set
      */
-    public void setTrackTimers(Boolean trackTimers) {
+    public void setTrackTimers(boolean trackTimers) {
         this.trackTimers = trackTimers;
     }
 }

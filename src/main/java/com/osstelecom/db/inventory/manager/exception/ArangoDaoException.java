@@ -34,11 +34,11 @@ public class ArangoDaoException extends BasicException {
         super(msg);
     }
 
-    public ArangoDaoException(IRequest request) {
+    public ArangoDaoException(IRequest<?> request) {
         super(request);
     }
 
-    public ArangoDaoException(IRequest request, String message) {
+    public ArangoDaoException(IRequest<?> request, String message) {
         super(request, message);
     }
 
@@ -46,15 +46,15 @@ public class ArangoDaoException extends BasicException {
         super(msg, cause);
     }
 
-    public ArangoDaoException(IRequest request, String message, Throwable cause) {
+    public ArangoDaoException(IRequest<?> request, String message, Throwable cause) {
         super(request, message, cause);
     }
 
-    public ArangoDaoException(IRequest request, Throwable cause) {
+    public ArangoDaoException(IRequest<?> request, Throwable cause) {
         super(request, cause);
     }
 
-    public ArangoDaoException(IRequest request, String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public ArangoDaoException(IRequest<?> request, String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(request, message, cause, enableSuppression, writableStackTrace);
     }
 

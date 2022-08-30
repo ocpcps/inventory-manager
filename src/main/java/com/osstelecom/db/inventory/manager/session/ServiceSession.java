@@ -18,6 +18,7 @@
 package com.osstelecom.db.inventory.manager.session;
 
 import com.osstelecom.db.inventory.manager.dto.DomainDTO;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +28,7 @@ import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.ServiceNotFoundException;
 import com.osstelecom.db.inventory.manager.operation.DomainManager;
+import com.osstelecom.db.inventory.manager.operation.ServiceManager;
 import com.osstelecom.db.inventory.manager.request.CreateServiceRequest;
 import com.osstelecom.db.inventory.manager.request.DeleteServiceRequest;
 import com.osstelecom.db.inventory.manager.request.GetServiceRequest;
@@ -49,6 +51,9 @@ import java.util.List;
 public class ServiceSession {
 
     @Autowired
+    private ServiceManager serviceManager;
+
+    @Autowired
     private DomainManager domainManager;
 
     public GetServiceResponse getServiceByServiceId(GetServiceRequest request) throws ServiceNotFoundException, DomainNotFoundException, ArangoDaoException, InvalidRequestException {
@@ -60,8 +65,8 @@ public class ServiceSession {
             throw new DomainNotFoundException("Domain With Name:[" + request.getRequestDomain() + "] not found");
         }
         request.getPayLoad().setDomain(domainManager.getDomain(request.getRequestDomain()));
-
-        return new GetServiceResponse(domainManager.getService(request.getPayLoad()));
+       
+        return new GetServiceResponse(serviceManager.getService(request.getPayLoad()));
     }
 
     public DeleteServiceResponse deleteService(DeleteServiceRequest request) throws DomainNotFoundException, ArangoDaoException {
@@ -69,8 +74,8 @@ public class ServiceSession {
             throw new DomainNotFoundException("Domain With Name:[" + request.getRequestDomain() + "] not found");
         }
         request.getPayLoad().setDomain(domainManager.getDomain(request.getRequestDomain()));
-
-        return new DeleteServiceResponse(domainManager.deleteService(request.getPayLoad()));
+        
+        return new DeleteServiceResponse(serviceManager.deleteService(request.getPayLoad()));
     }
 
     public CreateServiceResponse createService(CreateServiceRequest request) throws InvalidRequestException, ServiceNotFoundException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
@@ -91,6 +96,7 @@ public class ServiceSession {
             throw new InvalidRequestException("Please give at least one circuit or dependency");
         }
 
+        
         if (payload.getCircuits() != null && !payload.getCircuits().isEmpty()) {
             this.resolveCircuits(payload.getCircuits(), request.getPayLoad().getDomain());
         }

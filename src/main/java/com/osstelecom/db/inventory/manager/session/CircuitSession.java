@@ -39,6 +39,7 @@ import com.osstelecom.db.inventory.manager.response.GetCircuitPathResponse;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -151,10 +152,8 @@ public class CircuitSession {
                 }
 
             }
-            //
-            // Checks the current state of the circuit
-            //
-            ArrayList<String> brokenNodes = this.domainManager.checkBrokenGraph(circuitDto.getPaths(), circuit.getaPoint());
+
+            List<String> brokenNodes = this.domainManager.checkBrokenGraph(circuitDto.getPaths(), circuit.getaPoint());
 
             if (!brokenNodes.isEmpty()) {
                 //
@@ -226,7 +225,7 @@ public class CircuitSession {
         //
         // Checks the current state of the circuit
         //
-        ArrayList<String> brokenNodes = this.domainManager.checkBrokenGraph(connections, circuit.getaPoint());
+        List<String> brokenNodes = this.domainManager.checkBrokenGraph(connections, circuit.getaPoint());
 
         //
         //
@@ -295,7 +294,7 @@ public class CircuitSession {
         circuit = domainManager.findCircuitResource(circuit);
         request.getPayLoad().setCircuit(circuit);
         if (!request.getPayLoad().getPaths().isEmpty()) {
-            ArrayList<ResourceConnection> resolved = new ArrayList<>();
+            List<ResourceConnection> resolved = new ArrayList<>();
             logger.debug("Paths Size:" + request.getPayLoad().getPaths().size());
 //            logger.debug(utils.toJson(request.getPayLoad()));
             for (ResourceConnection requestedPath : request.getPayLoad().getPaths()) {

@@ -33,11 +33,11 @@ public class ScriptRuleException extends BasicException {
         super(msg);
     }
 
-    public ScriptRuleException(IRequest request) {
+    public ScriptRuleException(IRequest<?> request) {
         super(request);
     }
 
-    public ScriptRuleException(IRequest request, String message) {
+    public ScriptRuleException(IRequest<?> request, String message) {
         super(request, message);
     }
 
@@ -45,15 +45,15 @@ public class ScriptRuleException extends BasicException {
         super(msg, cause);
     }
 
-    public ScriptRuleException(IRequest request, String message, Throwable cause) {
+    public ScriptRuleException(IRequest<?> request, String message, Throwable cause) {
         super(request, message, cause);
     }
 
-    public ScriptRuleException(IRequest request, Throwable cause) {
+    public ScriptRuleException(IRequest<?> request, Throwable cause) {
         super(request, cause);
     }
 
-    public ScriptRuleException(IRequest request, String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public ScriptRuleException(IRequest<?> request, String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(request, message, cause, enableSuppression, writableStackTrace);
     }
 

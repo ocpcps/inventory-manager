@@ -45,9 +45,9 @@ public abstract class BasicResponse<T> implements IResponse<T> {
     public BasicResponse(T obj) {
         this.setPayLoad(obj);
         if (this.payLoad instanceof List) {
-            this.size = ((List) this.payLoad).size();
+            this.size = ((List<?>) this.payLoad).size();
         } else if (this.payLoad instanceof Map) {
-            this.size = ((Map) this.payLoad).size();
+            this.size = ((Map<?,?>) this.payLoad).size();
         }
     }
 

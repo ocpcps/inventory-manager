@@ -33,11 +33,11 @@ public class ApiSecurityException extends BasicException {
         super(msg);
     }
 
-    public ApiSecurityException(IRequest request) {
+    public ApiSecurityException(IRequest<?> request) {
         super(request);
     }
 
-    public ApiSecurityException(IRequest request, String message) {
+    public ApiSecurityException(IRequest<?> request, String message) {
         super(request, message);
     }
 
@@ -45,15 +45,15 @@ public class ApiSecurityException extends BasicException {
         super(msg, cause);
     }
 
-    public ApiSecurityException(IRequest request, String message, Throwable cause) {
+    public ApiSecurityException(IRequest<?> request, String message, Throwable cause) {
         super(request, message, cause);
     }
 
-    public ApiSecurityException(IRequest request, Throwable cause) {
+    public ApiSecurityException(IRequest<?> request, Throwable cause) {
         super(request, cause);
     }
 
-    public ApiSecurityException(IRequest request, String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public ApiSecurityException(IRequest<?> request, String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(request, message, cause, enableSuppression, writableStackTrace);
     }
 

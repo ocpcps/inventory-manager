@@ -26,7 +26,7 @@ import java.util.List;
 public class ServiceResource extends BasicResource {
 
     /**
-     * 
+     *
      * IDS of Services that this services depends on, like parent service.
      */
     private List<ServiceResource> dependencies;
@@ -46,10 +46,12 @@ public class ServiceResource extends BasicResource {
 
     public ServiceResource() {
     }
-    
-    public ServiceResource(String id){
+
+    public ServiceResource(String id) {
         this.setId(id);
     }
+
+  
 
     public List<ServiceResource> getDependencies() {
         return dependencies;
@@ -65,6 +67,6 @@ public class ServiceResource extends BasicResource {
 
     public void setCircuits(List<CircuitResource> circuits) {
         this.circuits = circuits;
-    }    
+    }
 
 }

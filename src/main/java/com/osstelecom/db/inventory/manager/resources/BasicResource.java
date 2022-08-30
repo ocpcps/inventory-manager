@@ -161,11 +161,7 @@ public class BasicResource {
     public void setDomain(DomainDTO domain) {
         this.domain = domain;
         if (domain != null) {
-            if (this.domainName == null) {
-                this.domainName = domain.getDomainName();
-            } else if (!this.domainName.equals(domain.getDomainName())) {
-                this.domainName = domain.getDomainName();
-            }
+            this.domainName = domain.getDomainName();
         }
     }
 
@@ -230,7 +226,7 @@ public class BasicResource {
     }
 
     public BasicResource(String attributeSchema, DomainDTO domain) {
-        this.attributeSchemaName = attributeSchemaName;
+        this.attributeSchemaName = attributeSchema;
         this.domain = domain;
     }
 
@@ -280,20 +276,17 @@ public class BasicResource {
         //
         // Temos um consumer :? 
         //
-        if (connection.getTo() != null) {
-            if (connection.getTo().getIsConsumer()) {
-                if (connection.getFrom().getIsConsumable()) {
+        if (connection.getTo() != null && connection.getTo().getIsConsumer() && connection.getFrom().getIsConsumable().booleanValue()) {
 
-                    if (connection.getFrom().getConsumableMetric().getMetricValue() - connection.getTo().getConsumerMetric().getUnitValue() < connection.getFrom().getConsumableMetric().getMinValue()) {
-                        throw new NoResourcesAvailableException("No Resouces Available on: " + connection.getFrom().getUid() + " Current: [" + connection.getFrom().getConsumableMetric().getMetricValue() + "] Needed: [" + connection.getTo().getConsumerMetric().getUnitValue() + "]");
-                    }
-
-                    //
-                    // Temos recursos  para Consumir
-                    //
-                    connection.getFrom().getConsumableMetric().setMetricValue(connection.getFrom().getConsumableMetric().getMetricValue() - connection.getTo().getConsumerMetric().getUnitValue());
-                }
+            if (connection.getFrom().getConsumableMetric().getMetricValue() - connection.getTo().getConsumerMetric().getUnitValue() < connection.getFrom().getConsumableMetric().getMinValue()) {
+                throw new NoResourcesAvailableException("No Resouces Available on: " + connection.getFrom().getUid() + " Current: [" + connection.getFrom().getConsumableMetric().getMetricValue() + "] Needed: [" + connection.getTo().getConsumerMetric().getUnitValue() + "]");
             }
+
+            //
+            // Temos recursos  para Consumir
+            //
+            connection.getFrom().getConsumableMetric().setMetricValue(connection.getFrom().getConsumableMetric().getMetricValue() - connection.getTo().getConsumerMetric().getUnitValue());
+                        
         }
     }
 

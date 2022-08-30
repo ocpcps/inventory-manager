@@ -19,8 +19,8 @@ package com.osstelecom.db.inventory.manager.dto;
 
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -29,32 +29,32 @@ import java.util.HashMap;
  */
 public class FilterDTO {
 
-    private ArrayList<String> classes;
-    private ArrayList<String> objects;
+    private List<String> classes;
+    private List<String> objects;
     private String aqlFilter;
-    private HashMap<String, Object> bindings;
+    private Map<String, Object> bindings;
     private String targetRegex;
     private Boolean computeWeakLinks = false;
     private Integer computeThreads = 8;
     private Integer minCuts = 1;
-    private ArrayList<ManagedResource> nodes;
-    private ArrayList<ResourceConnection> connections;
+    private List<ManagedResource> nodes;
+    private List<ResourceConnection> connections;
     private Integer nodeCount = 0;
     private Integer connectionsCount = 0;
 
-    public ArrayList<ManagedResource> getNodes() {
+    public List<ManagedResource> getNodes() {
         return nodes;
     }
 
-    public void setNodes(ArrayList<ManagedResource> nodes) {
+    public void setNodes(List<ManagedResource> nodes) {
         this.nodes = nodes;
     }
 
-    public ArrayList<ResourceConnection> getConnections() {
+    public List<ResourceConnection> getConnections() {
         return connections;
     }
 
-    public void setConnections(ArrayList<ResourceConnection> connections) {
+    public void setConnections(List<ResourceConnection> connections) {
         this.connections = connections;
         if (this.connections != null) {
             this.setConnectionsCount(this.connections.size());
@@ -80,28 +80,28 @@ public class FilterDTO {
     /**
      * @return the classes
      */
-    public ArrayList<String> getClasses() {
+    public List<String> getClasses() {
         return classes;
     }
 
     /**
      * @param classes the classes to set
      */
-    public void setClasses(ArrayList<String> classes) {
+    public void setClasses(List<String> classes) {
         this.classes = classes;
     }
 
     /**
      * @return the objects
      */
-    public ArrayList<String> getObjects() {
+    public List<String> getObjects() {
         return objects;
     }
 
     /**
      * @param objects the objects to set
      */
-    public void setObjects(ArrayList<String> objects) {
+    public void setObjects(List<String> objects) {
         this.objects = objects;
     }
 
@@ -178,14 +178,14 @@ public class FilterDTO {
     /**
      * @return the bindings
      */
-    public HashMap<String, Object> getBindings() {
+    public Map<String, Object> getBindings() {
         return bindings;
     }
 
     /**
      * @param bindings the bindings to set
      */
-    public void setBindings(HashMap<String, Object> bindings) {
+    public void setBindings(Map<String, Object> bindings) {
         this.bindings = bindings;
     }
 }

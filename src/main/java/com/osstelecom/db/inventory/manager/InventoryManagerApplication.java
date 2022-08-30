@@ -20,7 +20,6 @@ package com.osstelecom.db.inventory.manager;
 import javax.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.Banner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration;
@@ -41,10 +40,7 @@ public class InventoryManagerApplication {
     private Logger logger = LoggerFactory.getLogger(InventoryManagerApplication.class);
 
     public static void main(String[] args) {
-//        SpringApplication.run(InventoryManagerApplication.class, args);
-        SpringApplication application = new SpringApplication(InventoryManagerApplication.class);
-        application.setBannerMode(Banner.Mode.CONSOLE);
-        application.run(args);
+        SpringApplication.run(InventoryManagerApplication.class, args);
     }
 
     @EventListener(ApplicationReadyEvent.class)

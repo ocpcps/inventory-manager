@@ -33,23 +33,23 @@ public class ResourceNotFoundException extends BasicException {
         super(msg);
     }
 
-    public ResourceNotFoundException(IRequest request) {
+    public ResourceNotFoundException(IRequest<?> request) {
         super(request);
     }
 
-    public ResourceNotFoundException(IRequest request, String message) {
+    public ResourceNotFoundException(IRequest<?> request, String message) {
         super(request, message);
     }
 
-    public ResourceNotFoundException(IRequest request, String message, Throwable cause) {
+    public ResourceNotFoundException(IRequest<?> request, String message, Throwable cause) {
         super(request, message, cause);
     }
 
-    public ResourceNotFoundException(IRequest request, Throwable cause) {
+    public ResourceNotFoundException(IRequest<?> request, Throwable cause) {
         super(request, cause);
     }
 
-    public ResourceNotFoundException(IRequest request, String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public ResourceNotFoundException(IRequest<?> request, String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(request, message, cause, enableSuppression, writableStackTrace);
     }
 

@@ -73,6 +73,7 @@ import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import com.osstelecom.db.inventory.manager.resources.ResourceLocation;
 import com.osstelecom.db.inventory.manager.resources.ServiceResource;
+
 import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstraintViolationException;
 import com.osstelecom.db.inventory.manager.resources.exception.ConnectionAlreadyExistsException;
 import com.osstelecom.db.inventory.manager.resources.exception.MetricConstraintException;
@@ -84,6 +85,8 @@ import com.osstelecom.db.inventory.topology.DefaultTopology;
 import com.osstelecom.db.inventory.topology.ITopology;
 import com.osstelecom.db.inventory.topology.node.DefaultNode;
 import com.osstelecom.db.inventory.topology.node.INetworkNode;
+
+
 
 /**
  * This class is the main Domain Manager it will handle all operations related
@@ -99,10 +102,11 @@ import com.osstelecom.db.inventory.topology.node.INetworkNode;
 @Service
 public class DomainManager {
 
-    private ReentrantLock lockManager = new ReentrantLock();
-
     private ConcurrentHashMap<String, DomainDTO> domains = new ConcurrentHashMap<>();
     private ConcurrentHashMap<String, TimerDto> timers = new ConcurrentHashMap<>();
+
+    @Autowired
+    private ReentrantLock lockManager;
 
     @Autowired
     private DynamicRuleSession dynamicRuleSession;
@@ -372,7 +376,7 @@ public class DomainManager {
             schemaSession.validateResourceSchema(circuit);
             dynamicRuleSession.evalResource(circuit, "I", this);
             DocumentCreateEntity<CircuitResource> result = arangoDao.createCircuitResource(circuit);
-//            CircuitResource result = doc.getNew();
+            //CircuitResource result = doc.getNew();
             circuit.setUid(result.getId());
             circuit.setRevisionId(result.getRev());
             //
@@ -948,7 +952,7 @@ public class DomainManager {
      * @param connection
      * @return
      */
-    public ArrayList<ResourceConnection> updateResourceConnections(ArrayList<ResourceConnection> connections) {
+    public List<ResourceConnection> updateResourceConnections(List<ResourceConnection> connections) {
         String timerId = startTimer("updateResourceConnection");
         try {
             lockManager.lock();
@@ -1012,8 +1016,8 @@ public class DomainManager {
      * @param aPoint
      * @return
      */
-    public ArrayList<String> checkBrokenGraph(List<ResourceConnection> connections, ManagedResource aPoint) {
-        ArrayList<String> result = new ArrayList<>();
+    public List<String> checkBrokenGraph(List<ResourceConnection> connections, ManagedResource aPoint) {
+        List<String> result = new ArrayList<>();
         if (!connections.isEmpty()) {
             //
             // @Todo:Testar memória...
@@ -1043,23 +1047,23 @@ public class DomainManager {
                     topology.addConnection(from, to, "Connection: " + connection.getId());
                 }
 
-//                topology.addConnection(to, from, connection.getId() + ".A");
+                //topology.addConnection(to, from, connection.getId() + ".A");
             });
 
             logger.debug("-------------------------------------------------------------");
             logger.debug("Topology Loaded! ");
             logger.debug("Topology Size:");
-            logger.debug("         Nodes:" + topology.getNodes().size());
-            logger.debug("   Connections:" + topology.getConnections().size());
-            logger.debug("     EndPoints:" + topology.getEndPoints().size());
+            logger.debug("         Nodes:{}", topology.getNodes().size());
+            logger.debug("   Connections:{}", topology.getConnections().size());
+            logger.debug("     EndPoints:{}", topology.getEndPoints().size());
             for (INetworkNode node : topology.getEndPoints()) {
-                logger.debug("       " + node.getName());
+                logger.debug("       {}", node.getName());
             }
 
             List<INetworkNode> weak = topology.getImpactManager().getUnreacheableNodes();
             Long endTime = System.currentTimeMillis();
             Long tookTime = endTime - startTime;
-            logger.debug("Found " + weak.size() + " Unrecheable Nodes IN:" + tookTime + " ms");
+            logger.debug("Found {} Unrecheable Nodes IN: {} ms", weak.size(), tookTime);
 
             if (!weak.isEmpty()) {
                 weak.forEach(node -> {
@@ -1076,7 +1080,7 @@ public class DomainManager {
         return result;
     }
 
-    public void findWeakLinks(ArrayList<ResourceConnection> connections, FilterDTO filter) {
+    public void findWeakLinks(List<ResourceConnection> connections, FilterDTO filter) {
         //
         // Valida se temos dados de conexões...
         //
@@ -1086,22 +1090,18 @@ public class DomainManager {
             // Vamos validar se a regex encontra targets
             //
 
-            ArrayList<BasicResource> targets = new ArrayList<>();
+            List<BasicResource> targets = new ArrayList<>();
 
             Pattern p = Pattern.compile(filter.getTargetRegex());
             for (ResourceConnection connection : connections) {
                 Matcher sourceMatcher = p.matcher(connection.getFrom().getName());
-                if (sourceMatcher.matches()) {
-                    if (!targets.contains(connection.getFrom())) {
-                        targets.add(connection.getFrom());
-                    }
+                if (sourceMatcher.matches() && !targets.contains(connection.getFrom())) {
+                    targets.add(connection.getFrom());
                 }
 
                 Matcher targetMatched = p.matcher(connection.getTo().getName());
-                if (targetMatched.matches()) {
-                    if (!targets.contains(connection.getFrom())) {
-                        targets.add(connection.getTo());
-                    }
+                if (targetMatched.matches() && !targets.contains(connection.getFrom())) {
+                    targets.add(connection.getTo());
                 }
             }
 
@@ -1253,7 +1253,7 @@ public class DomainManager {
         return node;
     }
 
-    public ArrayList<ManagedResource> getNodesByFilter(FilterDTO filter, String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
+    public List<ManagedResource> getNodesByFilter(FilterDTO filter, String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
         DomainDTO domain = getDomain(domainName);
         if (filter.getObjects().contains("nodes")) {
             return arangoDao.getNodesByFilter(filter, domain);
@@ -1293,9 +1293,9 @@ public class DomainManager {
             //
             // Update the schema on each domain
             //
-            logger.debug("Updating Schema[" + update.getModel().getSchemaName() + "] On Domain:[" + domain.getDomainName() + "]");
+            logger.debug("Updating Schema[{}] On Domain:[{}]", update.getModel().getSchemaName(), domain.getDomainName());
             GraphList<ManagedResource> nodesToUpdate = this.findManagedResourcesBySchemaName(update.getModel(), domain);
-            logger.debug("Found " + nodesToUpdate.size() + " Elements to Update");
+            logger.debug("Found {} Elements to Update", nodesToUpdate.size());
 
             try {
 
@@ -1327,14 +1327,14 @@ public class DomainManager {
                     arangoDao.updateManagedResource(resource);
 
                     if (totalProcessed.incrementAndGet() % 1000 == 0) {
-                        logger.debug("Updated " + totalProcessed.get() + " Records");
+                        logger.debug("Updated {} Records", totalProcessed.get());
                     }
 
                 });
             } catch (IOException | IllegalStateException | GenericException | SchemaNotFoundException ex) {
                 logger.error("Failed to update Resource Schema Model", ex);
             }
-            logger.debug("Updating Schema[" + update.getModel().getSchemaName() + "] On Domain:[" + domain.getDomainName() + "] DONE");
+            logger.debug("Updating Schema[{}] On Domain:[{}] DONE", update.getModel().getSchemaName(),domain.getDomainName());
         }
     }
 }

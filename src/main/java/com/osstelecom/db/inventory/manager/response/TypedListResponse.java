@@ -24,9 +24,9 @@ import java.util.List;
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 21.07.2022
  */
-public class TypedListResponse extends BasicResponse<List> {
+public class TypedListResponse extends BasicResponse<List<?>> {
 
-    public TypedListResponse(List obj) {
+    public TypedListResponse(List<?> obj) {
         super(obj);
     }
 

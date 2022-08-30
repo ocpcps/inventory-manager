@@ -35,11 +35,11 @@ public class AttributeConstraintViolationException extends BasicException{
         super(msg);
     }
 
-    public AttributeConstraintViolationException(IRequest request) {
+    public AttributeConstraintViolationException(IRequest<?> request) {
         super(request);
     }
 
-    public AttributeConstraintViolationException(IRequest request, String message) {
+    public AttributeConstraintViolationException(IRequest<?> request, String message) {
         super(request, message);
     }
 
@@ -47,15 +47,15 @@ public class AttributeConstraintViolationException extends BasicException{
         super(msg, cause);
     }
 
-    public AttributeConstraintViolationException(IRequest request, String message, Throwable cause) {
+    public AttributeConstraintViolationException(IRequest<?> request, String message, Throwable cause) {
         super(request, message, cause);
     }
 
-    public AttributeConstraintViolationException(IRequest request, Throwable cause) {
+    public AttributeConstraintViolationException(IRequest<?> request, Throwable cause) {
         super(request, cause);
     }
 
-    public AttributeConstraintViolationException(IRequest request, String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public AttributeConstraintViolationException(IRequest<?> request, String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(request, message, cause, enableSuppression, writableStackTrace);
     }
 

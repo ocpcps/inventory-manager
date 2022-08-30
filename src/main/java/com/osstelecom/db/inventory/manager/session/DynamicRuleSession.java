@@ -22,9 +22,7 @@ import com.google.common.cache.CacheBuilder;
 import com.osstelecom.db.inventory.manager.configuration.ConfigurationManager;
 import com.osstelecom.db.inventory.manager.configuration.InventoryConfiguration;
 import com.osstelecom.db.inventory.manager.exception.ScriptRuleException;
-import com.osstelecom.db.inventory.manager.operation.DomainManager;
 import com.osstelecom.db.inventory.manager.resources.BasicResource;
-import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import groovy.lang.Binding;
 import groovy.util.GroovyScriptEngine;
 import groovy.util.ResourceException;
@@ -39,6 +37,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 /**
  *
@@ -50,7 +49,6 @@ public class DynamicRuleSession {
 
     private GroovyScriptEngine gse;
     private InventoryConfiguration configuration;
-    private Boolean isOk = false;
     private Binding bindings;
     private Logger logger = LoggerFactory.getLogger(DynamicRuleSession.class);
     private Cache<String, File> cachedFile;
@@ -63,12 +61,11 @@ public class DynamicRuleSession {
     private void initGse() {
         try {
             this.configuration = configurationManager.loadConfiguration();
-            logger.info("Starting Dynamic Rule Engine with rules dir at: [" + this.configuration.getRulesDir() + "]");
+            logger.info("Starting Dynamic Rule Engine with rules dir at: [{}]",this.configuration.getRulesDir());
             this.gse = new GroovyScriptEngine(configuration.getRulesDir());
             this.bindings = new Binding();
             this.bindings.setVariable("logger", logger);
             this.initGuavaCache();
-            this.isOk = true;
         } catch (IOException ex) {
             logger.error("Failed to start Rules Engine...");
         }
@@ -89,7 +86,7 @@ public class DynamicRuleSession {
      * @param domainManager
      * @throws ScriptRuleException
      */
-    public void evalResource(BasicResource resource, String oper, DomainManager domainManager) throws ScriptRuleException {
+    public void evalResource(BasicResource resource, String oper, Object manager) throws ScriptRuleException {
         //
         // Eval the resource chain
         //
@@ -108,26 +105,13 @@ public class DynamicRuleSession {
             if (scriptFile.exists()) {
                 this.cachedNoRules.invalidate(scriptPath);
                 context.clear();
-                this.bindings.setVariable("dm", domainManager);
+                this.bindings.setVariable("manager", manager);
                 this.bindings.setVariable("context", context);
 
-                context.put("dm", domainManager);
-                context.put("isConnection", domainManager.isConnection(resource));
-                context.put("isManagedResource", domainManager.isManagedResource(resource));
-                context.put("isLocation", domainManager.isLocation(resource));
-
+                context.put("manager", manager);                
                 context.put("resource", resource);
                 context.put("oper", oper);
-                if (domainManager.isConnection(resource)) {
-                    //
-                    // Se for connection vai expor o from e o to para 
-                    //
-                    ResourceConnection connection = (ResourceConnection) resource;
-                    context.put("from", connection.getFrom());
-                    context.put("to", connection.getTo());
-
-                }
-
+                
                 String runningScript = scriptPath;
                 this.bindings.setVariable("resource", resource);
                 while (!scriptPath.equals("")) {
@@ -136,40 +120,24 @@ public class DynamicRuleSession {
                         context.put("include", scriptPath);
                         this.gse.run(runningScript, bindings);
                         scriptPath = (String) context.get("include");
-                        if (scriptFile != null) {
-                            if (!scriptFile.equals("")) {
-                                runningScript = scriptPath;
-                            }
-                        } else {
-                            scriptPath = "";
-                        }
+                        if (StringUtils.hasText(scriptPath))
+                            runningScript = scriptPath;
+                        else scriptPath = "";
                     } catch (ResourceException | ScriptException ex) {
-                        logger.error("Error in Groovy Context", ex);
                         throw new ScriptRuleException("Error in Groovy Context", ex);
                     } catch (Exception ex) {
-                        //
-                        // Tá um jeito bem feio né.... um dia eu melhoro isso
-                        //
-                        if (ex instanceof ScriptRuleException) {
-                            ScriptRuleException scex = (ScriptRuleException) ex;
-                            throw scex;
-                        } else {
-                            throw new ScriptRuleException("Generic Exception in Groovy Context", ex);
-                        }
+                        throw new ScriptRuleException("Generic Exception in Groovy Context", ex);
                     }
                 }
                 context.clear();
             } else {
                 this.cachedNoRules.put(scriptPath, false);
-                logger.warn("No Rules Found for Class: " + resource.getClassName() + ":=[" + scriptPath + "] Putting on Cache for 30s");
+                logger.warn("No Rules Found for Class: {}:=[{}] Putting on Cache for 30s", resource.getClassName(), scriptPath);
             }
-
         } else {
             //
             // Nothing to Eval
             //
-            return;
         }
-
     }
 }
