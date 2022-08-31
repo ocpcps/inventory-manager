@@ -21,6 +21,7 @@ import com.arangodb.ArangoDatabase;
 import com.arangodb.entity.DocumentCreateEntity;
 import com.arangodb.entity.DocumentDeleteEntity;
 import com.arangodb.entity.DocumentUpdateEntity;
+import com.arangodb.entity.MultiDocumentEntity;
 import com.arangodb.model.AqlQueryOptions;
 import com.osstelecom.db.inventory.graph.arango.GraphList;
 import com.osstelecom.db.inventory.manager.dto.DomainDTO;
@@ -51,6 +52,8 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
 
     public abstract DocumentUpdateEntity<T> updateResource(T resource) throws BasicException;
 
+    public abstract MultiDocumentEntity<DocumentUpdateEntity<T>> updateResources(List<T> resources, DomainDTO domain) throws BasicException;
+
     public abstract DocumentDeleteEntity<ManagedResource> deleteResource(T resource) throws BasicException;
 
     public abstract GraphList<T> findResourcesBySchemaName(String schemaName, DomainDTO domain) throws BasicException;
@@ -59,7 +62,7 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
 
     public abstract GraphList<T> findResourceByFilter(String aql, Map<String, Object> bindVars, DomainDTO domain) throws BasicException;
 
-    protected String buildAqlFromBindings(String aql, Map<String, Object> bindVars) {
+    protected String buildAqlFromBindings(String aql, Map<String, Object> bindVars, boolean appendReturn) {
         StringBuffer buffer = new StringBuffer(aql);
         bindVars.forEach((k, v) -> {
             if (!k.equalsIgnoreCase("domainName")) {
@@ -73,7 +76,9 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
                 }
             }
         });
-        buffer.append(" return doc");
+        if (appendReturn) {
+            buffer.append(" return doc");
+        }
         return buffer.toString();
     }
 
@@ -85,6 +90,8 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
      * @param type
      * @param db
      * @return
+     * @throws
+     * com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException
      */
     public GraphList<T> query(String aql, Map<String, Object> bindVars, Class<T> type, ArangoDatabase db) throws ResourceNotFoundException {
         logger.info("(query) RUNNING: AQL:[{}]", aql);
@@ -92,7 +99,7 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
             logger.info("\t  [@{}]=[{}]", k, v);
 
         });
-        GraphList<T> result = new GraphList<T>(db.query(aql, bindVars, new AqlQueryOptions().fullCount(true).count(true), type));
+        GraphList<T> result = new GraphList<>(db.query(aql, bindVars, new AqlQueryOptions().fullCount(true).count(true), type));
         if (result.isEmpty()) {
             ResourceNotFoundException ex = new ResourceNotFoundException();
             //

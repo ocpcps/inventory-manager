@@ -17,9 +17,11 @@
  */
 package com.osstelecom.db.inventory.manager.dao;
 
+import com.arangodb.ArangoCollection;
 import com.arangodb.entity.DocumentCreateEntity;
 import com.arangodb.entity.DocumentDeleteEntity;
 import com.arangodb.entity.DocumentUpdateEntity;
+import com.arangodb.entity.MultiDocumentEntity;
 import com.arangodb.model.DocumentCreateOptions;
 import com.arangodb.model.DocumentDeleteOptions;
 import com.arangodb.model.DocumentUpdateOptions;
@@ -30,7 +32,9 @@ import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.BasicException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
+import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -50,7 +54,7 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
     public ManagedResource findResource(ManagedResource resource) throws ArangoDaoException, ResourceNotFoundException {
         try {
             //
-            // Pensar no Lock Manager aqui
+            // Pensar no Lock Manager aqui, ou subir para o manager
             //
             //
             // Domain is mandatory! make sure you set the domain before handling to dao
@@ -103,7 +107,7 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
             //
             // Creates AQL
             //
-            aql = this.buildAqlFromBindings(aql, bindVars);
+            aql = this.buildAqlFromBindings(aql, bindVars,true);
 
             GraphList<ManagedResource> result = this.query(aql, bindVars, ManagedResource.class, this.arangoDao.getDb());
 
@@ -112,7 +116,7 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
             throw new ArangoDaoException(ex);
         } finally {
             //
-            // Liberar o Lock manager Aqui
+            // Liberar o Lock manager Aqui,  ou subir para o manager
             //
         }
 
@@ -129,7 +133,7 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
             throw new ArangoDaoException(ex);
         } finally {
             //
-            // Liberar o Lock manager Aqui
+            // Liberar o Lock manager Aqui, ou subir para o manager
             //
         }
     }
@@ -145,7 +149,7 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
             throw new ArangoDaoException(ex);
         } finally {
             //
-            // Liberar o Lock manager Aqui
+            // Liberar o Lock manager Aqui, ou subir para o manager
             //
         }
     }
@@ -162,7 +166,7 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
             throw new ArangoDaoException(ex);
         } finally {
             //
-            // Liberar o Lock manager Aqui
+            // Liberar o Lock manager Aqui, ou subir para o manager
             //
         }
     }
@@ -175,7 +179,7 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
             throw new ArangoDaoException(ex);
         } finally {
             //
-            // Liberar o Lock manager Aqui
+            // Liberar o Lock manager Aqui, ou subir para o manager
             //
         }
     }
@@ -209,7 +213,7 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
     }
 
     @Override
-    public GraphList<ManagedResource> findResourceByFilter(String filter, Map<String, Object> bindVars, DomainDTO domain) throws BasicException {
+    public GraphList<ManagedResource> findResourceByFilter(String filter, Map<String, Object> bindVars, DomainDTO domain) throws ArangoDaoException {
         try {
             String aql = " for doc in   " + domain.getNodes();
             aql += " filter doc.domainName == @domainName ";
@@ -226,4 +230,14 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
         }
     }
 
+    @Override
+    public MultiDocumentEntity<DocumentUpdateEntity<ManagedResource>> updateResources(List<ManagedResource> resources, DomainDTO domain) throws ArangoDaoException {
+        try {
+            ArangoCollection connectionCollection = this.arangoDao.getDb().collection(domain.getNodes());
+            MultiDocumentEntity<DocumentUpdateEntity<ManagedResource>> results = connectionCollection.updateDocuments(resources, new DocumentUpdateOptions().returnNew(true).returnOld(true).keepNull(false).mergeObjects(false), ManagedResource.class);
+            return results;
+        } catch (Exception ex) {
+            throw new ArangoDaoException(ex);
+        }
+    }
 }

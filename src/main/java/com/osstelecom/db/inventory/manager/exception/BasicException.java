@@ -32,25 +32,17 @@ public abstract class BasicException extends Exception implements Serializable {
 
     protected IRequest<?> request;
     protected Integer statusCode = 500;
-    private Object details;
+    private Map<String, Object> details;
 
     public BasicException(Throwable thrwbl) {
         super(thrwbl);
     }
-    
-    
 
     public void addDetails(String key, Object obj) {
         if (this.details == null) {
-            Map<String, Object> map = new ConcurrentHashMap<String, Object>();
-            map.put(key, obj);
-            this.details = map;
-        } else if (this.details instanceof Map) {
-            Map<String, Object> map = (Map<String, Object>) this.details;
-            map.put(key, obj);
-        } else {
-            this.details = obj;
+            this.details = new ConcurrentHashMap<String, Object>();
         }
+        this.details.put(key, obj);
     }
 
     public BasicException() {
@@ -116,17 +108,9 @@ public abstract class BasicException extends Exception implements Serializable {
         this.statusCode = statusCode;
     }
 
-    /**
-     * @param details the details to set
-     */
-    public void setDetails(Object details) {
-        this.details = details;
-    }
-
-    public void setDetails(Object... details) {
-        this.details = Arrays.asList(details);
-    }
-
+//    public void setDetails(Object... details) {
+//        this.details = Arrays.asList(details);
+//    }
     /**
      * @return the details
      */

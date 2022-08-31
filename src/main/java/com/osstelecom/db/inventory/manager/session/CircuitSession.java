@@ -308,7 +308,7 @@ public class CircuitSession {
                     // No Node Address
                     //
                     InvalidRequestException ex = new InvalidRequestException("Please give at least,nodeAddress or from and to");
-                    ex.setDetails("connection", requestedPath);
+                    ex.addDetails("connection", requestedPath);
                     throw ex;
                 }
 
@@ -347,7 +347,7 @@ public class CircuitSession {
                 //
                 // Valida se funciona, mas batch update é muito mais rápido xD
                 //
-                resolved = domainManager.updateResourceConnections(resolved);
+                resolved = domainManager.updateResourceConnections(resolved,circuit.getDomain());
                 request.getPayLoad().getPaths().clear();
                 request.getPayLoad().getPaths().addAll(resolved);
                 circuit = domainManager.updateCircuitResource(circuit);

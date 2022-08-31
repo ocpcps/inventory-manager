@@ -38,10 +38,12 @@ import org.springframework.stereotype.Service;
 
 import com.arangodb.entity.DocumentCreateEntity;
 import com.arangodb.entity.DocumentUpdateEntity;
+import com.arangodb.entity.MultiDocumentEntity;
 import com.osstelecom.db.inventory.graph.arango.GraphList;
 import com.osstelecom.db.inventory.manager.configuration.ConfigurationManager;
 import com.osstelecom.db.inventory.manager.dao.ArangoDao;
 import com.osstelecom.db.inventory.manager.dao.ManagedResourceDao;
+import com.osstelecom.db.inventory.manager.dao.ResourceConnectionDao;
 import com.osstelecom.db.inventory.manager.dto.DomainDTO;
 import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import com.osstelecom.db.inventory.manager.dto.TimerDto;
@@ -88,6 +90,7 @@ import com.osstelecom.db.inventory.topology.ITopology;
 import com.osstelecom.db.inventory.topology.node.DefaultNode;
 import com.osstelecom.db.inventory.topology.node.INetworkNode;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * This class is the main Domain Manager it will handle all operations related
@@ -126,6 +129,9 @@ public class DomainManager {
 
     @Autowired
     private ManagedResourceDao managedResourceDao;
+
+    @Autowired
+    private ResourceConnectionDao resourceConnectionDao;
 
     private Logger logger = LoggerFactory.getLogger(DomainManager.class);
 
@@ -292,7 +298,7 @@ public class DomainManager {
         try {
             lockManager.lock();
             //
-            // Subir as validações para session
+            // START - Subir as validações para session
             //
             if (resource.getUid() == null) {
                 resource.setUid(this.getUUID());
@@ -302,11 +308,12 @@ public class DomainManager {
             resource.setSchemaModel(schemaModel);
             schemaSession.validateResourceSchema(resource);       //  
             dynamicRuleSession.evalResource(resource, "I", this); // <--- Pode não ser verdade , se a chave for duplicada..
-            // 
-
-//            DocumentCreateEntity<ManagedResource> result = arangoDao.createManagedResource(resource);
+            //
+            // END - Subir as validações para session
+            //
             DocumentCreateEntity<ManagedResource> result = this.managedResourceDao.insertResource(resource);
-            resource.setUid(result.getId());
+            resource.setId(result.getId());
+            resource.setUid(result.getKey());
             resource.setRevisionId(result.getRev());
             //
             // Aqui criou o managed resource
@@ -437,7 +444,7 @@ public class DomainManager {
      * @param to
      * @return
      */
-    public ResourceConnection createResourceConnection(BasicResource from, BasicResource to, String domainName) throws ConnectionAlreadyExistsException, MetricConstraintException, NoResourcesAvailableException, GenericException, DomainNotFoundException {
+    public ResourceConnection createResourceConnection(BasicResource from, BasicResource to, String domainName) throws ConnectionAlreadyExistsException, MetricConstraintException, NoResourcesAvailableException, GenericException, DomainNotFoundException, ArangoDaoException {
         String timerId = startTimer("createResourceConnection");
         try {
             lockManager.lock();
@@ -454,7 +461,7 @@ public class DomainManager {
         }
     }
 
-    public ResourceConnection createResourceConnection(ResourceConnection connection) throws ConnectionAlreadyExistsException, MetricConstraintException, NoResourcesAvailableException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, DomainNotFoundException {
+    public ResourceConnection createResourceConnection(ResourceConnection connection) throws ConnectionAlreadyExistsException, MetricConstraintException, NoResourcesAvailableException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, DomainNotFoundException, ArangoDaoException {
         String timerId = startTimer("createResourceConnection");
         try {
             lockManager.lock();
@@ -468,7 +475,7 @@ public class DomainManager {
             //
             // Creates the connection on DB
             //
-            DocumentCreateEntity<ResourceConnection> result = arangoDao.createConnection(connection);
+            DocumentCreateEntity<ResourceConnection> result = resourceConnectionDao.insertResource(connection);
             connection.setUid(result.getId());
             connection.setRevisionId(result.getRev());
             //
@@ -494,7 +501,7 @@ public class DomainManager {
      * @param to
      * @return
      */
-    public ResourceConnection createResourceConnection(BasicResource from, BasicResource to, DomainDTO domain) throws ConnectionAlreadyExistsException, MetricConstraintException, NoResourcesAvailableException, GenericException {
+    public ResourceConnection createResourceConnection(BasicResource from, BasicResource to, DomainDTO domain) throws ConnectionAlreadyExistsException, MetricConstraintException, NoResourcesAvailableException, GenericException, ArangoDaoException {
 
         String timerId = startTimer("createResourceConnection");
         try {
@@ -510,7 +517,7 @@ public class DomainManager {
             // Notifica o Elemento Origem para Computar o Consumo de recursos se necessário
             //
 //        from.notifyConnection(connection);
-            DocumentCreateEntity<ResourceConnection> result = arangoDao.createConnection(connection);
+            DocumentCreateEntity<ResourceConnection> result = resourceConnectionDao.insertResource(connection);
             connection.setUid(result.getId());
             connection.setRevisionId(result.getRev());
 
@@ -639,10 +646,12 @@ public class DomainManager {
      * @param details
      * @throws ScriptRuleException
      */
-    public void abortTransaction(String msg, Object details) throws ScriptRuleException {
+    public void abortTransaction(String msg, Map<String, Object> details) throws ScriptRuleException {
         ScriptRuleException ex = new ScriptRuleException(msg);
         if (details != null) {
-            ex.setDetails(details);
+            details.forEach((k, v) -> {
+                ex.addDetails(k, v);
+            });
         }
         logger.warn("Aborting Transaction..." + details);
         throw ex;
@@ -759,7 +768,7 @@ public class DomainManager {
         try {
             lockManager.lock();
 
-            return arangoDao.findResourceConnection(connection);
+            return this.resourceConnectionDao.findResource(connection);
         } finally {
             if (lockManager.isLocked()) {
                 lockManager.unlock();
@@ -794,7 +803,16 @@ public class DomainManager {
             //
             try {
                 ArrayList<String> relatedCircuits = new ArrayList<>();
-                this.arangoDao.findRelatedConnections(updatedResource).forEach((c) -> {
+                //
+                // Transcrever para um filtro, que busca os recursos relacionados
+                // Eventualmente irá se tornar um método no CircuitManager
+                //
+                String filter = "@resourceId in  doc.relatedNodes[*]";
+                Map<String, Object> bindVars = new HashMap<>();
+                bindVars.put("resourceId", updatedResource.getId());
+//                this.resourceConnectionDao.findResourceByFilter(filter, bindVars, updatedResource.getDomain());
+//                this.arangoDao.findRelatedConnections(updatedResource).forEach((c) -> {
+                this.resourceConnectionDao.findResourceByFilter(filter, bindVars, updatedResource.getDomain()).forEach((c) -> {
 
                     if (c.getFrom().getUid().equals(updatedResource.getUid())) {
                         //
@@ -831,21 +849,25 @@ public class DomainManager {
                         }
                     }
                     if (circuitStateChanged) {
-                        this.updateResourceConnection(c); // <- Atualizou a conexão no banco
-                        //
-                        // Now Update related Circuits..
-                        //
-                        if (c.getCircuits() != null) {
-                            if (!c.getCircuits().isEmpty()) {
-                                for (String circuitId : c.getCircuits()) {
-                                    if (!relatedCircuits.contains(circuitId)) {
-                                        //
-                                        // Garante que só incluímos o mesmo circuito uma vez
-                                        //
-                                        relatedCircuits.add(circuitId);
+                        try {
+                            this.updateResourceConnection(c); // <- Atualizou a conexão no banco
+                            //
+                            // Now Update related Circuits..
+                            //
+                            if (c.getCircuits() != null) {
+                                if (!c.getCircuits().isEmpty()) {
+                                    for (String circuitId : c.getCircuits()) {
+                                        if (!relatedCircuits.contains(circuitId)) {
+                                            //
+                                            // Garante que só incluímos o mesmo circuito uma vez
+                                            //
+                                            relatedCircuits.add(circuitId);
+                                        }
                                     }
                                 }
                             }
+                        } catch (ArangoDaoException ex) {
+                            logger.error("Failed to Update Circuit: [{}]", c.getId(), ex);
                         }
                     }
 
@@ -900,12 +922,12 @@ public class DomainManager {
      * @param connection
      * @return
      */
-    public ResourceConnection updateResourceConnection(ResourceConnection connection) {
+    public DocumentUpdateEntity<ResourceConnection> updateResourceConnection(ResourceConnection connection) throws ArangoDaoException {
         String timerId = startTimer("updateResourceConnection");
         try {
             lockManager.lock();
             connection.setLastModifiedDate(new Date());
-            return arangoDao.updateResourceConnection(connection);
+            return this.resourceConnectionDao.updateResource(connection);
         } finally {
             if (lockManager.isLocked()) {
                 lockManager.unlock();
@@ -920,15 +942,22 @@ public class DomainManager {
      * @param connection
      * @return
      */
-    public List<ResourceConnection> updateResourceConnections(List<ResourceConnection> connections) {
+    public List<ResourceConnection> updateResourceConnections(List<ResourceConnection> connections, DomainDTO domain) throws ArangoDaoException {
         String timerId = startTimer("updateResourceConnection");
         try {
             lockManager.lock();
             connections.forEach(connection -> {
                 connection.setLastModifiedDate(new Date());
             });
-
-            return arangoDao.updateResourceConnections(connections);
+            MultiDocumentEntity<DocumentUpdateEntity<ResourceConnection>> results = this.resourceConnectionDao.updateResources(connections, domain);
+            List<ResourceConnection> resultDocs = new ArrayList<>();
+            results.getDocuments().forEach(connection -> {
+                //
+                // Adiciona a conexão criada no documento
+                //
+                resultDocs.add(connection.getNew());
+            });
+            return resultDocs;
         } finally {
             if (lockManager.isLocked()) {
                 lockManager.unlock();
@@ -973,7 +1002,7 @@ public class DomainManager {
      * @throws ArangoDaoException
      */
     public GraphList<ResourceConnection> findCircuitPaths(CircuitResource circuit) throws ArangoDaoException {
-        return arangoDao.findCircuitPaths(circuit);
+        return this.resourceConnectionDao.findCircuitPaths(circuit);
     }
 
     /**
@@ -1221,13 +1250,12 @@ public class DomainManager {
         return node;
     }
 
-    public GraphList<ManagedResource> getNodesByFilter(FilterDTO filter, String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, BasicException {
+    public GraphList<ManagedResource> getNodesByFilter(FilterDTO filter, String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
         DomainDTO domain = getDomain(domainName);
         if (filter.getObjects().contains("nodes")) {
             HashMap<String, Object> bindVars = new HashMap<>();
 
             if (filter.getClasses() != null && !filter.getClasses().isEmpty()) {
-
                 bindVars.put("classes", filter.getClasses());
             }
 
@@ -1242,7 +1270,17 @@ public class DomainManager {
     public GraphList<ResourceConnection> getConnectionsByFilter(FilterDTO filter, String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
         DomainDTO domain = getDomain(domainName);
         if (filter.getObjects().contains("connections")) {
-            return arangoDao.getConnectionsByFilter(filter, domain);
+            HashMap<String, Object> bindVars = new HashMap<>();
+
+            if (filter.getClasses() != null && !filter.getClasses().isEmpty()) {
+                bindVars.put("classes", filter.getClasses());
+            }
+
+            if (filter.getBindings() != null && !filter.getBindings().isEmpty()) {
+                bindVars.putAll(filter.getBindings());
+            }
+            return this.resourceConnectionDao.findResourceByFilter(filter.getAqlFilter(), bindVars, domain);
+            //return arangoDao.getConnectionsByFilter(filter, domain);
         }
         throw new InvalidRequestException("getConnectionsByFilter() can only retrieve connections objects");
     }

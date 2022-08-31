@@ -322,7 +322,7 @@ public class ResourceSession {
         return result;
     }
 
-    public FilterResponse findManagedResourceByFilter(FilterRequest filter) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, BasicException {
+    public FilterResponse findManagedResourceByFilter(FilterRequest filter) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
 
         FilterResponse response = new FilterResponse(filter.getPayLoad());
         if (filter.getPayLoad().getObjects().contains("nodes")) {

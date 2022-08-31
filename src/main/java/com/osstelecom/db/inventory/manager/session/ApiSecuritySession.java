@@ -40,7 +40,11 @@ public class ApiSecuritySession {
             //
             // Give the requester some details on the request.
             //
-            ex.setDetails(ImmutableMap.of("path", request.getRequestURI(), "method", request.getMethod(), "remoteAddress", request.getRemoteAddr()));
+//            ex.setDetails(ImmutableMap.of("path", request.getRequestURI(), "method", request.getMethod(), "remoteAddress", request.getRemoteAddr()));
+            ex.addDetails("path", request.getRequestURI());
+            ex.addDetails("method", request.getMethod());
+            ex.addDetails("remoteAddress", request.getRemoteAddr());
+
             throw ex;
         }
     }
