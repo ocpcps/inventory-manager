@@ -44,7 +44,6 @@ import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.ServiceNotFoundException;
-import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceLocation;
 import com.osstelecom.db.inventory.manager.resources.ServiceResource;
 
@@ -276,40 +275,16 @@ public class ArangoDao {
         this.domainsCollection.updateDocument(domain.getDomainName(), domain);
     }
 
-//    public ResourceConnection updateResourceConnection(ResourceConnection connection) {
-//        connection.setLastModifiedDate(new Date());
-//        DocumentUpdateEntity<ResourceConnection> result = this.database
-//                .collection(connection.getDomain().getConnections())
-//                .updateDocument(connection.getUid(), connection,
-//                        new DocumentUpdateOptions().returnNew(true).returnOld(true).keepNull(false).mergeObjects(false), ResourceConnection.class);
-//        return result.getNew();
+//    /**
+//     * Update Circuit Resource
+//     *
+//     * @param resource
+//     * @return
+//     */
+//    public DocumentUpdateEntity<CircuitResource> updateCircuitResource(CircuitResource resource) {
+//        return this.database.collection(resource.getDomain().getCircuits()).updateDocument(resource.getUid(), resource,
+//                new DocumentUpdateOptions().returnNew(true).keepNull(false).returnOld(true).mergeObjects(false), CircuitResource.class);
 //    }
-
-//    public List<ResourceConnection> updateResourceConnections(List<ResourceConnection> connections) {
-//        List<ResourceConnection> resultDocs = new ArrayList<>();
-//        ArangoCollection connectionCollection = this.database
-//                .collection(connections.get(0).getDomain().getConnections());
-//        MultiDocumentEntity<DocumentUpdateEntity<ResourceConnection>> results = connectionCollection.updateDocuments(connections, new DocumentUpdateOptions().returnNew(true).returnOld(true).keepNull(false).mergeObjects(false), ResourceConnection.class);
-//        results.getDocuments().forEach(connection -> {
-//            //
-//            // Adiciona a conexão criada no documento
-//            //
-//            resultDocs.add(connection.getNew());
-//        });
-//   
-//        return resultDocs;
-//    }
-
-    /**
-     * Update Circuit Resource
-     *
-     * @param resource
-     * @return
-     */
-    public DocumentUpdateEntity<CircuitResource> updateCircuitResource(CircuitResource resource) {
-        return this.database.collection(resource.getDomain().getCircuits()).updateDocument(resource.getUid(), resource,
-                new DocumentUpdateOptions().returnNew(true).keepNull(false).returnOld(true).mergeObjects(false), CircuitResource.class);
-    }
 
     /**
      * Cria um Graph
@@ -330,8 +305,6 @@ public class ArangoDao {
         return this.graphDb.db(this.dbName).createGraph(graphName, edgeDefinitions);
     }
 
-  
-
     /**
      * Cria um elemento Comum
      *
@@ -351,36 +324,20 @@ public class ArangoDao {
     }
 
 //    /**
-//     * Create a connection
+//     * Creates a Circuit Resource
 //     *
-//     * @param connection
+//     * @param circuitResource
 //     * @return
 //     * @throws GenericException
 //     */
-//    public DocumentCreateEntity<ResourceConnection> createConnection(ResourceConnection connection) throws GenericException {
+//    public DocumentCreateEntity<CircuitResource> createCircuitResource(CircuitResource circuitResource) throws GenericException {
 //        try {
-//            DocumentCreateEntity<ResourceConnection> result = this.database.collection(connection.getDomain().getConnections()).insertDocument(connection);
+//            DocumentCreateEntity<CircuitResource> result = this.database.collection(circuitResource.getDomain().getCircuits()).insertDocument(circuitResource);
 //            return result;
 //        } catch (Exception ex) {
 //            throw new GenericException(ex.getMessage());
 //        }
 //    }
-
-    /**
-     * Creates a Circuit Resource
-     *
-     * @param circuitResource
-     * @return
-     * @throws GenericException
-     */
-    public DocumentCreateEntity<CircuitResource> createCircuitResource(CircuitResource circuitResource) throws GenericException {
-        try {
-            DocumentCreateEntity<CircuitResource> result = this.database.collection(circuitResource.getDomain().getCircuits()).insertDocument(circuitResource);
-            return result;
-        } catch (Exception ex) {
-            throw new GenericException(ex.getMessage());
-        }
-    }
 
     /**
      * Pesquisa o recurso com base no name, e nodeAddress, dando sempre
@@ -447,8 +404,6 @@ public class ArangoDao {
         }
         throw new ResourceNotFoundException("2 Resource With Node Address:[" + nodeAddress + "] and Class: [" + className + "] Not Found in Domain:" + domain.getDomainName());
     }
-
-
 
     /**
      * Find a service by ID
@@ -525,307 +480,95 @@ public class ArangoDao {
     }
 
 //    /**
-//     * Find the node related connections
+//     * Find Circuit Resource
 //     *
 //     * @param resource
 //     * @return
+//     * @throws ResourceNotFoundException
+//     * @throws ArangoDaoException
 //     */
-//    public GraphList<ResourceConnection> findRelatedConnections(BasicResource resource) {
-//        Long start = System.currentTimeMillis();
-//        String aql = "for doc in " + resource.getDomain().getConnections() + " FILTER";
-//        aql += " @resourceId in  doc.relatedNodes[*] return doc";
+//    public CircuitResource findCircuitResource(CircuitResource resource) throws ResourceNotFoundException, ArangoDaoException {
+//
+//        if (resource.getId() != null) {
+//            return findCircuitResourceById(resource.getId(), resource.getDomain());
+//        }
 //
 //        HashMap<String, Object> bindVars = new HashMap<>();
-//        bindVars.put("resourceId", resource.getId());
+//        bindVars.put("name", resource.getName());
+//        bindVars.put("className", resource.getClassName());
 //
-//        ArangoCursor<ResourceConnection> cursor = this.database.query(aql,
-//                bindVars, new AqlQueryOptions().count(true).batchSize(5000), ResourceConnection.class);
-//        GraphList<ResourceConnection> result = new GraphList<>(cursor);
-//        Long end = System.currentTimeMillis();
-//        Long took = end - start;
-//        if (took > 100) {
-//            logger.warn("TOOK [{}] ms to get Related Resources", took);
-//        }
-//        return result;
-//    }
-
-//    /**
-//     * Encontra apenas 1 Resultado..de conexão
-//     *
-//     * @param connection
-//     * @return
-//     */
-//    public ResourceConnection findResourceConnection(ResourceConnection connection) throws ResourceNotFoundException, ArangoDaoException {
-//        ArrayList<ResourceConnection> resultList = new ArrayList<>();
-//        String aql = "for doc in " + connection.getDomain().getConnections() + " FILTER ";
-//        HashMap<String, Object> bindVars = new HashMap<>();
-//        if (connection.getName() != null) {
-//            bindVars.put("name", connection.getName());
-//        }
+//        String aql = "FOR doc IN `"
+//                + resource.getDomain().getCircuits() + "` FILTER ";
 //
-//        aql += " doc.className == @className";
-//        bindVars.put("className", connection.getClassName());
-//
-//        if (connection.getDomainName() != null) {
-//            bindVars.put("domainName", connection.getDomainName());
-//            aql += "  and doc.domainName == @domainName ";
-//        }
-//
-//        if (connection.getNodeAddress() != null) {
-//            if (!connection.getNodeAddress().equals("")) {
+//        if (resource.getNodeAddress() != null) {
+//            if (!resource.getNodeAddress().equals("")) {
 //                bindVars.remove("name");
-//                bindVars.put("nodeAddress", connection.getNodeAddress());
-//                aql += "  and doc.nodeAddress == @nodeAddress ";
+//                bindVars.put("nodeAddress", resource.getNodeAddress());
+//                aql += "  doc.nodeAddress == @nodeAddress ";
 //            }
-//        }
-//
-//        if (connection.getFrom() != null) {
-//            if (connection.getFrom().getNodeAddress() != null
-//                    && connection.getFrom().getClassName() != null
-//                    && connection.getFrom().getDomainName() != null) {
-//                aql += " and  doc.fromResource.nodeAddress == @fromNodeAddress ";
-//                aql += " and  doc.fromResource.className   == @fromClassName ";
-//                aql += " and  doc.fromResource.domainName  == @fromDomainName ";
-//
-//                bindVars.put("fromNodeAddress", connection.getFrom().getNodeAddress());
-//                bindVars.put("fromClassName", connection.getFrom().getClassName());
-//                bindVars.put("fromDomainName", connection.getFrom().getDomainName());
-//
-//            }
-//        } else {
-//            logger.warn("(findResourceConnection) From is NULL");
-//        }
-//
-//        if (connection.getTo() != null) {
-//            if (connection.getTo().getNodeAddress() != null
-//                    && connection.getTo().getClassName() != null
-//                    && connection.getTo().getDomainName() != null) {
-//                aql += " and  doc.toResource.nodeAddress == @toNodeAddress ";
-//                aql += " and  doc.toResource.className   == @toClassName ";
-//                aql += " and  doc.toResource.domainName  == @toDomainName ";
-//
-//                bindVars.put("toNodeAddress", connection.getTo().getNodeAddress());
-//                bindVars.put("toClassName", connection.getTo().getClassName());
-//                bindVars.put("toDomainName", connection.getTo().getDomainName());
-//
-//            }
-//        } else {
-//            logger.warn("(findResourceConnection) To is NULL");
 //        }
 //
 //        if (bindVars.containsKey("name")) {
-//            aql += " and doc.name == @name ";
+//            aql += "  doc.name == @name ";
 //        }
 //
-//        aql += " RETURN doc";
-//        logger.debug("(findResourceConnection) RUNNING: AQL:[{}]", aql);
-//        logger.debug("\tBindings:");
+//        aql += " and doc.className == @className   RETURN doc";
+//
+//        logger.info("(findCircuitResource) RUNNING: AQL:[{}]", aql);
+//        logger.info("\tBindings:");
 //        bindVars.forEach((k, v) -> {
-//            logger.debug("\t  [@{}]=[{}]", k, v);
+//            logger.info("\t  [@{}]=[{}]", k, v);
 //
 //        });
-//        ArangoCursor<ResourceConnection> cursor = this.database.query(aql, bindVars, ResourceConnection.class);
-//
-//        resultList.addAll(getListFromCursorType(cursor));
-//
-//        //cursor.close();
-//        if (!resultList.isEmpty()) {
-//            return resultList.get(0);
+//        ArangoCursor<CircuitResource> cursor = this.database.query(aql, bindVars, CircuitResource.class);
+//        ArrayList<CircuitResource> circuits = new ArrayList<>();
+//        circuits.addAll(getListFromCursorType(cursor));
+//        if (!circuits.isEmpty()) {
+//            return circuits.get(0);
 //        }
-//        logger.warn("Resource with name:[{}] nodeAddress:[{}] className:[{}] was not found..",
-//                connection.getName(), connection.getNodeAddress(), connection.getClassName());
-//        throw new ResourceNotFoundException("3 Resource With Name:[" + connection.getName() + "] and Class: [" + connection.getClassName() + "] Not Found in Domain:" + connection.getDomainName());
 //
+//        logger.warn("Resource with name:[{}] nodeAddress:[{}] className:[{}] was not found..",
+//                resource.getName(), resource.getNodeAddress(), resource.getClassName());
+//        throw new ResourceNotFoundException("4 Resource With Name:[" + resource.getName() + "] and Class: [" + resource.getClassName() + "] Not Found in Domain:" + resource.getDomainName());
 //    }
 
-    /**
-     * Find Circuit Resource
-     *
-     * @param resource
-     * @return
-     * @throws ResourceNotFoundException
-     * @throws ArangoDaoException
-     */
-    public CircuitResource findCircuitResource(CircuitResource resource) throws ResourceNotFoundException, ArangoDaoException {
-
-        if (resource.getId() != null) {
-            return findCircuitResourceById(resource.getId(), resource.getDomain());
-        }
-
-        HashMap<String, Object> bindVars = new HashMap<>();
-        bindVars.put("name", resource.getName());
-        bindVars.put("className", resource.getClassName());
-
-        String aql = "FOR doc IN `"
-                + resource.getDomain().getCircuits() + "` FILTER ";
-
-        if (resource.getNodeAddress() != null) {
-            if (!resource.getNodeAddress().equals("")) {
-                bindVars.remove("name");
-                bindVars.put("nodeAddress", resource.getNodeAddress());
-                aql += "  doc.nodeAddress == @nodeAddress ";
-            }
-        }
-
-        if (bindVars.containsKey("name")) {
-            aql += "  doc.name == @name ";
-        }
-
-        aql += " and doc.className == @className   RETURN doc";
-
-        logger.info("(findCircuitResource) RUNNING: AQL:[{}]", aql);
-        logger.info("\tBindings:");
-        bindVars.forEach((k, v) -> {
-            logger.info("\t  [@{}]=[{}]", k, v);
-
-        });
-        ArangoCursor<CircuitResource> cursor = this.database.query(aql, bindVars, CircuitResource.class);
-        ArrayList<CircuitResource> circuits = new ArrayList<>();
-        circuits.addAll(getListFromCursorType(cursor));
-        if (!circuits.isEmpty()) {
-            return circuits.get(0);
-        }
-
-        logger.warn("Resource with name:[{}] nodeAddress:[{}] className:[{}] was not found..",
-                resource.getName(), resource.getNodeAddress(), resource.getClassName());
-        throw new ResourceNotFoundException("4 Resource With Name:[" + resource.getName() + "] and Class: [" + resource.getClassName() + "] Not Found in Domain:" + resource.getDomainName());
-    }
-
-    /**
-     * Find Circuit Resource by ID
-     *
-     * @param id
-     * @param domain
-     * @return
-     * @throws ResourceNotFoundException
-     * @throws ArangoDaoException
-     */
-    public CircuitResource findCircuitResourceById(String id, DomainDTO domain) throws ResourceNotFoundException, ArangoDaoException {
-        HashMap<String, Object> bindVars = new HashMap<>();
-        bindVars.put("id", id);
-
-        String aql = "FOR doc IN `"
-                + domain.getCircuits() + "` FILTER ";
-
-        if (bindVars.containsKey("id")) {
-            aql += "  doc._id == @id ";
-        }
-
-        aql += " RETURN doc";
-
-        logger.info("(findCircuitResourceById) RUNNING: AQL:{}]", aql);
-        logger.info("\tBindings:");
-        bindVars.forEach((k, v) -> {
-            logger.info("\t  [@{}]=[{}]", k, v);
-
-        });
-        ArangoCursor<CircuitResource> cursor = this.database.query(aql, bindVars, CircuitResource.class);
-        ArrayList<CircuitResource> circuits = new ArrayList<>();
-        circuits.addAll(getListFromCursorType(cursor));
-        if (!circuits.isEmpty()) {
-            return circuits.get(0);
-        }
-
-        logger.warn("Resource with ID:{}] was not found..", id);
-        throw new ResourceNotFoundException("4 Resource With ID:[" + id + "]  Not Found in Domain:" + domain.getDomainName());
-    }
-
-
 //    /**
-//     * Get Connections By Filter
+//     * Find Circuit Resource by ID
 //     *
-//     * @param filter
+//     * @param id
 //     * @param domain
 //     * @return
 //     * @throws ResourceNotFoundException
 //     * @throws ArangoDaoException
 //     */
-//    public GraphList<ResourceConnection> getConnectionsByFilter(FilterDTO filter, DomainDTO domain) throws ResourceNotFoundException, ArangoDaoException {
-//        //ArrayList<ResourceConnection> resultList = new ArrayList<>();
-//        Map<String, Object> bindVars = new HashMap<>();
-//        String aql = "FOR doc IN " + domain.getConnections() + " \n"
-//                + "   filter   1==1 ";
-//
-//        if (filter.getClasses() != null) {
-//            if (!filter.getClasses().isEmpty()) {
-//                aql += "doc.className  in @classes \n";
-//                bindVars.put("classes", filter.getClasses());
-//            }
-//        }
-//
-//        if (filter.getAqlFilter() != null) {
-//            if (!filter.getAqlFilter().trim().equals("")) {
-//                //
-//                //
-//                //
-//                aql += " and " + filter.getAqlFilter();
-//            }
-//        }
-//        aql += " return doc";
-//
-//        if (filter.getBindings() != null && !filter.getBindings().isEmpty()) {
-//            bindVars.putAll(filter.getBindings());
-//        }
-//
-//        ArangoCursor<ResourceConnection> cursor = this.database.query(aql, bindVars, new AqlQueryOptions().fullCount(true).count(true), ResourceConnection.class);
-//        GraphList<ResourceConnection> resultList = new GraphList<>(cursor);
-//        Long start = System.currentTimeMillis();
-//        //resultList.addAll(getListFromCursorType(cursor));
-//
-//        Long end = System.currentTimeMillis();
-//        Long took = end - start;
-//        logger.debug("Query Took: {} ms Total Result Found was:{}", took, resultList.size());
-//        logger.debug("AQL: [{}]", aql);
-//        if (resultList.size() < 1) {
-//            throw new ResourceNotFoundException("No Resource Found for Filter: [" + aql + "] Total:[" + resultList.size() + "]");
-//        }
-//        logger.debug("Found:{}", resultList.size());
-//        return resultList;
-//
-//    }
-
-
-
-//    /**
-//     * Obtem o caminho de um circuito no grafo
-//     *
-//     * @param circuit
-//     * @return
-//     */
-//    public GraphList<ResourceConnection> findCircuitPaths(CircuitResource circuit) {
-////        String aql = "FOR v, e, p IN 1..@dLimit ANY @aPoint " + circuit.getDomain().getConnections() + "\n"
-////                + " FILTER v._id ==  @zPoint "
-////                + " AND @circuitId in e.circuits[*] "
-////                + " AND   e.operationalStatus ==@operStatus "
-////                + "  for a in  p.edges[*] return distinct a";
-//        String aql = "FOR path\n"
-//                + "  IN 1..@dLimit ANY k_paths\n"
-//                + "  @aPoint TO @zPoint\n"
-//                + "  GRAPH '" + circuit.getDomain().getConnectionLayer() + "'\n"
-//                + "    for v in  path.edges\n"
-//                + "      filter @circuitId  in v.circuits[*] \n"
-//                + "        \n"
-//                + "       return v";
-//
+//    public CircuitResource findCircuitResourceById(String id, DomainDTO domain) throws ResourceNotFoundException, ArangoDaoException {
 //        HashMap<String, Object> bindVars = new HashMap<>();
-//        bindVars.put("dLimit", circuit.getCircuitPath().size() + 1);
-//        bindVars.put("aPoint", circuit.getaPoint().getId());
-//        bindVars.put("zPoint", circuit.getzPoint().getId());
-//        bindVars.put("circuitId", circuit.getId());
-//        //bindVars.put("operStatus", operStatus);
-//        ArangoCursor<ResourceConnection> cursor = this.database.query(aql, bindVars, new AqlQueryOptions().count(true).batchSize(5000), ResourceConnection.class);
-//        GraphList<ResourceConnection> result = new GraphList<>(cursor);
+//        bindVars.put("id", id);
 //
-//        logger.info("(getCircuitPath) RUNNING: AQL:[" + aql + "]");
+//        String aql = "FOR doc IN `"
+//                + domain.getCircuits() + "` FILTER ";
+//
+//        if (bindVars.containsKey("id")) {
+//            aql += "  doc._id == @id ";
+//        }
+//
+//        aql += " RETURN doc";
+//
+//        logger.info("(findCircuitResourceById) RUNNING: AQL:{}]", aql);
 //        logger.info("\tBindings:");
-//
 //        bindVars.forEach((k, v) -> {
-//            logger.info("\t  [@" + k + "]=[" + v + "]");
+//            logger.info("\t  [@{}]=[{}]", k, v);
 //
 //        });
-//        logger.info("(getCircuitPath) Size: " + result.size());
-//        return result;
+//        ArangoCursor<CircuitResource> cursor = this.database.query(aql, bindVars, CircuitResource.class);
+//        ArrayList<CircuitResource> circuits = new ArrayList<>();
+//        circuits.addAll(getListFromCursorType(cursor));
+//        if (!circuits.isEmpty()) {
+//            return circuits.get(0);
+//        }
+//
+//        logger.warn("Resource with ID:{}] was not found..", id);
+//        throw new ResourceNotFoundException("4 Resource With ID:[" + id + "]  Not Found in Domain:" + domain.getDomainName());
 //    }
 
-   
 };

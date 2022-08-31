@@ -63,7 +63,14 @@ public class GraphList<T> implements AutoCloseable {
     }
 
     public boolean isEmpty() {
-        return this.cursor.getCount() <= 0;
+        if (!this.closedCursor) {
+            return this.cursor.getCount() <= 0;
+        } else {
+            //
+            // Could lead to bad behavior...
+            //
+            return false;
+        }
     }
 
     /**
@@ -125,6 +132,12 @@ public class GraphList<T> implements AutoCloseable {
         return list;
     }
 
+    /**
+     * Returns the first element in the cursos or null if cursos is empty or
+     * closed
+     *
+     * @return
+     */
     public T getOne() {
         if (!this.closedCursor) {
             return this.cursor.next();

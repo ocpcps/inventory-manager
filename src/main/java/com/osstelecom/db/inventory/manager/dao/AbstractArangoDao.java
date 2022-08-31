@@ -42,7 +42,10 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class AbstractArangoDao<T extends BasicResource> {
 
-    private Logger logger = LoggerFactory.getLogger(AbstractArangoDao.class);
+    //
+    // Precisa de logger aqui mesmo ? ou migrar para implementação ? 
+    //
+    protected Logger logger = LoggerFactory.getLogger(AbstractArangoDao.class);
 
     public abstract T findResource(T resource) throws BasicException;
 

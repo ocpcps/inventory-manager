@@ -29,7 +29,9 @@ import com.arangodb.model.OverwriteMode;
 import com.osstelecom.db.inventory.graph.arango.GraphList;
 import com.osstelecom.db.inventory.manager.dto.DomainDTO;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
+import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
+import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import java.util.HashMap;
 import java.util.List;
@@ -40,16 +42,16 @@ import org.springframework.stereotype.Service;
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
- * @created 30.08.2022
+ * @created 31.08.2022
  */
 @Service
-public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
+public class CircuitResourceDao extends AbstractArangoDao<CircuitResource> {
 
     @Autowired
     private ArangoDao arangoDao;
 
     @Override
-    public ManagedResource findResource(ManagedResource resource) throws ArangoDaoException, ResourceNotFoundException {
+    public CircuitResource findResource(CircuitResource resource) throws ArangoDaoException,ResourceNotFoundException {
         try {
             //
             // Pensar no Lock Manager aqui, ou subir para o manager
@@ -62,7 +64,7 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
                 throw new ArangoDaoException("Missing Domain Information for Resource");
             }
 
-            String aql = " for doc in " + resource.getDomain().getNodes() + " filter ";
+            String aql = " for doc in " + resource.getDomain().getCircuits() + " filter ";
 
             Map<String, Object> bindVars = new HashMap<>();
             aql += " doc.domainName == @domainName";
@@ -105,10 +107,12 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
             //
             // Creates AQL
             //
-            aql = this.buildAqlFromBindings(aql, bindVars,true);
+            aql = this.buildAqlFromBindings(aql, bindVars, true);
 
-            GraphList<ManagedResource> result = this.query(aql, bindVars, ManagedResource.class, this.arangoDao.getDb());
-
+            GraphList<CircuitResource> result = this.query(aql, bindVars, CircuitResource.class, this.arangoDao.getDb());
+            if (result.isEmpty()){
+                throw new ResourceNotFoundException("Resource Not Found");
+            }
             return result.getOne();
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
@@ -117,16 +121,15 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
             // Liberar o Lock manager Aqui,  ou subir para o manager
             //
         }
-
     }
 
     @Override
-    public DocumentCreateEntity<ManagedResource> insertResource(ManagedResource resource) throws ArangoDaoException {
+    public DocumentCreateEntity<CircuitResource> insertResource(CircuitResource resource) throws ArangoDaoException {
         //
         // A complexidade de validação dos requistos do dado deve ter sido feita na dao antes de chegar aqui.
         //
         try {
-            return this.arangoDao.getDb().collection(resource.getDomain().getNodes()).insertDocument(resource, new DocumentCreateOptions().returnNew(true).returnOld(true));
+            return this.arangoDao.getDb().collection(resource.getDomain().getCircuits()).insertDocument(resource, new DocumentCreateOptions().returnNew(true).returnOld(true));
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         } finally {
@@ -137,29 +140,13 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
     }
 
     @Override
-    public DocumentUpdateEntity<ManagedResource> updateResource(ManagedResource resource) throws ArangoDaoException {
-        //
-        // A complexidade de validação dos requistos do dado deve ter sido feita na dao antes de chegar aqui.
-        //
-        try {
-            return this.arangoDao.getDb().collection(resource.getDomain().getNodes()).updateDocument(resource.getUid(), resource, new DocumentUpdateOptions().returnNew(true).returnOld(true).keepNull(false).waitForSync(false), ManagedResource.class);
-        } catch (Exception ex) {
-            throw new ArangoDaoException(ex);
-        } finally {
-            //
-            // Liberar o Lock manager Aqui, ou subir para o manager
-            //
-        }
-    }
-
-    @Override
-    public DocumentCreateEntity<ManagedResource> upsertResource(ManagedResource resource) throws ArangoDaoException {
+    public DocumentCreateEntity<CircuitResource> upsertResource(CircuitResource resource) throws ArangoDaoException {
         //
         // A complexidade de validação dos requistos do dado deve ter sido feita na dao antes de chegar aqui.
         //
 
         try {
-            return this.arangoDao.getDb().collection(resource.getDomain().getNodes()).insertDocument(resource, new DocumentCreateOptions().overwriteMode(OverwriteMode.update).mergeObjects(true).returnNew(true).returnOld(true));
+            return this.arangoDao.getDb().collection(resource.getDomain().getCircuits()).insertDocument(resource, new DocumentCreateOptions().overwriteMode(OverwriteMode.update).mergeObjects(true).returnNew(true).returnOld(true));
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         } finally {
@@ -170,9 +157,12 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
     }
 
     @Override
-    public DocumentDeleteEntity<ManagedResource> deleteResource(ManagedResource resource) throws ArangoDaoException {
+    public DocumentUpdateEntity<CircuitResource> updateResource(CircuitResource resource) throws ArangoDaoException {
+        //
+        // A complexidade de validação dos requistos do dado deve ter sido feita na dao antes de chegar aqui.
+        //
         try {
-            return this.arangoDao.getDb().collection(resource.getDomain().getNodes()).deleteDocument(resource.getId(), ManagedResource.class, new DocumentDeleteOptions().returnOld(true));
+            return this.arangoDao.getDb().collection(resource.getDomain().getCircuits()).updateDocument(resource.getUid(), resource, new DocumentUpdateOptions().returnNew(true).returnOld(true).keepNull(false).waitForSync(false), CircuitResource.class);
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         } finally {
@@ -183,13 +173,37 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
     }
 
     @Override
-    public GraphList<ManagedResource> findResourcesBySchemaName(String attributeSchemaName, DomainDTO domain) throws ResourceNotFoundException, ArangoDaoException {
+    public MultiDocumentEntity<DocumentUpdateEntity<CircuitResource>> updateResources(List<CircuitResource> resources, DomainDTO domain) throws ArangoDaoException {
         try {
-            String aql = "for doc in " + domain.getNodes() + "filter doc.attributeSchemaName = @attributeSchemaName return doc";
+            ArangoCollection connectionCollection = this.arangoDao.getDb().collection(domain.getCircuits());
+            MultiDocumentEntity<DocumentUpdateEntity<CircuitResource>> results = connectionCollection.updateDocuments(resources, new DocumentUpdateOptions().returnNew(true).returnOld(true).keepNull(false).mergeObjects(false), CircuitResource.class);
+            return results;
+        } catch (Exception ex) {
+            throw new ArangoDaoException(ex);
+        }
+    }
+
+    @Override
+    public DocumentDeleteEntity<ManagedResource> deleteResource(CircuitResource resource) throws ArangoDaoException {
+        try {
+            return this.arangoDao.getDb().collection(resource.getDomain().getCircuits()).deleteDocument(resource.getId(), ManagedResource.class, new DocumentDeleteOptions().returnOld(true));
+        } catch (Exception ex) {
+            throw new ArangoDaoException(ex);
+        } finally {
+            //
+            // Liberar o Lock manager Aqui, ou subir para o manager
+            //
+        }
+    }
+
+    @Override
+    public GraphList<CircuitResource> findResourcesBySchemaName(String attributeSchemaName, DomainDTO domain) throws ArangoDaoException {
+        try {
+            String aql = "for doc in " + domain.getCircuits() + "filter doc.attributeSchemaName = @attributeSchemaName return doc";
             Map<String, Object> bindVars = new HashMap<>();
 
             bindVars.put("attributeSchemaName", attributeSchemaName);
-            GraphList<ManagedResource> result = this.query(aql, bindVars, ManagedResource.class, this.arangoDao.getDb());
+            GraphList<CircuitResource> result = this.query(aql, bindVars, CircuitResource.class, this.arangoDao.getDb());
             return result;
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
@@ -197,13 +211,13 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
     }
 
     @Override
-    public GraphList<ManagedResource> findResourcesByClassName(String className, DomainDTO domain) throws ResourceNotFoundException, ArangoDaoException {
+    public GraphList<CircuitResource> findResourcesByClassName(String className, DomainDTO domain) throws ArangoDaoException {
         try {
-            String aql = "for doc in " + domain.getNodes() + " filter doc.className = @className return doc";
+            String aql = "for doc in " + domain.getCircuits() + " filter doc.className = @className return doc";
             Map<String, Object> bindVars = new HashMap<>();
 //            bindVars.put("collection", domain.getNodes());
             bindVars.put("attributeSchemaName", className);
-            GraphList<ManagedResource> result = this.query(aql, bindVars, ManagedResource.class, this.arangoDao.getDb());
+            GraphList<CircuitResource> result = this.query(aql, bindVars, CircuitResource.class, this.arangoDao.getDb());
             return result;
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
@@ -211,9 +225,9 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
     }
 
     @Override
-    public GraphList<ManagedResource> findResourceByFilter(String filter, Map<String, Object> bindVars, DomainDTO domain) throws ArangoDaoException {
+    public GraphList<CircuitResource> findResourceByFilter(String filter, Map<String, Object> bindVars, DomainDTO domain) throws ArangoDaoException {
         try {
-            String aql = " for doc in   " + domain.getNodes();
+            String aql = " for doc in   " + domain.getCircuits();
             aql += " filter doc.domainName == @domainName ";
             bindVars.put("domainName", domain.getDomainName());
 
@@ -221,21 +235,11 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
                 aql += " and " + filter;
             }
             aql += " return doc";
-            GraphList<ManagedResource> result = this.query(aql, bindVars, ManagedResource.class, this.arangoDao.getDb());
+            GraphList<CircuitResource> result = this.query(aql, bindVars, CircuitResource.class, this.arangoDao.getDb());
             return result;
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         }
     }
 
-    @Override
-    public MultiDocumentEntity<DocumentUpdateEntity<ManagedResource>> updateResources(List<ManagedResource> resources, DomainDTO domain) throws ArangoDaoException {
-        try {
-            ArangoCollection connectionCollection = this.arangoDao.getDb().collection(domain.getNodes());
-            MultiDocumentEntity<DocumentUpdateEntity<ManagedResource>> results = connectionCollection.updateDocuments(resources, new DocumentUpdateOptions().returnNew(true).returnOld(true).keepNull(false).mergeObjects(false), ManagedResource.class);
-            return results;
-        } catch (Exception ex) {
-            throw new ArangoDaoException(ex);
-        }
-    }
 }

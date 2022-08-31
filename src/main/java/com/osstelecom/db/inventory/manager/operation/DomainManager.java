@@ -42,6 +42,7 @@ import com.arangodb.entity.MultiDocumentEntity;
 import com.osstelecom.db.inventory.graph.arango.GraphList;
 import com.osstelecom.db.inventory.manager.configuration.ConfigurationManager;
 import com.osstelecom.db.inventory.manager.dao.ArangoDao;
+import com.osstelecom.db.inventory.manager.dao.CircuitResourceDao;
 import com.osstelecom.db.inventory.manager.dao.ManagedResourceDao;
 import com.osstelecom.db.inventory.manager.dao.ResourceConnectionDao;
 import com.osstelecom.db.inventory.manager.dto.DomainDTO;
@@ -132,6 +133,9 @@ public class DomainManager {
 
     @Autowired
     private ResourceConnectionDao resourceConnectionDao;
+    
+    @Autowired
+    private CircuitResourceDao circuitResourceDao;
 
     private Logger logger = LoggerFactory.getLogger(DomainManager.class);
 
@@ -379,7 +383,7 @@ public class DomainManager {
      * @throws AttributeConstraintViolationException
      * @throws ScriptRuleException
      */
-    public CircuitResource createCircuitResource(CircuitResource circuit) throws GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException {
+    public CircuitResource createCircuitResource(CircuitResource circuit) throws GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, ArangoDaoException {
         String timerId = startTimer("createCircuitResource");
         try {
             lockManager.lock();
@@ -390,7 +394,7 @@ public class DomainManager {
             circuit.setSchemaModel(schemaModel);
             schemaSession.validateResourceSchema(circuit);
             dynamicRuleSession.evalResource(circuit, "I", this);
-            DocumentCreateEntity<CircuitResource> result = arangoDao.createCircuitResource(circuit);
+            DocumentCreateEntity<CircuitResource> result = this.circuitResourceDao.insertResource(circuit);
             //CircuitResource result = doc.getNew();
             circuit.setUid(result.getId());
             circuit.setRevisionId(result.getRev());
@@ -746,7 +750,7 @@ public class DomainManager {
         String timerId = startTimer("findCircuitResource");
         try {
             lockManager.lock();
-            return arangoDao.findCircuitResource(circuit);
+            return this.circuitResourceDao.findResource(circuit);
         } finally {
             if (lockManager.isLocked()) {
                 lockManager.unlock();
@@ -876,7 +880,7 @@ public class DomainManager {
                 if (!relatedCircuits.isEmpty()) {
                     for (String circuitId : relatedCircuits) {
                         try {
-                            CircuitResource circuit = this.arangoDao.findCircuitResourceById(circuitId, updatedResource.getDomain());
+                            CircuitResource circuit = this.circuitResourceDao.findResource(new CircuitResource(updatedResource.getDomain(),circuitId));
                             if (circuit.getaPoint().getId().equals(updatedResource.getUid())) {
                                 circuit.setaPoint(updatedResource);
                                 circuit = this.updateCircuitResource(circuit);
@@ -891,7 +895,7 @@ public class DomainManager {
                             //
                             this.eventManager.notifyEvent(new ProcessCircuityIntegrityEvent(circuit));
 
-                        } catch (ResourceNotFoundException ex) {
+                        } catch (ResourceNotFoundException  ex) {
                             //
                             // This should never happen...but if happen please try to treat the error
                             //
@@ -972,12 +976,12 @@ public class DomainManager {
      * @param resource
      * @return
      */
-    public CircuitResource updateCircuitResource(CircuitResource resource) {
+    public CircuitResource updateCircuitResource(CircuitResource resource) throws ArangoDaoException {
         String timerId = startTimer("updateCircuitResource");
         try {
             lockManager.lock();
             resource.setLastModifiedDate(new Date());
-            DocumentUpdateEntity<CircuitResource> result = arangoDao.updateCircuitResource(resource);
+            DocumentUpdateEntity<CircuitResource> result = circuitResourceDao.updateResource(resource);
             CircuitResource newResource = result.getNew();
             CircuitResource oldResource = result.getOld();
             CircuitResourceUpdatedEvent event = new CircuitResourceUpdatedEvent(oldResource, newResource);
