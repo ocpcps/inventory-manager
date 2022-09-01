@@ -188,6 +188,7 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
     public void onCircuitResourceUpdatedEvent(CircuitResourceUpdatedEvent updateEvent) {
         logger.debug("Resource Connection[" + updateEvent.getOldResource().getId() + "] Updated FOM:[" + updateEvent.getOldResource().getOperationalStatus() + "] TO:[" + updateEvent.getNewResource().getOperationalStatus() + "]");
 //        logger.debug("\n" + gson.toJson(updateEvent.getOldResource()));
+
     }
     
     @Subscribe
