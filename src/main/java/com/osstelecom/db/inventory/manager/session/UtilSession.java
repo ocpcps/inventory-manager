@@ -23,6 +23,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.osstelecom.db.inventory.manager.configuration.InventoryConfiguration;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.UUID;
@@ -47,7 +48,7 @@ public class UtilSession {
         try {
             MessageDigest digest = MessageDigest.getInstance("MD5");
             digest.reset();
-            digest.update(input.getBytes(Charset.forName("UTF8")));
+            digest.update(input.getBytes(StandardCharsets.UTF_8));
             final byte[] resultByte = digest.digest();
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < resultByte.length; ++i) {

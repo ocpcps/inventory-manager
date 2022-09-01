@@ -16,7 +16,6 @@
  */
 package com.osstelecom.db.inventory.manager.resources;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.osstelecom.db.inventory.manager.operation.DomainManager;
 import com.osstelecom.db.inventory.manager.resources.exception.MetricConstraintException;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -105,16 +104,12 @@ public class ConsumableMetric {
      * com.osstelecom.db.inventory.manager.resources.exception.MetricConstraintException
      */
     public void setMetricValue(Double metricValue) throws MetricConstraintException {
-        if (minValue != null) {
-            if (metricValue < minValue) {
-                throw new MetricConstraintException("Metric is Less than Acceptable: Proposed: [" + metricValue + "] Current: [" + this.metricValue + "] Min: [" + this.minValue + "]");
-            }
+        if (minValue != null && metricValue < minValue) {
+            throw new MetricConstraintException("Metric is Less than Acceptable: Proposed: [" + metricValue + "] Current: [" + this.metricValue + "] Min: [" + this.minValue + "]");
         }
 
-        if (maxValue != null) {
-            if (metricValue > maxValue) {
-                throw new MetricConstraintException("Metric Value Exceeds Acceptable: Proposed: [" + metricValue + "] Current: [" + this.metricValue + "] Max:[" + this.maxValue + "]");
-            }
+        if (maxValue != null && metricValue > maxValue) {
+            throw new MetricConstraintException("Metric Value Exceeds Acceptable: Proposed: [" + metricValue + "] Current: [" + this.metricValue + "] Max:[" + this.maxValue + "]");
         }
 
         this.metricValue = metricValue;

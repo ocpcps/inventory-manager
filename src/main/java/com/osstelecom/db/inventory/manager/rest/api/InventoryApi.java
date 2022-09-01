@@ -137,21 +137,6 @@ public class InventoryApi extends BaseApi {
     }
 
     /**
-     *
-     * @param request
-     * @param domain
-     * @return
-     * @throws GenericException
-     */
-    @AuthenticatedCall(role = {"user"})
-    @PutMapping(path = "/{domain}/service", produces = "application/json", consumes = "application/json")
-    public CreateServiceResponse createService(@RequestBody CreateServiceRequest request, @PathVariable("domain") String domain) throws GenericException {
-        request.setRequestDomain(domain);
-        return resourceSession.createService(request);
-
-    }
-
-    /**
      * Cria uma nova conexão
      *
      * @param request

@@ -9,7 +9,6 @@ import com.osstelecom.db.inventory.topology.connection.impact.IImpactManager;
 import com.osstelecom.db.inventory.topology.node.DefaultNode;
 import com.osstelecom.db.inventory.topology.node.INetworkNode;
 import com.osstelecom.db.inventory.topology.DefaultTopology;
-import com.osstelecom.db.inventory.topology.connection.INetworkConnection;
 import com.osstelecom.db.inventory.topology.exception.GraphNotEnabledException;
 import java.util.ArrayList;
 import java.util.List;

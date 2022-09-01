@@ -16,12 +16,6 @@
  */
 package uc;
 
-import com.osstelecom.db.inventory.manager.operation.DomainManager;
-import com.osstelecom.db.inventory.manager.resources.ConsumableMetric;
-import com.osstelecom.db.inventory.manager.resources.ManagedResource;
-import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
-import com.osstelecom.db.inventory.manager.resources.ResourceLocation;
-
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
