@@ -25,7 +25,7 @@ import java.util.Date;
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 05.06.2022
  */
-public class DomainCreatedEvent extends BasicEvent {
+public class DomainCreatedEvent {
 
     private DomainDTO createdDomain;
 
@@ -35,14 +35,6 @@ public class DomainCreatedEvent extends BasicEvent {
 
     public void setCreatedDomain(DomainDTO createdDomain) {
         this.createdDomain = createdDomain;
-    }
-
-    public Date getEventDate() {
-        return eventDate;
-    }
-
-    public void setEventDate(Date eventDate) {
-        this.eventDate = eventDate;
     }
 
     public DomainCreatedEvent(DomainDTO createdDomain) {

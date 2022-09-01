@@ -25,31 +25,13 @@ import com.osstelecom.db.inventory.manager.resources.CircuitResource;
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 10.04.2022
  */
-public class CircuitResourceUpdatedEvent extends BasicEvent {
-
-    private final CircuitResource oldResource;
-    private final CircuitResource newResource;
-    private UpdateSourceEventDTO sourceEvent;
-
-    public CircuitResource getOldResource() {
-        return oldResource;
-    }
-
-    public CircuitResource getNewResource() {
-        return newResource;
-    }
+public class CircuitResourceUpdatedEvent extends BasicEvent<CircuitResource> {
 
     public CircuitResourceUpdatedEvent(CircuitResource oldResource, CircuitResource newResource) {
-        this.oldResource = oldResource;
-        this.newResource = newResource;
-        this.setEventDate();
+        super(oldResource, newResource);
     }
 
-    public CircuitResourceUpdatedEvent(CircuitResource oldResource, CircuitResource newResource, UpdateSourceEventDTO sourceEvent) {
-        this.oldResource = oldResource;
-        this.newResource = newResource;
-        this.sourceEvent = sourceEvent;
-    }
+    
     
 
 }

@@ -24,13 +24,10 @@ import com.osstelecom.db.inventory.manager.resources.CircuitResource;
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 10.04.2022
  */
-public class CircuitResourceCreatedEvent extends BasicEvent {
-
-    private CircuitResource resource;
+public class CircuitResourceCreatedEvent extends BasicEvent<CircuitResource> {
 
     public CircuitResourceCreatedEvent(CircuitResource resource) {
-        this.resource = resource;
-        this.setEventDate();
+        super(resource);
     }
 
 }

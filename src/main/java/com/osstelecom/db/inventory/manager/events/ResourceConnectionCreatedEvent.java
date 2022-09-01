@@ -25,16 +25,10 @@ import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 10.04.2022
  */
-public class ResourceConnectionCreatedEvent extends BasicEvent {
+public class ResourceConnectionCreatedEvent extends BasicEvent<ResourceConnection> {
 
-    private BasicResource from;
-    private BasicResource to;
-    private ResourceConnection connection;
-
-    public ResourceConnectionCreatedEvent(BasicResource from, BasicResource to, ResourceConnection connection) {
-        this.from = from;
-        this.to = to;
-        this.connection = connection;
+    public ResourceConnectionCreatedEvent(ResourceConnection resource) {
+        super(resource);
     }
 
 }

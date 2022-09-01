@@ -24,16 +24,10 @@ import com.osstelecom.db.inventory.manager.resources.CircuitResource;
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 23.08.2022
  */
-public class ProcessCircuityIntegrityEvent extends BasicEvent {
+public class ProcessCircuityIntegrityEvent extends BasicEvent<CircuitResource> {
 
-    private final CircuitResource circuit;
-
-    public ProcessCircuityIntegrityEvent(CircuitResource circuit) {
-        this.circuit = circuit;
-    }
-
-    public CircuitResource getCircuit() {
-        return circuit;
+    public ProcessCircuityIntegrityEvent(CircuitResource resource) {
+        super(resource);
     }
 
 }

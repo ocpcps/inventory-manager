@@ -82,6 +82,12 @@ public class CircuitSession {
             }
 
         }
+        //
+        // Default to UP
+        //
+        if (request.getPayLoad().getOperationalStatus() == null) {
+            request.getPayLoad().setOperationalStatus("UP");
+        }
 
         if (request.getPayLoad().getzPoint().getDomain() == null) {
             if (request.getPayLoad().getzPoint().getDomainName() != null) {
@@ -259,15 +265,24 @@ public class CircuitSession {
             //
             circuit.setBroken(false);
             stateChanged = true;
+
         }
         if (circuit.getBroken()) {
             circuit.setOperationalStatus("DOWN");
         } else {
             circuit.setOperationalStatus("UP");
         }
+
+        if (!circuit.getBroken()) {
+            if (!circuit.getBrokenResources().isEmpty()) {
+                stateChanged = true;
+                circuit.getBrokenResources().clear();
+            }
+        }
+
         Long end = System.currentTimeMillis();
         Long took = end - start;
-        logger.debug("Check Circuit Integrity for [" + circuit.getId() + "] Took: " + took + " ms State Changed: " + stateChanged);
+        logger.debug("Check Circuit Integrity for [" + circuit.getId() + "] Took: " + took + " ms State Changed: " + stateChanged + " Broken Cound:[" + circuit.getBrokenResources().size() + "]");
         if (stateChanged) {
             this.domainManager.updateCircuitResource(circuit);
         }
@@ -296,7 +311,6 @@ public class CircuitSession {
         if (!request.getPayLoad().getPaths().isEmpty()) {
             List<ResourceConnection> resolved = new ArrayList<>();
             logger.debug("Paths Size:" + request.getPayLoad().getPaths().size());
-//            logger.debug(utils.toJson(request.getPayLoad()));
             for (ResourceConnection requestedPath : request.getPayLoad().getPaths()) {
 
                 requestedPath.setDomain(domainManager.getDomain(requestedPath.getDomainName()));
@@ -318,14 +332,11 @@ public class CircuitSession {
                     //
                     // This needs updates
                     //
-//                    b = domainManager.updateResourceConnection(b);
                     if (!circuit.getCircuitPath().contains(b.getId())) {
                         circuit.getCircuitPath().add(b.getId());
-//                        circuit = domainManager.updateCircuitResource(circuit);
+
                     }
-                    //
-                    // 
-                    //
+    
 
                 } else {
                     logger.warn("Connection: [" + b.getId() + "] Already Has Circuit:" + circuit.getId());
@@ -347,7 +358,7 @@ public class CircuitSession {
                 //
                 // Valida se funciona, mas batch update é muito mais rápido xD
                 //
-                resolved = domainManager.updateResourceConnections(resolved,circuit.getDomain());
+                resolved = domainManager.updateResourceConnections(resolved, circuit.getDomain());
                 request.getPayLoad().getPaths().clear();
                 request.getPayLoad().getPaths().addAll(resolved);
                 circuit = domainManager.updateCircuitResource(circuit);

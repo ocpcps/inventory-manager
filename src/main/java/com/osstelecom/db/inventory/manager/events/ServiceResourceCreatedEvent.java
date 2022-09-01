@@ -24,13 +24,13 @@ import com.osstelecom.db.inventory.manager.resources.ServiceResource;
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 10.04.2022
  */
-public class ServiceResourceCreatedEvent extends BasicEvent {
+public class ServiceResourceCreatedEvent {
 
     private ServiceResource service;
 
     public ServiceResourceCreatedEvent(ServiceResource service) {
         this.service = service;
-        this.setEventDate();
+
     }
 
     public ServiceResource getService() {
@@ -40,5 +40,5 @@ public class ServiceResourceCreatedEvent extends BasicEvent {
     public void setService(ServiceResource service) {
         this.service = service;
     }
-    
+
 }

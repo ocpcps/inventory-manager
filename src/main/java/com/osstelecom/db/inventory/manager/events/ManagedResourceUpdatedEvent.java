@@ -24,22 +24,10 @@ import com.osstelecom.db.inventory.manager.resources.ManagedResource;
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 23.08.2022
  */
-public class ManagedResourceUpdatedEvent extends BasicEvent {
-
-    private final ManagedResource oldResource;
-    private final ManagedResource newResource;
+public class ManagedResourceUpdatedEvent extends BasicEvent<ManagedResource> {
 
     public ManagedResourceUpdatedEvent(ManagedResource oldResource, ManagedResource newResource) {
-        this.oldResource = oldResource;
-        this.newResource = newResource;
-    }
-
-    public ManagedResource getOldResource() {
-        return oldResource;
-    }
-
-    public ManagedResource getNewResource() {
-        return newResource;
+        super(oldResource, newResource);
     }
 
 }

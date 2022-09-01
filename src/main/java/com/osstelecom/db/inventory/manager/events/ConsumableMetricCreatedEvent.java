@@ -21,11 +21,11 @@ import com.osstelecom.db.inventory.manager.resources.ConsumableMetric;
 import java.util.Date;
 
 /**
- *
+ * @todo: Verificar
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 05.06.2022
  */
-public class ConsumableMetricCreatedEvent extends BasicEvent {
+public class ConsumableMetricCreatedEvent {
 
     private ConsumableMetric createdMetric;
 
@@ -37,13 +37,7 @@ public class ConsumableMetricCreatedEvent extends BasicEvent {
         this.createdMetric = createdMetric;
     }
 
-    public Date getEventDate() {
-        return eventDate;
-    }
-
-    public void setEventDate(Date eventDate) {
-        this.eventDate = eventDate;
-    }
+   
 
     public ConsumableMetricCreatedEvent(ConsumableMetric createdMetric) {
         this.createdMetric = createdMetric;

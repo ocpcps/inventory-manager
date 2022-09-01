@@ -24,31 +24,10 @@ import com.osstelecom.db.inventory.manager.resources.ServiceResource;
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 10.04.2022
  */
-public class ServiceResourceUpdatedEvent extends BasicEvent {
+public class ServiceResourceUpdatedEvent extends BasicEvent<ServiceResource> {
 
-    private ServiceResource oldService;
-    private ServiceResource newService;
-
-    public ServiceResourceUpdatedEvent(ServiceResource oldService, ServiceResource newService) {
-        this.oldService = oldService;
-        this.newService = newService;
-        this.setEventDate();
-    }
-
-    public ServiceResource getOldService() {
-        return oldService;
-    }
-
-    public void setOldService(ServiceResource oldService) {
-        this.oldService = oldService;
-    }
-
-    public ServiceResource getNewService() {
-        return newService;
-    }
-
-    public void setNewService(ServiceResource newService) {
-        this.newService = newService;
+    public ServiceResourceUpdatedEvent(ServiceResource oldResource, ServiceResource newResource) {
+        super(oldResource, newResource);
     }
 
 }

@@ -24,13 +24,10 @@ import com.osstelecom.db.inventory.manager.resources.ResourceLocation;
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 10.04.2022
  */
-public class ResourceLocationCreatedEvent extends BasicEvent {
+public class ResourceLocationCreatedEvent extends BasicEvent<ResourceLocation> {
 
-    private final ResourceLocation newLocation;
-
-    public ResourceLocationCreatedEvent(ResourceLocation newLocation) {
-        this.newLocation = newLocation;
-        this.setEventDate();
+    public ResourceLocationCreatedEvent(ResourceLocation resource) {
+        super(resource);
     }
 
 }

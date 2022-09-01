@@ -268,7 +268,7 @@ public class ResourceConnectionDao extends AbstractArangoDao<ResourceConnection>
     public MultiDocumentEntity<DocumentUpdateEntity<ResourceConnection>> updateResources(List<ResourceConnection> resources, DomainDTO domain) throws ArangoDaoException {
         try {
             ArangoCollection connectionCollection = this.arangoDao.getDb().collection(domain.getConnections());
-            MultiDocumentEntity<DocumentUpdateEntity<ResourceConnection>> results = connectionCollection.updateDocuments(resources, new DocumentUpdateOptions().returnNew(true).returnOld(true).keepNull(false).mergeObjects(false), ResourceConnection.class);
+            MultiDocumentEntity<DocumentUpdateEntity<ResourceConnection>> results = connectionCollection.updateDocuments(resources, new DocumentUpdateOptions().returnNew(true).returnOld(true).keepNull(false).mergeObjects(false).waitForSync(false), ResourceConnection.class);
             return results;
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);

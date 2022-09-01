@@ -24,22 +24,10 @@ import com.osstelecom.db.inventory.manager.resources.ManagedResource;
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 10.04.2022
  */
-public class ManagedResourceCreatedEvent extends BasicEvent {
-
-    private ManagedResource resource;
+public class ManagedResourceCreatedEvent extends BasicEvent<ManagedResource> {
 
     public ManagedResourceCreatedEvent(ManagedResource resource) {
-        this.resource = resource;
-        this.setEventDate();
+        super(resource);
     }
 
-    public ManagedResource getResource() {
-        return resource;
-    }
-
-    public void setResource(ManagedResource resource) {
-        this.resource = resource;
-    }
-
-    
 }

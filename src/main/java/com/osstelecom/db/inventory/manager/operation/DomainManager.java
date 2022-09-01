@@ -133,7 +133,7 @@ public class DomainManager {
 
     @Autowired
     private ResourceConnectionDao resourceConnectionDao;
-    
+
     @Autowired
     private CircuitResourceDao circuitResourceDao;
 
@@ -486,7 +486,7 @@ public class DomainManager {
             // Update Edges
             //
 
-            ResourceConnectionCreatedEvent event = new ResourceConnectionCreatedEvent(connection.getFrom(), connection.getTo(), connection);
+            ResourceConnectionCreatedEvent event = new ResourceConnectionCreatedEvent(connection);
             eventManager.notifyEvent(event);
             return connection;
         } finally {
@@ -525,7 +525,7 @@ public class DomainManager {
             connection.setUid(result.getId());
             connection.setRevisionId(result.getRev());
 
-            ResourceConnectionCreatedEvent event = new ResourceConnectionCreatedEvent(from, to, connection);
+            ResourceConnectionCreatedEvent event = new ResourceConnectionCreatedEvent(connection);
             this.eventManager.notifyEvent(event);
             return connection;
         } finally {
@@ -806,7 +806,7 @@ public class DomainManager {
             // Update the related dependencies
             //
             try {
-                ArrayList<String> relatedCircuits = new ArrayList<>();
+                List<String> relatedCircuits = new ArrayList<>();
                 //
                 // Transcrever para um filtro, que busca os recursos relacionados
                 // Eventualmente irá se tornar um método no CircuitManager
@@ -814,8 +814,7 @@ public class DomainManager {
                 String filter = "@resourceId in  doc.relatedNodes[*]";
                 Map<String, Object> bindVars = new HashMap<>();
                 bindVars.put("resourceId", updatedResource.getId());
-//                this.resourceConnectionDao.findResourceByFilter(filter, bindVars, updatedResource.getDomain());
-//                this.arangoDao.findRelatedConnections(updatedResource).forEach((c) -> {
+                    
                 this.resourceConnectionDao.findResourceByFilter(filter, bindVars, updatedResource.getDomain()).forEach((c) -> {
 
                     if (c.getFrom().getUid().equals(updatedResource.getUid())) {
@@ -880,7 +879,7 @@ public class DomainManager {
                 if (!relatedCircuits.isEmpty()) {
                     for (String circuitId : relatedCircuits) {
                         try {
-                            CircuitResource circuit = this.circuitResourceDao.findResource(new CircuitResource(updatedResource.getDomain(),circuitId));
+                            CircuitResource circuit = this.circuitResourceDao.findResource(new CircuitResource(updatedResource.getDomain(), circuitId));
                             if (circuit.getaPoint().getId().equals(updatedResource.getUid())) {
                                 circuit.setaPoint(updatedResource);
                                 circuit = this.updateCircuitResource(circuit);
@@ -895,7 +894,7 @@ public class DomainManager {
                             //
                             this.eventManager.notifyEvent(new ProcessCircuityIntegrityEvent(circuit));
 
-                        } catch (ResourceNotFoundException  ex) {
+                        } catch (ResourceNotFoundException ex) {
                             //
                             // This should never happen...but if happen please try to treat the error
                             //
@@ -947,7 +946,7 @@ public class DomainManager {
      * @return
      */
     public List<ResourceConnection> updateResourceConnections(List<ResourceConnection> connections, DomainDTO domain) throws ArangoDaoException {
-        String timerId = startTimer("updateResourceConnection");
+        String timerId = startTimer("updateResourceConnections:[" + connections.size() + "]");
         try {
             lockManager.lock();
             connections.forEach(connection -> {
