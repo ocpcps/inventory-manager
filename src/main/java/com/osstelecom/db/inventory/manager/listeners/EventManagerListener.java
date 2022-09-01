@@ -53,13 +53,13 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class EventManagerListener implements SubscriberExceptionHandler, Runnable {
-
+    
     private EventBus eventBus = new EventBus(this);
-
+    
     private Logger logger = LoggerFactory.getLogger(EventManagerListener.class);
-
+    
     private AtomicLong eventSeq = new AtomicLong(System.currentTimeMillis());
-
+    
     private LinkedBlockingQueue<Object> eventQueue = new LinkedBlockingQueue<>(1000);
 
     /**
@@ -68,20 +68,20 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
      * descer pela session.
      */
     private DomainManager domainmanager;
-
+    
     @Autowired
     private CircuitSession circuitSession;
-
+    
     private Boolean running = false;
-
+    
     private Thread me = new Thread(this);
-
+    
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
-
+    
     public void setDomainManager(DomainManager domainmanager) {
         this.domainmanager = domainmanager;
     }
-
+    
     @EventListener(ApplicationReadyEvent.class)
     private void registerEventBus() {
         if (!running) {
@@ -90,6 +90,10 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
             this.me.start();
         }
         this.eventBus.register(this);
+    }
+    
+    public void registerListener(Object onObject) {
+        this.eventBus.register(onObject);
     }
 
     /**
@@ -102,7 +106,7 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
         // the queue is limited to 1000 Events
         //
         eventQueue.offer(event);
-
+        
     }
 
     /**
@@ -123,7 +127,7 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
      */
     @Subscribe
     public void onManagedResourceCreatedEvent(ManagedResourceCreatedEvent resource) {
-
+        
     }
 
     /**
@@ -142,7 +146,7 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
      */
     @Subscribe
     public void onResourceLocationCreatedEvent(ResourceLocationCreatedEvent resourceLocation) {
-
+        
     }
 
     /**
@@ -152,12 +156,12 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
      */
     @Subscribe
     public void onCircuitResourceCreatedEvent(CircuitResourceCreatedEvent circuit) {
-
+        
     }
-
+    
     @Subscribe
     public void onConsumableMetricCreatedEvent(ConsumableMetricCreatedEvent metric) {
-
+        
     }
 
     /**
@@ -177,26 +181,26 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
             this.domainmanager.processSchemaUpdatedEvent(update);
         }
     }
-
+    
     @Subscribe
     public void onManagedResourceUpdatedEvent(ManagedResourceUpdatedEvent updateEvent) {
         logger.debug("Managed Resource [" + updateEvent.getOldResource().getId() + "] Updated: ");
     }
-
+    
     @Subscribe
     public void onCircuitResourceUpdatedEvent(CircuitResourceUpdatedEvent updateEvent) {
-
+        
         if (!updateEvent.getOldResource().getOperationalStatus().equals(updateEvent.getNewResource().getOperationalStatus())) {
             logger.debug("Resource Connection[" + updateEvent.getOldResource().getId() + "] Updated FOM:[" + updateEvent.getOldResource().getOperationalStatus() + "] TO:[" + updateEvent.getNewResource().getOperationalStatus() + "]");
 
             //
             // Transitou de status de UP->DOWN ou DOWN-> UP
-            // Produzir evento de notificação
+            // Produzir evento de notificação, agora devemos processar os serviços.
             //
         }
-
+        
     }
-
+    
     @Subscribe
     public void onProcessCircuityIntegrityEvent(ProcessCircuityIntegrityEvent processEvent) throws ArangoDaoException {
         logger.debug("A Circuit[" + processEvent.getNewResource().getId() + "] Dependency has been updated ,Integrity Needs to be recalculated");
@@ -219,7 +223,7 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
                     eventBus.post(event);
                 }
             } catch (InterruptedException ex) {
-
+                
             }
         }
     }
