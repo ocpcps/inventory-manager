@@ -51,7 +51,7 @@ public class CircuitResourceDao extends AbstractArangoDao<CircuitResource> {
     private ArangoDao arangoDao;
 
     @Override
-    public CircuitResource findResource(CircuitResource resource) throws ArangoDaoException,ResourceNotFoundException {
+    public CircuitResource findResource(CircuitResource resource) throws ArangoDaoException, ResourceNotFoundException {
         try {
             //
             // Pensar no Lock Manager aqui, ou subir para o manager
@@ -110,8 +110,14 @@ public class CircuitResourceDao extends AbstractArangoDao<CircuitResource> {
             aql = this.buildAqlFromBindings(aql, bindVars, true);
 
             GraphList<CircuitResource> result = this.query(aql, bindVars, CircuitResource.class, this.arangoDao.getDb());
-            if (result.isEmpty()){
-                throw new ResourceNotFoundException("Resource Not Found");
+            if (result.isEmpty()) {
+                ResourceNotFoundException ex = new ResourceNotFoundException("Resource Not Found");
+                //
+                // Melhor detalhe para o cliente, podemos melhorar no construtor depois
+                //
+                ex.addDetails("aql", aql);
+                ex.addDetails("bindings", bindVars);
+                throw ex;
             }
             return result.getOne();
         } catch (Exception ex) {

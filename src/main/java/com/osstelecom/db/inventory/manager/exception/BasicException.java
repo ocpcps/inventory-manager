@@ -36,6 +36,9 @@ public abstract class BasicException extends Exception implements Serializable {
 
     public BasicException(Throwable thrwbl) {
         super(thrwbl);
+        if (thrwbl instanceof BasicException) {
+
+        }
     }
 
     public void addDetails(String key, Object obj) {

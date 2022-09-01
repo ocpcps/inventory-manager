@@ -123,11 +123,7 @@ public class GraphList<T> implements AutoCloseable {
     public List<T> toList() {
         List<T> list = new ArrayList<>();
         if (!this.closedCursor) {
-            try {
-                this.forEach(list::add);
-            } catch (IOException | IllegalStateException ex) {
-                Logger.getLogger(GraphList.class.getName()).log(Level.SEVERE, null, ex);
-            }
+            list.addAll(cursor.asListRemaining());
         }
         return list;
     }

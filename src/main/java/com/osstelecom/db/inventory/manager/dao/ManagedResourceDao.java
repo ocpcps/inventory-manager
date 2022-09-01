@@ -29,6 +29,7 @@ import com.arangodb.model.OverwriteMode;
 import com.osstelecom.db.inventory.graph.arango.GraphList;
 import com.osstelecom.db.inventory.manager.dto.DomainDTO;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
+import com.osstelecom.db.inventory.manager.exception.BasicException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import java.util.HashMap;
@@ -98,19 +99,28 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
                 bindVars.put("attributeSchemaName", resource.getAttributeSchemaName());
             }
 
-            if (resource.getOperationalStatus() != null) {
-                bindVars.put("operationalStatus", resource.getOperationalStatus());
-            }
+//            if (resource.getOperationalStatus() != null) {
+//                bindVars.put("operationalStatus", resource.getOperationalStatus());
+//            }
 
             //
             // Creates AQL
             //
-            aql = this.buildAqlFromBindings(aql, bindVars,true);
+            aql = this.buildAqlFromBindings(aql, bindVars, true);
 
             GraphList<ManagedResource> result = this.query(aql, bindVars, ManagedResource.class, this.arangoDao.getDb());
 
             return result.getOne();
+        } catch (BasicException ex) {
+            //
+            // Sobe as exceptions conhecidass
+            //
+            throw ex;
         } catch (Exception ex) {
+            //
+            // Encapsula as não conhecidas.
+            //
+
             throw new ArangoDaoException(ex);
         } finally {
             //
@@ -128,7 +138,7 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
         try {
             return this.arangoDao.getDb().collection(resource.getDomain().getNodes()).insertDocument(resource, new DocumentCreateOptions().returnNew(true).returnOld(true));
         } catch (Exception ex) {
-            throw new ArangoDaoException(ex);
+            throw new ArangoDaoException(ex.getMessage(), ex);
         } finally {
             //
             // Liberar o Lock manager Aqui, ou subir para o manager

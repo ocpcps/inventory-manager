@@ -19,7 +19,6 @@ package com.osstelecom.db.inventory.manager.session;
 
 import com.osstelecom.db.inventory.manager.dto.DomainDTO;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
-import com.osstelecom.db.inventory.manager.exception.BasicException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
 import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
@@ -363,6 +362,7 @@ public class ResourceSession {
         //
         //
         ManagedResource requestedPatch = patchRequest.getPayLoad();
+
         //
         // Arruma o domain para funcionar certinho
         //
