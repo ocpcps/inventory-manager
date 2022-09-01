@@ -24,12 +24,12 @@ import org.springframework.stereotype.Service;
 
 import com.arangodb.entity.DocumentCreateEntity;
 import com.arangodb.entity.DocumentUpdateEntity;
-import com.osstelecom.db.inventory.manager.dao.ArangoDao;
+import com.osstelecom.db.inventory.manager.dao.ServiceResourceDao;
 import com.osstelecom.db.inventory.manager.events.ServiceResourceCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.ServiceResourceUpdatedEvent;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
-import com.osstelecom.db.inventory.manager.exception.ServiceNotFoundException;
+import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.listeners.EventManagerListener;
 import com.osstelecom.db.inventory.manager.resources.ServiceResource;
 import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
@@ -46,7 +46,7 @@ public class ServiceManager extends Manager {
     private SchemaSession schemaSession;
 
     @Autowired
-    private ArangoDao arangoDao;
+    private ServiceResourceDao arangoDao;
 
     @Autowired
     private EventManagerListener eventManager;
@@ -63,14 +63,34 @@ public class ServiceManager extends Manager {
      * @throws ArangoDaoException
      * @throws ServiceNotFoundException
      */
-    public ServiceResource getService(ServiceResource service) throws ServiceNotFoundException, ArangoDaoException {
-        return this.arangoDao.findServiceById(service);
+    public ServiceResource getService(ServiceResource service) throws ResourceNotFoundException, ArangoDaoException {
+        return this.arangoDao.findResource(service);
     }
 
-    public ServiceResource deleteService(ServiceResource service) {
+    public ServiceResource getServiceById(ServiceResource service) throws ResourceNotFoundException, ArangoDaoException {
+        String timerId = startTimer("getServiceById");
         try {
             lockManager.lock();
-            return this.arangoDao.deleteService(service);
+
+            if (!service.getId().contains("/")) {
+                service.setId(service.getDomain().getServices() + "/" + service.getId());
+            }
+            
+            service = this.arangoDao.findResource(service);
+            return service;
+        } finally {
+            if (lockManager.isLocked()) {
+                lockManager.unlock();
+            }
+            endTimer(timerId);
+        }
+    }
+
+    public ServiceResource deleteService(ServiceResource service) throws ArangoDaoException {
+        try {
+            lockManager.lock();
+            this.arangoDao.deleteResource(service);
+            return service;
         } finally {
             if (lockManager.isLocked()) {
                 lockManager.unlock();
@@ -95,7 +115,7 @@ public class ServiceManager extends Manager {
             schemaSession.validateResourceSchema(service);
             dynamicRuleSession.evalResource(service, "I", this); // <--- Pode não ser verdade , se a chave for duplicada..
 
-            DocumentCreateEntity<ServiceResource> result = arangoDao.createService(service);
+            DocumentCreateEntity<ServiceResource> result = arangoDao.insertResource(service);
             service.setUid(result.getId());
             service.setRevisionId(result.getRev());
             //
@@ -115,12 +135,12 @@ public class ServiceManager extends Manager {
 
     }
 
-    public ServiceResource updateService(ServiceResource resource) {
+    public ServiceResource updateService(ServiceResource resource) throws ArangoDaoException {
         String timerId = startTimer("updateServiceResource");
         try {
             lockManager.lock();
             resource.setLastModifiedDate(new Date());
-            DocumentUpdateEntity<ServiceResource> result = arangoDao.updateService(resource);
+            DocumentUpdateEntity<ServiceResource> result = arangoDao.updateResource(resource);
             ServiceResource newService = result.getNew();
             ServiceResource oldService = result.getOld();
             ServiceResourceUpdatedEvent event = new ServiceResourceUpdatedEvent(oldService, newService);

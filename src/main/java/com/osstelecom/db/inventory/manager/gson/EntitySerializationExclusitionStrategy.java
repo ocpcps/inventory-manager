@@ -19,6 +19,7 @@ import com.google.gson.ExclusionStrategy;
 import com.google.gson.FieldAttributes;
 import com.google.gson.annotations.Expose;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  *
@@ -26,10 +27,9 @@ import java.util.HashMap;
  */
 public class EntitySerializationExclusitionStrategy implements ExclusionStrategy {
 
-    private HashMap<String, String> serialized = new HashMap<>();
+    private Map<String, String> serialized = new HashMap<>();
 
     public EntitySerializationExclusitionStrategy() {
-
     }
 
     @Override

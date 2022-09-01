@@ -316,11 +316,6 @@ public class ResourceSession {
         return response;
     }
 
-    public CreateServiceResponse createService(CreateServiceRequest request) {
-        CreateServiceResponse result = null;
-        return result;
-    }
-
     public FilterResponse findManagedResourceByFilter(FilterRequest filter) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
 
         FilterResponse response = new FilterResponse(filter.getPayLoad());
