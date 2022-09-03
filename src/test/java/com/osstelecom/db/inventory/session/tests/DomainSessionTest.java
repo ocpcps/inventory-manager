@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package com.osstelecom.db.inventory.manager.tests;
+package com.osstelecom.db.inventory.session.tests;
 
 import com.osstelecom.db.inventory.manager.dto.DomainDTO;
 import com.osstelecom.db.inventory.manager.exception.DomainAlreadyExistsException;
@@ -30,15 +30,13 @@ import com.osstelecom.db.inventory.manager.session.DomainSession;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.Assertions.from;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import org.junit.Test;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.MethodOrderer.OrderAnnotation;
 import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.TestMethodOrder;
+import org.springframework.test.context.junit4.SpringRunner;
 
 /**
  * Testes de Unidade do négocio de criação de Domains..
@@ -47,8 +45,7 @@ import org.junit.jupiter.api.TestMethodOrder;
  * @created 30.08.2022
  */
 @SpringBootTest
-@RunWith(SpringJUnit4ClassRunner.class)
-@TestMethodOrder(OrderAnnotation.class)
+@RunWith(SpringRunner.class)
 public class DomainSessionTest {
 
     @Autowired

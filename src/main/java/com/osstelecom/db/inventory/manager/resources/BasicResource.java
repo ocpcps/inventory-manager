@@ -619,12 +619,7 @@ public class BasicResource {
         return node;
     }
 
-    /**
-     * @param noce the noce to set
-     */
-    public void setNoce(String node) {
-        this.setNode(node);
-    }
+   
 
     /**
      * @return the isConsumer

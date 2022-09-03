@@ -73,13 +73,13 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
     private EventManagerListener eventManager;
 
     /**
-     * Local Cache keeps the Schema for 1 Minute in memory
+     * Local Cache keeps the Schema for 1 Minute in memory, most of 5k Records
      */
     private Cache<String, ResourceSchemaModel> schemaCache = CacheBuilder
             .newBuilder()
             .maximumSize(5000)
             .removalListener(this)
-            .expireAfterWrite(30, TimeUnit.SECONDS).build(); // alterado para 10s
+            .expireAfterWrite(60, TimeUnit.SECONDS).build(); // alterado para 10s
 
     /**
      * Loads the Schema by Name
@@ -111,14 +111,14 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
      * @throws GenericException
      */
     public ResourceSchemaResponse loadSchemaByName(String schemaName) throws SchemaNotFoundException, GenericException {
-            return new ResourceSchemaResponse(this.loadSchema(schemaName));
+        return new ResourceSchemaResponse(this.loadSchema(schemaName));
     }
 
     /**
      * Merge a schema name, the result model is the output
-     * 
+     *
      * @param result
-     * @param resourceModel 
+     * @param resourceModel
      */
     private void mergeSchemaModelSession(ResourceSchemaModel result, ResourceSchemaModel resourceModel) {
         for (Map.Entry<String, ResourceAttributeModel> entry : resourceModel.getAttributes().entrySet()) {
@@ -160,7 +160,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                 }
                 logger.debug("Loaded  SchemaName: [" + resourceModel.getSchemaName() + "]");
                 jsonReader.close();
-                
+
                 this.mergeSchemaModelSession(result, resourceModel);
 
                 if (!resourceModel.getFromSchema().equals(".")) {
