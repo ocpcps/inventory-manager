@@ -36,7 +36,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import org.junit.Test;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Order;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 /**
  * Testes de Unidade do négocio de criação de Domains..
@@ -45,7 +45,7 @@ import org.springframework.test.context.junit4.SpringRunner;
  * @created 30.08.2022
  */
 @SpringBootTest
-@RunWith(SpringRunner.class)
+@RunWith(SpringJUnit4ClassRunner.class)
 public class DomainSessionTest {
 
     @Autowired
