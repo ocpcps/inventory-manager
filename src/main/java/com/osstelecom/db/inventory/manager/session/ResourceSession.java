@@ -29,7 +29,6 @@ import com.osstelecom.db.inventory.manager.operation.DomainManager;
 import com.osstelecom.db.inventory.manager.request.CreateConnectionRequest;
 import com.osstelecom.db.inventory.manager.request.CreateManagedResourceRequest;
 import com.osstelecom.db.inventory.manager.request.CreateResourceLocationRequest;
-import com.osstelecom.db.inventory.manager.request.CreateServiceRequest;
 import com.osstelecom.db.inventory.manager.request.FilterRequest;
 import com.osstelecom.db.inventory.manager.request.FindManagedResourceRequest;
 import com.osstelecom.db.inventory.manager.request.PatchManagedResourceRequest;
@@ -43,7 +42,6 @@ import com.osstelecom.db.inventory.manager.resources.exception.NoResourcesAvaila
 import com.osstelecom.db.inventory.manager.response.CreateManagedResourceResponse;
 import com.osstelecom.db.inventory.manager.response.CreateResourceConnectionResponse;
 import com.osstelecom.db.inventory.manager.response.CreateResourceLocationResponse;
-import com.osstelecom.db.inventory.manager.response.CreateServiceResponse;
 import com.osstelecom.db.inventory.manager.response.FilterResponse;
 import com.osstelecom.db.inventory.manager.response.FindManagedResourceResponse;
 import com.osstelecom.db.inventory.manager.response.PatchManagedResourceResponse;
@@ -328,10 +326,9 @@ public class ResourceSession {
             response.getPayLoad().setConnections(domainManager.getConnectionsByFilter(filter.getPayLoad(), filter.getRequestDomain()).toList());
             if (filter.getPayLoad().getComputeWeakLinks()) {
                 //
-                // Se vamos computar os links fracos monta um fake "in memory" topology
+                // Computação de Links Fracos Desabilitada
                 //
                 throw new InvalidRequestException("Weak Links Calculation is Disabled on this system");
-//                domainManager.findWeakLinks(response.getConnections(), filter.getPayLoad());
             }
         }
 

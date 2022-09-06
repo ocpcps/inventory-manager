@@ -86,6 +86,7 @@ import com.osstelecom.db.inventory.topology.DefaultTopology;
 import com.osstelecom.db.inventory.topology.ITopology;
 import com.osstelecom.db.inventory.topology.node.DefaultNode;
 import com.osstelecom.db.inventory.topology.node.INetworkNode;
+import java.util.stream.Collectors;
 
 /**
  * This class is the main Domain Manager it will handle all operations related
@@ -182,7 +183,11 @@ public class DomainManager {
      */
     public DomainDTO getDomain(String domainName) throws DomainNotFoundException {
         if (!domains.containsKey(domainName)) {
-            throw new DomainNotFoundException("Domain :[" + domainName + "] not found");
+            List<String> domainsList = domains.values().stream()
+                    .map(DomainDTO::getDomainName)
+                    .collect(Collectors.toList());
+            throw new DomainNotFoundException("Domain :[" + domainName + "] not found Available Domains are: [" + String.join(",", domainsList)
+                    + "]");
         }
         return domains.get(domainName);
     }
@@ -201,7 +206,6 @@ public class DomainManager {
         return result;
     }
 
-    
     /**
      * Create a managed Resource
      *
@@ -728,7 +732,7 @@ public class DomainManager {
                 String filter = "@resourceId in  doc.relatedNodes[*]";
                 Map<String, Object> bindVars = new HashMap<>();
                 bindVars.put("resourceId", updatedResource.getId());
-                    
+
                 this.resourceConnectionDao.findResourceByFilter(filter, bindVars, updatedResource.getDomain()).forEach((c) -> {
 
                     if (c.getFrom().getUid().equals(updatedResource.getUid())) {
