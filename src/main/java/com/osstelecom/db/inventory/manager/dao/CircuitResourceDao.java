@@ -17,6 +17,13 @@
  */
 package com.osstelecom.db.inventory.manager.dao;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
 import com.arangodb.ArangoCollection;
 import com.arangodb.entity.DocumentCreateEntity;
 import com.arangodb.entity.DocumentDeleteEntity;
@@ -32,18 +39,13 @@ import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 31.08.2022
  */
-@Service
+@Component
 public class CircuitResourceDao extends AbstractArangoDao<CircuitResource> {
 
     @Autowired

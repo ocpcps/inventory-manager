@@ -33,13 +33,13 @@ import java.util.List;
 public class CircuitResource extends BasicResource {
 
     @Schema(description = "If true, indicates that the circuit has some broken connections")
-    private Boolean degrated = false;
+    private boolean degrated = false;
     @Schema(description = "If true, indicates that the circuit has some broken connections, and it is broken")
-    private Boolean broken = false;
+    private boolean broken = false;
     @Schema(description = "The ID List of the broken connections")
     private List<String> brokenResources;
 
-    public Boolean getDegrated() {
+    public boolean getDegrated() {
         return degrated;
     }
 
@@ -47,25 +47,25 @@ public class CircuitResource extends BasicResource {
         this.degrated = degrated;
     }
 
-    public Boolean getBroken() {
+    public boolean getBroken() {
         return broken;
     }
 
-    public void setBroken(Boolean broken) {
+    public void setBroken(boolean broken) {
         this.broken = broken;
     }
 
     /**
      * @return the circuitPath
      */
-    public ArrayList<String> getCircuitPath() {
+    public List<String> getCircuitPath() {
         return circuitPath;
     }
 
     /**
      * @param circuitPath the circuitPath to set
      */
-    public void setCircuitPath(ArrayList<String> circuitPath) {
+    public void setCircuitPath(List<String> circuitPath) {
         this.circuitPath = circuitPath;
     }
 
@@ -76,7 +76,7 @@ public class CircuitResource extends BasicResource {
     /**
      * Services (IDS) Carried By this Circuit
      */
-    private ArrayList<String> services = new ArrayList<>();
+    private List<String> services = new ArrayList<>();
 
     /**
      * Later Will be used by the impact manager to check if the circuit is
@@ -84,7 +84,7 @@ public class CircuitResource extends BasicResource {
      */
     private Integer minRedundancyCount = 3;
 
-    private ArrayList<String> circuitPath = new ArrayList<>();
+    private List<String> circuitPath = new ArrayList<>();
 
     /**
      * @return the aPoint
@@ -125,8 +125,6 @@ public class CircuitResource extends BasicResource {
     public CircuitResource(DomainDTO domain, String id) {
         super(domain, id);
     }
-    
-    
 
     public CircuitResource() {
     }

@@ -34,7 +34,7 @@ public class FilterDTO {
     private String aqlFilter;
     private Map<String, Object> bindings;
     private String targetRegex;
-    private Boolean computeWeakLinks = false;
+    private boolean computeWeakLinks = false;
     private Integer computeThreads = 8;
     private Integer minCuts = 1;
     private List<ManagedResource> nodes;
@@ -122,14 +122,14 @@ public class FilterDTO {
     /**
      * @return the computeWeakLinks
      */
-    public Boolean getComputeWeakLinks() {
+    public boolean getComputeWeakLinks() {
         return computeWeakLinks;
     }
 
     /**
      * @param computeWeakLinks the computeWeakLinks to set
      */
-    public void setComputeWeakLinks(Boolean computeWeakLinks) {
+    public void setComputeWeakLinks(boolean computeWeakLinks) {
         this.computeWeakLinks = computeWeakLinks;
     }
 

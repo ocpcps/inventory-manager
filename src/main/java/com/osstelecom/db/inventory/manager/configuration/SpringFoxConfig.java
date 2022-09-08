@@ -17,7 +17,6 @@
  */
 package com.osstelecom.db.inventory.manager.configuration;
 
-import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import java.util.HashSet;
 import java.util.Set;
 import org.springframework.context.annotation.Bean;

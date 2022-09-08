@@ -17,8 +17,47 @@
  */
 package com.osstelecom.db.inventory.manager.operation;
 
-import com.osstelecom.db.inventory.manager.resources.ManagedResource;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantLock;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import com.arangodb.entity.DocumentCreateEntity;
+import com.arangodb.entity.DocumentUpdateEntity;
+import com.google.common.eventbus.Subscribe;
+import com.osstelecom.db.inventory.graph.arango.GraphList;
+import com.osstelecom.db.inventory.manager.dao.CircuitResourceDao;
+import com.osstelecom.db.inventory.manager.dao.ManagedResourceDao;
+import com.osstelecom.db.inventory.manager.dao.ResourceConnectionDao;
+import com.osstelecom.db.inventory.manager.dto.DomainDTO;
+import com.osstelecom.db.inventory.manager.dto.FilterDTO;
+import com.osstelecom.db.inventory.manager.events.ManagedResourceCreatedEvent;
+import com.osstelecom.db.inventory.manager.events.ManagedResourceUpdatedEvent;
+import com.osstelecom.db.inventory.manager.events.ProcessCircuityIntegrityEvent;
+import com.osstelecom.db.inventory.manager.events.ResourceSchemaUpdatedEvent;
+import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
+import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
+import com.osstelecom.db.inventory.manager.exception.GenericException;
+import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
+import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
+import com.osstelecom.db.inventory.manager.exception.SchemaNotFoundException;
+import com.osstelecom.db.inventory.manager.exception.ScriptRuleException;
+import com.osstelecom.db.inventory.manager.listeners.EventManagerListener;
+import com.osstelecom.db.inventory.manager.resources.CircuitResource;
+import com.osstelecom.db.inventory.manager.resources.ManagedResource;
+import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstraintViolationException;
+import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
+import com.osstelecom.db.inventory.manager.session.DynamicRuleSession;
+import com.osstelecom.db.inventory.manager.session.SchemaSession;
 
 /**
  *
@@ -26,26 +65,397 @@ import org.springframework.stereotype.Service;
  * @created 30.08.2022
  */
 @Service
-public class ManagedResourceManager extends AbstractManager<ManagedResource> {
+public class ManagedResourceManager extends Manager {   
 
-    @Override
+    @Autowired
+    private EventManagerListener eventManager;
+
+    @Autowired
+    private ReentrantLock lockManager;
+    
+    @Autowired
+    private DynamicRuleSession dynamicRuleSession;    
+
+    @Autowired
+    private SchemaSession schemaSession;
+
+    @Autowired
+    private ManagedResourceDao managedResourceDao;
+
+    @Autowired
+    private ResourceConnectionDao resourceConnectionDao;
+
+    @Autowired
+    private ResourceConnectionManager resourceConnectionManager;
+
+    @Autowired
+    private CircuitResourceDao circuitResourceDao; 
+
+    @Autowired
+    private CircuitResourceManager circuitResourceManager;
+    
+    @Autowired
+    private DomainManager domainManager;
+
+    private Logger logger = LoggerFactory.getLogger(ManagedResourceManager.class);
+
     public ManagedResource get(ManagedResource resource) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
-    @Override
     public ManagedResource delete(ManagedResource resource) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
-    @Override
-    public ManagedResource create(ManagedResource resource) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+     /**
+     * Create a managed Resource
+     *
+     * @param resource
+     * @return
+     * @throws SchemaNotFoundException
+     * @throws AttributeConstraintViolationException
+     * @throws GenericException
+     */
+    public ManagedResource create(ManagedResource resource) throws SchemaNotFoundException, AttributeConstraintViolationException, GenericException, ScriptRuleException, ArangoDaoException {
+        String timerId = startTimer("createManagedResource");
+        try {
+            lockManager.lock();
+            //
+            // START - Subir as validações para session
+            //
+            if (resource.getUid() == null) {
+                resource.setUid(getUUID());
+            }
+            resource.setAtomId(resource.getDomain().addAndGetId());
+            ResourceSchemaModel schemaModel = schemaSession.loadSchema(resource.getAttributeSchemaName());
+            resource.setSchemaModel(schemaModel);
+            schemaSession.validateResourceSchema(resource);       //  
+            dynamicRuleSession.evalResource(resource, "I", this); // <--- Pode não ser verdade , se a chave for duplicada..
+            //
+            // END - Subir as validações para session
+            //
+            DocumentCreateEntity<ManagedResource> result = this.managedResourceDao.insertResource(resource);
+            resource.setId(result.getId());
+            resource.setUid(result.getKey());
+            resource.setRevisionId(result.getRev());
+            //
+            // Aqui criou o managed resource
+            //
+            ManagedResourceCreatedEvent event = new ManagedResourceCreatedEvent(resource);
+            this.eventManager.notifyEvent(event);
+            return resource;
+        } finally {
+            if (lockManager.isLocked()) {
+                lockManager.unlock();
+            }
+            endTimer(timerId);
+        }
+
     }
 
-    @Override
     public ManagedResource update(ManagedResource resource) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        throw new UnsupportedOperationException("Not supported yet.");
     }
+
+    public ManagedResource findManagedResource(ManagedResource resource) throws ResourceNotFoundException, ArangoDaoException {
+        return this.managedResourceDao.findResource(resource);
+    }
+
+    /**
+     * <p>
+     * Find a managed resource by id, in arangodb, the ID is a combination of
+     * the collection plus id something like collection/uuid.
+     * <p>
+     * It the given resource just contains the UUID, the method will fix it to
+     * the pattern as collection/uuid based on the resource domain
+     *
+     * @param resource
+     * @return ManagedResource - The resource
+     * @throws DomainNotFoundException
+     * @throws ResourceNotFoundException
+     * @throws ArangoDaoException
+     */
+    public ManagedResource findManagedResourceById(ManagedResource resource) throws ResourceNotFoundException, ArangoDaoException {
+        String timerId = startTimer("findManagedResourceById");
+        try {
+            lockManager.lock();
+
+            if (!resource.getId().contains("/")) {
+                resource.setId(resource.getDomain().getNodes() + "/" + resource.getId());
+            }
+            resource = this.managedResourceDao.findResource(resource);
+            return resource;
+        } finally {
+            if (lockManager.isLocked()) {
+                lockManager.unlock();
+            }
+            endTimer(timerId);
+        }
+    }
+
+    /**
+     * Update a Resource,
+     *
+     * @param resource
+     * @return
+     * @throws InvalidRequestException
+     */
+    public ManagedResource updateManagedResource(ManagedResource resource) throws InvalidRequestException, ArangoDaoException {
+        String timerId = startTimer("updateManagedResource");
+        try {
+            lockManager.lock();
+            //
+            // Mover isso para session...
+            //
+            if (!resource.getOperationalStatus().equals("UP") && !resource.getOperationalStatus().equalsIgnoreCase("DOWN")) {
+                throw new InvalidRequestException("Invalid OperationalStatus:[" + resource.getOperationalStatus() + "]");
+            }
+
+            resource.setLastModifiedDate(new Date());
+            DocumentUpdateEntity<ManagedResource> updatedEntity = this.managedResourceDao.updateResource(resource);
+            ManagedResource updatedResource = updatedEntity.getNew();
+            //
+            // Update the related dependencies
+            //
+            try {
+                List<String> relatedCircuits = new ArrayList<>();
+                //
+                // Transcrever para um filtro, que busca os recursos relacionados
+                // Eventualmente irá se tornar um método no CircuitManager
+                //
+                String filter = "@resourceId in  doc.relatedNodes[*]";
+                Map<String, Object> bindVars = new HashMap<>();
+                bindVars.put("resourceId", updatedResource.getId());
+
+                this.resourceConnectionDao.findResourceByFilter(filter, bindVars, updatedResource.getDomain()).forEach((c) -> {
+
+                    if (c.getFrom().getUid().equals(updatedResource.getUid())) {
+                        //
+                        // Update from
+                        //
+
+                        c.setFrom(updatedResource);
+                        //
+                        // validando 
+                        //
+
+                    } else if (c.getTo().getUid().equals(updatedResource.getUid())) {
+                        //
+                        // Update to
+                        //
+                        c.setTo(updatedResource);
+
+                    }
+
+                    //
+                    // Avalia o status final da Conexão
+                    //
+                    boolean circuitStateChanged = false;
+                    if (c.getFrom().getOperationalStatus().equals("UP")
+                            && c.getTo().getOperationalStatus().equals("UP")) {
+                        if (c.getOperationalStatus().equals("DOWN")) {
+                            c.setOperationalStatus("UP");
+                            circuitStateChanged = true;
+                        }
+                    } else {
+                        if (c.getOperationalStatus().equals("UP")) {
+                            c.setOperationalStatus("DOWN");
+                            circuitStateChanged = true;
+                        }
+                    }
+                    if (circuitStateChanged) {
+                        try {
+                            resourceConnectionManager.updateResourceConnection(c); // <- Atualizou a conexão no banco
+                            //
+                            // Now Update related Circuits..
+                            //
+                            if (c.getCircuits() != null) {
+                                if (!c.getCircuits().isEmpty()) {
+                                    for (String circuitId : c.getCircuits()) {
+                                        if (!relatedCircuits.contains(circuitId)) {
+                                            //
+                                            // Garante que só incluímos o mesmo circuito uma vez
+                                            //
+                                            relatedCircuits.add(circuitId);
+                                        }
+                                    }
+                                }
+                            }
+                        } catch (ArangoDaoException ex) {
+                            logger.error("Failed to Update Circuit: [{}]", c.getId(), ex);
+                        }
+                    }
+
+                });
+
+                if (!relatedCircuits.isEmpty()) {
+                    for (String circuitId : relatedCircuits) {
+                        try {
+                            CircuitResource circuit = this.circuitResourceDao.findResource(new CircuitResource(updatedResource.getDomain(), circuitId));
+                            if (circuit.getaPoint().getId().equals(updatedResource.getUid())) {
+                                circuit.setaPoint(updatedResource);
+                                circuit = this.circuitResourceManager.updateCircuitResource(circuit);
+                            } else if (circuit.getzPoint().getId().equals(updatedResource.getUid())) {
+                                circuit.setzPoint(updatedResource);
+                                circuit = this.circuitResourceManager.updateCircuitResource(circuit);
+                            }
+
+                            //
+                            // Circuit Integrity must be checked here,
+                            // So we fire an event that will later request that
+                            //
+                            this.eventManager.notifyEvent(new ProcessCircuityIntegrityEvent(circuit));
+
+                        } catch (ResourceNotFoundException ex) {
+                            //
+                            // This should never happen...but if happen please try to treat the error
+                            //
+                            logger.error("Inconsistent Database on Domain Please check Related Circuit Resources: ResourceID:[" + updatedResource.getId() + "]", ex);
+                        } catch (ArangoDaoException ex) {
+                            logger.error("Arango Level Error", ex);
+                        }
+                    }
+                }
+
+            } catch (IOException | IllegalStateException ex) {
+                logger.error("Failed to Update Resource Connection Relation", ex);
+            }
+
+            eventManager.notifyEvent(new ManagedResourceUpdatedEvent(updatedEntity.getOld(), updatedEntity.getNew()));
+            return updatedResource;
+        } finally {
+            if (lockManager.isLocked()) {
+                lockManager.unlock();
+            }
+            endTimer(timerId);
+        }
+    }
+
+    
+
+    public GraphList<ManagedResource> getNodesByFilter(FilterDTO filter, String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
+        DomainDTO domain = domainManager.getDomain(domainName);
+        if (filter.getObjects().contains("nodes")) {
+            Map<String, Object> bindVars = new HashMap<>();
+
+            if (filter.getClasses() != null && !filter.getClasses().isEmpty()) {
+                bindVars.put("classes", filter.getClasses());
+            }
+
+            if (filter.getBindings() != null && !filter.getBindings().isEmpty()) {
+                bindVars.putAll(filter.getBindings());
+            }
+            return this.managedResourceDao.findResourceByFilter(filter.getAqlFilter(), bindVars, domain);
+        }
+        throw new InvalidRequestException("getNodesByFilter() can only retrieve nodes objects");
+    }
+
+    
+
+    public GraphList<ManagedResource> findManagedResourcesBySchemaName(ResourceSchemaModel model, DomainDTO domain) throws ResourceNotFoundException, ArangoDaoException {
+        return this.managedResourceDao.findResourcesBySchemaName(model.getSchemaName(), domain);
+    }
+
+
+    /**
+     * Process the schema update Event, this is very heavy for the system, avoid
+     * this use case.
+     * <p>
+     * Once a schema is updates, all referenced objects must be updated and all
+     * rules has to be rechecked.
+     *
+     * @param update
+     */
+    public void processSchemaUpdatedEvent(ResourceSchemaUpdatedEvent update) {
+        /**
+         * Here we need to find all resources that are using the schema, update
+         * ip, check validations and save it back to the database. Schemas are
+         * shared between all domains so we need to check all Domains..
+         */
+
+        for (DomainDTO domain : domainManager.getAllDomains()) {
+            //
+            // Update the schema on each domain
+            //
+            logger.debug("Updating Schema[{}] On Domain:[{}]", update.getModel().getSchemaName(), domain.getDomainName());
+
+            try {
+                GraphList<ManagedResource> nodesToUpdate = this.findManagedResourcesBySchemaName(update.getModel(), domain);
+                logger.debug("Found {} Elements to Update", nodesToUpdate.size());
+
+                ResourceSchemaModel model = this.schemaSession.loadSchema(update.getModel().getSchemaName());
+                AtomicLong totalProcessed = new AtomicLong(0L);
+
+                //
+                // We need to make this processing multithread.
+                //
+                nodesToUpdate.forEachParallel(resource -> {
+
+                    try {
+
+                        resource.setSchemaModel(model);
+                        schemaSession.validateResourceSchema(resource);
+
+                    } catch (AttributeConstraintViolationException ex) {
+                        //
+                        // resource is invalid model.
+                        //
+
+                        logger.error("Failed to Validate Attributes", ex);
+                        //
+                        // Mark the resource schema model as invalid
+                        //      
+                        resource.getSchemaModel().setIsValid(false);
+                    }
+                    try {
+                        this.managedResourceDao.updateResource(resource);
+                    } catch (ArangoDaoException ex) {
+                        logger.error("Failed to Update resource:[{}]", resource.getUid(), ex);
+                    }
+                    if (totalProcessed.incrementAndGet() % 1000 == 0) {
+                        logger.debug("Updated {} Records", totalProcessed.get());
+                    }
+
+                });
+            } catch (IOException | IllegalStateException | GenericException | SchemaNotFoundException | ArangoDaoException ex) {
+                logger.error("Failed to update Resource Schema Model", ex);
+            } catch (ResourceNotFoundException ex) {
+                logger.error("Domain Has No Resources on Schema:[{}]", update.getModel(), ex);
+            }
+            logger.debug("Updating Schema[{}] On Domain:[{}] DONE", update.getModel().getSchemaName(), domain.getDomainName());
+        }
+    }
+
+    /**
+	 * Called when a Managed Resource is created
+	 *
+	 * @param resource
+	 */
+	@Subscribe
+	public void onManagedResourceCreatedEvent(ManagedResourceCreatedEvent resource) {
+
+	}
+
+    /**
+	 * An resource Schema update just Happened...we neeed to update and check
+	 * all resources...
+	 *
+	 * @param update
+	 */
+	@Subscribe
+	public void onResourceSchameUpdatedEvent(ResourceSchemaUpdatedEvent update) {
+        //
+        // Notify the schema session that a schema has changed
+        // Now, it will search for:
+        // Nodes to be updates -> Connections that relies on those nodes
+        //
+        this.processSchemaUpdatedEvent(update);
+	}
+
+    @Subscribe
+	public void onManagedResourceUpdatedEvent(ManagedResourceUpdatedEvent updateEvent) {
+		logger.debug("Managed Resource [{}] Updated: ", updateEvent.getOldResource().getId());
+	}
+
 
 }

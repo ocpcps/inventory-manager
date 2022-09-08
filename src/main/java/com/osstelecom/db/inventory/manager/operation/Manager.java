@@ -17,8 +17,8 @@ public class Manager {
 
     @Autowired
     private ConfigurationManager configurationManager;
-    
-    private Logger logger = LoggerFactory.getLogger(DomainManager.class);
+
+    private Logger logger = LoggerFactory.getLogger(Manager.class);
 
     /**
      * Timer Util

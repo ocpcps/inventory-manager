@@ -18,17 +18,17 @@
 package com.osstelecom.db.inventory.manager.response;
 
 import com.osstelecom.db.inventory.manager.dto.DomainDTO;
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 07.08.2022
  */
-public class GetDomainsResponse extends BasicResponse<ArrayList<DomainDTO>> {
+public class GetDomainsResponse extends BasicResponse<List<DomainDTO>> {
     
-    public GetDomainsResponse(ArrayList<DomainDTO> obj) {
-        super(obj);
+    public GetDomainsResponse(List<DomainDTO> list) {
+        super(list);
     }
     
 }

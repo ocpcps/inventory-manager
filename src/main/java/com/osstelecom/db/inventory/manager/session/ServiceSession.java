@@ -26,6 +26,7 @@ import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
+import com.osstelecom.db.inventory.manager.operation.CircuitResourceManager;
 import com.osstelecom.db.inventory.manager.operation.DomainManager;
 import com.osstelecom.db.inventory.manager.operation.ServiceManager;
 import com.osstelecom.db.inventory.manager.request.CreateServiceRequest;
@@ -51,6 +52,9 @@ public class ServiceSession {
 
     @Autowired
     private ServiceManager serviceManager;
+
+    @Autowired
+    private CircuitResourceManager circuitResourceManager;
 
     @Autowired
     private DomainManager domainManager;
@@ -155,7 +159,7 @@ public class ServiceSession {
             if (circuit.getDomain() == null) {
                 circuit.setDomain(domain);
             }
-            CircuitResource resolved = this.domainManager.findCircuitResource(circuit);
+            CircuitResource resolved = this.circuitResourceManager.findCircuitResource(circuit);
             resolvedCircuits.add(resolved);
         }
         circuits.clear();

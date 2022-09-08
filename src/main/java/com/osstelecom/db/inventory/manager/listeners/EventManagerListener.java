@@ -17,33 +17,16 @@
  */
 package com.osstelecom.db.inventory.manager.listeners;
 
-import com.google.common.eventbus.EventBus;
-import com.google.common.eventbus.Subscribe;
-import com.google.common.eventbus.SubscriberExceptionContext;
-import com.google.common.eventbus.SubscriberExceptionHandler;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.osstelecom.db.inventory.manager.events.CircuitResourceCreatedEvent;
-import com.osstelecom.db.inventory.manager.events.CircuitResourceUpdatedEvent;
-import com.osstelecom.db.inventory.manager.events.ConsumableMetricCreatedEvent;
-import com.osstelecom.db.inventory.manager.events.DomainCreatedEvent;
-import com.osstelecom.db.inventory.manager.events.ManagedResourceCreatedEvent;
-import com.osstelecom.db.inventory.manager.events.ManagedResourceUpdatedEvent;
-import com.osstelecom.db.inventory.manager.events.ProcessCircuityIntegrityEvent;
-import com.osstelecom.db.inventory.manager.events.ResourceLocationCreatedEvent;
-import com.osstelecom.db.inventory.manager.events.ResourceSchemaUpdatedEvent;
-import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
-import com.osstelecom.db.inventory.manager.operation.DomainManager;
-import com.osstelecom.db.inventory.manager.session.CircuitSession;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+
+import com.google.common.eventbus.EventBus;
+import com.google.common.eventbus.SubscriberExceptionContext;
+import com.google.common.eventbus.SubscriberExceptionHandler;
 
 /**
  * Gerencia os eventos do sistema
@@ -53,178 +36,68 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class EventManagerListener implements SubscriberExceptionHandler, Runnable {
-    
-    private EventBus eventBus = new EventBus(this);
-    
-    private Logger logger = LoggerFactory.getLogger(EventManagerListener.class);
-    
-    private AtomicLong eventSeq = new AtomicLong(System.currentTimeMillis());
-    
-    private LinkedBlockingQueue<Object> eventQueue = new LinkedBlockingQueue<>(1000);
 
-    /**
-     * *
-     * Valida se precisar ser o domain manager, me parece que o correto seria
-     * descer pela session.
-     */
-    private DomainManager domainmanager;
-    
-    @Autowired
-    private CircuitSession circuitSession;
-    
-    private Boolean running = false;
-    
-    private Thread me = new Thread(this);
-    
-    private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
-    
-    public void setDomainManager(DomainManager domainmanager) {
-        this.domainmanager = domainmanager;
-    }
-    
-    @EventListener(ApplicationReadyEvent.class)
-    private void registerEventBus() {
-        if (!running) {
-            this.running = true;
-            this.me.setName("EventManagerSession_THREAD");
-            this.me.start();
-        }
-        this.eventBus.register(this);
-    }
-    
-    public void registerListener(Object onObject) {
-        this.eventBus.register(onObject);
-    }
+	private EventBus eventBus = new EventBus(this);
 
-    /**
-     * Recebe a notificação de um evento e envia para o EventBus
-     *
-     * @param event
-     */
-    public void notifyEvent(Object event) {
-        //
-        // the queue is limited to 1000 Events
-        //
-        eventQueue.offer(event);
-        
-    }
+	private Logger logger = LoggerFactory.getLogger(EventManagerListener.class);
 
-    /**
-     * Intercepta as exceptions geradas pelo eventbus nas subscriptions
-     *
-     * @param thrwbl
-     * @param sec
-     */
-    @Override
-    public void handleException(Throwable thrwbl, SubscriberExceptionContext sec) {
-        logger.error("Subscription Error in EventBUS Please Check ME:", thrwbl);
-    }
+	private LinkedBlockingQueue<Object> eventQueue = new LinkedBlockingQueue<>(1000);
+	
+	private boolean running = false;
 
-    /**
-     * Called when a Managed Resource is created
-     *
-     * @param resource
-     */
-    @Subscribe
-    public void onManagedResourceCreatedEvent(ManagedResourceCreatedEvent resource) {
-        
-    }
+	public EventManagerListener() {
+		if (!running) {
+			Thread thread = new Thread(this);
+			this.running = true;
+			thread.setName("EventManagerSession_THREAD");
+			thread.start();
+		}
+		this.eventBus.register(this);
+	}
 
-    /**
-     * Called When a New Domain is Created
-     *
-     * @param domain
-     */
-    @Subscribe
-    public void onDomainCreatedEvent(DomainCreatedEvent domain) {
-    }
+	public void registerListener(Object session) {
+		this.eventBus.register(session);
+	}
 
-    /**
-     * Called when a Resource Location is created
-     *
-     * @param resourceLocation
-     */
-    @Subscribe
-    public void onResourceLocationCreatedEvent(ResourceLocationCreatedEvent resourceLocation) {
-        
-    }
+	/**
+	 * Recebe a notificação de um evento e envia para o EventBus
+	 *
+	 * @param event
+	 */
+	public boolean notifyEvent(Object event) {
+		//
+		// the queue is limited to 1000 Events
+		//
+		return eventQueue.offer(event);
+	}
 
-    /**
-     * Called when a circuit resource is created 22 as 24
-     *
-     * @param circuit
-     */
-    @Subscribe
-    public void onCircuitResourceCreatedEvent(CircuitResourceCreatedEvent circuit) {
-        
-    }
-    
-    @Subscribe
-    public void onConsumableMetricCreatedEvent(ConsumableMetricCreatedEvent metric) {
-        
-    }
-
-    /**
-     * An resource Schema update just Happened...we neeed to update and check
-     * all resources...
-     *
-     * @param update
-     */
-    @Subscribe
-    public void onResourceSchameUpdatedEvent(ResourceSchemaUpdatedEvent update) {
-        if (this.domainmanager != null) {
-            //
-            // Notify the schema session that a schema has changed
-            // Now, it will search for:
-            // Nodes to be updates -> Connections that relies on those nodes
-            //
-            this.domainmanager.processSchemaUpdatedEvent(update);
-        }
-    }
-    
-    @Subscribe
-    public void onManagedResourceUpdatedEvent(ManagedResourceUpdatedEvent updateEvent) {
-        logger.debug("Managed Resource [" + updateEvent.getOldResource().getId() + "] Updated: ");
-    }
-    
-    @Subscribe
-    public void onCircuitResourceUpdatedEvent(CircuitResourceUpdatedEvent updateEvent) {
-        
-        if (!updateEvent.getOldResource().getOperationalStatus().equals(updateEvent.getNewResource().getOperationalStatus())) {
-            logger.debug("Resource Connection[" + updateEvent.getOldResource().getId() + "] Updated FOM:[" + updateEvent.getOldResource().getOperationalStatus() + "] TO:[" + updateEvent.getNewResource().getOperationalStatus() + "]");
-
-            //
-            // Transitou de status de UP->DOWN ou DOWN-> UP
-            // Produzir evento de notificação, agora devemos processar os serviços.
-            //
-        }
-        
-    }
-    
-    @Subscribe
-    public void onProcessCircuityIntegrityEvent(ProcessCircuityIntegrityEvent processEvent) throws ArangoDaoException {
-        logger.debug("A Circuit[" + processEvent.getNewResource().getId() + "] Dependency has been updated ,Integrity Needs to be recalculated");
-        //
-        // Now we should Notify the ImpactManagerSession
-        //
-        this.circuitSession.computeCircuitIntegrity(processEvent.getNewResource());
-    }
-
-    /**
-     * Faz o processamento da fila interna de eventos
-     */
-    @Override
-    public void run() {
-        while (running) {
-            try {
-                Object event = eventQueue.poll(5, TimeUnit.SECONDS);
-                if (event != null) {
-                    logger.debug("Processing Event: [" + event.getClass().getCanonicalName() + "]");
-                    eventBus.post(event);
-                }
-            } catch (InterruptedException ex) {
-                
-            }
-        }
-    }
+	/**
+	 * Intercepta as exceptions geradas pelo eventbus nas subscriptions
+	 *
+	 * @param thrwbl
+	 * @param sec
+	 */
+	@Override
+	public void handleException(Throwable thrwbl, SubscriberExceptionContext sec) {
+		logger.error("Subscription Error in EventBUS Please Check ME:", thrwbl);
+	}
+	
+	/**
+	 * Faz o processamento da fila interna de eventos
+	 */
+	@Override
+	public void run() {
+		while (running) {
+			try {
+				Object event = eventQueue.poll(5, TimeUnit.SECONDS);
+				if (event != null) {
+					logger.debug("Processing Event: [{}]", event.getClass().getCanonicalName());
+					eventBus.post(event);
+				}
+			} catch (InterruptedException ex) {
+				logger.error("Error on Processing Event: [{}]", ex.getMessage());
+				Thread.currentThread().interrupt();
+			}
+		}
+	}
 }

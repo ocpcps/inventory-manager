@@ -38,9 +38,6 @@ public abstract class BasicResponse<T> implements IResponse<T> {
         }
         return className;
     }
-    
-    
-    
 
     public BasicResponse(T obj) {
         this.setPayLoad(obj);

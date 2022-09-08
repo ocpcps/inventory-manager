@@ -44,14 +44,12 @@ public class DomainSession {
     private DomainManager domainManager;
 
     public DeleteDomainResponse deleteDomain(DeleteDomainRequest request) throws DomainNotFoundException {
-        DeleteDomainResponse response = new DeleteDomainResponse(domainManager.deleteDomain(request.getPayLoad()));
-        return response;
+        return new DeleteDomainResponse(domainManager.deleteDomain(request.getPayLoad()));
     }
 
     public CreateDomainResponse createDomain(CreateDomainRequest domainRequest) throws DomainAlreadyExistsException, GenericException {
         try {
-            CreateDomainResponse response = new CreateDomainResponse(this.domainManager.createDomain(domainRequest.getPayLoad()));
-            return response;
+            return new CreateDomainResponse(this.domainManager.createDomain(domainRequest.getPayLoad()));
         } catch (DomainAlreadyExistsException ex) {
             throw ex;
         } catch (Exception ex) {
@@ -60,16 +58,14 @@ public class DomainSession {
     }
 
     public GetDomainsResponse getAllDomains() {
-        GetDomainsResponse response = new GetDomainsResponse(this.domainManager.getAllDomains());
-        return response;
+        return new GetDomainsResponse(this.domainManager.getAllDomains());
     }
 
     public DomainResponse getDomain(String domainName) throws DomainNotFoundException, InvalidRequestException {
         if (domainName == null) {
             throw new InvalidRequestException("domainName cannot be null");
         }
-        DomainResponse response = new DomainResponse(domainManager.getDomain(domainName));
-        return response;
+        return new DomainResponse(domainManager.getDomain(domainName));
     }
 
 }
