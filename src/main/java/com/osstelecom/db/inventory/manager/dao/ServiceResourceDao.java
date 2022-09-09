@@ -17,6 +17,12 @@
  */
 package com.osstelecom.db.inventory.manager.dao;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.stereotype.Component;
+
 import com.arangodb.ArangoCollection;
 import com.arangodb.entity.DocumentCreateEntity;
 import com.arangodb.entity.DocumentDeleteEntity;
@@ -27,28 +33,46 @@ import com.arangodb.model.DocumentDeleteOptions;
 import com.arangodb.model.DocumentUpdateOptions;
 import com.arangodb.model.OverwriteMode;
 import com.osstelecom.db.inventory.graph.arango.GraphList;
-import com.osstelecom.db.inventory.manager.dto.DomainDTO;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
+import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ServiceResource;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 31.08.2022
  */
-@Service
+@Component
 public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
 
-    @Autowired
-    private ArangoDao arangoDao;
+    public GraphList<ServiceResource> findUpperResources(ServiceResource resource) throws ArangoDaoException {
+        try {
+            Map<String, Object> bindVars = new HashMap<>();
+            String aql = " for doc in   " + resource.getDomain().getServices();
+            aql += " filter is_array ( doc.dependencies ) ";
+            aql += " for dep in doc.dependencies ";
+            
+            aql += " filter dep.domainName == @domainName";
+            bindVars.put("domainName", resource.getDomain().getDomainName());
+            
+            if (resource.getId() != null) {
+                aql += " and dep._id == @_id";
+                bindVars.put("_id", resource.getId());
+            }
+            if (resource.getKey() != null) {            
+                aql += " and dep._key == @_key";
+                bindVars.put("_key", resource.getKey());
+            }
+            
+            aql += " return doc";
+            
+            return this.query(aql, bindVars, ServiceResource.class, this.getDb());
+        } catch (Exception ex) {
+            throw new ArangoDaoException(ex);
+        }
+    }
 
     @Override
     public ServiceResource findResource(ServiceResource resource) throws ArangoDaoException, ResourceNotFoundException {
@@ -71,12 +95,7 @@ public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
 
             bindVars.put("domainName", resource.getDomain().getDomainName());
 
-            if (resource.getId() != null) {
-                bindVars.put("_id", resource.getId());
-            }
-            if (resource.getUid() != null) {
-                bindVars.put("_key", resource.getUid());
-            }
+           
 
             if (resource.getName() != null) {
                 bindVars.put("name", resource.getName());
@@ -109,7 +128,7 @@ public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
             //
             aql = this.buildAqlFromBindings(aql, bindVars, true);
 
-            GraphList<ServiceResource> result = this.query(aql, bindVars, ServiceResource.class, this.arangoDao.getDb());
+            GraphList<ServiceResource> result = this.query(aql, bindVars, ServiceResource.class, this.getDb());
             if (result.isEmpty()) {
                 ResourceNotFoundException ex = new ResourceNotFoundException("Resource Not Found");
                 //
@@ -135,7 +154,7 @@ public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
         // A complexidade de validação dos requistos do dado deve ter sido feita na dao antes de chegar aqui.
         //
         try {
-            return this.arangoDao.getDb().collection(resource.getDomain().getServices()).insertDocument(resource, new DocumentCreateOptions().returnNew(true).returnOld(true));
+            return this.getDb().collection(resource.getDomain().getServices()).insertDocument(resource, new DocumentCreateOptions().returnNew(true).returnOld(true));
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         } finally {
@@ -152,7 +171,7 @@ public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
         //
 
         try {
-            return this.arangoDao.getDb().collection(resource.getDomain().getServices()).insertDocument(resource, new DocumentCreateOptions().overwriteMode(OverwriteMode.update).mergeObjects(true).returnNew(true).returnOld(true));
+            return this.getDb().collection(resource.getDomain().getServices()).insertDocument(resource, new DocumentCreateOptions().overwriteMode(OverwriteMode.update).mergeObjects(true).returnNew(true).returnOld(true));
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         } finally {
@@ -168,7 +187,7 @@ public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
         // A complexidade de validação dos requistos do dado deve ter sido feita na dao antes de chegar aqui.
         //
         try {
-            return this.arangoDao.getDb().collection(resource.getDomain().getServices()).updateDocument(resource.getUid(), resource, new DocumentUpdateOptions().returnNew(true).returnOld(true).keepNull(false).waitForSync(false), ServiceResource.class);
+            return this.getDb().collection(resource.getDomain().getServices()).updateDocument(resource.getKey(), resource, new DocumentUpdateOptions().returnNew(true).returnOld(true).keepNull(false).waitForSync(false), ServiceResource.class);
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         } finally {
@@ -179,9 +198,9 @@ public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
     }
 
     @Override
-    public MultiDocumentEntity<DocumentUpdateEntity<ServiceResource>> updateResources(List<ServiceResource> resources, DomainDTO domain) throws ArangoDaoException {
+    public MultiDocumentEntity<DocumentUpdateEntity<ServiceResource>> updateResources(List<ServiceResource> resources, Domain domain) throws ArangoDaoException {
         try {
-            ArangoCollection connectionCollection = this.arangoDao.getDb().collection(domain.getServices());
+            ArangoCollection connectionCollection = this.getDb().collection(domain.getServices());
             return connectionCollection.updateDocuments(resources, new DocumentUpdateOptions().returnNew(true).returnOld(true).keepNull(false).mergeObjects(false), ServiceResource.class);
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
@@ -191,40 +210,39 @@ public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
     @Override
     public DocumentDeleteEntity<ManagedResource> deleteResource(ServiceResource resource) throws ArangoDaoException {
         try {
-            return this.arangoDao.getDb().collection(resource.getDomain().getServices()).deleteDocument(resource.getId(), ManagedResource.class, new DocumentDeleteOptions().returnOld(true));
+            return this.getDb().collection(resource.getDomain().getServices()).deleteDocument(resource.getId(), ManagedResource.class, new DocumentDeleteOptions().returnOld(true));
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         }
     }
 
     @Override
-    public GraphList<ServiceResource> findResourcesBySchemaName(String attributeSchemaName, DomainDTO domain) throws ArangoDaoException {
+    public GraphList<ServiceResource> findResourcesBySchemaName(String attributeSchemaName, Domain domain) throws ArangoDaoException {
         try {
             String aql = "for doc in " + domain.getServices() + "filter doc.attributeSchemaName = @attributeSchemaName return doc";
             Map<String, Object> bindVars = new HashMap<>();
 
             bindVars.put("attributeSchemaName", attributeSchemaName);
-            return this.query(aql, bindVars, ServiceResource.class, this.arangoDao.getDb());
+            return this.query(aql, bindVars, ServiceResource.class, this.getDb());
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         }
     }
 
     @Override
-    public GraphList<ServiceResource> findResourcesByClassName(String className, DomainDTO domain) throws ArangoDaoException {
+    public GraphList<ServiceResource> findResourcesByClassName(String className, Domain domain) throws ArangoDaoException {
         try {
             String aql = "for doc in " + domain.getServices() + " filter doc.className = @className return doc";
             Map<String, Object> bindVars = new HashMap<>();
-            //bindVars.put("collection", domain.getNodes());
             bindVars.put("attributeSchemaName", className);
-            return this.query(aql, bindVars, ServiceResource.class, this.arangoDao.getDb());
+            return this.query(aql, bindVars, ServiceResource.class, this.getDb());
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         }
     }
 
     @Override
-    public GraphList<ServiceResource> findResourceByFilter(String filter, Map<String, Object> bindVars, DomainDTO domain) throws ArangoDaoException {
+    public GraphList<ServiceResource> findResourceByFilter(String filter, Map<String, Object> bindVars, Domain domain) throws ArangoDaoException {
         try {
             String aql = " for doc in   " + domain.getServices();
             aql += " filter doc.domainName == @domainName ";
@@ -234,7 +252,7 @@ public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
                 aql += " and " + filter;
             }
             aql += " return doc";
-            return this.query(aql, bindVars, ServiceResource.class, this.arangoDao.getDb());
+            return this.query(aql, bindVars, ServiceResource.class, this.getDb());
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         }

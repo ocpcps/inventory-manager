@@ -224,7 +224,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
      *
      * @return
      */
-    public Map getCachedSchemas() {
+    public Map<String,ResourceSchemaModel> getCachedSchemas() {
         return this.schemaCache.asMap();
     }
 

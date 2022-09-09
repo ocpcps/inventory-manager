@@ -18,7 +18,6 @@
 package com.osstelecom.db.inventory.manager.events;
 
 import com.osstelecom.db.inventory.manager.resources.ConsumableMetric;
-import java.util.Date;
 
 /**
  * @todo: Verificar

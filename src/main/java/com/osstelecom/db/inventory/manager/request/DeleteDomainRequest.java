@@ -17,17 +17,17 @@
  */
 package com.osstelecom.db.inventory.manager.request;
 
-import com.osstelecom.db.inventory.manager.dto.DomainDTO;
+import com.osstelecom.db.inventory.manager.resources.Domain;
 
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 14.08.2022
  */
-public class DeleteDomainRequest extends BasicRequest<DomainDTO> {
+public class DeleteDomainRequest extends BasicRequest<Domain> {
     
     public DeleteDomainRequest(String domainName) {
-        DomainDTO domain = new DomainDTO();
+        Domain domain = new Domain();
         domain.setDomainName(domainName);
         this.setPayLoad(domain);
     }

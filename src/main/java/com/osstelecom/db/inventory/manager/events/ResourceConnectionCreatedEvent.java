@@ -17,7 +17,6 @@
  */
 package com.osstelecom.db.inventory.manager.events;
 
-import com.osstelecom.db.inventory.manager.resources.BasicResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 
 /**

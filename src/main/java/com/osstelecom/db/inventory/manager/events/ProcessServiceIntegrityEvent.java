@@ -15,44 +15,19 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package com.osstelecom.db.inventory.manager.operation;
+package com.osstelecom.db.inventory.manager.events;
+
+import com.osstelecom.db.inventory.manager.resources.ServiceResource;
 
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
- * @created 30.08.2022n
+ * @created 23.08.2022
  */
-public abstract class AbstractManager<T> {
+public class ProcessServiceIntegrityEvent extends BasicEvent<ServiceResource> {
 
-    /**
-     * Retrieves an Resource.
-     *
-     * @param resource
-     * @return
-     */
-    public abstract T get(T resource);
+    public ProcessServiceIntegrityEvent(ServiceResource resource) {
+        super(resource);
+    }
 
-    /**
-     * Deletes a Resource
-     *
-     * @param resource
-     * @return
-     */
-    public abstract T delete(T resource);
-
-    /**
-     * Creates a Resource
-     *
-     * @param resource
-     * @return
-     */
-    public abstract T create(T resource);
-
-    /**
-     * Updates a Resource
-     *
-     * @param resource
-     * @return
-     */
-    public abstract T update(T resource);
 }

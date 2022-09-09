@@ -17,16 +17,16 @@
  */
 package com.osstelecom.db.inventory.manager.response;
 
-import com.osstelecom.db.inventory.manager.dto.DomainDTO;
+import com.osstelecom.db.inventory.manager.resources.Domain;
 
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 14.08.2022
  */
-public class DeleteDomainResponse extends BasicResponse<DomainDTO> {
+public class DeleteDomainResponse extends BasicResponse<Domain> {
     
-    public DeleteDomainResponse(DomainDTO obj) {
+    public DeleteDomainResponse(Domain obj) {
         super(obj);
     }
     

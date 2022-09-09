@@ -7,15 +7,12 @@ package com.osstelecom.db.inventory.topology.connection;
 
 import com.osstelecom.db.inventory.topology.node.INetworkNode;
 import com.osstelecom.db.inventory.topology.ITopology;
-import java.util.UUID;
 
 /**
  *
  * @author Nishisan
  */
 public class DefaultNetworkConnection extends NetworkConnection {
-
-    private String connectionName = "";
 
     public DefaultNetworkConnection() {
     }

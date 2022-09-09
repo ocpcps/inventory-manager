@@ -15,11 +15,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package com.osstelecom.db.inventory.manager.dto;
+package com.osstelecom.db.inventory.manager.resources;
 
 import com.arangodb.entity.DocumentField;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  *
@@ -27,7 +26,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @created 15.12.2021
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class DomainDTO {
+public class Domain {
 
     @DocumentField(DocumentField.Type.KEY)
     private String domainName;

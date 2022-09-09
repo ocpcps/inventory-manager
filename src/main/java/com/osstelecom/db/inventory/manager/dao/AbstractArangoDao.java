@@ -17,6 +17,17 @@
  */
 package com.osstelecom.db.inventory.manager.dao;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import com.arangodb.ArangoCollection;
+import com.arangodb.ArangoCursor;
 import com.arangodb.ArangoDatabase;
 import com.arangodb.entity.DocumentCreateEntity;
 import com.arangodb.entity.DocumentDeleteEntity;
@@ -24,15 +35,12 @@ import com.arangodb.entity.DocumentUpdateEntity;
 import com.arangodb.entity.MultiDocumentEntity;
 import com.arangodb.model.AqlQueryOptions;
 import com.osstelecom.db.inventory.graph.arango.GraphList;
-import com.osstelecom.db.inventory.manager.dto.DomainDTO;
+import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.BasicException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.resources.BasicResource;
+import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
-import java.util.List;
-import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -42,9 +50,9 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class AbstractArangoDao<T extends BasicResource> {
 
-    //
-    // Precisa de logger aqui mesmo ? ou migrar para implementação ? 
-    //
+    @Autowired
+    private ArangoDatabase arangoDatabase;
+
     protected Logger logger = LoggerFactory.getLogger(AbstractArangoDao.class);
 
     public abstract T findResource(T resource) throws BasicException;
@@ -55,18 +63,20 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
 
     public abstract DocumentUpdateEntity<T> updateResource(T resource) throws BasicException;
 
-    public abstract MultiDocumentEntity<DocumentUpdateEntity<T>> updateResources(List<T> resources, DomainDTO domain) throws BasicException;
+    public abstract MultiDocumentEntity<DocumentUpdateEntity<T>> updateResources(List<T> resources, Domain domain)
+            throws BasicException;
 
     public abstract DocumentDeleteEntity<ManagedResource> deleteResource(T resource) throws BasicException;
 
-    public abstract GraphList<T> findResourcesBySchemaName(String schemaName, DomainDTO domain) throws BasicException;
+    public abstract GraphList<T> findResourcesBySchemaName(String schemaName, Domain domain) throws BasicException;
 
-    public abstract GraphList<T> findResourcesByClassName(String className, DomainDTO domain) throws BasicException;
+    public abstract GraphList<T> findResourcesByClassName(String className, Domain domain) throws BasicException;
 
-    public abstract GraphList<T> findResourceByFilter(String aql, Map<String, Object> bindVars, DomainDTO domain) throws BasicException;
+    public abstract GraphList<T> findResourceByFilter(String aql, Map<String, Object> bindVars, Domain domain)
+            throws BasicException;
 
     protected String buildAqlFromBindings(String aql, Map<String, Object> bindVars, boolean appendReturn) {
-        StringBuffer buffer = new StringBuffer(aql);
+        StringBuilder buffer = new StringBuilder(aql);
         bindVars.forEach((k, v) -> {
             if (!k.equalsIgnoreCase("domainName")) {
                 //
@@ -96,13 +106,15 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
      * @throws
      * com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException
      */
-    public GraphList<T> query(String aql, Map<String, Object> bindVars, Class<T> type, ArangoDatabase db) throws ResourceNotFoundException {
+    public GraphList<T> query(String aql, Map<String, Object> bindVars, Class<T> type, ArangoDatabase db)
+            throws ResourceNotFoundException {
         logger.info("(query) RUNNING: AQL:[{}]", aql);
         bindVars.forEach((k, v) -> {
             logger.info("\t  [@{}]=[{}]", k, v);
 
         });
-        GraphList<T> result = new GraphList<>(db.query(aql, bindVars, new AqlQueryOptions().fullCount(true).count(true), type));
+        GraphList<T> result = new GraphList<>(
+                db.query(aql, bindVars, new AqlQueryOptions().fullCount(true).count(true), type));
         if (result.isEmpty()) {
             ResourceNotFoundException ex = new ResourceNotFoundException();
             //
@@ -111,6 +123,25 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
             ex.addDetails("AQL", aql);
             ex.addDetails("params", bindVars);
             throw ex;
+        }
+        return result;
+    }
+
+    public ArangoDatabase getDb() {
+        return this.arangoDatabase;
+    }
+
+    public ArangoCollection getCollectionByName(String name) {
+        return arangoDatabase.collection(name);
+    }
+
+    public List<T> getListFromCursorType(ArangoCursor<T> cursor) throws ArangoDaoException {
+        List<T> result = new ArrayList<>();
+        cursor.forEachRemaining(result::add);
+        try {
+            cursor.close();
+        } catch (IOException ex) {
+            throw new ArangoDaoException("Failed to Close Cursor:", ex);
         }
         return result;
     }

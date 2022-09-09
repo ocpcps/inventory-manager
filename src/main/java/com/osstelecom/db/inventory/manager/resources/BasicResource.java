@@ -20,7 +20,6 @@ import com.arangodb.entity.DocumentField;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.osstelecom.db.inventory.manager.dto.DomainDTO;
 import com.osstelecom.db.inventory.manager.resources.exception.ConnectionAlreadyExistsException;
 import com.osstelecom.db.inventory.manager.resources.exception.ConnectionNotFoundException;
 import com.osstelecom.db.inventory.manager.resources.exception.MetricConstraintException;
@@ -29,6 +28,7 @@ import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import org.bson.codecs.pojo.annotations.BsonIgnore;
 
@@ -44,7 +44,7 @@ public class BasicResource {
     /**
      * Mandatory
      */
-    private DomainDTO domain;
+    private Domain domain;
 
     /**
      * Mandatory
@@ -101,7 +101,7 @@ public class BasicResource {
     private String structureId;
     private ArrayList<String> tags;
     @DocumentField(DocumentField.Type.KEY)
-    private String uid;
+    private String key;
     @DocumentField(DocumentField.Type.ID)
     private String id;
 
@@ -110,19 +110,19 @@ public class BasicResource {
      */
     private String className = null;
 
-    private ConcurrentHashMap<String, Object> attributes = new ConcurrentHashMap<>();
+    private Map<String, Object> attributes = new ConcurrentHashMap<>();
     /**
      * Cuidado com os campos a seguir!
      */
     @JsonIgnore
     @BsonIgnore
-    private ConcurrentHashMap<String, ResourceConnection> connections = new ConcurrentHashMap<>();
+    private Map<String, ResourceConnection> connections = new ConcurrentHashMap<>();
     @JsonIgnore
     @BsonIgnore
-    private ConcurrentHashMap<String, ResourceConnection> connectionCache = new ConcurrentHashMap<>();
+    private Map<String, ResourceConnection> connectionCache = new ConcurrentHashMap<>();
     @JsonIgnore
     @BsonIgnore
-    private ConcurrentHashMap<String, Object> attachments = new ConcurrentHashMap<>();
+    private Map<String, Object> attachments = new ConcurrentHashMap<>();
 
     private Long atomId = 0L;
     private ResourceSchemaModel schemaModel;
@@ -159,7 +159,7 @@ public class BasicResource {
     /**
      * @param domain the domain to set
      */
-    public void setDomain(DomainDTO domain) {
+    public void setDomain(Domain domain) {
         this.domain = domain;
         if (domain != null) {
             this.domainName = domain.getDomainName();
@@ -169,7 +169,7 @@ public class BasicResource {
     /**
      * @return the domain
      */
-    public DomainDTO getDomain() {
+    public Domain getDomain() {
         return domain;
     }
 
@@ -204,14 +204,14 @@ public class BasicResource {
     /**
      * @return the connectionCache
      */
-    public ConcurrentHashMap<String, ResourceConnection> getConnectionCache() {
+    public Map<String, ResourceConnection> getConnectionCache() {
         return connectionCache;
     }
 
     /**
      * @param connectionCache the connectionCache to set
      */
-    public void setConnectionCache(ConcurrentHashMap<String, ResourceConnection> connectionCache) {
+    public void setConnectionCache(Map<String, ResourceConnection> connectionCache) {
         this.connectionCache = connectionCache;
     }
 
@@ -226,30 +226,30 @@ public class BasicResource {
         this.atomId = id;
     }
 
-    public BasicResource(String attributeSchema, DomainDTO domain) {
+    public BasicResource(String attributeSchema, Domain domain) {
         this.attributeSchemaName = attributeSchema;
         this.domain = domain;
     }
 
-    public BasicResource(DomainDTO domain) {
+    public BasicResource(Domain domain) {
         this.attributeSchemaName = "default";
         this.domain = domain;
     }
 
-    public BasicResource(DomainDTO domain, String uid, String id) {
+    public BasicResource(Domain domain, String key, String id) {
         this.domain = domain;
-        this.uid = uid;
+        this.key = key;
         this.id = id;
     }
 
-    public BasicResource(DomainDTO domain, String name, String nodeAddress, String className) {
+    public BasicResource(Domain domain, String name, String nodeAddress, String className) {
         this.domain = domain;
         this.name = name;
         this.nodeAddress = nodeAddress;
         this.className = className;
     }
 
-    public BasicResource(DomainDTO domain, String id) {
+    public BasicResource(Domain domain, String id) {
         this.domain = domain;
         this.id = id;
     }
@@ -278,18 +278,18 @@ public class BasicResource {
 
         if (getConnectionCache().containsKey(connectionCacheKey)) {
             ResourceConnection previousConnection = getConnectionCache().get(connectionCacheKey);
-            throw new ConnectionAlreadyExistsException("This Object: [" + this.getUid() + "] already know connection with id: [" + previousConnection.getUid() + "] From: [" + previousConnection.getFrom() + "] To: [" + previousConnection.getTo() + "]");
+            throw new ConnectionAlreadyExistsException("This Object: [" + this.getKey() + "] already know connection with id: [" + previousConnection.getKey() + "] From: [" + previousConnection.getFrom() + "] To: [" + previousConnection.getTo() + "]");
         } else {
             getConnectionCache().put(connectionCacheKey, connection);
         }
 
-        if (!connections.containsKey(connection.getUid())) {
+        if (!connections.containsKey(connection.getKey())) {
             //
             // Varre se a conexão já existe..
             //
-            this.getConnections().put(connection.getUid(), connection);
+            this.getConnections().put(connection.getKey(), connection);
         } else {
-            throw new ConnectionAlreadyExistsException("This Object: [" + this.getUid() + "] is Alredy Knows connection with id: [" + connection.getUid() + "]");
+            throw new ConnectionAlreadyExistsException("This Object: [" + this.getKey() + "] is Alredy Knows connection with id: [" + connection.getKey() + "]");
         }
 
         //
@@ -298,7 +298,7 @@ public class BasicResource {
         if (connection.getTo() != null && connection.getTo().getIsConsumer() && connection.getFrom().getIsConsumable().booleanValue()) {
 
             if (connection.getFrom().getConsumableMetric().getMetricValue() - connection.getTo().getConsumerMetric().getUnitValue() < connection.getFrom().getConsumableMetric().getMinValue()) {
-                throw new NoResourcesAvailableException("No Resouces Available on: " + connection.getFrom().getUid() + " Current: [" + connection.getFrom().getConsumableMetric().getMetricValue() + "] Needed: [" + connection.getTo().getConsumerMetric().getUnitValue() + "]");
+                throw new NoResourcesAvailableException("No Resouces Available on: " + connection.getFrom().getKey() + " Current: [" + connection.getFrom().getConsumableMetric().getMetricValue() + "] Needed: [" + connection.getTo().getConsumerMetric().getUnitValue() + "]");
             }
 
             //
@@ -316,10 +316,10 @@ public class BasicResource {
      * @throws ConnectionNotFoundException
      */
     public void notifyDisconnection(ResourceConnection connection) throws ConnectionNotFoundException {
-        if (getConnections().containsKey(connection.getUid())) {
-            getConnections().remove(connection.getUid());
+        if (getConnections().containsKey(connection.getKey())) {
+            getConnections().remove(connection.getKey());
         } else {
-            throw new ConnectionNotFoundException("This Object: [" + this.getUid() + "] Does not know connection with id: [" + connection.getUid() + "]");
+            throw new ConnectionNotFoundException("This Object: [" + this.getKey() + "] Does not know connection with id: [" + connection.getKey() + "]");
         }
     }
 
@@ -516,43 +516,42 @@ public class BasicResource {
     /**
      * @return the _id
      */
-    public String getUid() {
-        return this.uid;
+    public String getKey() {
+        return this.key;
     }
 
     /**
      * @param _id the _id to set
      */
-    public void setUid(String id) {
-        this.uid = id;
-//        this.id = id;
+    public void setKey(String key) {
+        this.key = key;
     }
 
     /**
      * @return the attributes
      */
-    public ConcurrentHashMap<String, Object> getAttributes() {
+    public Map<String, Object> getAttributes() {
         return attributes;
     }
 
     /**
      * @param attributes the attributes to set
      */
-    public void setAttributes(ConcurrentHashMap<String, Object> attributes) {
+    public void setAttributes(Map<String, Object> attributes) {
         this.attributes = attributes;
     }
 
     /**
      * @return the connections
      */
-    public ConcurrentHashMap<String, ResourceConnection> getConnections() {
+    public Map<String, ResourceConnection> getConnections() {
         return connections;
     }
 
     /**
      * @param connections the connections to set
      */
-    public void setConnections(ConcurrentHashMap<String, ResourceConnection> connections) {
+    public void setConnections(Map<String, ResourceConnection> connections) {
         this.connections = connections;
     }
 
@@ -666,14 +665,14 @@ public class BasicResource {
     /**
      * @return the attachments
      */
-    public ConcurrentHashMap<String, Object> getAttachments() {
+    public Map<String, Object> getAttachments() {
         return attachments;
     }
 
     /**
      * @param attachments the attachments to set
      */
-    public void setAttachments(ConcurrentHashMap<String, Object> attachments) {
+    public void setAttachments(Map<String, Object> attachments) {
         this.attachments = attachments;
     }
 

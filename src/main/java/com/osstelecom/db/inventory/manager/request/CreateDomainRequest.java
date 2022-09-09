@@ -17,14 +17,14 @@
  */
 package com.osstelecom.db.inventory.manager.request;
 
-import com.osstelecom.db.inventory.manager.dto.DomainDTO;
+import com.osstelecom.db.inventory.manager.resources.Domain;
 
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 15.12.2021
  */
-public class CreateDomainRequest extends BasicRequest<DomainDTO> {
+public class CreateDomainRequest extends BasicRequest<Domain> {
 
 
 }
