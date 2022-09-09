@@ -106,7 +106,7 @@ public class DomainManager {
     private ConcurrentHashMap<String, TimerDto> timers = new ConcurrentHashMap<>();
 
     @Autowired
-    private ReentrantLock lockManager;
+    private LockManager lockManager;
 
     @Autowired
     private DynamicRuleSession dynamicRuleSession;
@@ -276,7 +276,6 @@ public class DomainManager {
             DocumentCreateEntity<ResourceLocation> result = arangoDao.createResourceLocation(resource);
             resource.setUid(result.getId());
             resource.setRevisionId(result.getRev());
-            lockManager.unlock();
             //
             // Aqui de Fato Criou o ResourceLocation
             //

@@ -52,7 +52,7 @@ public class ServiceManager extends Manager {
     private EventManagerListener eventManager;
 
     @Autowired
-    private ReentrantLock lockManager;
+    private LockManager lockManager;
 
     /**
      * Retrieves a domain by name

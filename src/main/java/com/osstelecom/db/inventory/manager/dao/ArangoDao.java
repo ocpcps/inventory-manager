@@ -28,8 +28,10 @@ import com.arangodb.entity.CollectionType;
 import com.arangodb.entity.DocumentCreateEntity;
 import com.arangodb.entity.EdgeDefinition;
 import com.arangodb.entity.GraphEntity;
+import com.arangodb.model.AqlQueryOptions;
 import com.arangodb.model.CollectionCreateOptions;
 import com.arangodb.model.PersistentIndexOptions;
+import com.osstelecom.db.inventory.graph.arango.GraphList;
 import com.osstelecom.db.inventory.manager.configuration.ArangoDBConfiguration;
 import com.osstelecom.db.inventory.manager.configuration.ConfigurationManager;
 import com.osstelecom.db.inventory.manager.configuration.InventoryConfiguration;
@@ -279,7 +281,6 @@ public class ArangoDao {
 //        return this.database.collection(resource.getDomain().getCircuits()).updateDocument(resource.getUid(), resource,
 //                new DocumentUpdateOptions().returnNew(true).keepNull(false).returnOld(true).mergeObjects(false), CircuitResource.class);
 //    }
-
     /**
      * Cria um Graph
      *
@@ -332,7 +333,6 @@ public class ArangoDao {
 //            throw new GenericException(ex.getMessage());
 //        }
 //    }
-
     /**
      * Pesquisa o recurso com base no name, e nodeAddress, dando sempre
      * preferencia para o nodeaddress ao nome.
@@ -382,14 +382,13 @@ public class ArangoDao {
             logger.info("\t  [@" + k + "]=[" + v + "]");
 
         });
-        ArangoCursor<ResourceLocation> cursor = this.database.query(aql, bindVars, ResourceLocation.class);
+        ArangoCursor<ResourceLocation> cursor = this.database.query(aql, bindVars,new AqlQueryOptions().fullCount(true).count(true), ResourceLocation.class);
 
-        ArrayList<ResourceLocation> locations = new ArrayList<>();
+        GraphList<ResourceLocation> locations = new GraphList<>(cursor);
 
-        locations.addAll(getListFromCursorType(cursor));
-
+//        locations.addAll(getListFromCursorType(cursor));
         if (!locations.isEmpty()) {
-            return locations.get(0);
+            return locations.getOne();
         }
 
         logger.warn("Resource with name:[{}] nodeAddress:[{}] className:[{}] was not found..", name, nodeAddress, className);
@@ -398,7 +397,7 @@ public class ArangoDao {
         }
         throw new ResourceNotFoundException("2 Resource With Node Address:[" + nodeAddress + "] and Class: [" + className + "] Not Found in Domain:" + domain.getDomainName());
     }
-    
+
 //    /**
 //     * Find Circuit Resource
 //     *
@@ -451,7 +450,6 @@ public class ArangoDao {
 //                resource.getName(), resource.getNodeAddress(), resource.getClassName());
 //        throw new ResourceNotFoundException("4 Resource With Name:[" + resource.getName() + "] and Class: [" + resource.getClassName() + "] Not Found in Domain:" + resource.getDomainName());
 //    }
-
 //    /**
 //     * Find Circuit Resource by ID
 //     *
@@ -490,5 +488,4 @@ public class ArangoDao {
 //        logger.warn("Resource with ID:{}] was not found..", id);
 //        throw new ResourceNotFoundException("4 Resource With ID:[" + id + "]  Not Found in Domain:" + domain.getDomainName());
 //    }
-
 };
