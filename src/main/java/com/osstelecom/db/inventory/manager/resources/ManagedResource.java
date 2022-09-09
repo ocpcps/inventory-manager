@@ -17,7 +17,6 @@
 package com.osstelecom.db.inventory.manager.resources;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.osstelecom.db.inventory.manager.dto.DomainDTO;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
@@ -29,17 +28,17 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Schema(description = "This Represents a Managed Object (node) in the dependecies network")
 public class ManagedResource extends BasicResource {
 
-    public ManagedResource(String attributeSchema, DomainDTO domain) {
+    public ManagedResource(String attributeSchema, Domain domain) {
         super(attributeSchema, domain);
     }
 
-    public ManagedResource(DomainDTO domain, String uid, String id) {
+    public ManagedResource(Domain domain, String uid, String id) {
         super(domain, uid, id);
         this.setClassName(null);
         this.setAttributeSchemaName(null);
     }
 
-    public ManagedResource(DomainDTO domain, String id) {
+    public ManagedResource(Domain domain, String id) {
         super(domain, id);
         //
         // Prioritize ID
@@ -48,11 +47,11 @@ public class ManagedResource extends BasicResource {
         this.setAttributeSchemaName(null);
     }
 
-    public ManagedResource(DomainDTO domain) {
+    public ManagedResource(Domain domain) {
         super(domain);
     }
 
-    public ManagedResource(DomainDTO domain, String name, String nodeAddress, String className) {
+    public ManagedResource(Domain domain, String name, String nodeAddress, String className) {
         super(domain, name, nodeAddress, className);
         //
         // Prioritize name,nodeAddress

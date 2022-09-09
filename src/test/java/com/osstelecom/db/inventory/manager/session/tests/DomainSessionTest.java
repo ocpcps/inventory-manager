@@ -17,26 +17,28 @@
  */
 package com.osstelecom.db.inventory.manager.session.tests;
 
-import com.osstelecom.db.inventory.manager.dto.DomainDTO;
+import static org.assertj.core.api.Assertions.from;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
+
+import org.junit.Test;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Order;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+
 import com.osstelecom.db.inventory.manager.exception.DomainAlreadyExistsException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
 import com.osstelecom.db.inventory.manager.request.CreateDomainRequest;
 import com.osstelecom.db.inventory.manager.request.DeleteDomainRequest;
+import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.response.CreateDomainResponse;
 import com.osstelecom.db.inventory.manager.response.DeleteDomainResponse;
 import com.osstelecom.db.inventory.manager.response.GetDomainsResponse;
 import com.osstelecom.db.inventory.manager.session.DomainSession;
-import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.assertj.core.api.Assertions.from;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
-import org.junit.Test;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Order;
-import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 /**
  * Testes de Unidade do négocio de criação de Domains..
@@ -68,7 +70,7 @@ public class DomainSessionTest {
     @Order(2)
     public void createDomainTest() throws DomainAlreadyExistsException, GenericException {
         CreateDomainRequest createDomainRequest = new CreateDomainRequest();
-        createDomainRequest.setPayLoad(new DomainDTO());
+        createDomainRequest.setPayLoad(new Domain());
         createDomainRequest.getPayLoad().setDomainName("AutomatedTest");
         CreateDomainResponse response = domainSession.createDomain(createDomainRequest);
         assertThat(response)

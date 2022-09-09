@@ -38,7 +38,6 @@ import com.osstelecom.db.inventory.graph.arango.GraphList;
 import com.osstelecom.db.inventory.manager.dao.CircuitResourceDao;
 import com.osstelecom.db.inventory.manager.dao.ManagedResourceDao;
 import com.osstelecom.db.inventory.manager.dao.ResourceConnectionDao;
-import com.osstelecom.db.inventory.manager.dto.DomainDTO;
 import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import com.osstelecom.db.inventory.manager.events.ManagedResourceCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.ManagedResourceUpdatedEvent;
@@ -53,6 +52,7 @@ import com.osstelecom.db.inventory.manager.exception.SchemaNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.ScriptRuleException;
 import com.osstelecom.db.inventory.manager.listeners.EventManagerListener;
 import com.osstelecom.db.inventory.manager.resources.CircuitResource;
+import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstraintViolationException;
 import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
@@ -123,8 +123,8 @@ public class ManagedResourceManager extends Manager {
             //
             // START - Subir as validações para session
             //
-            if (resource.getUid() == null) {
-                resource.setUid(getUUID());
+            if (resource.getKey() == null) {
+                resource.setKey(getUUID());
             }
             resource.setAtomId(resource.getDomain().addAndGetId());
             ResourceSchemaModel schemaModel = schemaSession.loadSchema(resource.getAttributeSchemaName());
@@ -136,7 +136,7 @@ public class ManagedResourceManager extends Manager {
             //
             DocumentCreateEntity<ManagedResource> result = this.managedResourceDao.insertResource(resource);
             resource.setId(result.getId());
-            resource.setUid(result.getKey());
+            resource.setKey(result.getKey());
             resource.setRevisionId(result.getRev());
             //
             // Aqui criou o managed resource
@@ -229,7 +229,7 @@ public class ManagedResourceManager extends Manager {
 
                 this.resourceConnectionDao.findResourceByFilter(filter, bindVars, updatedResource.getDomain()).forEach((c) -> {
 
-                    if (c.getFrom().getUid().equals(updatedResource.getUid())) {
+                    if (c.getFrom().getKey().equals(updatedResource.getKey())) {
                         //
                         // Update from
                         //
@@ -239,7 +239,7 @@ public class ManagedResourceManager extends Manager {
                         // validando 
                         //
 
-                    } else if (c.getTo().getUid().equals(updatedResource.getUid())) {
+                    } else if (c.getTo().getKey().equals(updatedResource.getKey())) {
                         //
                         // Update to
                         //
@@ -292,10 +292,10 @@ public class ManagedResourceManager extends Manager {
                     for (String circuitId : relatedCircuits) {
                         try {
                             CircuitResource circuit = this.circuitResourceDao.findResource(new CircuitResource(updatedResource.getDomain(), circuitId));
-                            if (circuit.getaPoint().getId().equals(updatedResource.getUid())) {
+                            if (circuit.getaPoint().getId().equals(updatedResource.getKey())) {
                                 circuit.setaPoint(updatedResource);
                                 circuit = this.circuitResourceManager.updateCircuitResource(circuit);
-                            } else if (circuit.getzPoint().getId().equals(updatedResource.getUid())) {
+                            } else if (circuit.getzPoint().getId().equals(updatedResource.getKey())) {
                                 circuit.setzPoint(updatedResource);
                                 circuit = this.circuitResourceManager.updateCircuitResource(circuit);
                             }
@@ -334,7 +334,7 @@ public class ManagedResourceManager extends Manager {
     
 
     public GraphList<ManagedResource> getNodesByFilter(FilterDTO filter, String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
-        DomainDTO domain = domainManager.getDomain(domainName);
+        Domain domain = domainManager.getDomain(domainName);
         if (filter.getObjects().contains("nodes")) {
             Map<String, Object> bindVars = new HashMap<>();
 
@@ -352,7 +352,7 @@ public class ManagedResourceManager extends Manager {
 
     
 
-    public GraphList<ManagedResource> findManagedResourcesBySchemaName(ResourceSchemaModel model, DomainDTO domain) throws ResourceNotFoundException, ArangoDaoException {
+    public GraphList<ManagedResource> findManagedResourcesBySchemaName(ResourceSchemaModel model, Domain domain) throws ResourceNotFoundException, ArangoDaoException {
         return this.managedResourceDao.findResourcesBySchemaName(model.getSchemaName(), domain);
     }
 
@@ -373,7 +373,7 @@ public class ManagedResourceManager extends Manager {
          * shared between all domains so we need to check all Domains..
          */
 
-        for (DomainDTO domain : domainManager.getAllDomains()) {
+        for (Domain domain : domainManager.getAllDomains()) {
             //
             // Update the schema on each domain
             //
@@ -410,7 +410,7 @@ public class ManagedResourceManager extends Manager {
                     try {
                         this.managedResourceDao.updateResource(resource);
                     } catch (ArangoDaoException ex) {
-                        logger.error("Failed to Update resource:[{}]", resource.getUid(), ex);
+                        logger.error("Failed to Update resource:[{}]", resource.getKey(), ex);
                     }
                     if (totalProcessed.incrementAndGet() % 1000 == 0) {
                         logger.debug("Updated {} Records", totalProcessed.get());

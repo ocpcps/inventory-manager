@@ -16,13 +16,18 @@
  */
 package com.osstelecom.db.inventory.manager.resources;
 
-import com.osstelecom.db.inventory.manager.dto.DomainDTO;
 import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  */
+@JsonInclude(Include.NON_NULL)
 public class ServiceResource extends BasicResource {
 
     /**
@@ -36,11 +41,20 @@ public class ServiceResource extends BasicResource {
      */
     private List<CircuitResource> circuits;
 
-    public ServiceResource(String attributeSchema, DomainDTO domain) {
+    @Schema(description = "If true, indicates that the circuit has some broken connections")
+    private boolean degrated = false;
+    
+    @Schema(description = "If true, indicates that the circuit has some broken connections, and it is broken")
+    private boolean broken = false;
+    
+    @Schema(description = "The ID List of the broken connections")
+    private List<String> brokenResources;
+
+    public ServiceResource(String attributeSchema, Domain domain) {
         super(attributeSchema, domain);
     }
 
-    public ServiceResource(DomainDTO domain) {
+    public ServiceResource(Domain domain) {
         super(domain);
     }
 
@@ -67,4 +81,33 @@ public class ServiceResource extends BasicResource {
         this.circuits = circuits;
     }
 
+    public boolean getDegrated() {
+        return degrated;
+    }
+
+    public void setDegrated(Boolean degrated) {
+        this.degrated = degrated;
+    }
+
+    public boolean getBroken() {
+        return broken;
+    }
+
+    public void setBroken(boolean broken) {
+        this.broken = broken;
+    }
+
+    /**
+     * @return the brokenResources
+     */
+    public List<String> getBrokenResources() {
+        return brokenResources;
+    }
+
+    /**
+     * @param brokenResources the brokenResources to set
+     */
+    public void setBrokenResources(List<String> brokenResources) {
+        this.brokenResources = brokenResources;
+    }
 }

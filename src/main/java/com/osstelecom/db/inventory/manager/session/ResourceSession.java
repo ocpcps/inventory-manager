@@ -17,7 +17,11 @@
  */
 package com.osstelecom.db.inventory.manager.session;
 
-import com.osstelecom.db.inventory.manager.dto.DomainDTO;
+import java.util.Date;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
@@ -35,6 +39,7 @@ import com.osstelecom.db.inventory.manager.request.CreateResourceLocationRequest
 import com.osstelecom.db.inventory.manager.request.FilterRequest;
 import com.osstelecom.db.inventory.manager.request.FindManagedResourceRequest;
 import com.osstelecom.db.inventory.manager.request.PatchManagedResourceRequest;
+import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import com.osstelecom.db.inventory.manager.resources.ResourceLocation;
@@ -48,9 +53,6 @@ import com.osstelecom.db.inventory.manager.response.CreateResourceLocationRespon
 import com.osstelecom.db.inventory.manager.response.FilterResponse;
 import com.osstelecom.db.inventory.manager.response.FindManagedResourceResponse;
 import com.osstelecom.db.inventory.manager.response.PatchManagedResourceResponse;
-import java.util.Date;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
 /**
  *
@@ -145,13 +147,13 @@ public class ResourceSession {
             // Temos dois IDs podemos proesseguir com a validação por aqui
             //
             FindManagedResourceRequest fromResourceRequest = new FindManagedResourceRequest(request.getPayLoad().getFromId(), request.getRequestDomain());
-            DomainDTO fromDomain = this.domainManager.getDomain(fromResourceRequest.getRequestDomain());
+            Domain fromDomain = this.domainManager.getDomain(fromResourceRequest.getRequestDomain());
 
             fromResourceRequest.setRequestDomain(request.getRequestDomain());
             ManagedResource fromResource = manager.findManagedResource(new ManagedResource(fromDomain, fromResourceRequest.getResourceId()));
 
             FindManagedResourceRequest toResourceRequest = new FindManagedResourceRequest(request.getPayLoad().getToId(), request.getRequestDomain());
-            DomainDTO toDomain = this.domainManager.getDomain(toResourceRequest.getRequestDomain());
+            Domain toDomain = this.domainManager.getDomain(toResourceRequest.getRequestDomain());
             toResourceRequest.setRequestDomain(request.getRequestDomain());
             ManagedResource toResource = manager.findManagedResource(new ManagedResource(toDomain, toResourceRequest.getResourceId()));
 
@@ -162,7 +164,7 @@ public class ResourceSession {
             //
             // Valida se é uma conexão entre location e Resource por nodeAddress
             //
-            DomainDTO requestDomain = this.domainManager.getDomain(request.getRequestDomain());
+            Domain requestDomain = this.domainManager.getDomain(request.getRequestDomain());
             if (request.getPayLoad().getFromClassName().contains("location")) {
                 connection.setFrom(resourceLocationManager.findResourceLocation(request.getPayLoad().getFromName(), request.getPayLoad().getFromNodeAddress(), request.getPayLoad().getFromClassName(), request.getRequestDomain()));
             } else if (request.getPayLoad().getFromClassName().contains("resource")) {
@@ -217,8 +219,8 @@ public class ResourceSession {
             throw new InvalidRequestException("Field resourceId cannot be empty or null");
         } else {
             try {
-                DomainDTO domainDto = this.domainManager.getDomain(request.getRequestDomain());
-                return new FindManagedResourceResponse(this.manager.findManagedResource(new ManagedResource(domainDto, request.getResourceId())));
+                Domain domain = this.domainManager.getDomain(request.getRequestDomain());
+                return new FindManagedResourceResponse(this.manager.findManagedResource(new ManagedResource(domain, request.getResourceId())));
             } catch (IllegalArgumentException exception) {
                 throw new InvalidRequestException("ResourceId Invalid UUID:[" + request.getResourceId() + "]");
             }
@@ -319,7 +321,7 @@ public class ResourceSession {
         return new CreateManagedResourceResponse(resource);
     }
 
-    public FilterResponse findManagedResourceByFilter(FilterRequest filter) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
+    public FilterResponse findManagedResourceByFilter(FilterRequest filter) throws InvalidRequestException, ArangoDaoException, DomainNotFoundException, ResourceNotFoundException {
 
         FilterResponse response = new FilterResponse(filter.getPayLoad());
         if (filter.getPayLoad().getObjects().contains("nodes")) {

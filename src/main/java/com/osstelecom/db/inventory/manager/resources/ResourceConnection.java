@@ -17,8 +17,8 @@
 package com.osstelecom.db.inventory.manager.resources;
 
 import com.arangodb.entity.DocumentField;
-import com.osstelecom.db.inventory.manager.dto.DomainDTO;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -65,22 +65,20 @@ public class ResourceConnection extends BasicResource {
     private Boolean bidirectionalConsuption;
     private Boolean bidirectionCapacity;
     @DocumentField(DocumentField.Type.FROM)
-    private String _fromUid;
+    private String _fromKey;
     @DocumentField(DocumentField.Type.TO)
-    private String _toUid;
+    private String _toKey;
 
-    private ArrayList<String> relatedNodes = new ArrayList<>();
+    private List<String> relatedNodes = new ArrayList<>();
 
-    private ArrayList<String> circuits = new ArrayList<>();
+    private List<String> circuits = new ArrayList<>();   
 
-   
-
-    public ResourceConnection(String attributeSchema, DomainDTO domain) {
+    public ResourceConnection(String attributeSchema, Domain domain) {
         super(attributeSchema, domain);
 
     }
 
-    public ResourceConnection(DomainDTO domain) {
+    public ResourceConnection(Domain domain) {
         super(domain);
     }
 
@@ -89,17 +87,17 @@ public class ResourceConnection extends BasicResource {
 
     public void setFrom(BasicResource resource) {
         this.fromResource = resource;
-        this.setFromUid(this.getDomain().getNodes() + "/" + resource.getUid());
-        if (!this.relatedNodes.contains(this.getFromUid())) {
-            this.relatedNodes.add(this.getFromUid());
+        this.setFromKey(this.getDomain().getNodes() + "/" + resource.getKey());
+        if (!this.relatedNodes.contains(this.getFromKey())) {
+            this.relatedNodes.add(this.getFromKey());
         }
     }
 
     public void setTo(BasicResource resource) {
         this.toResource = resource;
-        this.setToUid(this.getDomain().getNodes() + "/" + resource.getUid());
-        if (!this.relatedNodes.contains(this.getToUid())) {
-            this.relatedNodes.add(this.getToUid());
+        this.setToKey(this.getDomain().getNodes() + "/" + resource.getKey());
+        if (!this.relatedNodes.contains(this.getToKey())) {
+            this.relatedNodes.add(this.getToKey());
         }
     }
 
@@ -189,51 +187,51 @@ public class ResourceConnection extends BasicResource {
     }
 
     /**
-     * @return the _fromUid
+     * @return the _fromKey
      */
-    public String getFromUid() {
-        return _fromUid;
+    public String getFromKey() {
+        return _fromKey;
     }
 
     /**
-     * @param _fromUid the _fromUid toResource set
+     * @param _fromKey the _fromKey toResource set
      */
-    public void setFromUid(String _fromUid) {
-        this._fromUid = _fromUid;
+    public void setFromKey(String _fromKey) {
+        this._fromKey = _fromKey;
     }
 
     /**
-     * @return the _toUid
+     * @return the _toKey
      */
-    public String getToUid() {
-        return _toUid;
+    public String getToKey() {
+        return _toKey;
     }
 
     /**
-     * @param _toUid the _toUid toResource set
+     * @param _toKey the _toKey toResource set
      */
-    public void setToUid(String _toUid) {
-        this._toUid = _toUid;
+    public void setToKey(String _toKey) {
+        this._toKey = _toKey;
     }
 
     /**
      * @return the circuits
      */
-    public ArrayList<String> getCircuits() {
+    public List<String> getCircuits() {
         return circuits;
     }
 
     /**
      * @param circuits the circuits toResource set
      */
-    public void setCircuits(ArrayList<String> circuits) {
+    public void setCircuits(List<String> circuits) {
         this.circuits = circuits;
     }
 
     /**
      * @return the relatedNodes
      */
-    public ArrayList<String> getRelatedNodes() {
+    public List<String> getRelatedNodes() {
         return relatedNodes;
     }
 

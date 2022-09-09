@@ -16,8 +16,6 @@
  */
 package com.osstelecom.db.inventory.manager.resources;
 
-import com.osstelecom.db.inventory.manager.dto.DomainDTO;
-
 /**
  * Representa um local Fisico
  *
@@ -30,11 +28,11 @@ public class ResourceLocation extends BasicResource {
     private String state;
     private String country = "BR";
 
-    public ResourceLocation(String attributeSchema, DomainDTO domain) {
+    public ResourceLocation(String attributeSchema, Domain domain) {
         super(attributeSchema, domain);
     }
 
-    public ResourceLocation(DomainDTO domain) {
+    public ResourceLocation(Domain domain) {
         super(domain);
     }
 

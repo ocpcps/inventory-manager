@@ -19,7 +19,6 @@ package com.osstelecom.db.inventory.manager.resources;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.osstelecom.db.inventory.manager.dto.DomainDTO;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.ArrayList;
 import java.util.List;
@@ -114,15 +113,15 @@ public class CircuitResource extends BasicResource {
         this.zPoint = zPoint;
     }
 
-    public CircuitResource(String attributeSchema, DomainDTO domain) {
+    public CircuitResource(String attributeSchema, Domain domain) {
         super(attributeSchema, domain);
     }
 
-    public CircuitResource(DomainDTO domain) {
+    public CircuitResource(Domain domain) {
         super(domain);
     }
 
-    public CircuitResource(DomainDTO domain, String id) {
+    public CircuitResource(Domain domain, String id) {
         super(domain, id);
     }
 

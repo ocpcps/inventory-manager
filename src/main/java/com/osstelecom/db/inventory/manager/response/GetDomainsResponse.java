@@ -17,17 +17,18 @@
  */
 package com.osstelecom.db.inventory.manager.response;
 
-import com.osstelecom.db.inventory.manager.dto.DomainDTO;
 import java.util.List;
+
+import com.osstelecom.db.inventory.manager.resources.Domain;
 
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 07.08.2022
  */
-public class GetDomainsResponse extends BasicResponse<List<DomainDTO>> {
+public class GetDomainsResponse extends BasicResponse<List<Domain>> {
     
-    public GetDomainsResponse(List<DomainDTO> list) {
+    public GetDomainsResponse(List<Domain> list) {
         super(list);
     }
     

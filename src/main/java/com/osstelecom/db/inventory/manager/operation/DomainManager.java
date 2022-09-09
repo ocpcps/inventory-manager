@@ -36,8 +36,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import com.google.common.eventbus.Subscribe;
-import com.osstelecom.db.inventory.manager.dao.ArangoDao;
-import com.osstelecom.db.inventory.manager.dto.DomainDTO;
+import com.osstelecom.db.inventory.manager.dao.DomainDao;
 import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import com.osstelecom.db.inventory.manager.events.ConsumableMetricCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.DomainCreatedEvent;
@@ -47,6 +46,7 @@ import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.listeners.EventManagerListener;
 import com.osstelecom.db.inventory.manager.resources.BasicResource;
 import com.osstelecom.db.inventory.manager.resources.ConsumableMetric;
+import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import com.osstelecom.db.inventory.topology.DefaultTopology;
@@ -68,7 +68,7 @@ import com.osstelecom.db.inventory.topology.node.INetworkNode;
 @Service
 public class DomainManager extends Manager{
 
-	private Map<String, DomainDTO> domains = new ConcurrentHashMap<>();
+	private Map<String, Domain> domains = new ConcurrentHashMap<>();
 
 	@Autowired
 	private ReentrantLock lockManager;
@@ -77,7 +77,7 @@ public class DomainManager extends Manager{
 	private EventManagerListener eventManager;
 
 	@Autowired
-	private ArangoDao arangoDao;
+	private DomainDao domainDao;
 
 	private Logger logger = LoggerFactory.getLogger(DomainManager.class);
 
@@ -87,7 +87,7 @@ public class DomainManager extends Manager{
 	@EventListener(ApplicationReadyEvent.class)
 	private void onStartUp() throws ArangoDaoException {
 		eventManager.registerListener(this);
-		this.arangoDao.getDomains().forEach(d -> {
+		this.domainDao.getDomains().forEach(d -> {
 			logger.debug("\tFound Domain: [{}] Atomic ID:[{}]", d.getDomainName(),d.getAtomicId());
 			this.domains.put(d.getDomainName(), d);
 		});
@@ -99,7 +99,7 @@ public class DomainManager extends Manager{
 	@PreDestroy
 	private void onShutDown() {
 		this.domains.forEach((domainName, domain) -> {
-			this.arangoDao.updateDomain(domain);
+			this.domainDao.updateDomain(domain);
 			logger.debug("Domain: [{}] Updated", domainName);
 		});
 	}
@@ -107,36 +107,36 @@ public class DomainManager extends Manager{
 	/**
 	 * Creates a Domain
 	 *
-	 * @param domainDto
+	 * @param domain
 	 * @return
 	 * @throws DomainAlreadyExistsException
 	 */
-	public DomainDTO createDomain(DomainDTO domainDto) throws DomainAlreadyExistsException {
+	public Domain createDomain(Domain domain) throws DomainAlreadyExistsException {
 		String timerId = startTimer("createDomain");
 		try {
 
 			lockManager.lock();
-			domainDto = arangoDao.createDomain(domainDto);
-			if (domainDto.getAtomicId() == null) {
-				domainDto.setAtomicId(0L);
+			domain = domainDao.createDomain(domain);
+			if (domain.getAtomicId() == null) {
+				domain.setAtomicId(0L);
 			}
-			domains.put(domainDto.getDomainName(), domainDto);
+			domains.put(domain.getDomainName(), domain);
 		} finally {
 			if (lockManager.isLocked()) {
 				lockManager.unlock();
 			}
 			endTimer(timerId);
 		}
-		DomainCreatedEvent domainCreatedEvent = new DomainCreatedEvent(domainDto);
+		DomainCreatedEvent domainCreatedEvent = new DomainCreatedEvent(domain);
 		eventManager.notifyEvent(domainCreatedEvent);
-		return domainDto;
+		return domain;
 	}
 
-	public DomainDTO deleteDomain(DomainDTO domain) throws DomainNotFoundException {
+	public Domain deleteDomain(Domain domain) throws DomainNotFoundException {
 		try {
 			lockManager.lock();
 			domain = this.getDomain(domain.getDomainName());
-			return this.arangoDao.deleteDomain(domain);
+			return this.domainDao.deleteDomain(domain);
 		} finally {
 			if (lockManager.isLocked()) {
 				lockManager.unlock();
@@ -151,10 +151,10 @@ public class DomainManager extends Manager{
 	 * @return
 	 * @throws DomainNotFoundException
 	 */
-	public DomainDTO getDomain(String domainName) throws DomainNotFoundException {
+	public Domain getDomain(String domainName) throws DomainNotFoundException {
 		if (!domains.containsKey(domainName)) {
 			List<String> domainsList = domains.values().stream()
-					.map(DomainDTO::getDomainName)
+					.map(Domain::getDomainName)
 					.collect(Collectors.toList());
 			throw new DomainNotFoundException(
 					"Domain :[" + domainName + "] not found Available Domains are: [" + String.join(",", domainsList)
@@ -168,8 +168,8 @@ public class DomainManager extends Manager{
 	 *
 	 * @return
 	 */
-	public List<DomainDTO> getAllDomains() {
-		List<DomainDTO> result = new ArrayList<>();
+	public List<Domain> getAllDomains() {
+		List<Domain> result = new ArrayList<>();
 
 		this.domains.forEach((name, domain) -> {
 			result.add(domain);
@@ -216,7 +216,6 @@ public class DomainManager extends Manager{
 
 	@Subscribe
 	public void onConsumableMetricCreatedEvent(ConsumableMetricCreatedEvent metric) {
-
 	}
 
 	/**

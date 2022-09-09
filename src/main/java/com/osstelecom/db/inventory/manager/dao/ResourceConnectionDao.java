@@ -21,7 +21,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.arangodb.ArangoCollection;
@@ -36,10 +35,10 @@ import com.arangodb.model.DocumentDeleteOptions;
 import com.arangodb.model.DocumentUpdateOptions;
 import com.arangodb.model.OverwriteMode;
 import com.osstelecom.db.inventory.graph.arango.GraphList;
-import com.osstelecom.db.inventory.manager.dto.DomainDTO;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.resources.CircuitResource;
+import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 
@@ -51,11 +50,9 @@ import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 @Component
 public class ResourceConnectionDao extends AbstractArangoDao<ResourceConnection> {
 
-    @Autowired
-    private ArangoDao arangoDao;
-
     @Override
-    public ResourceConnection findResource(ResourceConnection resource) throws ResourceNotFoundException, ArangoDaoException {
+    public ResourceConnection findResource(ResourceConnection resource)
+            throws ResourceNotFoundException, ArangoDaoException {
         try {
             //
             // Pensar no Lock Manager aqui, ou subir para o manager
@@ -78,8 +75,8 @@ public class ResourceConnectionDao extends AbstractArangoDao<ResourceConnection>
             if (resource.getId() != null) {
                 bindVars.put("_id", resource.getId());
             }
-            if (resource.getUid() != null) {
-                bindVars.put("_key", resource.getUid());
+            if (resource.getKey() != null) {
+                bindVars.put("_key", resource.getKey());
             }
 
             if (resource.getName() != null) {
@@ -116,56 +113,55 @@ public class ResourceConnectionDao extends AbstractArangoDao<ResourceConnection>
             //
             // Lida com o FROM:
             //
-            if (resource.getFrom() != null) {
-                if (resource.getFrom().getNodeAddress() != null
-                        && resource.getFrom().getClassName() != null
-                        && resource.getFrom().getDomainName() != null) {
-                    aql += " and  doc.fromResource.nodeAddress == @fromNodeAddress ";
-                    aql += " and  doc.fromResource.className   == @fromClassName ";
-                    aql += " and  doc.fromResource.domainName  == @fromDomainName ";
+            if (resource.getFrom() != null && resource.getFrom().getNodeAddress() != null
+                    && resource.getFrom().getClassName() != null
+                    && resource.getFrom().getDomainName() != null) {
+                aql += " and  doc.fromResource.nodeAddress == @fromNodeAddress ";
+                aql += " and  doc.fromResource.className   == @fromClassName ";
+                aql += " and  doc.fromResource.domainName  == @fromDomainName ";
 
-                    bindVars.put("fromNodeAddress", resource.getFrom().getNodeAddress());
-                    bindVars.put("fromClassName", resource.getFrom().getClassName());
-                    bindVars.put("fromDomainName", resource.getFrom().getDomainName());
+                bindVars.put("fromNodeAddress", resource.getFrom().getNodeAddress());
+                bindVars.put("fromClassName", resource.getFrom().getClassName());
+                bindVars.put("fromDomainName", resource.getFrom().getDomainName());
 
-                }
             }
 
-            if (resource.getTo() != null) {
-                if (resource.getTo().getNodeAddress() != null
-                        && resource.getTo().getClassName() != null
-                        && resource.getTo().getDomainName() != null) {
-                    aql += " and  doc.toResource.nodeAddress == @toNodeAddress ";
-                    aql += " and  doc.toResource.className   == @toClassName ";
-                    aql += " and  doc.toResource.domainName  == @toDomainName ";
+            if (resource.getTo() != null
+                    && resource.getTo().getNodeAddress() != null
+                    && resource.getTo().getClassName() != null
+                    && resource.getTo().getDomainName() != null) {
+                aql += " and  doc.toResource.nodeAddress == @toNodeAddress ";
+                aql += " and  doc.toResource.className   == @toClassName ";
+                aql += " and  doc.toResource.domainName  == @toDomainName ";
 
-                    bindVars.put("toNodeAddress", resource.getTo().getNodeAddress());
-                    bindVars.put("toClassName", resource.getTo().getClassName());
-                    bindVars.put("toDomainName", resource.getTo().getDomainName());
-
-                }
+                bindVars.put("toNodeAddress", resource.getTo().getNodeAddress());
+                bindVars.put("toClassName", resource.getTo().getClassName());
+                bindVars.put("toDomainName", resource.getTo().getDomainName());
             }
 
             aql += " return doc";
-            GraphList<ResourceConnection> result = this.query(aql, bindVars, ResourceConnection.class, this.arangoDao.getDb());
+            GraphList<ResourceConnection> result = this.query(aql, bindVars, ResourceConnection.class, this.getDb());
 
             return result.getOne();
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         } finally {
             //
-            // Liberar o Lock manager Aqui,  ou subir para o manager
+            // Liberar o Lock manager Aqui, ou subir para o manager
             //
         }
     }
 
     @Override
-    public DocumentCreateEntity<ResourceConnection> insertResource(ResourceConnection resource) throws ArangoDaoException {
+    public DocumentCreateEntity<ResourceConnection> insertResource(ResourceConnection resource)
+            throws ArangoDaoException {
         //
-        // A complexidade de validação dos requistos do dado deve ter sido feita na dao antes de chegar aqui.
+        // A complexidade de validação dos requistos do dado deve ter sido feita na dao
+        // antes de chegar aqui.
         //
         try {
-            return this.arangoDao.getDb().collection(resource.getDomain().getConnections()).insertDocument(resource, new DocumentCreateOptions().returnNew(true).returnOld(true));
+            return this.getDb().collection(resource.getDomain().getConnections()).insertDocument(resource,
+                    new DocumentCreateOptions().returnNew(true).returnOld(true));
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         } finally {
@@ -176,12 +172,16 @@ public class ResourceConnectionDao extends AbstractArangoDao<ResourceConnection>
     }
 
     @Override
-    public DocumentCreateEntity<ResourceConnection> upsertResource(ResourceConnection resource) throws ArangoDaoException {
+    public DocumentCreateEntity<ResourceConnection> upsertResource(ResourceConnection resource)
+            throws ArangoDaoException {
         //
-        // A complexidade de validação dos requistos do dado deve ter sido feita na dao antes de chegar aqui.
+        // A complexidade de validação dos requistos do dado deve ter sido feita na dao
+        // antes de chegar aqui.
         //
         try {
-            return this.arangoDao.getDb().collection(resource.getDomain().getConnections()).insertDocument(resource, new DocumentCreateOptions().overwriteMode(OverwriteMode.update).mergeObjects(true).returnNew(true).returnOld(true));
+            return this.getDb().collection(resource.getDomain().getConnections()).insertDocument(resource,
+                    new DocumentCreateOptions().overwriteMode(OverwriteMode.update).mergeObjects(true).returnNew(true)
+                            .returnOld(true));
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         } finally {
@@ -192,12 +192,17 @@ public class ResourceConnectionDao extends AbstractArangoDao<ResourceConnection>
     }
 
     @Override
-    public DocumentUpdateEntity<ResourceConnection> updateResource(ResourceConnection resource) throws ArangoDaoException {
+    public DocumentUpdateEntity<ResourceConnection> updateResource(ResourceConnection resource)
+            throws ArangoDaoException {
         //
-        // A complexidade de validação dos requistos do dado deve ter sido feita na dao antes de chegar aqui.
+        // A complexidade de validação dos requistos do dado deve ter sido feita na dao
+        // antes de chegar aqui.
         //
         try {
-            return this.arangoDao.getDb().collection(resource.getDomain().getConnections()).updateDocument(resource.getUid(), resource, new DocumentUpdateOptions().returnNew(true).returnOld(true).keepNull(false).waitForSync(false), ResourceConnection.class);
+            return this.getDb().collection(resource.getDomain().getConnections()).updateDocument(resource.getKey(),
+                    resource,
+                    new DocumentUpdateOptions().returnNew(true).returnOld(true).keepNull(false).waitForSync(false),
+                    ResourceConnection.class);
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         } finally {
@@ -210,7 +215,8 @@ public class ResourceConnectionDao extends AbstractArangoDao<ResourceConnection>
     @Override
     public DocumentDeleteEntity<ManagedResource> deleteResource(ResourceConnection resource) throws ArangoDaoException {
         try {
-            return this.arangoDao.getDb().collection(resource.getDomain().getConnections()).deleteDocument(resource.getId(), ManagedResource.class, new DocumentDeleteOptions().returnOld(true));
+            return this.getDb().collection(resource.getDomain().getConnections()).deleteDocument(resource.getId(),
+                    ManagedResource.class, new DocumentDeleteOptions().returnOld(true));
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         } finally {
@@ -221,35 +227,36 @@ public class ResourceConnectionDao extends AbstractArangoDao<ResourceConnection>
     }
 
     @Override
-    public GraphList<ResourceConnection> findResourcesBySchemaName(String attributeSchemaName, DomainDTO domain) throws ArangoDaoException {
+    public GraphList<ResourceConnection> findResourcesBySchemaName(String attributeSchemaName, Domain domain)
+            throws ArangoDaoException {
         try {
-            String aql = "for doc in " + domain.getConnections() + "filter doc.attributeSchemaName = @attributeSchemaName return doc";
+            String aql = "for doc in " + domain.getConnections()
+                    + "filter doc.attributeSchemaName = @attributeSchemaName return doc";
             Map<String, Object> bindVars = new HashMap<>();
 
             bindVars.put("attributeSchemaName", attributeSchemaName);
-            GraphList<ResourceConnection> result = this.query(aql, bindVars, ResourceConnection.class, this.arangoDao.getDb());
-            return result;
+            return this.query(aql, bindVars, ResourceConnection.class, this.getDb());
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         }
     }
 
     @Override
-    public GraphList<ResourceConnection> findResourcesByClassName(String className, DomainDTO domain) throws ArangoDaoException {
+    public GraphList<ResourceConnection> findResourcesByClassName(String className, Domain domain)
+            throws ArangoDaoException {
         try {
             String aql = "for doc in " + domain.getConnections() + " filter doc.className = @className return doc";
             Map<String, Object> bindVars = new HashMap<>();
-//            bindVars.put("collection", domain.getNodes());
             bindVars.put("attributeSchemaName", className);
-            GraphList<ResourceConnection> result = this.query(aql, bindVars, ResourceConnection.class, this.arangoDao.getDb());
-            return result;
+            return this.query(aql, bindVars, ResourceConnection.class, this.getDb());
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         }
     }
 
     @Override
-    public GraphList<ResourceConnection> findResourceByFilter(String filter, Map<String, Object> bindVars, DomainDTO domain) throws ArangoDaoException {
+    public GraphList<ResourceConnection> findResourceByFilter(String filter, Map<String, Object> bindVars,
+            Domain domain) throws ArangoDaoException {
         try {
             String aql = " for doc in   " + domain.getConnections();
             aql += " filter doc.domainName == @domainName ";
@@ -259,19 +266,19 @@ public class ResourceConnectionDao extends AbstractArangoDao<ResourceConnection>
                 aql += " and " + filter;
             }
             aql += " return doc";
-            GraphList<ResourceConnection> result = this.query(aql, bindVars, ResourceConnection.class, this.arangoDao.getDb());
-            return result;
+            return this.query(aql, bindVars, ResourceConnection.class, this.getDb());
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         }
     }
 
     @Override
-    public MultiDocumentEntity<DocumentUpdateEntity<ResourceConnection>> updateResources(List<ResourceConnection> resources, DomainDTO domain) throws ArangoDaoException {
+    public MultiDocumentEntity<DocumentUpdateEntity<ResourceConnection>> updateResources(
+            List<ResourceConnection> resources, Domain domain) throws ArangoDaoException {
         try {
-            ArangoCollection connectionCollection = this.arangoDao.getDb().collection(domain.getConnections());
-            MultiDocumentEntity<DocumentUpdateEntity<ResourceConnection>> results = connectionCollection.updateDocuments(resources, new DocumentUpdateOptions().returnNew(true).returnOld(true).keepNull(false).mergeObjects(false).waitForSync(false), ResourceConnection.class);
-            return results;
+            ArangoCollection connectionCollection = this.getDb().collection(domain.getConnections());
+            return connectionCollection.updateDocuments(resources, new DocumentUpdateOptions().returnNew(true)
+                    .returnOld(true).keepNull(false).mergeObjects(false).waitForSync(false), ResourceConnection.class);
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         }
@@ -280,15 +287,17 @@ public class ResourceConnectionDao extends AbstractArangoDao<ResourceConnection>
     /**
      * Obtem os vertices relacionados ao circuito
      * Muito especifica para generalizar
+     * 
      * @param circuit
-     * @return 
+     * @return
      */
     public GraphList<ResourceConnection> findCircuitPaths(CircuitResource circuit) {
-//        String aql = "FOR v, e, p IN 1..@dLimit ANY @aPoint " + circuit.getDomain().getConnections() + "\n"
-//                + " FILTER v._id ==  @zPoint "
-//                + " AND @circuitId in e.circuits[*] "
-//                + " AND   e.operationalStatus ==@operStatus "
-//                + "  for a in  p.edges[*] return distinct a";
+        // String aql = "FOR v, e, p IN 1..@dLimit ANY @aPoint " +
+        // circuit.getDomain().getConnections() + "\n"
+        // + " FILTER v._id == @zPoint "
+        // + " AND @circuitId in e.circuits[*] "
+        // + " AND e.operationalStatus ==@operStatus "
+        // + " for a in p.edges[*] return distinct a";
         String aql = "FOR path\n"
                 + "  IN 1..@dLimit ANY k_paths\n"
                 + "  @aPoint TO @zPoint\n"
@@ -303,18 +312,10 @@ public class ResourceConnectionDao extends AbstractArangoDao<ResourceConnection>
         bindVars.put("aPoint", circuit.getaPoint().getId());
         bindVars.put("zPoint", circuit.getzPoint().getId());
         bindVars.put("circuitId", circuit.getId());
-        //bindVars.put("operStatus", operStatus);
-        ArangoCursor<ResourceConnection> cursor = this.arangoDao.getDb().query(aql, bindVars, new AqlQueryOptions().count(true).batchSize(5000), ResourceConnection.class);
-        GraphList<ResourceConnection> result = new GraphList<>(cursor);
 
-//        logger.info("(getCircuitPath) RUNNING: AQL:[" + aql + "]");
-//        logger.info("\tBindings:");
-//        bindVars.forEach((k, v) -> {
-//            logger.info("\t  [@" + k + "]=[" + v + "]");
-//
-//        });
-//        logger.info("(getCircuitPath) Size: " + result.size());
-        return result;
+        ArangoCursor<ResourceConnection> cursor = this.getDb().query(aql, bindVars,
+                new AqlQueryOptions().count(true).batchSize(5000), ResourceConnection.class);
+        return new GraphList<>(cursor);
     }
 
 }

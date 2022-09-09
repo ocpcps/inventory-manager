@@ -17,7 +17,6 @@ import com.google.common.eventbus.Subscribe;
 import com.osstelecom.db.inventory.graph.arango.GraphList;
 import com.osstelecom.db.inventory.manager.dao.CircuitResourceDao;
 import com.osstelecom.db.inventory.manager.dao.ResourceConnectionDao;
-import com.osstelecom.db.inventory.manager.dto.DomainDTO;
 import com.osstelecom.db.inventory.manager.events.CircuitResourceCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.CircuitResourceUpdatedEvent;
 import com.osstelecom.db.inventory.manager.events.ProcessCircuityIntegrityEvent;
@@ -28,6 +27,7 @@ import com.osstelecom.db.inventory.manager.exception.SchemaNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.ScriptRuleException;
 import com.osstelecom.db.inventory.manager.listeners.EventManagerListener;
 import com.osstelecom.db.inventory.manager.resources.CircuitResource;
+import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstraintViolationException;
 import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
@@ -75,15 +75,15 @@ public class CircuitResourceManager extends Manager {
         String timerId = startTimer("createCircuitResource");
         try {
             lockManager.lock();
-            DomainDTO domain = circuit.getDomain();
-            circuit.setUid(this.getUUID());
+            Domain domain = circuit.getDomain();
+            circuit.setKey(this.getUUID());
             circuit.setAtomId(domain.addAndGetId());
             ResourceSchemaModel schemaModel = schemaSession.loadSchema(circuit.getAttributeSchemaName());
             circuit.setSchemaModel(schemaModel);
             schemaSession.validateResourceSchema(circuit);
             dynamicRuleSession.evalResource(circuit, "I", this);
             DocumentCreateEntity<CircuitResource> result = this.circuitResourceDao.insertResource(circuit);
-            circuit.setUid(result.getId());
+            circuit.setKey(result.getId());
             circuit.setRevisionId(result.getRev());
             //
             // Aqui criou o circuito
@@ -161,8 +161,8 @@ public class CircuitResourceManager extends Manager {
     }
 
     @EventListener(ApplicationReadyEvent.class)
-	private void onStartUp() throws ArangoDaoException {
-		eventManager.registerListener(this);
+    private void onStartUp() {
+        eventManager.registerListener(this);
     }
 
     @Subscribe
@@ -273,7 +273,7 @@ public class CircuitResourceManager extends Manager {
 
         Long end = System.currentTimeMillis();
         Long took = end - start;
-        logger.debug("Check Circuit Integrity for [{}] Took: {} ms State Changed: {} Broken Cound:[{}]",
+        logger.debug("Check Circuit Integrity for [{}] Took: {} ms State Changed: {} Broken Count:[{}]",
                 circuit.getId(), took, stateChanged, circuit.getBrokenResources().size());
         if (stateChanged) {
             this.updateCircuitResource(circuit);

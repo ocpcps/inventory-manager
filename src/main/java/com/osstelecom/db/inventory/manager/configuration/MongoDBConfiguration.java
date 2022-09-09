@@ -18,6 +18,7 @@
 package com.osstelecom.db.inventory.manager.configuration;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
@@ -30,7 +31,7 @@ public class MongoDBConfiguration {
     private String username;
     private String password;
     private String database;
-    private ArrayList<String> collections = new ArrayList<>();
+    private List<String> collections = new ArrayList<>();
 
     /**
      * @return the url
@@ -91,14 +92,14 @@ public class MongoDBConfiguration {
     /**
      * @return the collections
      */
-    public ArrayList<String> getCollections() {
+    public List<String> getCollections() {
         return collections;
     }
 
     /**
      * @param collections the collections to set
      */
-    public void setCollections(ArrayList<String> collections) {
+    public void setCollections(List<String> collections) {
         this.collections = collections;
     }
 

@@ -47,8 +47,8 @@ public class TesteFlavio {
         curitiba.getAttributes().put("model", "@parent.model"); // virtual attribute
         
 //        try {
-//            manager.createResourceConnection(brasil, parana, new DomainDTO());
-//            manager.createResourceConnection(parana, curitiba, new DomainDTO());
+//            manager.createResourceConnection(brasil, parana, new Domain());
+//            manager.createResourceConnection(parana, curitiba, new Domain());
 //        } catch (ConnectionAlreadyExistsException | MetricConstraintException | NoResourcesAvailableException | GenericException ex) {
 //            Logger.getLogger(TesteFlavio.class.getName()).log(Level.SEVERE, null, ex);
 //        }

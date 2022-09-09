@@ -21,8 +21,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.osstelecom.db.inventory.manager.configuration.InventoryConfiguration;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -39,8 +37,6 @@ import org.springframework.stereotype.Service;
 @Service
 public class UtilSession {
 
-    private MessageDigest md;
-    private InventoryConfiguration configuration;
     private Gson gson = new GsonBuilder().setPrettyPrinting().create();
     private ObjectMapper objectMapper = new ObjectMapper();
 

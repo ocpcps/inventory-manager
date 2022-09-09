@@ -24,12 +24,12 @@ package com.osstelecom.db.inventory.manager.dto;
  */
 public class TimerDto {
 
-    private String uid;
+    private String key;
     private String operation;
     private Long startTimer;
 
-    public TimerDto(String uid, String operation, Long startTimer) {
-        this.uid = uid;
+    public TimerDto(String key, String operation, Long startTimer) {
+        this.key = key;
         this.operation = operation;
         this.startTimer = startTimer;
     }
@@ -37,15 +37,15 @@ public class TimerDto {
     /**
      * @return the uid
      */
-    public String getUid() {
-        return uid;
+    public String getKey() {
+        return key;
     }
 
     /**
      * @param uid the uid to set
      */
-    public void setUid(String uid) {
-        this.uid = uid;
+    public void setKey(String key) {
+        this.key = key;
     }
 
     /**

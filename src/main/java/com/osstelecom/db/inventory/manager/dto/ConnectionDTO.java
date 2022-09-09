@@ -17,6 +17,7 @@
  */
 package com.osstelecom.db.inventory.manager.dto;
 
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -40,19 +41,19 @@ public class ConnectionDTO {
     private String attributeSchemaName = "connection.default";
     private Boolean propagateOperStatus;
     private String operationalStatus = "UP";
-    private ConcurrentHashMap<String, Object> attributes = new ConcurrentHashMap<>();
+    private Map<String, Object> attributes = new ConcurrentHashMap<>();
 
     /**
      * @return the attributes
      */
-    public ConcurrentHashMap<String, Object> getAttributes() {
+    public Map<String, Object> getAttributes() {
         return attributes;
     }
 
     /**
      * @param attributes the attributes to set
      */
-    public void setAttributes(ConcurrentHashMap<String, Object> attributes) {
+    public void setAttributes(Map<String, Object> attributes) {
         this.attributes = attributes;
     }
 

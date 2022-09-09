@@ -17,31 +17,24 @@
  */
 package com.osstelecom.db.inventory.manager.session.tests;
 
-import com.osstelecom.db.inventory.manager.dto.DomainDTO;
-import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
-import com.osstelecom.db.inventory.manager.exception.DomainAlreadyExistsException;
-import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
-import com.osstelecom.db.inventory.manager.exception.GenericException;
-import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
-import com.osstelecom.db.inventory.manager.exception.SchemaNotFoundException;
-import com.osstelecom.db.inventory.manager.exception.ScriptRuleException;
-import com.osstelecom.db.inventory.manager.request.CreateDomainRequest;
-import com.osstelecom.db.inventory.manager.request.CreateManagedResourceRequest;
-import com.osstelecom.db.inventory.manager.request.DeleteDomainRequest;
-import com.osstelecom.db.inventory.manager.resources.ManagedResource;
-import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstraintViolationException;
-import com.osstelecom.db.inventory.manager.response.CreateDomainResponse;
-import com.osstelecom.db.inventory.manager.response.CreateManagedResourceResponse;
-import com.osstelecom.db.inventory.manager.response.DeleteDomainResponse;
-import com.osstelecom.db.inventory.manager.session.DomainSession;
-import com.osstelecom.db.inventory.manager.session.ResourceSession;
 import static org.assertj.core.api.Assertions.from;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+
+import com.osstelecom.db.inventory.manager.exception.DomainAlreadyExistsException;
+import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
+import com.osstelecom.db.inventory.manager.exception.GenericException;
+import com.osstelecom.db.inventory.manager.request.CreateDomainRequest;
+import com.osstelecom.db.inventory.manager.request.DeleteDomainRequest;
+import com.osstelecom.db.inventory.manager.resources.Domain;
+import com.osstelecom.db.inventory.manager.response.CreateDomainResponse;
+import com.osstelecom.db.inventory.manager.response.DeleteDomainResponse;
+import com.osstelecom.db.inventory.manager.session.DomainSession;
+import com.osstelecom.db.inventory.manager.session.ResourceSession;
 
 /**
  * Provavelmente os testes estão bugando por causa da depedencia do groovy com a junit4
@@ -73,7 +66,7 @@ public class ResourceSessionTest {
     @Test
     public void createDomainTest() throws DomainAlreadyExistsException, GenericException {
         CreateDomainRequest createDomainRequest = new CreateDomainRequest();
-        createDomainRequest.setPayLoad(new DomainDTO());
+        createDomainRequest.setPayLoad(new Domain());
         createDomainRequest.getPayLoad().setDomainName("AutomatedTest");
         CreateDomainResponse response = domainSession.createDomain(createDomainRequest);
         domainSession.getAllDomains().getPayLoad().forEach(d -> {
@@ -85,22 +78,7 @@ public class ResourceSessionTest {
 
         System.out.println("3");
     }
-
-    @Test
-    public void createManagedResouce() throws SchemaNotFoundException, AttributeConstraintViolationException, GenericException, ScriptRuleException, InvalidRequestException, DomainNotFoundException, ArangoDaoException {
-        System.out.println("4");
-        CreateManagedResourceRequest request = new CreateManagedResourceRequest();
-        request.setPayLoad(new ManagedResource(domainSession.getDomain("AutomatedTest").getPayLoad()));
-        request.getPayLoad().setNodeAddress("Teste1Node");
-        request.getPayLoad().setName("Teste1Node");
-        request.getPayLoad().setClassName("resource.Default");
-        request.getPayLoad().setAttributeSchemaName("resource.default");
-        CreateManagedResourceResponse response = resourceSession.createManagedResource(request);
-        assertThat(response)
-                .returns(200, from(CreateManagedResourceResponse::getStatusCode))
-                .doesNotReturn(null, from(CreateManagedResourceResponse::getPayLoad));
-
-    }
+    
 
     @Test
     @DisplayName("Test if Domain deletion is ok")

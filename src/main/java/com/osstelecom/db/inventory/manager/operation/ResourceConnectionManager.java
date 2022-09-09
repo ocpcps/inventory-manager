@@ -14,10 +14,10 @@ import com.arangodb.entity.DocumentUpdateEntity;
 import com.arangodb.entity.MultiDocumentEntity;
 import com.osstelecom.db.inventory.graph.arango.GraphList;
 import com.osstelecom.db.inventory.manager.dao.ResourceConnectionDao;
-import com.osstelecom.db.inventory.manager.dto.DomainDTO;
 import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import com.osstelecom.db.inventory.manager.events.ResourceConnectionCreatedEvent;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
+import com.osstelecom.db.inventory.manager.exception.BasicException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
 import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
@@ -26,11 +26,9 @@ import com.osstelecom.db.inventory.manager.exception.SchemaNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.ScriptRuleException;
 import com.osstelecom.db.inventory.manager.listeners.EventManagerListener;
 import com.osstelecom.db.inventory.manager.resources.BasicResource;
+import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstraintViolationException;
-import com.osstelecom.db.inventory.manager.resources.exception.ConnectionAlreadyExistsException;
-import com.osstelecom.db.inventory.manager.resources.exception.MetricConstraintException;
-import com.osstelecom.db.inventory.manager.resources.exception.NoResourcesAvailableException;
 import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
 import com.osstelecom.db.inventory.manager.session.DynamicRuleSession;
 import com.osstelecom.db.inventory.manager.session.SchemaSession;
@@ -64,11 +62,11 @@ public class ResourceConnectionManager extends Manager {
      * @param to
      * @return
      */
-    public ResourceConnection createResourceConnection(BasicResource from, BasicResource to, String domainName) throws ConnectionAlreadyExistsException, MetricConstraintException, NoResourcesAvailableException, GenericException, DomainNotFoundException, ArangoDaoException {
+    public ResourceConnection createResourceConnection(BasicResource from, BasicResource to, String domainName) throws DomainNotFoundException, ArangoDaoException {
         String timerId = startTimer("createResourceConnection");
         try {
             lockManager.lock();
-            DomainDTO domain = this.domainManager.getDomain(domainName);
+            Domain domain = this.domainManager.getDomain(domainName);
             return this.createResourceConnection(from, to, domain); // <-- Event Handled Here
         } finally {
             if (lockManager.isLocked()) {
@@ -83,7 +81,7 @@ public class ResourceConnectionManager extends Manager {
         String timerId = startTimer("createResourceConnection");
         try {
             lockManager.lock();
-            connection.setUid(this.getUUID());
+            connection.setKey(this.getUUID());
 
             ResourceSchemaModel schemaModel = schemaSession.loadSchema(connection.getAttributeSchemaName());
             connection.setSchemaModel(schemaModel);
@@ -93,7 +91,7 @@ public class ResourceConnectionManager extends Manager {
             // Creates the connection on DB
             //
             DocumentCreateEntity<ResourceConnection> result = resourceConnectionDao.insertResource(connection);
-            connection.setUid(result.getId());
+            connection.setKey(result.getId());
             connection.setRevisionId(result.getRev());
             //
             // Update Edges
@@ -118,13 +116,13 @@ public class ResourceConnectionManager extends Manager {
      * @param to
      * @return
      */
-    public ResourceConnection createResourceConnection(BasicResource from, BasicResource to, DomainDTO domain) throws ArangoDaoException {
+    public ResourceConnection createResourceConnection(BasicResource from, BasicResource to, Domain domain) throws ArangoDaoException {
 
         String timerId = startTimer("createResourceConnection");
         try {
             lockManager.lock();
             ResourceConnection connection = new ResourceConnection(domain);
-            connection.setUid(this.getUUID());
+            connection.setKey(this.getUUID());
             connection.setFrom(from);
             connection.setTo(to);
 
@@ -135,7 +133,7 @@ public class ResourceConnectionManager extends Manager {
             //
             // from.notifyConnection(connection);
             DocumentCreateEntity<ResourceConnection> result = resourceConnectionDao.insertResource(connection);
-            connection.setUid(result.getId());
+            connection.setKey(result.getId());
             connection.setRevisionId(result.getRev());
 
             ResourceConnectionCreatedEvent event = new ResourceConnectionCreatedEvent(connection);
@@ -198,7 +196,7 @@ public class ResourceConnectionManager extends Manager {
      * @param connection
      * @return
      */
-    public List<ResourceConnection> updateResourceConnections(List<ResourceConnection> connections, DomainDTO domain) throws ArangoDaoException {
+    public List<ResourceConnection> updateResourceConnections(List<ResourceConnection> connections, Domain domain) throws ArangoDaoException {
         String timerId = startTimer("updateResourceConnections:[" + connections.size() + "]");
         try {
             lockManager.lock();
@@ -222,8 +220,8 @@ public class ResourceConnectionManager extends Manager {
         }
     }
 
-    public GraphList<ResourceConnection> getConnectionsByFilter(FilterDTO filter, String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
-        DomainDTO domain = domainManager.getDomain(domainName);
+    public GraphList<ResourceConnection> getConnectionsByFilter(FilterDTO filter, String domainName) throws ArangoDaoException, DomainNotFoundException, InvalidRequestException {
+        Domain domain = domainManager.getDomain(domainName);
         if (filter.getObjects().contains("connections")) {
             HashMap<String, Object> bindVars = new HashMap<>();
 
@@ -235,7 +233,6 @@ public class ResourceConnectionManager extends Manager {
                 bindVars.putAll(filter.getBindings());
             }
             return this.resourceConnectionDao.findResourceByFilter(filter.getAqlFilter(), bindVars, domain);
-            //return arangoDao.getConnectionsByFilter(filter, domain);
         }
         throw new InvalidRequestException("getConnectionsByFilter() can only retrieve connections objects");
     }

@@ -17,7 +17,6 @@
  */
 package com.osstelecom.db.inventory.manager.session;
 
-import com.google.common.collect.ImmutableMap;
 import com.osstelecom.db.inventory.manager.exception.ApiSecurityException;
 import javax.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Service;

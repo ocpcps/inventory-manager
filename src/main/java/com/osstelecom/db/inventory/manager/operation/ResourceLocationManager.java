@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 import com.arangodb.entity.DocumentCreateEntity;
 import com.google.common.eventbus.Subscribe;
 import com.osstelecom.db.inventory.manager.dao.ResourceLocationDao;
-import com.osstelecom.db.inventory.manager.dto.DomainDTO;
 import com.osstelecom.db.inventory.manager.events.ResourceLocationCreatedEvent;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
@@ -17,6 +16,7 @@ import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.SchemaNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.ScriptRuleException;
 import com.osstelecom.db.inventory.manager.listeners.EventManagerListener;
+import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.ResourceLocation;
 import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstraintViolationException;
 import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
@@ -58,7 +58,7 @@ public class ResourceLocationManager extends Manager {
         String timerId = startTimer("createResourceLocation");
         try {
             lockManager.lock();
-            resource.setUid(this.getUUID());
+            resource.setKey(this.getUUID());
             resource.setAtomId(resource.getDomain().addAndGetId());
 
             ResourceSchemaModel schemaModel = schemaSession.loadSchema(resource.getAttributeSchemaName());
@@ -66,7 +66,7 @@ public class ResourceLocationManager extends Manager {
             schemaSession.validateResourceSchema(resource);
             dynamicRuleSession.evalResource(resource, "I", this);
             DocumentCreateEntity<ResourceLocation> result = resourceLocationDao.createResourceLocation(resource);
-            resource.setUid(result.getId());
+            resource.setKey(result.getId());
             resource.setRevisionId(result.getRev());
             lockManager.unlock();
             //
@@ -87,7 +87,7 @@ public class ResourceLocationManager extends Manager {
         String timerId = startTimer("findResourceLocation");
         try {
             lockManager.lock();
-            DomainDTO domain = domainManager.getDomain(domainName);
+            Domain domain = domainManager.getDomain(domainName);
             return resourceLocationDao.findResourceLocation(name, nodeAdrress, className, domain);
         } finally {
             if (lockManager.isLocked()) {

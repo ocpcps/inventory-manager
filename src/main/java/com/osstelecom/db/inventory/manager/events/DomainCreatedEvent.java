@@ -17,8 +17,7 @@
  */
 package com.osstelecom.db.inventory.manager.events;
 
-import com.osstelecom.db.inventory.manager.dto.DomainDTO;
-import java.util.Date;
+import com.osstelecom.db.inventory.manager.resources.Domain;
 
 /**
  *
@@ -27,17 +26,17 @@ import java.util.Date;
  */
 public class DomainCreatedEvent {
 
-    private DomainDTO createdDomain;
+    private Domain createdDomain;
 
-    public DomainDTO getCreatedDomain() {
+    public Domain getCreatedDomain() {
         return createdDomain;
     }
 
-    public void setCreatedDomain(DomainDTO createdDomain) {
+    public void setCreatedDomain(Domain createdDomain) {
         this.createdDomain = createdDomain;
     }
 
-    public DomainCreatedEvent(DomainDTO createdDomain) {
+    public DomainCreatedEvent(Domain createdDomain) {
         this.createdDomain = createdDomain;
     }
 }

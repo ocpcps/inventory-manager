@@ -17,8 +17,6 @@
  */
 package com.osstelecom.db.inventory.manager.session;
 
-import com.osstelecom.db.inventory.manager.dto.DomainDTO;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -26,21 +24,17 @@ import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
-import com.osstelecom.db.inventory.manager.operation.CircuitResourceManager;
 import com.osstelecom.db.inventory.manager.operation.DomainManager;
 import com.osstelecom.db.inventory.manager.operation.ServiceManager;
 import com.osstelecom.db.inventory.manager.request.CreateServiceRequest;
 import com.osstelecom.db.inventory.manager.request.DeleteServiceRequest;
 import com.osstelecom.db.inventory.manager.request.GetServiceRequest;
 import com.osstelecom.db.inventory.manager.request.PatchServiceRequest;
-import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 import com.osstelecom.db.inventory.manager.resources.ServiceResource;
 import com.osstelecom.db.inventory.manager.response.CreateServiceResponse;
 import com.osstelecom.db.inventory.manager.response.DeleteServiceResponse;
 import com.osstelecom.db.inventory.manager.response.GetServiceResponse;
 import com.osstelecom.db.inventory.manager.response.PatchServiceResponse;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  *
@@ -52,9 +46,6 @@ public class ServiceSession {
 
     @Autowired
     private ServiceManager serviceManager;
-
-    @Autowired
-    private CircuitResourceManager circuitResourceManager;
 
     @Autowired
     private DomainManager domainManager;
@@ -101,15 +92,8 @@ public class ServiceSession {
         if ((payload.getCircuits() == null || payload.getCircuits().isEmpty()) && (payload.getDependencies() == null || payload.getDependencies().isEmpty())) {
             throw new InvalidRequestException("Please give at least one circuit or dependency");
         }
-
         
-        if (payload.getCircuits() != null && !payload.getCircuits().isEmpty()) {
-            this.resolveCircuits(payload.getCircuits(), request.getPayLoad().getDomain());
-        }
-
-        if (payload.getDependencies() != null && !payload.getCircuits().isEmpty()) {
-            this.resolveServices(payload.getDependencies(), request.getPayLoad().getDomain());
-        }
+        payload = serviceManager.resolveService(payload);
 
         return new CreateServiceResponse(serviceManager.createService(payload));
     }
@@ -129,62 +113,15 @@ public class ServiceSession {
             throw new InvalidRequestException("Payload not found");
         }
         ServiceResource old = serviceManager.getServiceById(payload);
-        payload.setUid(old.getUid());
+        payload.setKey(old.getKey());
 
         if ((payload.getCircuits() == null || payload.getCircuits().isEmpty()) && (payload.getDependencies() == null || payload.getDependencies().isEmpty())) {
             throw new InvalidRequestException("Please give at least one circuit or dependency");
         }
 
-        if (payload.getCircuits() != null && !payload.getCircuits().isEmpty()) {
-            this.resolveCircuits(payload.getCircuits(), request.getPayLoad().getDomain());
-        }
-
-        if (payload.getDependencies() != null && !payload.getCircuits().isEmpty()) {
-            this.resolveServices(payload.getDependencies(), request.getPayLoad().getDomain());
-        }
+        payload = serviceManager.resolveService(payload);
 
         return new PatchServiceResponse(serviceManager.updateService(payload));
-    }
-
-    /**
-     * Resolve as entidades com suas referencias do banco
-     *
-     * @param circuits
-     * @throws ResourceNotFoundException
-     * @throws ArangoDaoException
-     */
-    private void resolveCircuits(List<CircuitResource> circuits, DomainDTO domain) throws ResourceNotFoundException, ArangoDaoException {
-        List<CircuitResource> resolvedCircuits = new ArrayList<>();
-        for (CircuitResource circuit : circuits) {
-            if (circuit.getDomain() == null) {
-                circuit.setDomain(domain);
-            }
-            CircuitResource resolved = this.circuitResourceManager.findCircuitResource(circuit);
-            resolvedCircuits.add(resolved);
-        }
-        circuits.clear();
-        circuits.addAll(resolvedCircuits);
-
-    }
-
-    /**
-     * Resolve o serviço com suas referencias do DB
-     *
-     * @param serviceResources
-     * @throws ServiceNotFoundException
-     * @throws ArangoDaoException
-     */
-    private void resolveServices(List<ServiceResource> serviceResources, DomainDTO domain) throws ResourceNotFoundException, ArangoDaoException {
-        List<ServiceResource> resolvedServices = new ArrayList<>();
-        for (ServiceResource service : serviceResources) {
-            if (service.getDomain() == null) {
-                service.setDomain(domain);
-            }
-            ServiceResource resolved = this.serviceManager.getService(service);
-            resolvedServices.add(resolved);
-        }
-        serviceResources.clear();
-        serviceResources.addAll(resolvedServices);
     }
 
 }
