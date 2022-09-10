@@ -49,210 +49,210 @@ import com.osstelecom.db.inventory.manager.resources.Domain;
  * Manages The ArangoDB Connection
  *
  * @todo, avaliar se os cursores precisam ser fechados depois de consumidos!
- * 
+ *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 14.12.2021
  */
 @Component
 public class DomainDao {
 
-        protected Logger logger = LoggerFactory.getLogger(DomainDao.class);
+    protected Logger logger = LoggerFactory.getLogger(DomainDao.class);
 
-        @Autowired
-        private ConfigurationManager configurationManager;
+    @Autowired
+    private ConfigurationManager configurationManager;
 
-        private ArangoCollection domainsCollection;
+    private ArangoCollection domainsCollection;
 
-        @Autowired
-        private ArangoDatabase arangoDatabase;
+    @Autowired
+    private ArangoDatabase arangoDatabase;
 
-        @EventListener(ApplicationReadyEvent.class)
-        private void start() {
-                InventoryConfiguration inventoryConfiguration = configurationManager.loadConfiguration();
-                ArangoDBConfiguration arangoDbConfiguration = inventoryConfiguration.getGraphDbConfiguration();
+    @EventListener(ApplicationReadyEvent.class)
+    private void start() {
+        InventoryConfiguration inventoryConfiguration = configurationManager.loadConfiguration();
+        ArangoDBConfiguration arangoDbConfiguration = inventoryConfiguration.getGraphDbConfiguration();
 
-                this.domainsCollection = arangoDatabase.collection(arangoDbConfiguration.getDomainsCollection());
-                if (!domainsCollection.exists()) {
-                        domainsCollection.create(new CollectionCreateOptions().type(CollectionType.DOCUMENT));
-                }
+        this.domainsCollection = arangoDatabase.collection(arangoDbConfiguration.getDomainsCollection());
+        if (!domainsCollection.exists()) {
+            domainsCollection.create(new CollectionCreateOptions().type(CollectionType.DOCUMENT));
         }
+    }
 
-        /**
-         * Deletes the domain from the system
-         *
-         * @param domain
-         * @return
-         * @throws DomainNotFoundException
-         */
-        public Domain deleteDomain(Domain domain) throws DomainNotFoundException {
-                if (Boolean.TRUE.equals(this.domainsCollection.documentExists(domain.getDomainName()))) {
-                        /**
-                         * Now we know that the domain exists. Lets delete it all
-                         */
+    /**
+     * Deletes the domain from the system
+     *
+     * @param domain
+     * @return
+     * @throws DomainNotFoundException
+     */
+    public Domain deleteDomain(Domain domain) throws DomainNotFoundException {
+        if (Boolean.TRUE.equals(this.domainsCollection.documentExists(domain.getDomainName()))) {
+            /**
+             * Now we know that the domain exists. Lets delete it all
+             */
 
-                        arangoDatabase.collection(domain.getNodes()).drop();
-                        arangoDatabase.collection(domain.getCircuits()).drop();
-                        arangoDatabase.collection(domain.getConnections()).drop();
-                        arangoDatabase.collection(domain.getServices()).drop();
-                        arangoDatabase.graph(domain.getConnectionLayer()).drop();
-                        this.domainsCollection.deleteDocument(domain.getDomainName());
-                        logger.debug("Domain :[{}] Deleted", domain.getDomainName());
-                        return domain;
-                } else {
-                        throw new DomainNotFoundException(
-                                        "Domain with name:[" + domain.getDomainName() + "] not found");
-                }
+            arangoDatabase.collection(domain.getNodes()).drop();
+            arangoDatabase.collection(domain.getCircuits()).drop();
+            arangoDatabase.collection(domain.getConnections()).drop();
+            arangoDatabase.collection(domain.getServices()).drop();
+            arangoDatabase.graph(domain.getConnectionLayer()).drop();
+            this.domainsCollection.deleteDocument(domain.getDomainName());
+            logger.debug("Domain :[{}] Deleted", domain.getDomainName());
+            return domain;
+        } else {
+            throw new DomainNotFoundException(
+                    "Domain with name:[" + domain.getDomainName() + "] not found");
         }
+    }
 
-        /**
-         * Cria um Novo Dominio xD e suas collections
-         *
-         * @param domainRequestDTO
-         * @return
-         * @throws
-         * com.osstelecom.db.inventory.manager.exception.DomainAlreadyExistsException
-         */
-        @SuppressWarnings("empty-statement")
-        public Domain createDomain(Domain domainRequestDTO) throws DomainAlreadyExistsException {
-                InventoryConfiguration inventoryConfiguration = configurationManager.loadConfiguration();
-                ArangoDBConfiguration arangoDbConfiguration = inventoryConfiguration.getGraphDbConfiguration();
+    /**
+     * Cria um Novo Dominio xD e suas collections
+     *
+     * @param domainRequestDTO
+     * @return
+     * @throws
+     * com.osstelecom.db.inventory.manager.exception.DomainAlreadyExistsException
+     */
+    @SuppressWarnings("empty-statement")
+    public Domain createDomain(Domain domainRequestDTO) throws DomainAlreadyExistsException {
+        InventoryConfiguration inventoryConfiguration = configurationManager.loadConfiguration();
+        ArangoDBConfiguration arangoDbConfiguration = inventoryConfiguration.getGraphDbConfiguration();
 
-                String domainName = domainRequestDTO.getDomainName();
+        String domainName = domainRequestDTO.getDomainName();
 
-                logger.debug("Creating New Domain: {}", domainName);
+        logger.debug("Creating New Domain: {}", domainName);
 
-                if (!this.domainsCollection.documentExists(domainName).booleanValue()) {
-                        CollectionEntity nodes = arangoDatabase
-                                        .createCollection(domainName
-                                                        + arangoDbConfiguration.getNodeSufix(),
-                                                        new CollectionCreateOptions().type(CollectionType.DOCUMENT));
+        if (!this.domainsCollection.documentExists(domainName).booleanValue()) {
+            CollectionEntity nodes = arangoDatabase
+                    .createCollection(domainName
+                            + arangoDbConfiguration.getNodeSufix(),
+                            new CollectionCreateOptions().type(CollectionType.DOCUMENT));
 
-                        arangoDatabase.collection(domainName
-                                        + arangoDbConfiguration.getNodeSufix())
-                                        .ensurePersistentIndex(
-                                                        Arrays.asList("name", "nodeAddress", "className",
-                                                                        "domain._key"),
-                                                        new PersistentIndexOptions().unique(true).name("NodeUNIQIDX"));
+            arangoDatabase.collection(domainName
+                    + arangoDbConfiguration.getNodeSufix())
+                    .ensurePersistentIndex(
+                            Arrays.asList("name", "nodeAddress", "className",
+                                    "domain._key"),
+                            new PersistentIndexOptions().unique(true).name("NodeUNIQIDX"));
 
-                        //
-                        // Performance IDX
-                        //
-                        arangoDatabase.collection(domainName
-                                        + arangoDbConfiguration
-                                                        .getNodeSufix())
-                                        .ensurePersistentIndex(Arrays.asList("nodeAddress", "className", "domainName"),
-                                                        new PersistentIndexOptions().name("NodeSEARCHIDX"));
+            //
+            // Performance IDX
+            //
+            arangoDatabase.collection(domainName
+                    + arangoDbConfiguration
+                            .getNodeSufix())
+                    .ensurePersistentIndex(Arrays.asList("nodeAddress", "className", "domainName"),
+                            new PersistentIndexOptions().name("NodeSEARCHIDX"));
 
-                        CollectionEntity connections = arangoDatabase
-                                        .createCollection(domainName
-                                                        + inventoryConfiguration.getGraphDbConfiguration()
-                                                                        .getNodeConnectionSufix(),
-                                                        new CollectionCreateOptions().type(CollectionType.EDGES));
+            CollectionEntity connections = arangoDatabase
+                    .createCollection(domainName
+                            + inventoryConfiguration.getGraphDbConfiguration()
+                                    .getNodeConnectionSufix(),
+                            new CollectionCreateOptions().type(CollectionType.EDGES));
 
-                        arangoDatabase.collection(connections.getName()).ensurePersistentIndex(
-                                        Arrays.asList("name", "nodeAddress", "className", "domain._key"),
-                                        new PersistentIndexOptions().unique(true).name("ConnectionUNIQIDX"));
+            arangoDatabase.collection(connections.getName()).ensurePersistentIndex(
+                    Arrays.asList("name", "nodeAddress", "className", "domain._key"),
+                    new PersistentIndexOptions().unique(true).name("ConnectionUNIQIDX"));
 
-                        arangoDatabase.collection(connections.getName()).ensurePersistentIndex(
-                                        Arrays.asList("circuits[*]"),
-                                        new PersistentIndexOptions().unique(false).name("circuitsIDX"));
+            arangoDatabase.collection(connections.getName()).ensurePersistentIndex(
+                    Arrays.asList("circuits[*]"),
+                    new PersistentIndexOptions().unique(false).name("circuitsIDX"));
 
-                        arangoDatabase.collection(connections.getName())
-                                        .ensurePersistentIndex(
-                                                        Arrays.asList("className", "domainName",
-                                                                        "fromResource.nodeAddress",
-                                                                        "fromResource.className",
-                                                                        "fromResource.domainName",
-                                                                        "toResource.nodeAddress",
-                                                                        "toResource.className",
-                                                                        "toResource.domainName"),
-                                                        new PersistentIndexOptions().unique(false).name("searchIDX"));
+            arangoDatabase.collection(connections.getName())
+                    .ensurePersistentIndex(
+                            Arrays.asList("className", "domainName",
+                                    "fromResource.nodeAddress",
+                                    "fromResource.className",
+                                    "fromResource.domainName",
+                                    "toResource.nodeAddress",
+                                    "toResource.className",
+                                    "toResource.domainName"),
+                            new PersistentIndexOptions().unique(false).name("searchIDX"));
 
-                        CollectionEntity services = arangoDatabase
-                                        .createCollection(domainName
-                                                        + arangoDbConfiguration.getServiceSufix(),
-                                                        new CollectionCreateOptions().type(CollectionType.DOCUMENT));
+            CollectionEntity services = arangoDatabase
+                    .createCollection(domainName
+                            + arangoDbConfiguration.getServiceSufix(),
+                            new CollectionCreateOptions().type(CollectionType.DOCUMENT));
 
-                        CollectionEntity circuits = arangoDatabase
-                                        .createCollection(domainName
-                                                        + arangoDbConfiguration.getCircuitsSufix(),
-                                                        new CollectionCreateOptions().type(CollectionType.DOCUMENT));
+            CollectionEntity circuits = arangoDatabase
+                    .createCollection(domainName
+                            + arangoDbConfiguration.getCircuitsSufix(),
+                            new CollectionCreateOptions().type(CollectionType.DOCUMENT));
 
-                        arangoDatabase.collection(circuits.getName()).ensurePersistentIndex(
-                                        Arrays.asList("name", "aPoint.nodeAddress", "aPoint.className",
-                                                        "aPoint.domain._key",
-                                                        "zPoint.nodeAddress", "zPoint.className", "zPoint.domain._key",
-                                                        "className", "domain._key"),
-                                        new PersistentIndexOptions().unique(true).name("CircuitUNIQIDX"));
+            arangoDatabase.collection(circuits.getName()).ensurePersistentIndex(
+                    Arrays.asList("name", "aPoint.nodeAddress", "aPoint.className",
+                            "aPoint.domain._key",
+                            "zPoint.nodeAddress", "zPoint.className", "zPoint.domain._key",
+                            "className", "domain._key"),
+                    new PersistentIndexOptions().unique(true).name("CircuitUNIQIDX"));
 
-                        arangoDatabase.collection(circuits.getName()).ensurePersistentIndex(
-                                        Arrays.asList("nodeAddress", "className", "domainName"),
-                                        new PersistentIndexOptions().unique(false).name("searchIDX1"));
+            arangoDatabase.collection(circuits.getName()).ensurePersistentIndex(
+                    Arrays.asList("nodeAddress", "className", "domainName"),
+                    new PersistentIndexOptions().unique(false).name("searchIDX1"));
 
-                        GraphEntity connectionLayer = createGraph(
-                                        domainName + arangoDbConfiguration.getConnectionLayerSufix(),
-                                        connections.getName(), nodes.getName(), services.getName(), circuits.getName());
+            GraphEntity connectionLayer = createGraph(
+                    domainName + arangoDbConfiguration.getConnectionLayerSufix(),
+                    connections.getName(), nodes.getName(), services.getName(), circuits.getName());
 
-                        domainRequestDTO.setServices(services.getName());
-                        domainRequestDTO.setConnectionLayer(connectionLayer.getName());
-                        domainRequestDTO.setConnections(connections.getName());
-                        domainRequestDTO.setNodes(nodes.getName());
-                        domainRequestDTO.setCircuits(circuits.getName());
-                        domainRequestDTO.setDomainName(domainName);
+            domainRequestDTO.setServices(services.getName());
+            domainRequestDTO.setConnectionLayer(connectionLayer.getName());
+            domainRequestDTO.setConnections(connections.getName());
+            domainRequestDTO.setNodes(nodes.getName());
+            domainRequestDTO.setCircuits(circuits.getName());
+            domainRequestDTO.setDomainName(domainName);
 
-                        this.domainsCollection.insertDocument(domainRequestDTO);
+            this.domainsCollection.insertDocument(domainRequestDTO);
 
-                        logger.debug("Created Domain: {} With: NODES: {} EDGES: {} GRAPH: {}", domainName,
-                                        domainName + arangoDbConfiguration.getNodeSufix(), domainName
-                                                        + arangoDbConfiguration.getNodeConnectionSufix(),
-                                        domainName
-                                                        + arangoDbConfiguration.getConnectionLayerSufix());
+            logger.debug("Created Domain: {} With: NODES: {} EDGES: {} GRAPH: {}", domainName,
+                    domainName + arangoDbConfiguration.getNodeSufix(), domainName
+                    + arangoDbConfiguration.getNodeConnectionSufix(),
+                    domainName
+                    + arangoDbConfiguration.getConnectionLayerSufix());
 
-                        return domainRequestDTO;
-                } else {
-                        throw new DomainAlreadyExistsException("Domain with Name: [" + domainName + "] already exists");
-                }
+            return domainRequestDTO;
+        } else {
+            throw new DomainAlreadyExistsException("Domain with Name: [" + domainName + "] already exists");
         }
+    }
 
-        /**
-         * Obtem a lista de domain
-         *
-         * @return
-         */
-        public List<Domain> getDomains() throws ArangoDaoException {
-                logger.debug("Domains Size is: {}", this.domainsCollection.count().getCount());
-                ArangoCursor<Domain> cursor = arangoDatabase.query("FOR doc IN domains RETURN doc", Domain.class);
-                return cursor.asListRemaining();
-        }
+    /**
+     * Obtem a lista de domain
+     *
+     * @return
+     */
+    public List<Domain> getDomains() throws ArangoDaoException {
+        logger.debug("Domains Size is: {}", this.domainsCollection.count().getCount());
+        ArangoCursor<Domain> cursor = arangoDatabase.query("FOR doc IN domains RETURN doc", Domain.class);
+        return cursor.asListRemaining();
+    }
 
-        /**
-         * Atualiza o Domain
-         *
-         * @param domain
-         */
-        public void updateDomain(Domain domain) {
-                logger.debug("Persinting Domain info...:{}", domain.getDomainName());
-                this.domainsCollection.updateDocument(domain.getDomainName(), domain);
-        }
+    /**
+     * Atualiza o Domain
+     *
+     * @param domain
+     */
+    public void updateDomain(Domain domain) {
+        logger.debug("Persinting Domain info...:{}", domain.getDomainName());
+        this.domainsCollection.updateDocument(domain.getDomainName(), domain);
+    }
 
-        /**
-         * Cria um Graph
-         *
-         * @param graphName
-         * @param connectionCollection
-         * @param nodesDocument
-         * @param serviceDocument
-         * @return
-         */
-        private GraphEntity createGraph(String graphName, String connectionCollection, String nodesDocument,
-                        String serviceDocument, String circuitDocument) {
-                EdgeDefinition edgeDefiniton = new EdgeDefinition()
-                                .collection(connectionCollection)
-                                .from(nodesDocument, serviceDocument, circuitDocument)
-                                .to(nodesDocument, serviceDocument, circuitDocument);
-                Collection<EdgeDefinition> edgeDefinitions = Arrays.asList(edgeDefiniton);
+    /**
+     * Cria um Graph
+     *
+     * @param graphName
+     * @param connectionCollection
+     * @param nodesDocument
+     * @param serviceDocument
+     * @return
+     */
+    private GraphEntity createGraph(String graphName, String connectionCollection, String nodesDocument,
+            String serviceDocument, String circuitDocument) {
+        EdgeDefinition edgeDefiniton = new EdgeDefinition()
+                .collection(connectionCollection)
+                .from(nodesDocument, serviceDocument, circuitDocument)
+                .to(nodesDocument, serviceDocument, circuitDocument);
+        Collection<EdgeDefinition> edgeDefinitions = Arrays.asList(edgeDefiniton);
 
-                return arangoDatabase.createGraph(graphName, edgeDefinitions);
-        }
+        return arangoDatabase.createGraph(graphName, edgeDefinitions);
+    }
 
 };

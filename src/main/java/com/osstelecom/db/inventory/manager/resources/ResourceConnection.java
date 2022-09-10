@@ -71,7 +71,7 @@ public class ResourceConnection extends BasicResource {
 
     private List<String> relatedNodes = new ArrayList<>();
 
-    private List<String> circuits = new ArrayList<>();   
+    private List<String> circuits = new ArrayList<>();
 
     public ResourceConnection(String attributeSchema, Domain domain) {
         super(attributeSchema, domain);

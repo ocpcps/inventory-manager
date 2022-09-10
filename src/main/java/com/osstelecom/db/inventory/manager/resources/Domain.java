@@ -181,7 +181,7 @@ public class Domain {
     }
 
     public Long addAndGetId() {
-        if (this.atomicId==null){
+        if (this.atomicId == null) {
             this.atomicId = 0L;
         }
         return this.atomicId++;

@@ -10,5 +10,5 @@ package com.osstelecom.db.inventory.topology.listeners;
  * @author Nishisan
  */
 public abstract class TopologyListener implements ITopologyListener {
-    
+
 }

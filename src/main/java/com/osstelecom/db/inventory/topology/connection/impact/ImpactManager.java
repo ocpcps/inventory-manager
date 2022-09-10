@@ -14,7 +14,7 @@ import com.osstelecom.db.inventory.topology.ITopology;
 public abstract class ImpactManager implements IImpactManager {
 
     private final ITopology topology;
-    
+
     public ImpactManager(ITopology topology) {
         this.topology = topology;
         this.topology.setImpactManager(this);
@@ -24,7 +24,5 @@ public abstract class ImpactManager implements IImpactManager {
     public ITopology getTopology() {
         return this.topology;
     }
-    
-    
-    
+
 }

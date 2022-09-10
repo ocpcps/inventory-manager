@@ -42,7 +42,6 @@ public class WSApiHandler extends TextWebSocketHandler {
         session.sendMessage(new TextMessage("ACKED!"));
     }
 
-    
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         super.afterConnectionEstablished(session);

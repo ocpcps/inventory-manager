@@ -38,8 +38,6 @@ public class ResourceLocation extends BasicResource {
 
     public ResourceLocation() {
     }
-    
-    
 
     /**
      * @return the latLong

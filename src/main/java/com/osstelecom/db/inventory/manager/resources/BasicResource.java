@@ -618,8 +618,6 @@ public class BasicResource {
         return node;
     }
 
-   
-
     /**
      * @return the isConsumer
      */

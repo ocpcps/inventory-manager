@@ -255,7 +255,6 @@ public class CircuitResourceDao extends AbstractArangoDao<CircuitResource> {
     // DocumentUpdateOptions().returnNew(true).keepNull(false).returnOld(true).mergeObjects(false),
     // CircuitResource.class);
     // }
-
     // /**
     // * Creates a Circuit Resource
     // *
@@ -274,7 +273,6 @@ public class CircuitResourceDao extends AbstractArangoDao<CircuitResource> {
     // throw new GenericException(ex.getMessage());
     // }
     // }
-
     // /**
     // * Find Circuit Resource
     // *
@@ -332,7 +330,6 @@ public class CircuitResourceDao extends AbstractArangoDao<CircuitResource> {
     // resource.getName() + "] and Class: [" + resource.getClassName() + "] Not
     // Found in Domain:" + resource.getDomainName());
     // }
-
     // /**
     // * Find Circuit Resource by ID
     // *

@@ -88,7 +88,7 @@ public class DefaultExample {
         Long took = end - start;
         System.out.println("Found " + weak.size() + " Weak Nodes Took:" + took + " ms");
         for (INetworkNode n : weak) {
-            System.out.println("  ::Weak " + n.getName() + " Connections size:" + n.getEndpointConnectionsCount() +  " Total:" + n.getActiveConnnectionsCount() +" Probed:" + n.getProbedConnectionsCount());
+            System.out.println("  ::Weak " + n.getName() + " Connections size:" + n.getEndpointConnectionsCount() + " Total:" + n.getActiveConnnectionsCount() + " Probed:" + n.getProbedConnectionsCount());
         }
 
 //        List<INetworkNode> allNodes = topology.getNodes();
@@ -98,7 +98,6 @@ public class DefaultExample {
 ////                connection.printPathList();
 //            }
 //        }
-
 //        List<INetworkNode> unreacheble = topology.getImpactManager().getUnreacheableNodes();
 //        System.out.println("Found " + unreacheble.size() + " Unreacheable Nodes");
         System.out.println("Done...");

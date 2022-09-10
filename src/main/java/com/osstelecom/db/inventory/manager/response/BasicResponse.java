@@ -33,7 +33,7 @@ public abstract class BasicResponse<T> implements IResponse<T> {
     private String className;
 
     public String getClassName() {
-        if (this.className==null){
+        if (this.className == null) {
             this.className = this.getClass().getName();
         }
         return className;
@@ -44,7 +44,7 @@ public abstract class BasicResponse<T> implements IResponse<T> {
         if (this.payLoad instanceof List) {
             this.size = ((List<?>) this.payLoad).size();
         } else if (this.payLoad instanceof Map) {
-            this.size = ((Map<?,?>) this.payLoad).size();
+            this.size = ((Map<?, ?>) this.payLoad).size();
         }
     }
 

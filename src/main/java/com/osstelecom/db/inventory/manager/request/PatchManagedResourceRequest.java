@@ -25,5 +25,5 @@ import com.osstelecom.db.inventory.manager.resources.ManagedResource;
  * @created 12.08.2022
  */
 public class PatchManagedResourceRequest extends BasicRequest<ManagedResource> {
-    
+
 }

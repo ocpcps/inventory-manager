@@ -25,5 +25,5 @@ import com.osstelecom.db.inventory.manager.resources.ServiceResource;
  * @created 12.08.2022
  */
 public class PatchServiceRequest extends BasicRequest<ServiceResource> {
-    
+
 }

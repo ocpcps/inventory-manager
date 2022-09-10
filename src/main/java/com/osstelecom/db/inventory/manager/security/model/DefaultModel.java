@@ -15,14 +15,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-
 package com.osstelecom.db.inventory.manager.security.model;
 
 /**
  *
- * @author  Lucas Nishimura <lucas.nishimura@gmail.com> 
+ * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 14.12.2021
  */
 public class DefaultModel {
+
     private String name = "default";
 }

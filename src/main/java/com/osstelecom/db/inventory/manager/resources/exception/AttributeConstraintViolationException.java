@@ -15,7 +15,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-
 package com.osstelecom.db.inventory.manager.resources.exception;
 
 import com.osstelecom.db.inventory.manager.exception.BasicException;
@@ -23,10 +22,10 @@ import com.osstelecom.db.inventory.manager.request.IRequest;
 
 /**
  *
- * @author  Lucas Nishimura <lucas.nishimura@gmail.com> 
+ * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 23.12.2021
  */
-public class AttributeConstraintViolationException extends BasicException{
+public class AttributeConstraintViolationException extends BasicException {
 
     public AttributeConstraintViolationException() {
     }

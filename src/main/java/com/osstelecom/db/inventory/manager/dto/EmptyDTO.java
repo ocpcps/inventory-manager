@@ -15,15 +15,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-
 package com.osstelecom.db.inventory.manager.dto;
 
 /**
  *
- * @author  Lucas Nishimura <lucas.nishimura@gmail.com> 
+ * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 21.07.2022
  */
 public class EmptyDTO {
+
     private String msg = "OK";
 
     /**

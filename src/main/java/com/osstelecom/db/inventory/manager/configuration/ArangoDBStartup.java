@@ -15,15 +15,15 @@ import com.arangodb.model.CollectionCreateOptions;
 
 @Configuration
 public class ArangoDBStartup {
-    
+
     private Logger logger = LoggerFactory.getLogger(ArangoDBStartup.class);
-    
+
     @Bean
     public ArangoDatabase arangoDatabase(ConfigurationManager configurationManager) {
-        
+
         InventoryConfiguration inventoryConfiguration = configurationManager.loadConfiguration();
         ArangoDBConfiguration arangoDbConfiguration = inventoryConfiguration.getGraphDbConfiguration();
-        
+
         ArangoDB graphDb = new ArangoDB.Builder()
                 .host(arangoDbConfiguration.getHost(), arangoDbConfiguration.getPort())
                 .user(arangoDbConfiguration.getUser())
@@ -54,7 +54,7 @@ public class ArangoDBStartup {
             logger.info(".........................................");
         } catch (ArangoDBException ex) {
             logger.error("Failed GraphDB:", ex);
-        } 
+        }
         return database;
     }
 

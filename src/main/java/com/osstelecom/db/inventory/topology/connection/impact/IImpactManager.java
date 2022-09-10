@@ -21,7 +21,7 @@ public interface IImpactManager {
 
     public List<INetworkNode> getWeakNodes(Integer connLimit, Boolean all, Integer threadCount, Boolean useCache);
 
-    public List<INetworkNode> getWeakNodes(Integer connLimit,ArrayList<INetworkNode> nodes);
+    public List<INetworkNode> getWeakNodes(Integer connLimit, ArrayList<INetworkNode> nodes);
 
     public ITopology getTopology();
 

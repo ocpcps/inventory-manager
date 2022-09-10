@@ -25,5 +25,5 @@ import com.osstelecom.db.inventory.manager.dto.ConnectionDTO;
  * @created 16.12.2021
  */
 public class CreateConnectionRequest extends BasicRequest<ConnectionDTO> {
-    
+
 }

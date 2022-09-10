@@ -41,7 +41,6 @@ public abstract class BasicEvent<T extends BasicResource> {
         this.newResource = resource;
     }
 
-
     public BasicEvent(T oldResource, T newResource) {
         this.oldResource = oldResource;
         this.newResource = newResource;
@@ -79,7 +78,6 @@ public abstract class BasicEvent<T extends BasicResource> {
         this.details.put(key, value);
     }
 
-    
     /**
      * @return the oldResource
      */

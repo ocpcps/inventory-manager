@@ -36,8 +36,6 @@ public class ConsumableMetricCreatedEvent {
         this.createdMetric = createdMetric;
     }
 
-   
-
     public ConsumableMetricCreatedEvent(ConsumableMetric createdMetric) {
         this.createdMetric = createdMetric;
     }

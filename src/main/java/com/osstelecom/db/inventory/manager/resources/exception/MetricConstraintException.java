@@ -20,7 +20,7 @@ package com.osstelecom.db.inventory.manager.resources.exception;
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  */
-public class MetricConstraintException extends Exception{
+public class MetricConstraintException extends Exception {
 
     public MetricConstraintException() {
     }
@@ -36,5 +36,5 @@ public class MetricConstraintException extends Exception{
     public MetricConstraintException(Throwable thrwbl) {
         super(thrwbl);
     }
-    
+
 }

@@ -40,11 +40,11 @@ public class ResourceLocationManager extends Manager {
 
     @Autowired
     private DomainManager domainManager;
-    
-    @Autowired
-    private DynamicRuleSession dynamicRuleSession;    
 
-     /**
+    @Autowired
+    private DynamicRuleSession dynamicRuleSession;
+
+    /**
      * Created a Resource Location
      *
      * @param resource
@@ -81,7 +81,7 @@ public class ResourceLocationManager extends Manager {
             }
             endTimer(timerId);
         }
-    }    
+    }
 
     public ResourceLocation findResourceLocation(String name, String nodeAdrress, String className, String domainName) throws ResourceNotFoundException, DomainNotFoundException, ArangoDaoException {
         String timerId = startTimer("findResourceLocation");
@@ -98,13 +98,13 @@ public class ResourceLocationManager extends Manager {
     }
 
     /**
-	 * Called when a Resource Location is created
-	 *
-	 * @param resourceLocation
-	 */
-	@Subscribe
-	public void onResourceLocationCreatedEvent(ResourceLocationCreatedEvent resourceLocation) {
+     * Called when a Resource Location is created
+     *
+     * @param resourceLocation
+     */
+    @Subscribe
+    public void onResourceLocationCreatedEvent(ResourceLocationCreatedEvent resourceLocation) {
 
-	}
-    
+    }
+
 }

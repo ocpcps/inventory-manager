@@ -59,7 +59,7 @@ public class ServiceSession {
             throw new DomainNotFoundException("Domain With Name:[" + request.getRequestDomain() + "] not found");
         }
         request.getPayLoad().setDomain(domainManager.getDomain(request.getRequestDomain()));
-       
+
         return new GetServiceResponse(serviceManager.getServiceById(request.getPayLoad()));
     }
 
@@ -68,12 +68,12 @@ public class ServiceSession {
             throw new DomainNotFoundException("Domain With Name:[" + request.getRequestDomain() + "] not found");
         }
         request.getPayLoad().setDomain(domainManager.getDomain(request.getRequestDomain()));
-        
+
         return new DeleteServiceResponse(serviceManager.deleteService(request.getPayLoad()));
     }
 
     public CreateServiceResponse createService(CreateServiceRequest request) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
-        
+
         if (request == null || request.getPayLoad() == null) {
             throw new InvalidRequestException("Request is null please send a valid request");
         }
@@ -92,7 +92,7 @@ public class ServiceSession {
         if ((payload.getCircuits() == null || payload.getCircuits().isEmpty()) && (payload.getDependencies() == null || payload.getDependencies().isEmpty())) {
             throw new InvalidRequestException("Please give at least one circuit or dependency");
         }
-        
+
         payload = serviceManager.resolveService(payload);
 
         return new CreateServiceResponse(serviceManager.createService(payload));

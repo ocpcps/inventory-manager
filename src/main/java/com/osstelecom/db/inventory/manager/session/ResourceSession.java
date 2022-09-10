@@ -283,7 +283,7 @@ public class ResourceSession {
             throw new InvalidRequestException("Request is NULL!");
         }
         ManagedResource resource = request.getPayLoad();
-        
+
         request.getPayLoad().setDomain(domainManager.getDomain(request.getRequestDomain()));
 
         if (request.getPayLoad().getDomain() == null) {
@@ -383,7 +383,7 @@ public class ResourceSession {
         }
 
         if (requestedPatch.getClassName() != null && !requestedPatch.getClassName().equals("Default")) {
-           fromDBResource.setClassName(requestedPatch.getClassName());
+            fromDBResource.setClassName(requestedPatch.getClassName());
         }
 
         if (requestedPatch.getOperationalStatus() != null) {

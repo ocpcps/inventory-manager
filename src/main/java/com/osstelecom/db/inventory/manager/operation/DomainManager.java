@@ -66,411 +66,410 @@ import com.osstelecom.db.inventory.topology.node.INetworkNode;
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  */
 @Service
-public class DomainManager extends Manager{
+public class DomainManager extends Manager {
 
-	private Map<String, Domain> domains = new ConcurrentHashMap<>();
+    private Map<String, Domain> domains = new ConcurrentHashMap<>();
 
-	@Autowired
-	private ReentrantLock lockManager;
+    @Autowired
+    private ReentrantLock lockManager;
 
-	@Autowired
-	private EventManagerListener eventManager;
+    @Autowired
+    private EventManagerListener eventManager;
 
-	@Autowired
-	private DomainDao domainDao;
+    @Autowired
+    private DomainDao domainDao;
 
-	private Logger logger = LoggerFactory.getLogger(DomainManager.class);
+    private Logger logger = LoggerFactory.getLogger(DomainManager.class);
 
-	/**
-	 * Starts and fetch all available domains
-	 */
-	@EventListener(ApplicationReadyEvent.class)
-	private void onStartUp() throws ArangoDaoException {
-		eventManager.registerListener(this);
-		this.domainDao.getDomains().forEach(d -> {
-			logger.debug("\tFound Domain: [{}] Atomic ID:[{}]", d.getDomainName(),d.getAtomicId());
-			this.domains.put(d.getDomainName(), d);
-		});
-	}
+    /**
+     * Starts and fetch all available domains
+     */
+    @EventListener(ApplicationReadyEvent.class)
+    private void onStartUp() throws ArangoDaoException {
+        eventManager.registerListener(this);
+        this.domainDao.getDomains().forEach(d -> {
+            logger.debug("\tFound Domain: [{}] Atomic ID:[{}]", d.getDomainName(), d.getAtomicId());
+            this.domains.put(d.getDomainName(), d);
+        });
+    }
 
-	/**
-	 * Update the persistence layer with the current atomic id in the domain
-	 */
-	@PreDestroy
-	private void onShutDown() {
-		this.domains.forEach((domainName, domain) -> {
-			this.domainDao.updateDomain(domain);
-			logger.debug("Domain: [{}] Updated", domainName);
-		});
-	}
+    /**
+     * Update the persistence layer with the current atomic id in the domain
+     */
+    @PreDestroy
+    private void onShutDown() {
+        this.domains.forEach((domainName, domain) -> {
+            this.domainDao.updateDomain(domain);
+            logger.debug("Domain: [{}] Updated", domainName);
+        });
+    }
 
-	/**
-	 * Creates a Domain
-	 *
-	 * @param domain
-	 * @return
-	 * @throws DomainAlreadyExistsException
-	 */
-	public Domain createDomain(Domain domain) throws DomainAlreadyExistsException {
-		String timerId = startTimer("createDomain");
-		try {
+    /**
+     * Creates a Domain
+     *
+     * @param domain
+     * @return
+     * @throws DomainAlreadyExistsException
+     */
+    public Domain createDomain(Domain domain) throws DomainAlreadyExistsException {
+        String timerId = startTimer("createDomain");
+        try {
 
-			lockManager.lock();
-			domain = domainDao.createDomain(domain);
-			if (domain.getAtomicId() == null) {
-				domain.setAtomicId(0L);
-			}
-			domains.put(domain.getDomainName(), domain);
-		} finally {
-			if (lockManager.isLocked()) {
-				lockManager.unlock();
-			}
-			endTimer(timerId);
-		}
-		DomainCreatedEvent domainCreatedEvent = new DomainCreatedEvent(domain);
-		eventManager.notifyEvent(domainCreatedEvent);
-		return domain;
-	}
+            lockManager.lock();
+            domain = domainDao.createDomain(domain);
+            if (domain.getAtomicId() == null) {
+                domain.setAtomicId(0L);
+            }
+            domains.put(domain.getDomainName(), domain);
+        } finally {
+            if (lockManager.isLocked()) {
+                lockManager.unlock();
+            }
+            endTimer(timerId);
+        }
+        DomainCreatedEvent domainCreatedEvent = new DomainCreatedEvent(domain);
+        eventManager.notifyEvent(domainCreatedEvent);
+        return domain;
+    }
 
-	public Domain deleteDomain(Domain domain) throws DomainNotFoundException {
-		try {
-			lockManager.lock();
-			domain = this.getDomain(domain.getDomainName());
-			return this.domainDao.deleteDomain(domain);
-		} finally {
-			if (lockManager.isLocked()) {
-				lockManager.unlock();
-			}
-		}
-	}
+    public Domain deleteDomain(Domain domain) throws DomainNotFoundException {
+        try {
+            lockManager.lock();
+            domain = this.getDomain(domain.getDomainName());
+            return this.domainDao.deleteDomain(domain);
+        } finally {
+            if (lockManager.isLocked()) {
+                lockManager.unlock();
+            }
+        }
+    }
 
-	/**
-	 * Retrieves a domain by name
-	 *
-	 * @param domainName
-	 * @return
-	 * @throws DomainNotFoundException
-	 */
-	public Domain getDomain(String domainName) throws DomainNotFoundException {
-		if (!domains.containsKey(domainName)) {
-			List<String> domainsList = domains.values().stream()
-					.map(Domain::getDomainName)
-					.collect(Collectors.toList());
-			throw new DomainNotFoundException(
-					"Domain :[" + domainName + "] not found Available Domains are: [" + String.join(",", domainsList)
-							+ "]");
-		}
-		return domains.get(domainName);
-	}
+    /**
+     * Retrieves a domain by name
+     *
+     * @param domainName
+     * @return
+     * @throws DomainNotFoundException
+     */
+    public Domain getDomain(String domainName) throws DomainNotFoundException {
+        if (!domains.containsKey(domainName)) {
+            List<String> domainsList = domains.values().stream()
+                    .map(Domain::getDomainName)
+                    .collect(Collectors.toList());
+            throw new DomainNotFoundException(
+                    "Domain :[" + domainName + "] not found Available Domains are: [" + String.join(",", domainsList)
+                    + "]");
+        }
+        return domains.get(domainName);
+    }
 
-	/**
-	 * Get the list of all domains.
-	 *
-	 * @return
-	 */
-	public List<Domain> getAllDomains() {
-		List<Domain> result = new ArrayList<>();
+    /**
+     * Get the list of all domains.
+     *
+     * @return
+     */
+    public List<Domain> getAllDomains() {
+        List<Domain> result = new ArrayList<>();
 
-		this.domains.forEach((name, domain) -> {
-			result.add(domain);
-		});
-		return result;
-	}
+        this.domains.forEach((name, domain) -> {
+            result.add(domain);
+        });
+        return result;
+    }
 
-	/**
-	 * Creates a consumable metric
-	 *
-	 * @param name
-	 * @return
-	 */
-	public ConsumableMetric createConsumableMetric(String name) {
-		String timerId = startTimer("createConsumableMetric");
-		try {
-			lockManager.lock();
-			ConsumableMetric metric = new ConsumableMetric(this);
-			metric.setMetricName(name);
-			endTimer(timerId);
-			//
-			// Notifica o event Manager da Metrica criada
-			//
-			ConsumableMetricCreatedEvent event = new ConsumableMetricCreatedEvent(metric);
-			eventManager.notifyEvent(event);
-			return metric;
-		} finally {
-			if (lockManager.isLocked()) {
-				lockManager.unlock();
-			}
-			endTimer(timerId);
-		}
+    /**
+     * Creates a consumable metric
+     *
+     * @param name
+     * @return
+     */
+    public ConsumableMetric createConsumableMetric(String name) {
+        String timerId = startTimer("createConsumableMetric");
+        try {
+            lockManager.lock();
+            ConsumableMetric metric = new ConsumableMetric(this);
+            metric.setMetricName(name);
+            endTimer(timerId);
+            //
+            // Notifica o event Manager da Metrica criada
+            //
+            ConsumableMetricCreatedEvent event = new ConsumableMetricCreatedEvent(metric);
+            eventManager.notifyEvent(event);
+            return metric;
+        } finally {
+            if (lockManager.isLocked()) {
+                lockManager.unlock();
+            }
+            endTimer(timerId);
+        }
 
-	}
+    }
 
-	/**
-	 * Called When a New Domain is Created
-	 *
-	 * @param domain
-	 */
-	@Subscribe
-	public void onDomainCreatedEvent(DomainCreatedEvent domain) {
-	}
+    /**
+     * Called When a New Domain is Created
+     *
+     * @param domain
+     */
+    @Subscribe
+    public void onDomainCreatedEvent(DomainCreatedEvent domain) {
+    }
 
-	@Subscribe
-	public void onConsumableMetricCreatedEvent(ConsumableMetricCreatedEvent metric) {
-	}
+    @Subscribe
+    public void onConsumableMetricCreatedEvent(ConsumableMetricCreatedEvent metric) {
+    }
 
-	/**
-	 * Computes if the the graph topology is fully connected, will return
-	 * isolated nodes
-	 *
-	 * @param connections
-	 * @param aPoint
-	 * @return
-	 */
-	public List<String> checkBrokenGraph(List<ResourceConnection> connections, ManagedResource aPoint) {
-		List<String> result = new ArrayList<>();
-		if (!connections.isEmpty()) {
-			//
-			// @Todo:Testar memória...
-			//
-			Long startTime = System.currentTimeMillis();
-			DefaultTopology topology = new DefaultTopology();
-			AtomicLong localId = new AtomicLong(0L);
-			INetworkNode target = createNode(aPoint.getId(), localId.incrementAndGet(), topology);
-			//
-			// this is the A Point from the circuit, will mark as endPoint. meaning all
-			// nodes must reach this one
-			//
-			target.setEndPoint(true);
+    /**
+     * Computes if the the graph topology is fully connected, will return
+     * isolated nodes
+     *
+     * @param connections
+     * @param aPoint
+     * @return
+     */
+    public List<String> checkBrokenGraph(List<ResourceConnection> connections, ManagedResource aPoint) {
+        List<String> result = new ArrayList<>();
+        if (!connections.isEmpty()) {
+            //
+            // @Todo:Testar memória...
+            //
+            Long startTime = System.currentTimeMillis();
+            DefaultTopology topology = new DefaultTopology();
+            AtomicLong localId = new AtomicLong(0L);
+            INetworkNode target = createNode(aPoint.getId(), localId.incrementAndGet(), topology);
+            //
+            // this is the A Point from the circuit, will mark as endPoint. meaning all
+            // nodes must reach this one
+            //
+            target.setEndPoint(true);
 
-			connections.forEach(connection -> {
-				INetworkNode from = topology.getNodeByName(connection.getFrom().getId());
-				INetworkNode to = topology.getNodeByName(connection.getTo().getId());
+            connections.forEach(connection -> {
+                INetworkNode from = topology.getNodeByName(connection.getFrom().getId());
+                INetworkNode to = topology.getNodeByName(connection.getTo().getId());
 
-				if (from == null) {
-					from = createNode(connection.getFrom().getId(), localId.incrementAndGet(), topology);
-				}
+                if (from == null) {
+                    from = createNode(connection.getFrom().getId(), localId.incrementAndGet(), topology);
+                }
 
-				if (to == null) {
-					to = createNode(connection.getTo().getId(), localId.incrementAndGet(), topology);
-				}
+                if (to == null) {
+                    to = createNode(connection.getTo().getId(), localId.incrementAndGet(), topology);
+                }
 
-				if (connection.getOperationalStatus().equals("UP")) {
-					topology.addConnection(from, to, "Connection: " + connection.getId());
-				}
+                if (connection.getOperationalStatus().equals("UP")) {
+                    topology.addConnection(from, to, "Connection: " + connection.getId());
+                }
 
-				// topology.addConnection(to, from, connection.getId() + ".A");
-			});
+                // topology.addConnection(to, from, connection.getId() + ".A");
+            });
 
-			logger.debug("-------------------------------------------------------------");
-			logger.debug("Topology Loaded! ");
-			logger.debug("Topology Size:");
-			logger.debug("         Nodes:{}", topology.getNodes().size());
-			logger.debug("   Connections:{}", topology.getConnections().size());
-			logger.debug("     EndPoints:{}", topology.getEndPoints().size());
-			for (INetworkNode node : topology.getEndPoints()) {
-				logger.debug("       {}", node.getName());
-			}
+            logger.debug("-------------------------------------------------------------");
+            logger.debug("Topology Loaded! ");
+            logger.debug("Topology Size:");
+            logger.debug("         Nodes:{}", topology.getNodes().size());
+            logger.debug("   Connections:{}", topology.getConnections().size());
+            logger.debug("     EndPoints:{}", topology.getEndPoints().size());
+            for (INetworkNode node : topology.getEndPoints()) {
+                logger.debug("       {}", node.getName());
+            }
 
-			List<INetworkNode> weak = topology.getImpactManager().getUnreacheableNodes();
-			Long endTime = System.currentTimeMillis();
-			Long tookTime = endTime - startTime;
-			logger.debug("Found {} Unrecheable Nodes IN: {} ms", weak.size(), tookTime);
+            List<INetworkNode> weak = topology.getImpactManager().getUnreacheableNodes();
+            Long endTime = System.currentTimeMillis();
+            Long tookTime = endTime - startTime;
+            logger.debug("Found {} Unrecheable Nodes IN: {} ms", weak.size(), tookTime);
 
-			if (!weak.isEmpty()) {
-				weak.forEach(node -> {
-					if (!result.contains(node.getName())) {
-						result.add(node.getName());
-					}
-				});
-			}
-			//
-			// Try to free the memory
-			//
-			topology.destroyTopology();
-		}
-		return result;
-	}
+            if (!weak.isEmpty()) {
+                weak.forEach(node -> {
+                    if (!result.contains(node.getName())) {
+                        result.add(node.getName());
+                    }
+                });
+            }
+            //
+            // Try to free the memory
+            //
+            topology.destroyTopology();
+        }
+        return result;
+    }
 
-	public void findWeakLinks(List<ResourceConnection> connections, FilterDTO filter) {
-		//
-		// Valida se temos dados de conexões...
-		//
+    public void findWeakLinks(List<ResourceConnection> connections, FilterDTO filter) {
+        //
+        // Valida se temos dados de conexões...
+        //
 
-		if (!connections.isEmpty()) {
-			//
-			// Vamos validar se a regex encontra targets
-			//
+        if (!connections.isEmpty()) {
+            //
+            // Vamos validar se a regex encontra targets
+            //
 
-			List<BasicResource> targets = new ArrayList<>();
+            List<BasicResource> targets = new ArrayList<>();
 
-			Pattern p = Pattern.compile(filter.getTargetRegex());
-			for (ResourceConnection connection : connections) {
-				Matcher sourceMatcher = p.matcher(connection.getFrom().getName());
-				if (sourceMatcher.matches() && !targets.contains(connection.getFrom())) {
-					targets.add(connection.getFrom());
-				}
+            Pattern p = Pattern.compile(filter.getTargetRegex());
+            for (ResourceConnection connection : connections) {
+                Matcher sourceMatcher = p.matcher(connection.getFrom().getName());
+                if (sourceMatcher.matches() && !targets.contains(connection.getFrom())) {
+                    targets.add(connection.getFrom());
+                }
 
-				Matcher targetMatched = p.matcher(connection.getTo().getName());
-				if (targetMatched.matches() && !targets.contains(connection.getFrom())) {
-					targets.add(connection.getTo());
-				}
-			}
+                Matcher targetMatched = p.matcher(connection.getTo().getName());
+                if (targetMatched.matches() && !targets.contains(connection.getFrom())) {
+                    targets.add(connection.getTo());
+                }
+            }
 
-			if (!targets.isEmpty()) {
-				//
-				// Ok temos algo para Trabalhar, montemos a topologia...
-				//
-				DefaultTopology topology = new DefaultTopology();
+            if (!targets.isEmpty()) {
+                //
+                // Ok temos algo para Trabalhar, montemos a topologia...
+                //
+                DefaultTopology topology = new DefaultTopology();
 
-				targets.forEach(t -> {
-					//
-					//
-					//
+                targets.forEach(t -> {
+                    //
+                    //
+                    //
 
-				});
+                });
 
-				connections.forEach(connection -> {
+                connections.forEach(connection -> {
 
-				});
+                });
 
-			}
-		}
-	}
+            }
+        }
+    }
 
-	private INetworkNode createNode(String name, Long id, ITopology topology) {
-		INetworkNode node = new DefaultNode(name, id.intValue(), topology);
-		return node;
-	}
+    private INetworkNode createNode(String name, Long id, ITopology topology) {
+        INetworkNode node = new DefaultNode(name, id.intValue(), topology);
+        return node;
+    }
 
-	// public void test(String filter, Integer threads) {
-	// String aql = "for doc in inventory_connections "
-	// + " filter doc.from.name like @filter"
-	// + " or doc.to.name like @filter return doc";
-	// HashMap<String, Object> bindings = new HashMap<>();
-	// bindings.put("filter", filter);
-	// ArangoCursor<ResourceConnection> connections =
-	// arangoDao.filterConnectionByAQL(aql, bindings);
-	// DefaultTopology topology = new DefaultTopology();
-	// AtomicLong id = new AtomicLong(0L);
-	//// INetworkNode saida = createNode("OUTPUT", id.incrementAndGet(), topology);
-	//// saida.setEndPoint(true);
-	//
-	// connections.forEachRemaining(connection -> {
-	// if (connection.getFrom().getName().contains("m-br") &&
-	// connection.getTo().getName().contains("m-br")) {
-	// INetworkNode from = topology.getNodeByName(connection.getFrom().getName());
-	// INetworkNode to = topology.getNodeByName(connection.getTo().getName());
-	//
-	// if (from == null) {
-	// from = createNode(connection.getFrom().getName(), id.incrementAndGet(),
-	// topology);
-	// }
-	//
-	// if (to == null) {
-	// to = createNode(connection.getTo().getName(), id.incrementAndGet(),
-	// topology);
-	// }
-	//
-	// if (from.getName().contains("gwc")) {
-	//// topology.addConnection(from, saida);
-	// from.setEndPoint(true);
-	// } else {
-	// from.setEndPoint(false);
-	// from.addAttribute("erbCount", 0);
-	// }
-	//
-	// if (to.getName().contains("gwc")) {
-	// to.setEndPoint(true);
-	//// topology.addConnection(to, saida);
-	// } else {
-	// to.setEndPoint(false);
-	// to.addAttribute("erbCount", 0);
-	// }
-	//
-	// if (from.getConnectionRelated(to).isEmpty()) {
-	// INetworkConnection topologyConnection = topology.addConnection(from, to);
-	// }
-	// } else if (connection.getFrom().getName().contains("m-br")
-	// || connection.getTo().getName().contains("m-br")) {
-	// logger.debug("Connection From: [" + connection.getFrom().getName() + "] TO:["
-	// + connection.getTo().getName() + "]");
-	// BasicResource resource = null;
-	// Boolean goAhead = true;
-	// if (connection.getFrom().getName().contains("m-br")) {
-	// resource = connection.getFrom();
-	//// if (!connection.getTo().getName().contains("erb")) {
-	//// goAhead = false;
-	//// }
-	// } else {
-	// resource = connection.getTo();
-	//// if (!connection.getFrom().getName().contains("erb")) {
-	//// goAhead = false;
-	//// }
-	// }
-	//
-	// if (goAhead) {
-	// INetworkNode node = topology.getNodeByName(resource.getName());
-	// if (node == null) {
-	// node = createNode(resource.getName(), id.incrementAndGet(), topology);
-	// node.addAttribute("erbCount", 0);
-	// }
-	// if (node.getAttribute("erbCount") == null) {
-	// node.addAttribute("erbCount", 0);
-	// }
-	// Integer count = (Integer) node.getAttribute("erbCount");
-	// count++;
-	// node.addAttribute("erbCount", count);
-	// }
-	//
-	// }
-	// });
-	// logger.debug("-------------------------------------------------------------");
-	// logger.debug("Topology Loaded! ");
-	// logger.debug("Topology Size:");
-	// logger.debug(" Nodes:" + topology.getNodes().size());
-	// logger.debug(" Connections:" + topology.getConnections().size());
-	// logger.debug(" EndPoints:" + topology.getEndPoints().size());
-	// for (INetworkNode node : topology.getEndPoints()) {
-	// logger.debug(" " + node.getName());
-	// }
-	//
-	// Long start = System.currentTimeMillis();
-	// logger.debug("-------------------------------------------------------------");
-	// logger.debug("Weak Nodes With 1 Connection or LESS:");
-	// logger.debug("-------------------------------------------------------------");
-	// List<INetworkNode> weak = null;
-	// if (threads > 1) {
-	// weak = topology.getImpactManager().getWeakNodes(1, false, threads, false);
-	// } else {
-	// weak = topology.getImpactManager().getWeakNodes(1, false, threads, false);
-	// }
-	//
-	// logger.debug("Found " + weak.size() + " Weak Nodes");
-	// for (INetworkNode n : weak) {
-	// logger.debug(" ::Weak " + n.getName() + " Connections size:" +
-	// n.getEndpointConnectionsCount() + " Impact Count:" +
-	// n.getImpactedNodes().size() + " ERBS:" + n.getAttribute("erbCount"));
-	// if (!n.getImpactedNodes().isEmpty()) {
-	// n.getImpactedNodes().forEach((k, v) -> {
-	// logger.debug(" ::Node " + n.getName() + " Impacts:" + v.getName() + " ERBS: "
-	// + v.getAttribute("erbCount"));
-	// });
-	//
-	// }
-	// }
-	//
-	// Long end = System.currentTimeMillis();
-	// Long took = end - start;
-	// logger.debug("Process took: " + took + " ms With:" + threads + " Threads");
-	// try {
-	// connections.close();
-	// } catch (IOException ex) {
-	// System.out.println("OOOOOOO Deu RUIm!");
-	// }
-	// //
-	// // Uma vez usados todos os recursos, destroy tudo...
-	// //
-	// topology.destroyTopology();
-	// }
-
+    // public void test(String filter, Integer threads) {
+    // String aql = "for doc in inventory_connections "
+    // + " filter doc.from.name like @filter"
+    // + " or doc.to.name like @filter return doc";
+    // HashMap<String, Object> bindings = new HashMap<>();
+    // bindings.put("filter", filter);
+    // ArangoCursor<ResourceConnection> connections =
+    // arangoDao.filterConnectionByAQL(aql, bindings);
+    // DefaultTopology topology = new DefaultTopology();
+    // AtomicLong id = new AtomicLong(0L);
+    //// INetworkNode saida = createNode("OUTPUT", id.incrementAndGet(), topology);
+    //// saida.setEndPoint(true);
+    //
+    // connections.forEachRemaining(connection -> {
+    // if (connection.getFrom().getName().contains("m-br") &&
+    // connection.getTo().getName().contains("m-br")) {
+    // INetworkNode from = topology.getNodeByName(connection.getFrom().getName());
+    // INetworkNode to = topology.getNodeByName(connection.getTo().getName());
+    //
+    // if (from == null) {
+    // from = createNode(connection.getFrom().getName(), id.incrementAndGet(),
+    // topology);
+    // }
+    //
+    // if (to == null) {
+    // to = createNode(connection.getTo().getName(), id.incrementAndGet(),
+    // topology);
+    // }
+    //
+    // if (from.getName().contains("gwc")) {
+    //// topology.addConnection(from, saida);
+    // from.setEndPoint(true);
+    // } else {
+    // from.setEndPoint(false);
+    // from.addAttribute("erbCount", 0);
+    // }
+    //
+    // if (to.getName().contains("gwc")) {
+    // to.setEndPoint(true);
+    //// topology.addConnection(to, saida);
+    // } else {
+    // to.setEndPoint(false);
+    // to.addAttribute("erbCount", 0);
+    // }
+    //
+    // if (from.getConnectionRelated(to).isEmpty()) {
+    // INetworkConnection topologyConnection = topology.addConnection(from, to);
+    // }
+    // } else if (connection.getFrom().getName().contains("m-br")
+    // || connection.getTo().getName().contains("m-br")) {
+    // logger.debug("Connection From: [" + connection.getFrom().getName() + "] TO:["
+    // + connection.getTo().getName() + "]");
+    // BasicResource resource = null;
+    // Boolean goAhead = true;
+    // if (connection.getFrom().getName().contains("m-br")) {
+    // resource = connection.getFrom();
+    //// if (!connection.getTo().getName().contains("erb")) {
+    //// goAhead = false;
+    //// }
+    // } else {
+    // resource = connection.getTo();
+    //// if (!connection.getFrom().getName().contains("erb")) {
+    //// goAhead = false;
+    //// }
+    // }
+    //
+    // if (goAhead) {
+    // INetworkNode node = topology.getNodeByName(resource.getName());
+    // if (node == null) {
+    // node = createNode(resource.getName(), id.incrementAndGet(), topology);
+    // node.addAttribute("erbCount", 0);
+    // }
+    // if (node.getAttribute("erbCount") == null) {
+    // node.addAttribute("erbCount", 0);
+    // }
+    // Integer count = (Integer) node.getAttribute("erbCount");
+    // count++;
+    // node.addAttribute("erbCount", count);
+    // }
+    //
+    // }
+    // });
+    // logger.debug("-------------------------------------------------------------");
+    // logger.debug("Topology Loaded! ");
+    // logger.debug("Topology Size:");
+    // logger.debug(" Nodes:" + topology.getNodes().size());
+    // logger.debug(" Connections:" + topology.getConnections().size());
+    // logger.debug(" EndPoints:" + topology.getEndPoints().size());
+    // for (INetworkNode node : topology.getEndPoints()) {
+    // logger.debug(" " + node.getName());
+    // }
+    //
+    // Long start = System.currentTimeMillis();
+    // logger.debug("-------------------------------------------------------------");
+    // logger.debug("Weak Nodes With 1 Connection or LESS:");
+    // logger.debug("-------------------------------------------------------------");
+    // List<INetworkNode> weak = null;
+    // if (threads > 1) {
+    // weak = topology.getImpactManager().getWeakNodes(1, false, threads, false);
+    // } else {
+    // weak = topology.getImpactManager().getWeakNodes(1, false, threads, false);
+    // }
+    //
+    // logger.debug("Found " + weak.size() + " Weak Nodes");
+    // for (INetworkNode n : weak) {
+    // logger.debug(" ::Weak " + n.getName() + " Connections size:" +
+    // n.getEndpointConnectionsCount() + " Impact Count:" +
+    // n.getImpactedNodes().size() + " ERBS:" + n.getAttribute("erbCount"));
+    // if (!n.getImpactedNodes().isEmpty()) {
+    // n.getImpactedNodes().forEach((k, v) -> {
+    // logger.debug(" ::Node " + n.getName() + " Impacts:" + v.getName() + " ERBS: "
+    // + v.getAttribute("erbCount"));
+    // });
+    //
+    // }
+    // }
+    //
+    // Long end = System.currentTimeMillis();
+    // Long took = end - start;
+    // logger.debug("Process took: " + took + " ms With:" + threads + " Threads");
+    // try {
+    // connections.close();
+    // } catch (IOException ex) {
+    // System.out.println("OOOOOOO Deu RUIm!");
+    // }
+    // //
+    // // Uma vez usados todos os recursos, destroy tudo...
+    // //
+    // topology.destroyTopology();
+    // }
 }

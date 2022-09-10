@@ -37,67 +37,67 @@ import com.google.common.eventbus.SubscriberExceptionHandler;
 @Service
 public class EventManagerListener implements SubscriberExceptionHandler, Runnable {
 
-	private EventBus eventBus = new EventBus(this);
+    private EventBus eventBus = new EventBus(this);
 
-	private Logger logger = LoggerFactory.getLogger(EventManagerListener.class);
+    private Logger logger = LoggerFactory.getLogger(EventManagerListener.class);
 
-	private LinkedBlockingQueue<Object> eventQueue = new LinkedBlockingQueue<>(1000);
-	
-	private boolean running = false;
+    private LinkedBlockingQueue<Object> eventQueue = new LinkedBlockingQueue<>(1000);
 
-	public EventManagerListener() {
-		if (!running) {
-			Thread thread = new Thread(this);
-			this.running = true;
-			thread.setName("EventManagerSession_THREAD");
-			thread.start();
-		}
-		this.eventBus.register(this);
-	}
+    private boolean running = false;
 
-	public void registerListener(Object session) {
-		this.eventBus.register(session);
-	}
+    public EventManagerListener() {
+        if (!running) {
+            Thread thread = new Thread(this);
+            this.running = true;
+            thread.setName("EventManagerSession_THREAD");
+            thread.start();
+        }
+        this.eventBus.register(this);
+    }
 
-	/**
-	 * Recebe a notificação de um evento e envia para o EventBus
-	 *
-	 * @param event
-	 */
-	public boolean notifyEvent(Object event) {
-		//
-		// the queue is limited to 1000 Events
-		//
-		return eventQueue.offer(event);
-	}
+    public void registerListener(Object session) {
+        this.eventBus.register(session);
+    }
 
-	/**
-	 * Intercepta as exceptions geradas pelo eventbus nas subscriptions
-	 *
-	 * @param thrwbl
-	 * @param sec
-	 */
-	@Override
-	public void handleException(Throwable thrwbl, SubscriberExceptionContext sec) {
-		logger.error("Subscription Error in EventBUS Please Check ME:", thrwbl);
-	}
-	
-	/**
-	 * Faz o processamento da fila interna de eventos
-	 */
-	@Override
-	public void run() {
-		while (running) {
-			try {
-				Object event = eventQueue.poll(5, TimeUnit.SECONDS);
-				if (event != null) {
-					logger.debug("Processing Event: [{}]", event.getClass().getCanonicalName());
-					eventBus.post(event);
-				}
-			} catch (InterruptedException ex) {
-				logger.error("Error on Processing Event: [{}]", ex.getMessage());
-				Thread.currentThread().interrupt();
-			}
-		}
-	}
+    /**
+     * Recebe a notificação de um evento e envia para o EventBus
+     *
+     * @param event
+     */
+    public boolean notifyEvent(Object event) {
+        //
+        // the queue is limited to 1000 Events
+        //
+        return eventQueue.offer(event);
+    }
+
+    /**
+     * Intercepta as exceptions geradas pelo eventbus nas subscriptions
+     *
+     * @param thrwbl
+     * @param sec
+     */
+    @Override
+    public void handleException(Throwable thrwbl, SubscriberExceptionContext sec) {
+        logger.error("Subscription Error in EventBUS Please Check ME:", thrwbl);
+    }
+
+    /**
+     * Faz o processamento da fila interna de eventos
+     */
+    @Override
+    public void run() {
+        while (running) {
+            try {
+                Object event = eventQueue.poll(5, TimeUnit.SECONDS);
+                if (event != null) {
+                    logger.debug("Processing Event: [{}]", event.getClass().getCanonicalName());
+                    eventBus.post(event);
+                }
+            } catch (InterruptedException ex) {
+                logger.error("Error on Processing Event: [{}]", ex.getMessage());
+                Thread.currentThread().interrupt();
+            }
+        }
+    }
 }

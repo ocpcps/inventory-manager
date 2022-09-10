@@ -25,9 +25,9 @@ import com.osstelecom.db.inventory.manager.resources.ResourceLocation;
  * @created 15.12.2021
  */
 public class CreateResourceLocationResponse extends BasicResponse<ResourceLocation> {
-    
+
     public CreateResourceLocationResponse(ResourceLocation obj) {
         super(obj);
     }
-    
+
 }

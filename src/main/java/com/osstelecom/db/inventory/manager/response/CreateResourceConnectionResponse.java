@@ -25,9 +25,9 @@ import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
  * @created 16.12.2021
  */
 public class CreateResourceConnectionResponse extends BasicResponse<ResourceConnection> {
-    
+
     public CreateResourceConnectionResponse(ResourceConnection obj) {
         super(obj);
     }
-    
+
 }

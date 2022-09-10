@@ -25,11 +25,11 @@ import com.osstelecom.db.inventory.manager.resources.Domain;
  * @created 14.08.2022
  */
 public class DeleteDomainRequest extends BasicRequest<Domain> {
-    
+
     public DeleteDomainRequest(String domainName) {
         Domain domain = new Domain();
         domain.setDomainName(domainName);
         this.setPayLoad(domain);
     }
-    
+
 }

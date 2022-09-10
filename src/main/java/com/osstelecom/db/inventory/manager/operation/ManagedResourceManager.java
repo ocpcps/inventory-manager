@@ -65,16 +65,16 @@ import com.osstelecom.db.inventory.manager.session.SchemaSession;
  * @created 30.08.2022
  */
 @Service
-public class ManagedResourceManager extends Manager {   
+public class ManagedResourceManager extends Manager {
 
     @Autowired
     private EventManagerListener eventManager;
 
     @Autowired
     private ReentrantLock lockManager;
-    
+
     @Autowired
-    private DynamicRuleSession dynamicRuleSession;    
+    private DynamicRuleSession dynamicRuleSession;
 
     @Autowired
     private SchemaSession schemaSession;
@@ -89,11 +89,11 @@ public class ManagedResourceManager extends Manager {
     private ResourceConnectionManager resourceConnectionManager;
 
     @Autowired
-    private CircuitResourceDao circuitResourceDao; 
+    private CircuitResourceDao circuitResourceDao;
 
     @Autowired
     private CircuitResourceManager circuitResourceManager;
-    
+
     @Autowired
     private DomainManager domainManager;
 
@@ -107,7 +107,7 @@ public class ManagedResourceManager extends Manager {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
-     /**
+    /**
      * Create a managed Resource
      *
      * @param resource
@@ -331,8 +331,6 @@ public class ManagedResourceManager extends Manager {
         }
     }
 
-    
-
     public GraphList<ManagedResource> getNodesByFilter(FilterDTO filter, String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
         Domain domain = domainManager.getDomain(domainName);
         if (filter.getObjects().contains("nodes")) {
@@ -350,12 +348,9 @@ public class ManagedResourceManager extends Manager {
         throw new InvalidRequestException("getNodesByFilter() can only retrieve nodes objects");
     }
 
-    
-
     public GraphList<ManagedResource> findManagedResourcesBySchemaName(ResourceSchemaModel model, Domain domain) throws ResourceNotFoundException, ArangoDaoException {
         return this.managedResourceDao.findResourcesBySchemaName(model.getSchemaName(), domain);
     }
-
 
     /**
      * Process the schema update Event, this is very heavy for the system, avoid
@@ -427,35 +422,34 @@ public class ManagedResourceManager extends Manager {
     }
 
     /**
-	 * Called when a Managed Resource is created
-	 *
-	 * @param resource
-	 */
-	@Subscribe
-	public void onManagedResourceCreatedEvent(ManagedResourceCreatedEvent resource) {
+     * Called when a Managed Resource is created
+     *
+     * @param resource
+     */
+    @Subscribe
+    public void onManagedResourceCreatedEvent(ManagedResourceCreatedEvent resource) {
 
-	}
+    }
 
     /**
-	 * An resource Schema update just Happened...we neeed to update and check
-	 * all resources...
-	 *
-	 * @param update
-	 */
-	@Subscribe
-	public void onResourceSchameUpdatedEvent(ResourceSchemaUpdatedEvent update) {
+     * An resource Schema update just Happened...we neeed to update and check
+     * all resources...
+     *
+     * @param update
+     */
+    @Subscribe
+    public void onResourceSchameUpdatedEvent(ResourceSchemaUpdatedEvent update) {
         //
         // Notify the schema session that a schema has changed
         // Now, it will search for:
         // Nodes to be updates -> Connections that relies on those nodes
         //
         this.processSchemaUpdatedEvent(update);
-	}
+    }
 
     @Subscribe
-	public void onManagedResourceUpdatedEvent(ManagedResourceUpdatedEvent updateEvent) {
-		logger.debug("Managed Resource [{}] Updated: ", updateEvent.getOldResource().getId());
-	}
-
+    public void onManagedResourceUpdatedEvent(ManagedResourceUpdatedEvent updateEvent) {
+        logger.debug("Managed Resource [{}] Updated: ", updateEvent.getOldResource().getId());
+    }
 
 }

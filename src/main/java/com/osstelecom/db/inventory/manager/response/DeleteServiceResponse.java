@@ -25,9 +25,9 @@ import com.osstelecom.db.inventory.manager.resources.ServiceResource;
  * @created 14.08.2022
  */
 public class DeleteServiceResponse extends BasicResponse<ServiceResource> {
-    
+
     public DeleteServiceResponse(ServiceResource obj) {
         super(obj);
     }
-    
+
 }

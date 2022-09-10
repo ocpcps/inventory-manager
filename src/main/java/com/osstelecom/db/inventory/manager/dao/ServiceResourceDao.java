@@ -53,21 +53,21 @@ public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
             String aql = " for doc in   " + resource.getDomain().getServices();
             aql += " filter is_array ( doc.dependencies ) ";
             aql += " for dep in doc.dependencies ";
-            
+
             aql += " filter dep.domainName == @domainName";
             bindVars.put("domainName", resource.getDomain().getDomainName());
-            
+
             if (resource.getId() != null) {
                 aql += " and dep._id == @_id";
                 bindVars.put("_id", resource.getId());
             }
-            if (resource.getKey() != null) {            
+            if (resource.getKey() != null) {
                 aql += " and dep._key == @_key";
                 bindVars.put("_key", resource.getKey());
             }
-            
+
             aql += " return doc";
-            
+
             return this.query(aql, bindVars, ServiceResource.class, this.getDb());
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
@@ -94,8 +94,6 @@ public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
             aql += " doc.domainName == @domainName";
 
             bindVars.put("domainName", resource.getDomain().getDomainName());
-
-           
 
             if (resource.getName() != null) {
                 bindVars.put("name", resource.getName());
@@ -258,5 +256,3 @@ public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
         }
     }
 }
-
-

@@ -25,9 +25,9 @@ import com.osstelecom.db.inventory.manager.resources.Domain;
  * @created 14.08.2022
  */
 public class DeleteDomainResponse extends BasicResponse<Domain> {
-    
+
     public DeleteDomainResponse(Domain obj) {
         super(obj);
     }
-    
+
 }

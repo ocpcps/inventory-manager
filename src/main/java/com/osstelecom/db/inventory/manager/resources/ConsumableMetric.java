@@ -42,7 +42,7 @@ public class ConsumableMetric {
     private Double maxValue;
     @Schema(description = "The Consumable Metric Unity value", example = "1")
     private Double unitValue;
-     @Schema(description = "The Consumable Metric Category", example = "Interface Speed")
+    @Schema(description = "The Consumable Metric Category", example = "Interface Speed")
     private String category;
 
     public ConsumableMetric(DomainManager domain) {

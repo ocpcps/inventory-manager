@@ -50,9 +50,9 @@ public class ResourceConnectionManager extends Manager {
 
     @Autowired
     private ResourceConnectionDao resourceConnectionDao;
-    
+
     @Autowired
-    private DynamicRuleSession dynamicRuleSession;    
+    private DynamicRuleSession dynamicRuleSession;
 
     /**
      * Cria uma nova Conexão entre dois elementos, Note que a ordem é importante
@@ -169,8 +169,7 @@ public class ResourceConnectionManager extends Manager {
         }
     }
 
-
-     /**
+    /**
      * Update a Resource Connection
      *
      * @param connection

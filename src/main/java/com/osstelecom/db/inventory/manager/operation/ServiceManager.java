@@ -127,7 +127,7 @@ public class ServiceManager extends Manager {
             if (service.getKey() == null) {
                 service.setKey(this.getUUID());
             }
-            if(service.getOperationalStatus() == null || service.getOperationalStatus().isEmpty()){
+            if (service.getOperationalStatus() == null || service.getOperationalStatus().isEmpty()) {
                 service.setOperationalStatus("UP");
             }
 
@@ -136,7 +136,7 @@ public class ServiceManager extends Manager {
             service.setSchemaModel(schemaModel);
             schemaSession.validateResourceSchema(service);
             dynamicRuleSession.evalResource(service, "I", this); // <--- Pode não ser verdade , se a chave for
-                                                                 // duplicada..
+            // duplicada..
 
             DocumentCreateEntity<ServiceResource> result = serviceDao.insertResource(service);
             service.setKey(result.getId());
@@ -179,10 +179,11 @@ public class ServiceManager extends Manager {
 
     /**
      * Resolves Services and Circuits
+     *
      * @param service
      * @return
      * @throws ResourceNotFoundException
-     * @throws ArangoDaoException 
+     * @throws ArangoDaoException
      */
     public ServiceResource resolveService(ServiceResource service)
             throws ResourceNotFoundException, ArangoDaoException {

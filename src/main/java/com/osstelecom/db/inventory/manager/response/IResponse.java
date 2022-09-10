@@ -26,9 +26,8 @@ public interface IResponse<T> {
     public T getPayLoad();
 
     public void setPayLoad(T obj);
-    
+
     public void setStatusCode(int status);
-    
+
     public int getStatusCode();
 }
- 

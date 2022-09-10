@@ -44,7 +44,6 @@ public class ResourceAttributeModel {
     private Boolean validate;
     private String itemHash;
     private Boolean doRemove;
-    
 
     public String getVariableType() {
         return variableType;

@@ -53,6 +53,6 @@ public interface ITopology {
     public ArrayList<INetworkNode> getTopOut(int count);
 
     public void resetDynamicValues();
-    
+
     public void destroyTopology();
 }

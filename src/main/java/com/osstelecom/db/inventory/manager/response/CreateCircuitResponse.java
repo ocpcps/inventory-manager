@@ -25,9 +25,9 @@ import com.osstelecom.db.inventory.manager.resources.CircuitResource;
  * @created 04.01.2022
  */
 public class CreateCircuitResponse extends BasicResponse<CircuitResource> {
-    
+
     public CreateCircuitResponse(CircuitResource obj) {
         super(obj);
     }
-    
+
 }

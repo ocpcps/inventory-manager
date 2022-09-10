@@ -26,5 +26,4 @@ import com.osstelecom.db.inventory.manager.resources.Domain;
  */
 public class CreateDomainRequest extends BasicRequest<Domain> {
 
-
 }

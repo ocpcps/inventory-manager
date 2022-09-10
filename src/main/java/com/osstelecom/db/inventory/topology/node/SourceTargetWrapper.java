@@ -3,19 +3,20 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package com.osstelecom.db.inventory.topology.node;
 
 /**
  *
- * @author  Lucas Nishimura <lucas.nishimura@gmail.com> 
+ * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 06.01.2022
  */
 public class SourceTargetWrapper {
+
     private INetworkNode source;
     private INetworkNode target;
     private Integer limit;
     private Boolean useCache;
+
     /**
      * @return the source
      */
@@ -71,5 +72,5 @@ public class SourceTargetWrapper {
     public void setUseCache(Boolean useCache) {
         this.useCache = useCache;
     }
-    
+
 }

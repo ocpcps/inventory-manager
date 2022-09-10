@@ -71,7 +71,7 @@ public class UtilSession {
         return UUID.randomUUID().toString();
     }
 
-    public String toJson(Object obj){
+    public String toJson(Object obj) {
         try {
             return objectMapper.writeValueAsString(obj);
         } catch (JsonProcessingException ex) {

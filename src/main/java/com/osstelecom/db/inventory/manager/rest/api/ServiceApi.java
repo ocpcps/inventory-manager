@@ -55,7 +55,7 @@ public class ServiceApi {
     @Autowired
     private ServiceSession serviceSession;
 
-    @AuthenticatedCall(role = { "user" })
+    @AuthenticatedCall(role = {"user"})
     @GetMapping(path = "/{domainName}/service/{serviceId}", produces = "application/json")
     public GetServiceResponse getServiceById(@PathVariable("domainName") String domainName,
             @PathVariable("serviceId") String serviceId) throws InvalidRequestException, ResourceNotFoundException, DomainNotFoundException, ArangoDaoException {
@@ -75,7 +75,7 @@ public class ServiceApi {
 
     @AuthenticatedCall(role = {"user"})
     @PutMapping(path = "/{domainName}/service/", produces = "application/json", consumes = "application/json")
-    public CreateServiceResponse createService(@RequestBody CreateServiceRequest request, @PathVariable("domainName") String domainName) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException  {
+    public CreateServiceResponse createService(@RequestBody CreateServiceRequest request, @PathVariable("domainName") String domainName) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
         request.setRequestDomain(domainName);
         return serviceSession.createService(request);
     }

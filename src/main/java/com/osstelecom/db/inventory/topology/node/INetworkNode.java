@@ -19,7 +19,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public interface INetworkNode extends DefaultNetworkObject {
 
     /**
-     *Adiciona uma nova conexão ao node
+     * Adiciona uma nova conexão ao node
+     *
      * @param connection
      * @return
      */
@@ -88,10 +89,10 @@ public interface INetworkNode extends DefaultNetworkObject {
     public void markConnectionAsProbed(INetworkConnection connection);
 
     public List<INetworkConnection> getUnprobedConnections();
-    
-    public  List<ArrayList<INetworkNode>> getSolutions();
-    
+
+    public List<ArrayList<INetworkNode>> getSolutions();
+
     public void addSolution(ArrayList<INetworkNode> solution);
-    
+
     public List<ArrayList<INetworkNode>> getSolutionsExcept(INetworkNode node);
 }

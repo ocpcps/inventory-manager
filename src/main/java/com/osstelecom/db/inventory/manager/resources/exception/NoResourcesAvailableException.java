@@ -20,7 +20,7 @@ package com.osstelecom.db.inventory.manager.resources.exception;
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  */
-public class NoResourcesAvailableException extends Exception{
+public class NoResourcesAvailableException extends Exception {
 
     public NoResourcesAvailableException() {
     }
@@ -36,5 +36,5 @@ public class NoResourcesAvailableException extends Exception{
     public NoResourcesAvailableException(Throwable thrwbl) {
         super(thrwbl);
     }
-    
+
 }

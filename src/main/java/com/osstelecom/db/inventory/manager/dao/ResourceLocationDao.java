@@ -178,8 +178,6 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
         }
     }
 
-    
-
     /**
      * Cria um elemento Comum
      *
@@ -194,7 +192,7 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
             ex.printStackTrace();
             throw new GenericException(ex.getMessage());
         }
-    }    
+    }
 
     /**
      * Pesquisa o recurso com base no name, e nodeAddress, dando sempre
@@ -241,7 +239,7 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
             logger.info("\t  [@{}]=[{}]", k, v);
 
         });
-        
+
         ArangoCursor<ResourceLocation> cursor = this.getDb().query(aql, bindVars, ResourceLocation.class);
         List<ResourceLocation> locations = cursor.asListRemaining();
 

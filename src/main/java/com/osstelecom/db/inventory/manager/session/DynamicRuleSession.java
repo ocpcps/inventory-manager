@@ -61,7 +61,7 @@ public class DynamicRuleSession {
     private void initGse() {
         try {
             this.configuration = configurationManager.loadConfiguration();
-            logger.info("Starting Dynamic Rule Engine with rules dir at: [{}]",this.configuration.getRulesDir());
+            logger.info("Starting Dynamic Rule Engine with rules dir at: [{}]", this.configuration.getRulesDir());
             this.gse = new GroovyScriptEngine(configuration.getRulesDir());
             this.bindings = new Binding();
             this.bindings.setVariable("logger", logger);
@@ -108,10 +108,10 @@ public class DynamicRuleSession {
                 this.bindings.setVariable("manager", manager);
                 this.bindings.setVariable("context", context);
 
-                context.put("manager", manager);                
+                context.put("manager", manager);
                 context.put("resource", resource);
                 context.put("oper", oper);
-                
+
                 String runningScript = scriptPath;
                 this.bindings.setVariable("resource", resource);
                 while (!scriptPath.equals("")) {
@@ -120,9 +120,11 @@ public class DynamicRuleSession {
                         context.put("include", scriptPath);
                         this.gse.run(runningScript, bindings);
                         scriptPath = (String) context.get("include");
-                        if (StringUtils.hasText(scriptPath))
+                        if (StringUtils.hasText(scriptPath)) {
                             runningScript = scriptPath;
-                        else scriptPath = "";
+                        } else {
+                            scriptPath = "";
+                        }
                     } catch (ResourceException | ScriptException ex) {
                         throw new ScriptRuleException("Error in Groovy Context", ex);
                     } catch (Exception ex) {

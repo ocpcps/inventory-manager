@@ -24,9 +24,9 @@ import java.util.Map;
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 21.07.2022
  */
-public class TypedMapResponse extends BasicResponse<Map<?,?>> {
+public class TypedMapResponse extends BasicResponse<Map<?, ?>> {
 
-    public TypedMapResponse(Map<?,?> obj) {
+    public TypedMapResponse(Map<?, ?> obj) {
         super(obj);
     }
 

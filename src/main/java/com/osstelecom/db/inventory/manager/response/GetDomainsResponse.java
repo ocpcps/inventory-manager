@@ -27,9 +27,9 @@ import com.osstelecom.db.inventory.manager.resources.Domain;
  * @created 07.08.2022
  */
 public class GetDomainsResponse extends BasicResponse<List<Domain>> {
-    
+
     public GetDomainsResponse(List<Domain> list) {
         super(list);
     }
-    
+
 }

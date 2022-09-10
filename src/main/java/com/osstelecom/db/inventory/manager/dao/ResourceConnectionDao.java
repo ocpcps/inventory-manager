@@ -285,9 +285,9 @@ public class ResourceConnectionDao extends AbstractArangoDao<ResourceConnection>
     }
 
     /**
-     * Obtem os vertices relacionados ao circuito
-     * Muito especifica para generalizar
-     * 
+     * Obtem os vertices relacionados ao circuito Muito especifica para
+     * generalizar
+     *
      * @param circuit
      * @return
      */

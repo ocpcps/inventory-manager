@@ -28,13 +28,11 @@ public class FindManagedResourceRequest extends BasicRequest<ManagedResource> {
 
     private String resourceId;
 
-    public FindManagedResourceRequest(String resourceId,String domainName) {
+    public FindManagedResourceRequest(String resourceId, String domainName) {
         this.resourceId = resourceId;
         this.setRequestDomain(domainName);
     }
-    
-   
-    
+
     /**
      * @return the resourceId
      */

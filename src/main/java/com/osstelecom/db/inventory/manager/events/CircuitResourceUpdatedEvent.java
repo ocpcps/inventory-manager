@@ -30,7 +30,4 @@ public class CircuitResourceUpdatedEvent extends BasicEvent<CircuitResource> {
         super(oldResource, newResource);
     }
 
-    
-    
-
 }

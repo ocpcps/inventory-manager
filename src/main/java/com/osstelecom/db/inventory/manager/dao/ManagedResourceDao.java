@@ -96,7 +96,7 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
                 }
                 bindVars.put("attributeSchemaName", resource.getAttributeSchemaName());
             }
-            
+
             aql = this.buildAqlFromBindings(aql, bindVars, true);
 
             GraphList<ManagedResource> result = this.query(aql, bindVars, ManagedResource.class, this.getDb());

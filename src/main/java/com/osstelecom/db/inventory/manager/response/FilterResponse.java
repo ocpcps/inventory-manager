@@ -26,11 +26,8 @@ import com.osstelecom.db.inventory.manager.dto.FilterDTO;
  */
 public class FilterResponse extends BasicResponse<FilterDTO> {
 
-  
-
     public FilterResponse(FilterDTO obj) {
         super(obj);
     }
-
 
 }

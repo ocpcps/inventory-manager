@@ -25,9 +25,9 @@ import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
  * @created 12.08.2022
  */
 public class PatchResourceSchemaModelResponse extends BasicResponse<ResourceSchemaModel> {
-    
+
     public PatchResourceSchemaModelResponse(ResourceSchemaModel obj) {
         super(obj);
     }
-    
+
 }
