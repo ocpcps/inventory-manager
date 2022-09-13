@@ -24,7 +24,7 @@ import com.osstelecom.db.inventory.manager.resources.ManagedResource;
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 10.04.2022
  */
-public class ManagedResourceCreatedEvent extends BasicEvent<ManagedResource> {
+public class ManagedResourceCreatedEvent extends BasicResourceEvent<ManagedResource> {
 
     public ManagedResourceCreatedEvent(ManagedResource resource) {
         super(resource);

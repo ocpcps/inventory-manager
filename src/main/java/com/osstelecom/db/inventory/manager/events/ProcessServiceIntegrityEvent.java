@@ -24,7 +24,7 @@ import com.osstelecom.db.inventory.manager.resources.ServiceResource;
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 23.08.2022
  */
-public class ProcessServiceIntegrityEvent extends BasicEvent<ServiceResource> {
+public class ProcessServiceIntegrityEvent extends BasicResourceEvent<ServiceResource> {
 
     public ProcessServiceIntegrityEvent(ServiceResource resource) {
         super(resource);

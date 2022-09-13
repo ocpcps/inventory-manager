@@ -24,7 +24,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.ReentrantLock;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,7 +70,7 @@ public class ManagedResourceManager extends Manager {
     private EventManagerListener eventManager;
 
     @Autowired
-    private ReentrantLock lockManager;
+    private LockManager lockManager;
 
     @Autowired
     private DynamicRuleSession dynamicRuleSession;
@@ -142,7 +141,7 @@ public class ManagedResourceManager extends Manager {
             // Aqui criou o managed resource
             //
             ManagedResourceCreatedEvent event = new ManagedResourceCreatedEvent(resource);
-            this.eventManager.notifyEvent(event);
+            this.eventManager.notifyResourceEvent(event);
             return resource;
         } finally {
             if (lockManager.isLocked()) {
@@ -227,51 +226,52 @@ public class ManagedResourceManager extends Manager {
                 Map<String, Object> bindVars = new HashMap<>();
                 bindVars.put("resourceId", updatedResource.getId());
 
-                this.resourceConnectionDao.findResourceByFilter(filter, bindVars, updatedResource.getDomain()).forEach((c) -> {
+                this.resourceConnectionDao.findResourceByFilter(filter, bindVars, updatedResource.getDomain()).forEach((connection) -> {
 
-                    if (c.getFrom().getKey().equals(updatedResource.getKey())) {
+                    if (connection.getFrom().getKey().equals(updatedResource.getKey())) {
                         //
                         // Update from
                         //
 
-                        c.setFrom(updatedResource);
+                        connection.setFrom(updatedResource);
                         //
                         // validando 
                         //
 
-                    } else if (c.getTo().getKey().equals(updatedResource.getKey())) {
+                    } else if (connection.getTo().getKey().equals(updatedResource.getKey())) {
                         //
                         // Update to
                         //
-                        c.setTo(updatedResource);
+                        connection.setTo(updatedResource);
 
                     }
 
                     //
-                    // Avalia o status final da Conexão
+                    // Avalia o status final da Conexão, imagino que isso 
+                    // deveria ir para o listener...pois já está trabalhando no evento em si
                     //
                     boolean circuitStateChanged = false;
-                    if (c.getFrom().getOperationalStatus().equals("UP")
-                            && c.getTo().getOperationalStatus().equals("UP")) {
-                        if (c.getOperationalStatus().equals("DOWN")) {
-                            c.setOperationalStatus("UP");
+                    if (connection.getFrom().getOperationalStatus().equals("UP")
+                            && connection.getTo().getOperationalStatus().equals("UP")) {
+                        if (connection.getOperationalStatus().equals("DOWN")) {
+                            connection.setOperationalStatus("UP");
                             circuitStateChanged = true;
                         }
                     } else {
-                        if (c.getOperationalStatus().equals("UP")) {
-                            c.setOperationalStatus("DOWN");
+                        if (connection.getOperationalStatus().equals("UP")) {
+                            connection.setOperationalStatus("DOWN");
                             circuitStateChanged = true;
                         }
                     }
                     if (circuitStateChanged) {
                         try {
-                            resourceConnectionManager.updateResourceConnection(c); // <- Atualizou a conexão no banco
+                            resourceConnectionManager.updateResourceConnection(connection); // <- Atualizou a conexão no banco
                             //
                             // Now Update related Circuits..
                             //
-                            if (c.getCircuits() != null) {
-                                if (!c.getCircuits().isEmpty()) {
-                                    for (String circuitId : c.getCircuits()) {
+                            if (connection.getCircuits() != null) {
+                                if (!connection.getCircuits().isEmpty()) {
+                                    for (String circuitId : connection.getCircuits()) {
                                         if (!relatedCircuits.contains(circuitId)) {
                                             //
                                             // Garante que só incluímos o mesmo circuito uma vez
@@ -282,12 +282,15 @@ public class ManagedResourceManager extends Manager {
                                 }
                             }
                         } catch (ArangoDaoException ex) {
-                            logger.error("Failed to Update Circuit: [{}]", c.getId(), ex);
+                            logger.error("Failed to Update Circuit: [{}]", connection.getId(), ex);
                         }
                     }
 
                 });
 
+                //
+                // Note que ele só terá circuitos relacionados se houver mudança de status do circuito.
+                //
                 if (!relatedCircuits.isEmpty()) {
                     for (String circuitId : relatedCircuits) {
                         try {
@@ -304,7 +307,7 @@ public class ManagedResourceManager extends Manager {
                             // Circuit Integrity must be checked here,
                             // So we fire an event that will later request that
                             //
-                            this.eventManager.notifyEvent(new ProcessCircuityIntegrityEvent(circuit));
+                            this.eventManager.notifyResourceEvent(new ProcessCircuityIntegrityEvent(circuit));
 
                         } catch (ResourceNotFoundException ex) {
                             //
@@ -321,7 +324,7 @@ public class ManagedResourceManager extends Manager {
                 logger.error("Failed to Update Resource Connection Relation", ex);
             }
 
-            eventManager.notifyEvent(new ManagedResourceUpdatedEvent(updatedEntity.getOld(), updatedEntity.getNew()));
+            eventManager.notifyResourceEvent(new ManagedResourceUpdatedEvent(updatedEntity.getOld(), updatedEntity.getNew()));
             return updatedResource;
         } finally {
             if (lockManager.isLocked()) {

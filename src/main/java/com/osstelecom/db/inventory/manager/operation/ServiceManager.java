@@ -20,7 +20,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.locks.ReentrantLock;
 
 import javax.management.ServiceNotFoundException;
 
@@ -35,6 +34,7 @@ import com.arangodb.entity.DocumentCreateEntity;
 import com.arangodb.entity.DocumentUpdateEntity;
 import com.google.common.eventbus.Subscribe;
 import com.osstelecom.db.inventory.manager.dao.ServiceResourceDao;
+import com.osstelecom.db.inventory.manager.events.CircuitStateTransionedEvent;
 import com.osstelecom.db.inventory.manager.events.ProcessServiceIntegrityEvent;
 import com.osstelecom.db.inventory.manager.events.ServiceResourceCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.ServiceResourceUpdatedEvent;
@@ -47,6 +47,7 @@ import com.osstelecom.db.inventory.manager.resources.ServiceResource;
 import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
 import com.osstelecom.db.inventory.manager.session.DynamicRuleSession;
 import com.osstelecom.db.inventory.manager.session.SchemaSession;
+import java.util.stream.Collectors;
 
 @Service
 public class ServiceManager extends Manager {
@@ -67,7 +68,7 @@ public class ServiceManager extends Manager {
     private CircuitResourceManager circuitResourceManager;
 
     @Autowired
-    private ReentrantLock lockManager;
+    private LockManager lockManager;
 
     private Logger logger = LoggerFactory.getLogger(ServiceManager.class);
 
@@ -141,14 +142,18 @@ public class ServiceManager extends Manager {
             DocumentCreateEntity<ServiceResource> result = serviceDao.insertResource(service);
             service.setKey(result.getId());
             service.setRevisionId(result.getRev());
+
+            this.resolveCircuitServiceLinks(service, null);
             //
             // Aqui criou o managed resource
             //
             ServiceResourceCreatedEvent event = new ServiceResourceCreatedEvent(service);
-            this.eventManager.notifyEvent(event);
+            this.eventManager.notifyResourceEvent(event);
             return service;
         } catch (Exception e) {
-            throw new ArangoDaoException("Error while creating ServiceResource", e);
+            ArangoDaoException ex = new ArangoDaoException("Error while creating ServiceResource", e);
+//            e.printStackTrace();s
+            throw ex;
         } finally {
             if (lockManager.isLocked()) {
                 lockManager.unlock();
@@ -158,16 +163,82 @@ public class ServiceManager extends Manager {
 
     }
 
+    private void resolveCircuitServiceLinks(ServiceResource newService, ServiceResource oldService) throws ArangoDaoException {
+        //
+        // Aqui temos certeza que o serviço foi criado, então vamos pegar e atualizar as dependencias do circuito
+        //
+        if (newService.getCircuits() != null) {
+            if (!newService.getCircuits().isEmpty()) {
+                //
+                // Como temos serviços associados vamos garantir que o circuito seja notificado
+                //
+
+                for (CircuitResource circuit : newService.getCircuits()) {
+                    //
+                    // 
+                    //
+                    if (!circuit.getServices().contains(newService.getId())) {
+                        //
+                        // Adiciona o ID do serviço no circuito
+                        //
+                        circuit.getServices().add(newService.getId());
+                        circuitResourceManager.updateCircuitResource(circuit);
+                    }
+
+                }
+
+            } else {
+                //
+                // Se a lista de circuitos for vazia precisamos ver se antes não era.
+                //
+                if (!oldService.getCircuits().isEmpty()) {
+                    //
+                    // Não era vazia, ou seja ficou vazia vamos precisar remover a referencia.
+                    //
+                    for (CircuitResource circuit : oldService.getCircuits()) {
+                        if (circuit.getServices().contains(oldService.getId())) {
+                            circuit.getServices().remove(circuit.getId());
+                            circuitResourceManager.updateCircuitResource(circuit);
+                        }
+                    }
+                }
+
+            }
+        }
+        //
+        // Agora vamos comparar com o OLD, para saber se temos circuitos para remover..
+        //
+        if (oldService != null) {
+            if (!oldService.getCircuits().isEmpty()) {
+                for (CircuitResource circuit : oldService.getCircuits()) {
+                    if (!newService.getCircuits().contains(circuit)) {
+                        //
+                        // Marca o Circuito para remoção
+                        //
+                        circuit.getServices().remove(circuit.getId());
+                        circuitResourceManager.updateCircuitResource(circuit);
+                    }
+                }
+            }
+        }
+
+    }
+
     public ServiceResource updateService(ServiceResource service) throws ArangoDaoException {
         String timerId = startTimer("updateServiceResource");
         try {
             lockManager.lock();
             service.setLastModifiedDate(new Date());
+            //
+            // Está salvando null de nested resources... ver o que fazer..
+            // 
             DocumentUpdateEntity<ServiceResource> result = serviceDao.updateResource(service);
             ServiceResource newService = result.getNew();
             ServiceResource oldService = result.getOld();
+
+            this.resolveCircuitServiceLinks(newService, oldService);
             ServiceResourceUpdatedEvent event = new ServiceResourceUpdatedEvent(oldService, newService);
-            this.eventManager.notifyEvent(event);
+            this.eventManager.notifyResourceEvent(event);
             return newService;
         } finally {
             if (lockManager.isLocked()) {
@@ -206,8 +277,15 @@ public class ServiceManager extends Manager {
                 if (circuit.getDomain() == null) {
                     circuit.setDomain(service.getDomain());
                 }
-                CircuitResource resolved = this.circuitResourceManager.findCircuitResource(circuit);
-                resolvedCircuits.add(resolved);
+                if (circuit.getRevisionId() == null) {
+                    CircuitResource resolved = this.circuitResourceManager.findCircuitResource(circuit);
+                    resolvedCircuits.add(resolved);
+                } else {
+                    //
+                    // Se tem revision já foi resolvido.
+                    //
+                    resolvedCircuits.add(circuit);
+                }
             }
         }
         service.setCircuits(resolvedCircuits);
@@ -229,6 +307,9 @@ public class ServiceManager extends Manager {
     @Subscribe
     public void onProcessServiceResourceUpdatedEvent(ServiceResourceUpdatedEvent processEvent)
             throws ArangoDaoException, IllegalStateException, IOException {
+        //
+        // Na atualização do Serviço, precisamo 
+        //
         computeServiceResourceUpdated(processEvent.getNewResource(), processEvent.getOldResource());
     }
 
@@ -286,17 +367,115 @@ public class ServiceManager extends Manager {
         this.updateService(service);
     }
 
+    /**
+     * Recebe as transições de estado dos circuitos
+     *
+     * @param event
+     */
+    @Subscribe
+    public void onCircuitStateTransionedEvent(CircuitStateTransionedEvent event) throws ResourceNotFoundException, ArangoDaoException {
+        if (event.getNewResource().getServices() != null) {
+            if (!event.getNewResource().getServices().isEmpty()) {
+                logger.debug("Circuit:[{}] State Changed, Impacted Services Count:[{}]",
+                        event.getNewResource().getId(),
+                        event.getNewResource().getServices().size());
+                //
+                // Trata o Status Aqui
+                //
+                List<ServiceResource> servicesToUpdate = new ArrayList<>();
+                for (String serviceId : event.getNewResource().getServices()) {
+                    //
+                    // o Circuito só pode impactar serviços do mesmo dominio.
+                    //
+                    ServiceResource service = new ServiceResource(serviceId);
+                    service.setDomain(event.getNewResource().getDomain());
+                    service = this.getServiceById(service);
+                    if (service.getDegrated() != event.getNewResource().getDegrated()) {
+                        service.setDegrated(event.getNewResource().getDegrated());
+                        //
+                        // Atualiza as referencias do Circuito
+                        //
+                        service.getCircuits().remove(event.getNewResource());
+                        service.getCircuits().add(event.getNewResource());
+                        servicesToUpdate.add(service);
+
+                    }
+
+                }
+
+                for (ServiceResource service : servicesToUpdate) {
+                    //
+                    // Verifica o estado final do serviço
+                    //
+
+                    List<CircuitResource> workingCircuits = service.getCircuits()
+                            .stream()
+                            .filter(c -> !c.getBroken()).collect(Collectors.toList());
+
+                    if (workingCircuits != null) {
+                        if (workingCircuits.isEmpty()) {
+                            if (!service.getBroken()) {
+                                service.setBroken(true);
+                            }
+                        } else {
+                            if (service.getBroken()) {
+                                service.setBroken(false);
+                            }
+                        }
+                    } else {
+                        if (!service.getBroken()) {
+                            service.setBroken(true);
+                        }
+
+                    }
+
+                    if (service.getBroken()) {
+                        service.setDegrated(true);
+                        service.setOperationalStatus("DOWN");
+                    } else {
+                        service.setOperationalStatus("UP");
+                    }
+
+                    this.updateService(service);
+                }
+
+            }
+        }
+    }
+
+    /**
+     * Identifica se houve uma transição do estado do serviço, se houve vai
+     * procurar as depedencias e atualizar o estado do servico
+     *
+     * @param newService
+     * @param oldService
+     * @throws ArangoDaoException
+     * @throws IllegalStateException
+     * @throws IOException
+     */
     private void computeServiceResourceUpdated(ServiceResource newService, ServiceResource oldService)
             throws ArangoDaoException, IllegalStateException, IOException {
 
         if (newService.getBroken() != oldService.getBroken()
                 || newService.getDegrated() != oldService.getDegrated()
                 || newService.getOperationalStatus().equalsIgnoreCase(oldService.getOperationalStatus())) {
+            try {
+                this.serviceDao.findUpperResources(newService).forEach(s -> {
+                    //
+                    // Propaga para cima o evento impactando os Serviços que 
+                    // dependem deste serviço
+                    //
+                    ProcessServiceIntegrityEvent event = new ProcessServiceIntegrityEvent(s);
+                    this.eventManager.notifyResourceEvent(event);
+                });
 
-            this.serviceDao.findUpperResources(newService).forEach(s -> {
-                ProcessServiceIntegrityEvent event = new ProcessServiceIntegrityEvent(s);
-                this.eventManager.notifyEvent(event);
-            });
+            } catch (ResourceNotFoundException ex) {
+                //
+                // Esta ex, é lançada quando não tem Upper Resource....
+                // Então é seguro ignorar ela ou simplesmente omitir...
+                // 
+                //
+            }
 
         }
 

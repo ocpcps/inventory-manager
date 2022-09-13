@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.SubscriberExceptionContext;
 import com.google.common.eventbus.SubscriberExceptionHandler;
+import com.osstelecom.db.inventory.manager.events.BasicResourceEvent;
 
 /**
  * Gerencia os eventos do sistema
@@ -64,11 +65,22 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
      *
      * @param event
      */
-    public boolean notifyEvent(Object event) {
+    public synchronized boolean notifyResourceEvent(BasicResourceEvent event) {
         //
         // the queue is limited to 1000 Events
         //
         return eventQueue.offer(event);
+    }
+
+    /**
+     * Trata os eventos genéricos que não estão ligados aos recursos,
+     *
+     * @Todo: pensar se faz sentido migrar para uma fila separada.
+     * @param genericEvent
+     * @return
+     */
+    public synchronized boolean notifyGenericEvent(Object genericEvent) {
+        return eventQueue.offer(genericEvent);
     }
 
     /**

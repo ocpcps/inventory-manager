@@ -29,6 +29,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import org.bson.codecs.pojo.annotations.BsonIgnore;
 
@@ -798,38 +799,38 @@ public class BasicResource {
     }
 
     /**
-     * Muito experimental, não mexer!!!
+     * Muito experimental, habilitado em 12/09/2022
      */
-//    @Override
-//    public int hashCode() {
-//        int hash = 5;
-//        hash = 97 * hash + Objects.hashCode(this.domainName);
-//        hash = 97 * hash + Objects.hashCode(this.nodeAddress);
-//        hash = 97 * hash + Objects.hashCode(this.className);
-//        return hash;
-//    }
-//
-//    @Override
-//    public boolean equals(Object obj) {
-//        if (this == obj) {
-//            return true;
-//        }
-//        if (obj == null) {
-//            return false;
-//        }
-//        if (getClass() != obj.getClass()) {
-//            return false;
-//        }
-//        final BasicResource other = (BasicResource) obj;
-//        if (!Objects.equals(this.domainName, other.domainName)) {
-//            return false;
-//        }
-//        if (!Objects.equals(this.nodeAddress, other.nodeAddress)) {
-//            return false;
-//        }
-//        if (!Objects.equals(this.className, other.className)) {
-//            return false;
-//        }
-//        return true;
-//    }
+    @Override
+    public int hashCode() {
+        int hash = 5;
+        hash = 97 * hash + Objects.hashCode(this.domainName);
+        hash = 97 * hash + Objects.hashCode(this.nodeAddress);
+        hash = 97 * hash + Objects.hashCode(this.className);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final BasicResource other = (BasicResource) obj;
+        if (!Objects.equals(this.domainName, other.domainName)) {
+            return false;
+        }
+        if (!Objects.equals(this.nodeAddress, other.nodeAddress)) {
+            return false;
+        }
+        if (!Objects.equals(this.className, other.className)) {
+            return false;
+        }
+        return true;
+    }
 }

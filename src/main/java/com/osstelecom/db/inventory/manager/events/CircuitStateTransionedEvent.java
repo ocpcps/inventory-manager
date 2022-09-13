@@ -17,17 +17,16 @@
  */
 package com.osstelecom.db.inventory.manager.events;
 
-import com.osstelecom.db.inventory.manager.resources.ManagedResource;
+import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
- * @created 23.08.2022
+ * @created 12.09.2022
  */
-public class ManagedResourceUpdatedEvent extends BasicResourceEvent<ManagedResource> {
+public class CircuitStateTransionedEvent extends BasicResourceEvent<CircuitResource> {
 
-    public ManagedResourceUpdatedEvent(ManagedResource oldResource, ManagedResource newResource) {
+    public CircuitStateTransionedEvent(CircuitResource oldResource, CircuitResource newResource) {
         super(oldResource, newResource);
     }
-
 }

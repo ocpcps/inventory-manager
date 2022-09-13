@@ -47,7 +47,7 @@ import com.osstelecom.db.inventory.manager.resources.ServiceResource;
 @Component
 public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
 
-    public GraphList<ServiceResource> findUpperResources(ServiceResource resource) throws ArangoDaoException {
+    public GraphList<ServiceResource> findUpperResources(ServiceResource resource) throws ArangoDaoException, ResourceNotFoundException {
         try {
             Map<String, Object> bindVars = new HashMap<>();
             String aql = " for doc in   " + resource.getDomain().getServices();
@@ -69,6 +69,11 @@ public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
             aql += " return doc";
 
             return this.query(aql, bindVars, ServiceResource.class, this.getDb());
+        } catch (ResourceNotFoundException ex) {
+            //
+            // Neste caso queremos saber se não existe nada
+            //
+            throw ex;
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         }

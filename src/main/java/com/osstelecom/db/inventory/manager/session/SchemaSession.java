@@ -524,7 +524,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
             //
             // Notifica o Message Bus da Atualização, ele vai varrer a base procurando utilizações...
             // 
-            eventManager.notifyEvent(new ResourceSchemaUpdatedEvent(original));
+            eventManager.notifyGenericEvent(new ResourceSchemaUpdatedEvent(original));
         }
         return new PatchResourceSchemaModelResponse(this.loadSchema(original.getSchemaName()));
     }

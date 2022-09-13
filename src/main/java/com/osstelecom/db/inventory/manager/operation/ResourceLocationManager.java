@@ -30,7 +30,7 @@ public class ResourceLocationManager extends Manager {
     private EventManagerListener eventManager;
 
     @Autowired
-    private ReentrantLock lockManager;
+    private LockManager lockManager;
 
     @Autowired
     private SchemaSession schemaSession;
@@ -73,7 +73,7 @@ public class ResourceLocationManager extends Manager {
             // Aqui de Fato Criou o ResourceLocation
             //
             ResourceLocationCreatedEvent event = new ResourceLocationCreatedEvent(resource);
-            this.eventManager.notifyEvent(event);
+            this.eventManager.notifyResourceEvent(event);
             return resource;
         } finally {
             if (lockManager.isLocked()) {

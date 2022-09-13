@@ -17,7 +17,6 @@ import com.osstelecom.db.inventory.manager.dao.ResourceConnectionDao;
 import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import com.osstelecom.db.inventory.manager.events.ResourceConnectionCreatedEvent;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
-import com.osstelecom.db.inventory.manager.exception.BasicException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
 import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
@@ -40,7 +39,7 @@ public class ResourceConnectionManager extends Manager {
     private EventManagerListener eventManager;
 
     @Autowired
-    private ReentrantLock lockManager;
+    private LockManager lockManager;
 
     @Autowired
     private SchemaSession schemaSession;
@@ -98,7 +97,7 @@ public class ResourceConnectionManager extends Manager {
             //
 
             ResourceConnectionCreatedEvent event = new ResourceConnectionCreatedEvent(connection);
-            eventManager.notifyEvent(event);
+            eventManager.notifyResourceEvent(event);
             return connection;
         } finally {
             if (lockManager.isLocked()) {
@@ -137,7 +136,7 @@ public class ResourceConnectionManager extends Manager {
             connection.setRevisionId(result.getRev());
 
             ResourceConnectionCreatedEvent event = new ResourceConnectionCreatedEvent(connection);
-            this.eventManager.notifyEvent(event);
+            this.eventManager.notifyResourceEvent(event);
             return connection;
         } finally {
             if (lockManager.isLocked()) {

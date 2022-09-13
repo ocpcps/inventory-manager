@@ -24,7 +24,7 @@ import com.osstelecom.db.inventory.manager.resources.ResourceLocation;
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 10.04.2022
  */
-public class ResourceLocationCreatedEvent extends BasicEvent<ResourceLocation> {
+public class ResourceLocationCreatedEvent extends BasicResourceEvent<ResourceLocation> {
 
     public ResourceLocationCreatedEvent(ResourceLocation resource) {
         super(resource);

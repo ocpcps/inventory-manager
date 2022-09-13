@@ -172,6 +172,11 @@ public class DomainDao {
                     .createCollection(domainName
                             + arangoDbConfiguration.getServiceSufix(),
                             new CollectionCreateOptions().type(CollectionType.DOCUMENT));
+            
+            
+             arangoDatabase.collection(services.getName()).ensurePersistentIndex(
+                    Arrays.asList("name", "nodeAddress", "className", "domain._key"),
+                    new PersistentIndexOptions().unique(true).name("ServiceUNIQIDX"));
 
             CollectionEntity circuits = arangoDatabase
                     .createCollection(domainName

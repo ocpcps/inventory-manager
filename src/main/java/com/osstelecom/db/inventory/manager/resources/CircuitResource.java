@@ -31,6 +31,20 @@ import java.util.List;
 @JsonInclude(Include.NON_NULL)
 public class CircuitResource extends BasicResource {
 
+    /**
+     * @return the services
+     */
+    public List<String> getServices() {
+        return services;
+    }
+
+    /**
+     * @param services the services to set
+     */
+    public void setServices(List<String> services) {
+        this.services = services;
+    }
+
     @Schema(description = "If true, indicates that the circuit has some broken connections")
     private boolean degrated = false;
     @Schema(description = "If true, indicates that the circuit has some broken connections, and it is broken")

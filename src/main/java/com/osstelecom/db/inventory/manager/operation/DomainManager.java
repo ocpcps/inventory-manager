@@ -71,7 +71,7 @@ public class DomainManager extends Manager {
     private Map<String, Domain> domains = new ConcurrentHashMap<>();
 
     @Autowired
-    private ReentrantLock lockManager;
+    private LockManager lockManager;
 
     @Autowired
     private EventManagerListener eventManager;
@@ -128,7 +128,7 @@ public class DomainManager extends Manager {
             endTimer(timerId);
         }
         DomainCreatedEvent domainCreatedEvent = new DomainCreatedEvent(domain);
-        eventManager.notifyEvent(domainCreatedEvent);
+        eventManager.notifyGenericEvent(domainCreatedEvent);
         return domain;
     }
 
@@ -194,7 +194,7 @@ public class DomainManager extends Manager {
             // Notifica o event Manager da Metrica criada
             //
             ConsumableMetricCreatedEvent event = new ConsumableMetricCreatedEvent(metric);
-            eventManager.notifyEvent(event);
+            eventManager.notifyGenericEvent(event);
             return metric;
         } finally {
             if (lockManager.isLocked()) {

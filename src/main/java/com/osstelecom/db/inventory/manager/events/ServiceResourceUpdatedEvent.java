@@ -24,7 +24,7 @@ import com.osstelecom.db.inventory.manager.resources.ServiceResource;
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 10.04.2022
  */
-public class ServiceResourceUpdatedEvent extends BasicEvent<ServiceResource> {
+public class ServiceResourceUpdatedEvent extends BasicResourceEvent<ServiceResource> {
 
     public ServiceResourceUpdatedEvent(ServiceResource oldResource, ServiceResource newResource) {
         super(oldResource, newResource);

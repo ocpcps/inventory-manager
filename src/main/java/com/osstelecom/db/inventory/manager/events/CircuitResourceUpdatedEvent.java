@@ -24,7 +24,7 @@ import com.osstelecom.db.inventory.manager.resources.CircuitResource;
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 10.04.2022
  */
-public class CircuitResourceUpdatedEvent extends BasicEvent<CircuitResource> {
+public class CircuitResourceUpdatedEvent extends BasicResourceEvent<CircuitResource> {
 
     public CircuitResourceUpdatedEvent(CircuitResource oldResource, CircuitResource newResource) {
         super(oldResource, newResource);

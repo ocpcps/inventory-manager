@@ -24,7 +24,7 @@ import com.osstelecom.db.inventory.manager.resources.CircuitResource;
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 10.04.2022
  */
-public class CircuitResourceCreatedEvent extends BasicEvent<CircuitResource> {
+public class CircuitResourceCreatedEvent extends BasicResourceEvent<CircuitResource> {
 
     public CircuitResourceCreatedEvent(CircuitResource resource) {
         super(resource);

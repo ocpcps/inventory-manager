@@ -93,6 +93,38 @@ public class ServiceSession {
             throw new InvalidRequestException("Please give at least one circuit or dependency");
         }
 
+        //
+        // Treat Defaults
+        //
+        if (payload.getAttributeSchemaName() == null) {
+            payload.setAttributeSchemaName("service.default");
+        }
+
+        if (payload.getClassName() == null) {
+            payload.setClassName("service.Default");
+        }
+
+        //
+        // Validate minimun requirements fields
+        //
+        if (payload.getName() != null) {
+            if (payload.getNodeAddress() == null) {
+                payload.setNodeAddress(payload.getName());
+            }
+        }
+
+        if (payload.getNodeAddress() != null) {
+            if (payload.getName() == null) {
+                payload.setName(payload.getNodeAddress());
+            }
+        }
+
+        if (payload.getNodeAddress() == null) {
+            throw new InvalidRequestException("Plase set name, or nodeAddress values");
+        }
+        //
+        // Aqui resolve os circuitos e recursos.
+        //
         payload = serviceManager.resolveService(payload);
 
         return new CreateServiceResponse(serviceManager.createService(payload));
@@ -118,7 +150,9 @@ public class ServiceSession {
         if ((payload.getCircuits() == null || payload.getCircuits().isEmpty()) && (payload.getDependencies() == null || payload.getDependencies().isEmpty())) {
             throw new InvalidRequestException("Please give at least one circuit or dependency");
         }
-
+        //
+        // Resolveu aqui, será que não faz sentido ir para o manager inteiro ?
+        //
         payload = serviceManager.resolveService(payload);
 
         return new PatchServiceResponse(serviceManager.updateService(payload));

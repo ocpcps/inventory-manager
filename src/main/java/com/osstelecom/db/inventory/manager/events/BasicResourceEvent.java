@@ -18,16 +18,17 @@
 package com.osstelecom.db.inventory.manager.events;
 
 import com.osstelecom.db.inventory.manager.resources.BasicResource;
-import java.util.Date;
+import java.util.Date; 
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @param <T>
  * @created 10.04.2022
  */
-public abstract class BasicEvent<T extends BasicResource> {
+public abstract class BasicResourceEvent<T extends BasicResource> {
 
     private Date eventDate;
     private String sourceEventId;
@@ -37,13 +38,14 @@ public abstract class BasicEvent<T extends BasicResource> {
     private T newResource;
     private Map<String, Object> details = new HashMap<>();
 
-    public BasicEvent(T resource) {
+    public BasicResourceEvent(T resource) {
         this.newResource = resource;
     }
 
-    public BasicEvent(T oldResource, T newResource) {
+    public BasicResourceEvent(T oldResource, T newResource) {
         this.oldResource = oldResource;
         this.newResource = newResource;
+        this.eventDate = new Date();
     }
 
     public Date getEventDate() {
