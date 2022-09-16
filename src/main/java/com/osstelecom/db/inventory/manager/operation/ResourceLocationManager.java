@@ -68,7 +68,6 @@ public class ResourceLocationManager extends Manager {
             DocumentCreateEntity<ResourceLocation> result = resourceLocationDao.createResourceLocation(resource);
             resource.setKey(result.getId());
             resource.setRevisionId(result.getRev());
-            lockManager.unlock();
             //
             // Aqui de Fato Criou o ResourceLocation
             //

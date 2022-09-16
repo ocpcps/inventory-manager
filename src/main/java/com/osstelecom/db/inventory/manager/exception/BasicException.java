@@ -35,8 +35,13 @@ public abstract class BasicException extends Exception implements Serializable {
 
     protected BasicException(Throwable thrwbl) {
         super(thrwbl);
-        if (thrwbl instanceof BasicException) {
+        this.handleDetails(thrwbl);
+    }
 
+    private void handleDetails(Throwable ex) {
+        if (ex instanceof BasicException) {
+            BasicException a = (BasicException) ex;
+            this.details = a.getDetails();
         }
     }
 
@@ -65,21 +70,26 @@ public abstract class BasicException extends Exception implements Serializable {
 
     protected BasicException(String msg, Throwable cause) {
         super(msg, cause);
+        this.handleDetails(cause);
     }
 
     protected BasicException(IRequest<?> request, String message, Throwable cause) {
         super(message, cause);
         this.request = request;
+        this.handleDetails(cause);
     }
 
     protected BasicException(IRequest<?> request, Throwable cause) {
         super(cause);
         this.request = request;
+        this.handleDetails(cause);
+
     }
 
     protected BasicException(IRequest<?> request, String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
         this.request = request;
+        this.handleDetails(cause);
     }
 
     /**
@@ -116,7 +126,7 @@ public abstract class BasicException extends Exception implements Serializable {
     /**
      * @return the details
      */
-    public Object getDetails() {
+    public Map<String, Object> getDetails() {
         return details;
     }
 }
