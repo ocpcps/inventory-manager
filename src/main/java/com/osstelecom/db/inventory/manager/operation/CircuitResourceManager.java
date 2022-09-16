@@ -194,7 +194,7 @@ public class CircuitResourceManager extends Manager {
             //
             // get current node status
             //
-            if (!connection.getOperationalStatus().equalsIgnoreCase("UP") && !circuit.getDegrated()) {
+            if (!connection.getOperationalStatus().equalsIgnoreCase("UP")) {
                 //
                 // Transitou de normal para degradado
                 //
@@ -261,16 +261,19 @@ public class CircuitResourceManager extends Manager {
             stateChanged = true;
 
         }
+        
         if (circuit.getBroken()) {
             circuit.setOperationalStatus("DOWN");
+            circuit.setDegrated(true);
         } else {
             circuit.setOperationalStatus("UP");
         }
-
-        if (!circuit.getBroken() && !circuit.getBrokenResources().isEmpty()) {
-            stateChanged = true;
-            circuit.getBrokenResources().clear();
-        }
+        if (circuit.getBrokenResources() != null ) {
+            if (!circuit.getBroken() && !circuit.getBrokenResources().isEmpty()) {
+                stateChanged = true;
+                circuit.getBrokenResources().clear();
+            }
+        } 
 
         Long end = System.currentTimeMillis();
         Long took = end - start;

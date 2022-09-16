@@ -253,6 +253,7 @@ public class ManagedResourceManager extends Manager {
                     boolean circuitStateChanged = false;
                     if (connection.getFrom().getOperationalStatus().equals("UP")
                             && connection.getTo().getOperationalStatus().equals("UP")) {
+                        
                         if (connection.getOperationalStatus().equals("DOWN")) {
                             connection.setOperationalStatus("UP");
                             circuitStateChanged = true;

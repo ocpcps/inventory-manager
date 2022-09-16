@@ -97,9 +97,9 @@ public class CircuitResourceDao extends AbstractArangoDao<CircuitResource> {
                 bindVars.put("attributeSchemaName", resource.getAttributeSchemaName());
             }
 
-            if (resource.getOperationalStatus() != null) {
-                bindVars.put("operationalStatus", resource.getOperationalStatus());
-            }
+//            if (resource.getOperationalStatus() != null) {
+//                bindVars.put("operationalStatus", resource.getOperationalStatus());
+//            }
 
             //
             // Creates AQL

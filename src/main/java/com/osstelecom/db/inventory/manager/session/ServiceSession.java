@@ -144,6 +144,7 @@ public class ServiceSession {
         if (payload == null) {
             throw new InvalidRequestException("Payload not found");
         }
+        
         ServiceResource old = serviceManager.getServiceById(payload);
         payload.setKey(old.getKey());
 

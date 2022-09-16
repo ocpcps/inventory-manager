@@ -49,10 +49,10 @@ public class ConfigurationManager {
      */
     private ArrayList<String> getConfigurationPaths() {
         ArrayList<String> paths = new ArrayList<>();
-        paths.add("config/inventory.json");
         paths.add("c:/temp/inventory.json");
         paths.add("/app/inventory-manager/config/inventory.json");
         paths.add("/etc/inventory-manager/inventory.json");
+        paths.add("config/inventory.json");
         String envPath = System.getenv("INVENTORY_MANAGER_CONFIG");
         if (envPath != null) {
             //

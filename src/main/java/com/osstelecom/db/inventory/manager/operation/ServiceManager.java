@@ -47,6 +47,8 @@ import com.osstelecom.db.inventory.manager.resources.ServiceResource;
 import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
 import com.osstelecom.db.inventory.manager.session.DynamicRuleSession;
 import com.osstelecom.db.inventory.manager.session.SchemaSession;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -94,8 +96,9 @@ public class ServiceManager extends Manager {
             if (!service.getId().contains("/")) {
                 service.setId(service.getDomain().getServices() + "/" + service.getId());
             }
-
-            service = this.serviceDao.findResource(service);
+            Map<String, Object> binds = new HashMap<>();
+            binds.put("id", service.getId());
+            service = this.serviceDao.findResourceByFilter("doc._id == @id", binds, service.getDomain()).getOne();
             return service;
         } finally {
             if (lockManager.isLocked()) {
@@ -105,6 +108,13 @@ public class ServiceManager extends Manager {
         }
     }
 
+    /**
+     * Deleta um serviço
+     *
+     * @param service
+     * @return
+     * @throws ArangoDaoException
+     */
     public ServiceResource deleteService(ServiceResource service) throws ArangoDaoException {
         try {
             lockManager.lock();
@@ -117,6 +127,13 @@ public class ServiceManager extends Manager {
         }
     }
 
+    /**
+     * Cria um novo serviço
+     *
+     * @param service
+     * @return
+     * @throws ArangoDaoException
+     */
     public ServiceResource createService(ServiceResource service) throws ArangoDaoException {
         String timerId = startTimer("createServiceResource");
 
@@ -128,17 +145,41 @@ public class ServiceManager extends Manager {
             if (service.getKey() == null) {
                 service.setKey(this.getUUID());
             }
+            //
+            // Simula o ID a ser criado
+            //
+            String toPersistId = service.getDomain().getServices() + "/" + service.getKey();
             if (service.getOperationalStatus() == null || service.getOperationalStatus().isEmpty()) {
                 service.setOperationalStatus("UP");
             }
 
             service.setAtomId(service.getDomain().addAndGetId());
+
             ResourceSchemaModel schemaModel = schemaSession.loadSchema(service.getAttributeSchemaName());
             service.setSchemaModel(schemaModel);
             schemaSession.validateResourceSchema(service);
             dynamicRuleSession.evalResource(service, "I", this); // <--- Pode não ser verdade , se a chave for
             // duplicada..
 
+            //
+            // Trata a chave do circuito
+            //
+            if (service.getCircuits() != null) {
+                if (!service.getCircuits().isEmpty()) {
+                    service.getCircuits().forEach(circuit -> {
+                        /**
+                         * The ID
+                         */
+                        if (!circuit.getServices().contains(toPersistId)) {
+                            circuit.getServices().add(toPersistId);
+                        }
+                    });
+                }
+            }
+            //
+            // Já computa o stado final da solução
+            //
+            this.computeServiceIntegrity(service);
             DocumentCreateEntity<ServiceResource> result = serviceDao.insertResource(service);
             service.setKey(result.getId());
             service.setRevisionId(result.getRev());
@@ -152,7 +193,7 @@ public class ServiceManager extends Manager {
             return service;
         } catch (Exception e) {
             ArangoDaoException ex = new ArangoDaoException("Error while creating ServiceResource", e);
-//            e.printStackTrace();s
+            e.printStackTrace();
             throw ex;
         } finally {
             if (lockManager.isLocked()) {
@@ -163,7 +204,13 @@ public class ServiceManager extends Manager {
 
     }
 
-    private void resolveCircuitServiceLinks(ServiceResource newService, ServiceResource oldService) throws ArangoDaoException {
+    /**
+     *
+     * @param newService
+     * @param oldService
+     * @throws ArangoDaoException
+     */
+    private void resolveCircuitServiceLinks(ServiceResource newService, ServiceResource oldService) throws ArangoDaoException, ResourceNotFoundException {
         //
         // Aqui temos certeza que o serviço foi criado, então vamos pegar e atualizar as dependencias do circuito
         //
@@ -177,12 +224,16 @@ public class ServiceManager extends Manager {
                     //
                     // 
                     //
-                    if (!circuit.getServices().contains(newService.getId())) {
+
+                    CircuitResource fromDbCircuit = circuitResourceManager.findCircuitResource(circuit);
+
+                    if (!fromDbCircuit.getServices().contains(newService.getId())) {
                         //
                         // Adiciona o ID do serviço no circuito
                         //
-                        circuit.getServices().add(newService.getId());
-                        circuitResourceManager.updateCircuitResource(circuit);
+                        logger.debug("Adding New Service to the Circuit:[{}] Current Service Size is: [{}]", newService.getId(), fromDbCircuit.getServices().size());
+                        fromDbCircuit.getServices().add(newService.getId());
+                        circuitResourceManager.updateCircuitResource(fromDbCircuit);
                     }
 
                 }
@@ -191,14 +242,16 @@ public class ServiceManager extends Manager {
                 //
                 // Se a lista de circuitos for vazia precisamos ver se antes não era.
                 //
-                if (!oldService.getCircuits().isEmpty()) {
-                    //
-                    // Não era vazia, ou seja ficou vazia vamos precisar remover a referencia.
-                    //
-                    for (CircuitResource circuit : oldService.getCircuits()) {
-                        if (circuit.getServices().contains(oldService.getId())) {
-                            circuit.getServices().remove(circuit.getId());
-                            circuitResourceManager.updateCircuitResource(circuit);
+                if (oldService != null) {
+                    if (!oldService.getCircuits().isEmpty()) {
+                        //
+                        // Não era vazia, ou seja ficou vazia vamos precisar remover a referencia.
+                        //
+                        for (CircuitResource circuit : oldService.getCircuits()) {
+                            if (circuit.getServices().contains(oldService.getId())) {
+                                circuit.getServices().remove(circuit.getId());
+                                circuitResourceManager.updateCircuitResource(circuit);
+                            }
                         }
                     }
                 }
@@ -224,7 +277,7 @@ public class ServiceManager extends Manager {
 
     }
 
-    public ServiceResource updateService(ServiceResource service) throws ArangoDaoException {
+    public ServiceResource updateService(ServiceResource service) throws ArangoDaoException, ResourceNotFoundException {
         String timerId = startTimer("updateServiceResource");
         try {
             lockManager.lock();
@@ -232,11 +285,13 @@ public class ServiceManager extends Manager {
             //
             // Está salvando null de nested resources... ver o que fazer..
             // 
+            this.computeServiceIntegrity(service);
             DocumentUpdateEntity<ServiceResource> result = serviceDao.updateResource(service);
             ServiceResource newService = result.getNew();
             ServiceResource oldService = result.getOld();
 
             this.resolveCircuitServiceLinks(newService, oldService);
+
             ServiceResourceUpdatedEvent event = new ServiceResourceUpdatedEvent(oldService, newService);
             this.eventManager.notifyResourceEvent(event);
             return newService;
@@ -265,7 +320,14 @@ public class ServiceManager extends Manager {
                 if (item.getDomain() == null) {
                     item.setDomain(service.getDomain());
                 }
-                ServiceResource resolved = this.getService(service);
+                /**
+                 * Garante que não vamos levar em consideração o status
+                 * operacional,pois pode ter atualizado... isso é ruim,acontece
+                 * porque na atualização do serviço ele não atualizou as
+                 * referencias. Vou tentar resolver isso
+                 */
+                item.setOperationalStatus(null);
+                ServiceResource resolved = this.getService(item);
                 resolvedServices.add(resolved);
             }
         }
@@ -301,79 +363,23 @@ public class ServiceManager extends Manager {
     @Subscribe
     public void onProcessServiceIntegrityEvent(ProcessServiceIntegrityEvent processEvent)
             throws ArangoDaoException, ResourceNotFoundException {
-        computeServiceIntegrity(processEvent.getNewResource());
+//        computeServiceIntegrity(processEvent.getNewResource());
     }
 
     @Subscribe
     public void onProcessServiceResourceUpdatedEvent(ServiceResourceUpdatedEvent processEvent)
-            throws ArangoDaoException, IllegalStateException, IOException {
-        //
-        // Na atualização do Serviço, precisamo 
-        //
-        computeServiceResourceUpdated(processEvent.getNewResource(), processEvent.getOldResource());
-    }
-
-    private void computeServiceIntegrity(ServiceResource service) throws ArangoDaoException, ResourceNotFoundException {
-        //
-        // Forks with the logic of checking integrity
-        //
-        Long start = System.currentTimeMillis();
-        List<String> brokenDependencies = new ArrayList<>();
-        int totalDependencies = 0;
-
-        service = this.getServiceById(service);
-        service = this.resolveService(service);
-
-        if (service.getDependencies() != null) {
-            for (ServiceResource item : service.getDependencies()) {
-                if (!item.getOperationalStatus().equalsIgnoreCase("UP") && !item.getDegrated()) {
-                    brokenDependencies.add(item.getId());
-                }
-            }
-            totalDependencies += service.getDependencies().size();
-        }
-
-        if (service.getCircuits() != null) {
-            for (CircuitResource item : service.getCircuits()) {
-                //
-                // get current node status
-                //
-                if (!item.getOperationalStatus().equalsIgnoreCase("UP") && !item.getDegrated()) {
-                    brokenDependencies.add(item.getId());
-                }
-            }
-            totalDependencies += service.getCircuits().size();
-        }
-        service.setBrokenResources(brokenDependencies);
-
-        if (brokenDependencies.isEmpty()) {
-            service.setOperationalStatus("UP");
-            service.setBroken(false);
-            service.setDegrated(false);
-        } else if (brokenDependencies.size() < totalDependencies) {
-            service.setOperationalStatus("UP");
-            service.setBroken(false);
-            service.setDegrated(true);
-        } else {
-            service.setOperationalStatus("DOWN");
-            service.setBroken(true);
-            service.setDegrated(false);
-        }
-
-        Long end = System.currentTimeMillis();
-        Long took = end - start;
-        logger.debug("Check Service Integrity for [{}] Took: {} ms Broken Count:[{}]",
-                service.getId(), took, service.getBrokenResources().size());
-        this.updateService(service);
+            throws ArangoDaoException, IllegalStateException, IOException, ResourceNotFoundException {
+        this.updateServiceReferences(processEvent.getNewResource());
     }
 
     /**
-     * Recebe as transições de estado dos circuitos
+     * Recebe as transições de estado dos circuitos e processa o estado final do
+     * serviço
      *
      * @param event
      */
     @Subscribe
-    public void onCircuitStateTransionedEvent(CircuitStateTransionedEvent event) throws ResourceNotFoundException, ArangoDaoException {
+    public void onCircuitStateTransionedEvent(CircuitStateTransionedEvent event) throws ResourceNotFoundException, ArangoDaoException, IOException {
         if (event.getNewResource().getServices() != null) {
             if (!event.getNewResource().getServices().isEmpty()) {
                 logger.debug("Circuit:[{}] State Changed, Impacted Services Count:[{}]",
@@ -383,60 +389,41 @@ public class ServiceManager extends Manager {
                 // Trata o Status Aqui
                 //
                 List<ServiceResource> servicesToUpdate = new ArrayList<>();
+
                 for (String serviceId : event.getNewResource().getServices()) {
                     //
                     // o Circuito só pode impactar serviços do mesmo dominio.
                     //
                     ServiceResource service = new ServiceResource(serviceId);
                     service.setDomain(event.getNewResource().getDomain());
+                    //
+                    // Recupera o serviço do Banco
+                    //
                     service = this.getServiceById(service);
-                    if (service.getDegrated() != event.getNewResource().getDegrated()) {
-                        service.setDegrated(event.getNewResource().getDegrated());
-                        //
-                        // Atualiza as referencias do Circuito
-                        //
-                        service.getCircuits().remove(event.getNewResource());
-                        service.getCircuits().add(event.getNewResource());
-                        servicesToUpdate.add(service);
+                    //
+                    // Atualiza as referencias do Circuito
+                    //
+                    service.getCircuits().removeIf(c -> c.getId().equals(event.getNewResource().getId()));
+                    service.getCircuits().add(event.getNewResource());
 
-                    }
+                    //
+                    // Avalia o status dos Circuitos
+                    //
+                    servicesToUpdate.add(service);
 
                 }
 
                 for (ServiceResource service : servicesToUpdate) {
                     //
-                    // Verifica o estado final do serviço
+                    // Computa o status Final do serviço
                     //
+                    this.computeServiceIntegrity(service);
+                    /**
+                     * Manda para um método especifico só para atualizar as
+                     * referencias. do Circuito e seu Status
+                     */
+                    this.updateServiceReferences(service);
 
-                    List<CircuitResource> workingCircuits = service.getCircuits()
-                            .stream()
-                            .filter(c -> !c.getBroken()).collect(Collectors.toList());
-
-                    if (workingCircuits != null) {
-                        if (workingCircuits.isEmpty()) {
-                            if (!service.getBroken()) {
-                                service.setBroken(true);
-                            }
-                        } else {
-                            if (service.getBroken()) {
-                                service.setBroken(false);
-                            }
-                        }
-                    } else {
-                        if (!service.getBroken()) {
-                            service.setBroken(true);
-                        }
-
-                    }
-
-                    if (service.getBroken()) {
-                        service.setDegrated(true);
-                        service.setOperationalStatus("DOWN");
-                    } else {
-                        service.setOperationalStatus("UP");
-                    }
-
-                    this.updateService(service);
                 }
 
             }
@@ -444,39 +431,164 @@ public class ServiceManager extends Manager {
     }
 
     /**
-     * Identifica se houve uma transição do estado do serviço, se houve vai
-     * procurar as depedencias e atualizar o estado do servico
+     * Atualiza a referencia de um circuito com serviço.
      *
-     * @param newService
-     * @param oldService
+     * @param service
      * @throws ArangoDaoException
-     * @throws IllegalStateException
-     * @throws IOException
      */
-    private void computeServiceResourceUpdated(ServiceResource newService, ServiceResource oldService)
-            throws ArangoDaoException, IllegalStateException, IOException {
+    private void updateServiceReferences(ServiceResource service) throws ArangoDaoException, ResourceNotFoundException, IOException {
+        DocumentUpdateEntity<ServiceResource> updateResult = this.serviceDao.updateResource(service);
 
-        if (newService.getBroken() != oldService.getBroken()
-                || newService.getDegrated() != oldService.getDegrated()
-                || newService.getOperationalStatus().equalsIgnoreCase(oldService.getOperationalStatus())) {
-            try {
-                this.serviceDao.findUpperResources(newService).forEach(s -> {
-                    //
-                    // Propaga para cima o evento impactando os Serviços que 
-                    // dependem deste serviço
-                    //
-                    ProcessServiceIntegrityEvent event = new ProcessServiceIntegrityEvent(s);
-                    this.eventManager.notifyResourceEvent(event);
-                });
+        /**
+         * Verifica se este serviço é necessário para algum outro, ou seja, do
+         * pai, procura os filhos.
+         */
+        try {
+            this.serviceDao.findUpperResources(service).forEach(dependentService -> {
+                //
+                // Aqui vamos ter a lista dos serviços que dependem do serviço que acabou de ser atualizado.
+                //
+                if (dependentService.getDependencies() != null) {
+                    dependentService.getDependencies().removeIf(d -> d.getId().equals(service.getId()));
+                    dependentService.getDependencies().add(service);
+                    try {
+                        this.computeServiceIntegrity(dependentService);
+                        this.updateServiceReferences(dependentService);
+                    } catch (ArangoDaoException | ResourceNotFoundException | IOException ex) {
+                        logger.error("Failed to Update Service Dependecies", ex);
+                    }
 
-            } catch (ResourceNotFoundException ex) {
+                }
+
+            });
+        } catch (ResourceNotFoundException ex) {
+            //
+            // Isto é esperado visto que podemos não ter dependencias.
+            // 
+        }
+    }
+
+    /**
+     * Computa o status final do serviço
+     *
+     * @param service
+     */
+    private void computeServiceIntegrity(ServiceResource service) {
+        //
+        // Verifica o estado final do serviço
+        //
+        if (service.getCircuits() != null && !service.getCircuits().isEmpty()) {
+            if (service.getCircuits().size() == 1) {
                 //
-                // Esta ex, é lançada quando não tem Upper Resource....
-                // Então é seguro ignorar ela ou simplesmente omitir...
-                // 
+                // Se tem apenas um circuito, o status do serviço reflete o status do circuito
                 //
+                service.setDegrated(service.getCircuits().get(0).getDegrated());
+                service.setBroken(service.getCircuits().get(0).getBroken());
+            } else {
+
+                List<CircuitResource> workingCircuits = service.getCircuits()
+                        .stream()
+                        .filter(c -> !c.getBroken()).collect(Collectors.toList());
+
+                List<CircuitResource> brokenCircuits = service.getCircuits()
+                        .stream()
+                        .filter(c -> c.getBroken()).collect(Collectors.toList());
+
+                if (workingCircuits != null) {
+                    if (workingCircuits.isEmpty()) {
+                        if (!service.getBroken()) {
+                            service.setBroken(true);
+                        }
+                    } else {
+                        /**
+                         * Tem algum circuito funcionando, se estava quebrado,
+                         * normaliza, também avalia se tem algum circuito fora,
+                         * e se tiver marca como degradado
+                         */
+                        if (service.getBroken()) {
+                            service.setBroken(false);
+                            if (!brokenCircuits.isEmpty()) {
+                                service.setDegrated(true);
+                            } else {
+                                service.setDegrated(false);
+
+                            }
+                        }
+
+                    }
+                } else {
+                    /**
+                     * Nenhum circuito funcionando, marca o serviço como
+                     * quebrado
+                     */
+                    if (!service.getBroken()) {
+                        service.setBroken(true);
+                        service.setDegrated(true);
+                    }
+
+                }
             }
 
+            if (service.getBroken()) {
+                service.setDegrated(true);
+                service.setOperationalStatus("DOWN");
+            } else {
+                service.setOperationalStatus("UP");
+            }
+        } else if (service.getDependencies() != null && !service.getDependencies().isEmpty()) {
+            //
+            // Trabalha com a depedencia de serviço
+            //
+            if (service.getDependencies().size() == 1) {
+                //
+                // se só tiver um serviço reflete o status
+                //
+
+                service.setDegrated(service.getDependencies().get(0).getDegrated());
+                service.setBroken(service.getDependencies().get(0).getBroken());
+            } else {
+                //
+                // Temos multiplos serviços.
+                //
+
+                List<ServiceResource> workingServices = service.getDependencies()
+                        .stream()
+                        .filter(c -> !c.getBroken()).collect(Collectors.toList());
+
+                List<ServiceResource> brokenServices = service.getDependencies()
+                        .stream()
+                        .filter(c -> c.getBroken()).collect(Collectors.toList());
+
+                if (workingServices != null) {
+                    if (workingServices.isEmpty()) {
+                        if (!service.getBroken()) {
+                            service.setBroken(true);
+                        }
+                    } else {
+
+                        if (service.getBroken()) {
+                            service.setBroken(false);
+                            if (!brokenServices.isEmpty()) {
+                                service.setDegrated(true);
+                            } else {
+                                service.setDegrated(false);
+
+                            }
+                        }
+
+                    }
+                } else {
+                    /**
+                     * Nenhum seriço funcionando, marca o serviço como quebrado
+                     */
+                    if (!service.getBroken()) {
+                        service.setBroken(true);
+                        service.setDegrated(true);
+                    }
+
+                }
+
+            }
         }
 
     }

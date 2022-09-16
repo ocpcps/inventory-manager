@@ -804,6 +804,12 @@ public class BasicResource {
     @Override
     public int hashCode() {
         int hash = 5;
+        //
+        // Prioriza o ID, para campos persistidos.
+        //
+        if (this.id != null) {
+            return 97 * hash + Objects.hashCode(this.id);
+        }
         hash = 97 * hash + Objects.hashCode(this.domainName);
         hash = 97 * hash + Objects.hashCode(this.nodeAddress);
         hash = 97 * hash + Objects.hashCode(this.className);
@@ -821,7 +827,11 @@ public class BasicResource {
         if (getClass() != obj.getClass()) {
             return false;
         }
+
         final BasicResource other = (BasicResource) obj;
+        if (this.id != null && other.id != null) {
+            return this.id == other.id;
+        }
         if (!Objects.equals(this.domainName, other.domainName)) {
             return false;
         }

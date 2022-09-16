@@ -28,6 +28,7 @@ import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.SubscriberExceptionContext;
 import com.google.common.eventbus.SubscriberExceptionHandler;
 import com.osstelecom.db.inventory.manager.events.BasicResourceEvent;
+import java.util.UUID;
 
 /**
  * Gerencia os eventos do sistema
@@ -92,6 +93,7 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
     @Override
     public void handleException(Throwable thrwbl, SubscriberExceptionContext sec) {
         logger.error("Subscription Error in EventBUS Please Check ME:", thrwbl);
+        thrwbl.printStackTrace();
     }
 
     /**
@@ -103,8 +105,13 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
             try {
                 Object event = eventQueue.poll(5, TimeUnit.SECONDS);
                 if (event != null) {
-                    logger.debug("Processing Event: [{}]", event.getClass().getCanonicalName());
+                    String eventProcessindInstanceId = UUID.randomUUID().toString();
+                    Long start = System.currentTimeMillis();
+                    logger.debug("Processing Event: [{}] ID:[{}]", event.getClass().getCanonicalName(), eventProcessindInstanceId);
                     eventBus.post(event);
+                    Long end = System.currentTimeMillis();
+                    Long took = end - start;
+                    logger.debug("Processing Event: [{}] Done ID:[{}] Took:[{}]ms", event.getClass().getCanonicalName(), eventProcessindInstanceId, took);
                 }
             } catch (InterruptedException ex) {
                 logger.error("Error on Processing Event: [{}]", ex.getMessage());
