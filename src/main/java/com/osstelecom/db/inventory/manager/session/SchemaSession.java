@@ -49,6 +49,8 @@ import org.slf4j.Logger;
 
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 /**
@@ -75,11 +77,18 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
     /**
      * Local Cache keeps the Schema for 1 Minute in memory, most of 5k Records
      */
-    private Cache<String, ResourceSchemaModel> schemaCache = CacheBuilder
-            .newBuilder()
-            .maximumSize(5000)
-            .removalListener(this)
-            .expireAfterWrite(60, TimeUnit.SECONDS).build(); // alterado para 10s
+    private Cache<String, ResourceSchemaModel> schemaCache;
+
+    @EventListener(ApplicationReadyEvent.class)
+    private void initSchemaSession() {
+        this.schemaCache = CacheBuilder
+                .newBuilder()
+                .maximumSize(5000)
+                .removalListener(this)
+                .expireAfterWrite(this.configurationManager
+                        .loadConfiguration()
+                        .getSchemaCacheTTL(), TimeUnit.SECONDS).build();
+    }
 
     /**
      * Loads the Schema by Name

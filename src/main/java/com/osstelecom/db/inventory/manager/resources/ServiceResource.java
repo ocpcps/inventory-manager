@@ -41,10 +41,16 @@ public class ServiceResource extends BasicResource {
      */
     private List<CircuitResource> circuits;
 
-    @Schema(description = "If true, indicates that the circuit has some broken connections")
+    /**
+     *
+     * IDS of Services that this services is parent of
+     */
+    private List<String> relatedServices;
+
+    @Schema(description = "If true, indicates that the Service has some broken connections")
     private boolean degrated = false;
 
-    @Schema(description = "If true, indicates that the circuit has some broken connections, and it is broken")
+    @Schema(description = "If true, indicates that the Service has some broken connections, and it is broken")
     private boolean broken = false;
 
     @Schema(description = "The ID List of the broken connections")
@@ -109,5 +115,19 @@ public class ServiceResource extends BasicResource {
      */
     public void setBrokenResources(List<String> brokenResources) {
         this.brokenResources = brokenResources;
+    }
+
+    /**
+     * @return the relatedServices
+     */
+    public List<String> getRelatedServices() {
+        return relatedServices;
+    }
+
+    /**
+     * @param relatedServices the relatedServices to set
+     */
+    public void setRelatedServices(List<String> relatedServices) {
+        this.relatedServices = relatedServices;
     }
 }

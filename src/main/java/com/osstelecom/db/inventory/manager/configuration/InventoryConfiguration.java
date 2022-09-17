@@ -31,6 +31,15 @@ public class InventoryConfiguration {
     private String rulesDir = "rules/";
     private String dateFormat = "dd-MM-yyyy";
     private String dateTimeFormat = "dd-MM-yyyy hh:MM:ss";
+    /**
+     * Diz se vamos avaliar as regras dinamicas do groovy, Habilitar reduz a
+     * performance
+     */
+    private Boolean dynamicRulesEnabled = false;
+    /**
+     * Tempo em segundos do Cache
+     */
+    private Integer schemaCacheTTL = 120;
     private boolean trackTimers = true;
 
     /**
@@ -129,5 +138,26 @@ public class InventoryConfiguration {
      */
     public void setTrackTimers(boolean trackTimers) {
         this.trackTimers = trackTimers;
+    }
+
+    /**
+     * @return the dynamicRulesEnabled
+     */
+    public Boolean getDynamicRulesEnabled() {
+        return dynamicRulesEnabled;
+    }
+
+    /**
+     * @param dynamicRulesEnabled the dynamicRulesEnabled to set
+     */
+    public void setDynamicRulesEnabled(Boolean dynamicRulesEnabled) {
+        this.dynamicRulesEnabled = dynamicRulesEnabled;
+    }
+
+    /**
+     * @return the schemaCacheTTL
+     */
+    public Integer getSchemaCacheTTL() {
+        return schemaCacheTTL;
     }
 }

@@ -90,56 +90,58 @@ public class DynamicRuleSession {
         //
         // Eval the resource chain
         //
-        String scriptPath = resource.getClassName();
+        if (this.configurationManager.loadConfiguration().getDynamicRulesEnabled()) {
+            String scriptPath = resource.getClassName();
 
-        scriptPath = scriptPath.replaceAll("\\.", "/");
-        scriptPath += ".groovy";
+            scriptPath = scriptPath.replaceAll("\\.", "/");
+            scriptPath += ".groovy";
 
-        if (this.cachedNoRules.getIfPresent(scriptPath) == null) {
-            File scriptFile = this.cachedFile.getIfPresent(scriptPath);
-            if (scriptFile == null) {
-                scriptFile = new File(configuration.getRulesDir() + scriptPath);
-                this.cachedFile.put(scriptPath, scriptFile);
-            }
-
-            if (scriptFile.exists()) {
-                this.cachedNoRules.invalidate(scriptPath);
-                context.clear();
-                this.bindings.setVariable("manager", manager);
-                this.bindings.setVariable("context", context);
-
-                context.put("manager", manager);
-                context.put("resource", resource);
-                context.put("oper", oper);
-
-                String runningScript = scriptPath;
-                this.bindings.setVariable("resource", resource);
-                while (!scriptPath.equals("")) {
-                    try {
-                        scriptPath = "";
-                        context.put("include", scriptPath);
-                        this.gse.run(runningScript, bindings);
-                        scriptPath = (String) context.get("include");
-                        if (StringUtils.hasText(scriptPath)) {
-                            runningScript = scriptPath;
-                        } else {
-                            scriptPath = "";
-                        }
-                    } catch (ResourceException | ScriptException ex) {
-                        throw new ScriptRuleException("Error in Groovy Context", ex);
-                    } catch (Exception ex) {
-                        throw new ScriptRuleException("Generic Exception in Groovy Context", ex);
-                    }
+            if (this.cachedNoRules.getIfPresent(scriptPath) == null) {
+                File scriptFile = this.cachedFile.getIfPresent(scriptPath);
+                if (scriptFile == null) {
+                    scriptFile = new File(configuration.getRulesDir() + scriptPath);
+                    this.cachedFile.put(scriptPath, scriptFile);
                 }
-                context.clear();
+
+                if (scriptFile.exists()) {
+                    this.cachedNoRules.invalidate(scriptPath);
+                    context.clear();
+                    this.bindings.setVariable("manager", manager);
+                    this.bindings.setVariable("context", context);
+
+                    context.put("manager", manager);
+                    context.put("resource", resource);
+                    context.put("oper", oper);
+
+                    String runningScript = scriptPath;
+                    this.bindings.setVariable("resource", resource);
+                    while (!scriptPath.equals("")) {
+                        try {
+                            scriptPath = "";
+                            context.put("include", scriptPath);
+                            this.gse.run(runningScript, bindings);
+                            scriptPath = (String) context.get("include");
+                            if (StringUtils.hasText(scriptPath)) {
+                                runningScript = scriptPath;
+                            } else {
+                                scriptPath = "";
+                            }
+                        } catch (ResourceException | ScriptException ex) {
+                            throw new ScriptRuleException("Error in Groovy Context", ex);
+                        } catch (Exception ex) {
+                            throw new ScriptRuleException("Generic Exception in Groovy Context", ex);
+                        }
+                    }
+                    context.clear();
+                } else {
+                    this.cachedNoRules.put(scriptPath, false);
+                    logger.warn("No Rules Found for Class: {}:=[{}] Putting on Cache for 30s", resource.getClassName(), scriptPath);
+                }
             } else {
-                this.cachedNoRules.put(scriptPath, false);
-                logger.warn("No Rules Found for Class: {}:=[{}] Putting on Cache for 30s", resource.getClassName(), scriptPath);
+                //
+                // Nothing to Eval
+                //
             }
-        } else {
-            //
-            // Nothing to Eval
-            //
         }
     }
 }

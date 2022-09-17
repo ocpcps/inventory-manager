@@ -70,6 +70,9 @@ public class ServiceManager extends Manager {
     private CircuitResourceManager circuitResourceManager;
 
     @Autowired
+    private DomainManager domainManager;
+
+    @Autowired
     private LockManager lockManager;
 
     private Logger logger = LoggerFactory.getLogger(ServiceManager.class);
@@ -158,8 +161,7 @@ public class ServiceManager extends Manager {
             ResourceSchemaModel schemaModel = schemaSession.loadSchema(service.getAttributeSchemaName());
             service.setSchemaModel(schemaModel);
             schemaSession.validateResourceSchema(service);
-            dynamicRuleSession.evalResource(service, "I", this); // <--- Pode não ser verdade , se a chave for
-            // duplicada..
+            dynamicRuleSession.evalResource(service, "I", this); // <--- Pode não ser verdade , se a chave for  duplicada..
 
             //
             // Trata a chave do circuito
@@ -312,21 +314,29 @@ public class ServiceManager extends Manager {
      * @throws ArangoDaoException
      */
     public ServiceResource resolveService(ServiceResource service)
-            throws ResourceNotFoundException, ArangoDaoException {
+            throws ResourceNotFoundException, ArangoDaoException, DomainNotFoundException {
 
         List<ServiceResource> resolvedServices = new ArrayList<>();
         if (service.getDependencies() != null && !service.getDependencies().isEmpty()) {
             for (ServiceResource item : service.getDependencies()) {
                 if (item.getDomain() == null) {
-                    item.setDomain(service.getDomain());
+                    if (item.getDomainName() != null) {
+                        //
+                        // Trata o Inter domain
+                        //
+                        item.setDomain(this.domainManager.getDomain(item.getDomainName()));
+                    } else {
+                        item.setDomain(service.getDomain());
+                    }
                 }
+
                 /**
                  * Garante que não vamos levar em consideração o status
                  * operacional,pois pode ter atualizado... isso é ruim,acontece
                  * porque na atualização do serviço ele não atualizou as
                  * referencias. Vou tentar resolver isso
                  */
-                item.setOperationalStatus(null);
+//                item.setOperationalStatus(null);
                 ServiceResource resolved = this.getService(item);
                 resolvedServices.add(resolved);
             }
@@ -355,6 +365,9 @@ public class ServiceManager extends Manager {
         return service;
     }
 
+    /**
+     * Registra o Listener no EventBUS
+     */
     @EventListener(ApplicationReadyEvent.class)
     private void onStartUp() {
         eventManager.registerListener(this);
@@ -363,13 +376,61 @@ public class ServiceManager extends Manager {
     @Subscribe
     public void onProcessServiceIntegrityEvent(ProcessServiceIntegrityEvent processEvent)
             throws ArangoDaoException, ResourceNotFoundException {
-//        computeServiceIntegrity(processEvent.getNewResource());
+
     }
 
     @Subscribe
     public void onProcessServiceResourceUpdatedEvent(ServiceResourceUpdatedEvent processEvent)
-            throws ArangoDaoException, IllegalStateException, IOException, ResourceNotFoundException {
+            throws ArangoDaoException, IllegalStateException, IOException, ResourceNotFoundException, DomainNotFoundException {
         this.updateServiceReferences(processEvent.getNewResource());
+    }
+
+    @Subscribe
+    public void onServiceResourceCreatedEvent(ServiceResourceCreatedEvent createdEvent) throws ArangoDaoException, ResourceNotFoundException, IOException, DomainNotFoundException {
+        if (createdEvent.getNewResource().getDependencies() != null) {
+            if (!createdEvent.getNewResource().getDependencies().isEmpty()) {
+                //
+                // Vamos olhar as dependencias do Serviço criado
+                //
+                List<ServiceResource> servicesToUpdate = new ArrayList<>();
+                for (ServiceResource dependency : createdEvent.getNewResource().getDependencies()) {
+                    //
+                    // Valida se a dependencia é do mesmo dominio.
+                    //
+
+                    //
+                    // Sincroniza com o DB
+                    //
+                    dependency = this.serviceDao.findResource(dependency);
+                    if (dependency.getRelatedServices() != null) {
+                        if (!dependency.getRelatedServices().contains(createdEvent.getNewResource().getId())) {
+                            dependency.getRelatedServices().add(createdEvent.getNewResource().getId());
+                            servicesToUpdate.add(dependency);
+                        }
+                    } else {
+                        dependency.setRelatedServices(new ArrayList<>());
+                        dependency.getRelatedServices().add(createdEvent.getNewResource().getId());
+                        servicesToUpdate.add(dependency);
+                    }
+
+//                    if (dependency.getDomainName().equals(createdEvent.getNewResource().getDomainName())) {
+//
+//                    } else {
+//                        //
+//                        // Domain Jump
+//                        //
+//                    }
+                }
+                //
+                // Atualiza na origem a depedencia
+                //
+                for (ServiceResource service : servicesToUpdate) {
+                    this.updateServiceReferences(service);
+                }
+
+            }
+        }
+
     }
 
     /**
@@ -379,7 +440,7 @@ public class ServiceManager extends Manager {
      * @param event
      */
     @Subscribe
-    public void onCircuitStateTransionedEvent(CircuitStateTransionedEvent event) throws ResourceNotFoundException, ArangoDaoException, IOException {
+    public void onCircuitStateTransionedEvent(CircuitStateTransionedEvent event) throws ResourceNotFoundException, ArangoDaoException, IOException, DomainNotFoundException {
         if (event.getNewResource().getServices() != null) {
             if (!event.getNewResource().getServices().isEmpty()) {
                 logger.debug("Circuit:[{}] State Changed, Impacted Services Count:[{}]",
@@ -436,31 +497,60 @@ public class ServiceManager extends Manager {
      * @param service
      * @throws ArangoDaoException
      */
-    private void updateServiceReferences(ServiceResource service) throws ArangoDaoException, ResourceNotFoundException, IOException {
+    private void updateServiceReferences(ServiceResource service) throws ArangoDaoException, ResourceNotFoundException, IOException, DomainNotFoundException {
         DocumentUpdateEntity<ServiceResource> updateResult = this.serviceDao.updateResource(service);
 
         /**
          * Verifica se este serviço é necessário para algum outro, ou seja, do
-         * pai, procura os filhos.
+         * pai, procura os filhos. Note que este método só encontra serviços do
+         * mesmo dominio.
          */
         try {
-            this.serviceDao.findUpperResources(service).forEach(dependentService -> {
+            //
+            // Vamos procurar os filhos de outro jeito agora..
+            //
+            if (service.getRelatedServices() != null && !service.getRelatedServices().isEmpty()) {
                 //
-                // Aqui vamos ter a lista dos serviços que dependem do serviço que acabou de ser atualizado.
+                // Tem Filhos 
                 //
-                if (dependentService.getDependencies() != null) {
+
+                for (String relatedServiceId : service.getRelatedServices()) {
+                    String domainName = this.domainManager.getDomainNameFromId(relatedServiceId);
+
+                    ServiceResource dependentService = new ServiceResource(relatedServiceId);
+                    dependentService.setDomainName(domainName);
+                    dependentService.setDomain(this.domainManager.getDomain(domainName));
+                    dependentService = this.getServiceById(dependentService);
                     dependentService.getDependencies().removeIf(d -> d.getId().equals(service.getId()));
                     dependentService.getDependencies().add(service);
                     try {
                         this.computeServiceIntegrity(dependentService);
                         this.updateServiceReferences(dependentService);
-                    } catch (ArangoDaoException | ResourceNotFoundException | IOException ex) {
+                    } catch (ArangoDaoException | ResourceNotFoundException | DomainNotFoundException | IOException ex) {
                         logger.error("Failed to Update Service Dependecies", ex);
                     }
-
                 }
+            }
 
-            });
+            /**
+             * Desligado, pois somente consulta dados do mesmo domininio.
+             */
+//            this.serviceDao.findUpperResources(service).forEach(dependentService -> {
+//                //
+//                // Aqui vamos ter a lista dos serviços que dependem do serviço que acabou de ser atualizado.
+//                //
+//                if (dependentService.getDependencies() != null) {
+//                    dependentService.getDependencies().removeIf(d -> d.getId().equals(service.getId()));
+//                    dependentService.getDependencies().add(service);
+//                    try {
+//                        this.computeServiceIntegrity(dependentService);
+//                        this.updateServiceReferences(dependentService);
+//                    } catch (ArangoDaoException | ResourceNotFoundException | DomainNotFoundException | IOException ex) {
+//                        logger.error("Failed to Update Service Dependecies", ex);
+//                    }
+//                }
+//
+//            });
         } catch (ResourceNotFoundException ex) {
             //
             // Isto é esperado visto que podemos não ter dependencias.

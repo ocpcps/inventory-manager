@@ -342,6 +342,13 @@ public class DomainManager extends Manager {
         return node;
     }
 
+    public String getDomainNameFromId(String id) {
+        String[] payLoad = id.split("/");
+        String collectionName = payLoad[0];
+        payLoad = collectionName.split("_");
+        return payLoad[0];
+    }
+
     // public void test(String filter, Integer threads) {
     // String aql = "for doc in inventory_connections "
     // + " filter doc.from.name like @filter"
