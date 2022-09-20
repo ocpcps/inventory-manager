@@ -41,11 +41,31 @@ public class ServiceResource extends BasicResource {
      */
     private List<CircuitResource> circuits;
 
+    //
+    // The next three realated stuff will bring hell on earth to maintain D:
+    // God Help Our Souls!
+    // @By Nishisan
+    //
+    
     /**
-     *
-     * IDS of Services that this services is parent of
+     * IDS of Services that this services is parent of This aproach is easier to
+     * maintain.Can be read as the "list of children Services" of this service
      */
     private List<String> relatedServices;
+
+    /**
+     * IDS of Managed Resources that this services is parent of This aproach is
+     * easier to maintain.Can be read as the "list of children Services" of this
+     * service
+     */
+    private List<String> relatedManagedResources;
+
+    /**
+     * IDS of Resources Connections that this services is parent of This aproach
+     * is easier to maintain.Can be read as the "list of children Services" of
+     * this service
+     */
+    private List<String> relatedResourceConnections;
 
     @Schema(description = "If true, indicates that the Service has some broken connections")
     private boolean degrated = false;

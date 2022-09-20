@@ -644,7 +644,6 @@ public class ServiceManager extends Manager {
                 //
                 // se só tiver um serviço reflete o status
                 //
-
                 service.setDegrated(service.getDependencies().get(0).getDegrated());
                 service.setBroken(service.getDependencies().get(0).getBroken());
             } else {

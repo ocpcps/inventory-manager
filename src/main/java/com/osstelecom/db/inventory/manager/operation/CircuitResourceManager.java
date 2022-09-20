@@ -19,7 +19,6 @@ import com.osstelecom.db.inventory.manager.dao.ResourceConnectionDao;
 import com.osstelecom.db.inventory.manager.events.CircuitResourceCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.CircuitResourceUpdatedEvent;
 import com.osstelecom.db.inventory.manager.events.ManagedResourceUpdatedEvent;
-import com.osstelecom.db.inventory.manager.events.ProcessCircuityIntegrityEvent;
 import com.osstelecom.db.inventory.manager.events.ResourceConnectionUpdatedEvent;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
@@ -37,7 +36,6 @@ import com.osstelecom.db.inventory.manager.session.SchemaSession;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
 
 @Service
 public class CircuitResourceManager extends Manager {
