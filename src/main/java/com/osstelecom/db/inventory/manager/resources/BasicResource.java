@@ -31,7 +31,7 @@ import java.util.Date;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-import org.bson.codecs.pojo.annotations.BsonIgnore;
+//import org.bson.codecs.pojo.annotations.BsonIgnore;
 
 /**
  * This is the basic resource of all resources, that can be: Location, Managed,
@@ -116,13 +116,13 @@ public class BasicResource {
      * Cuidado com os campos a seguir!
      */
     @JsonIgnore
-    @BsonIgnore
+//    @BsonIgnore
     private Map<String, ResourceConnection> connections = new ConcurrentHashMap<>();
     @JsonIgnore
-    @BsonIgnore
+//    @BsonIgnore
     private Map<String, ResourceConnection> connectionCache = new ConcurrentHashMap<>();
     @JsonIgnore
-    @BsonIgnore
+//    @BsonIgnore
     private Map<String, Object> attachments = new ConcurrentHashMap<>();
 
     private Long atomId = 0L;

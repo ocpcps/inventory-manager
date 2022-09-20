@@ -356,7 +356,7 @@ public class ResourceSession {
      * @throws ArangoDaoException
      * @throws InvalidRequestException
      */
-    public PatchManagedResourceResponse patchManagedResource(PatchManagedResourceRequest patchRequest) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
+    public PatchManagedResourceResponse patchManagedResource(PatchManagedResourceRequest patchRequest) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException {
         //
         //
         //
@@ -395,6 +395,21 @@ public class ResourceSession {
         //
         if (requestedPatch.getAdminStatus() != null) {
             fromDBResource.setAdminStatus(requestedPatch.getAdminStatus());
+        }
+
+        //
+        // Atualiza os atributos
+        //
+        if (requestedPatch.getAttributes() != null && !requestedPatch.getAttributes().isEmpty()) {
+            requestedPatch.getAttributes().forEach((name, attribute) -> {
+                if (fromDBResource.getAttributes() != null) {
+                    if (fromDBResource.getAttributes().containsKey(name)) {
+                        fromDBResource.getAttributes().replace(name, attribute);
+                    } else {
+                        fromDBResource.getAttributes().put(name, attribute);
+                    }
+                }
+            });
         }
 
         ManagedResource result = this.managedResourceManager.updateManagedResource(fromDBResource);

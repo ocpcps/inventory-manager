@@ -18,10 +18,8 @@
 package com.osstelecom.db.inventory.manager.operation;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -40,7 +38,6 @@ import com.osstelecom.db.inventory.manager.dao.ResourceConnectionDao;
 import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import com.osstelecom.db.inventory.manager.events.ManagedResourceCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.ManagedResourceUpdatedEvent;
-import com.osstelecom.db.inventory.manager.events.ProcessCircuityIntegrityEvent;
 import com.osstelecom.db.inventory.manager.events.ResourceSchemaUpdatedEvent;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
@@ -50,13 +47,14 @@ import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.SchemaNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.ScriptRuleException;
 import com.osstelecom.db.inventory.manager.listeners.EventManagerListener;
-import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstraintViolationException;
 import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
 import com.osstelecom.db.inventory.manager.session.DynamicRuleSession;
 import com.osstelecom.db.inventory.manager.session.SchemaSession;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 
 /**
  *
@@ -106,6 +104,11 @@ public class ManagedResourceManager extends Manager {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
+    @EventListener(ApplicationReadyEvent.class)
+    private void onStartUp() {
+        this.eventManager.registerListener(this);
+    }
+
     /**
      * Create a managed Resource
      *
@@ -152,11 +155,17 @@ public class ManagedResourceManager extends Manager {
 
     }
 
-    public ManagedResource update(ManagedResource resource) {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public ManagedResource update(ManagedResource resource) throws InvalidRequestException, ArangoDaoException, AttributeConstraintViolationException {
+       return this.updateManagedResource(resource);
     }
 
     public ManagedResource findManagedResource(ManagedResource resource) throws ResourceNotFoundException, ArangoDaoException {
+        if (resource.getId() != null) {
+            if (!resource.getId().contains("/")) {
+                resource.setId(resource.getDomain().getNodes() + "/" + resource.getId());
+            }
+        }
+
         return this.managedResourceDao.findResource(resource);
     }
 
@@ -199,7 +208,7 @@ public class ManagedResourceManager extends Manager {
      * @return
      * @throws InvalidRequestException
      */
-    public ManagedResource updateManagedResource(ManagedResource resource) throws InvalidRequestException, ArangoDaoException {
+    public ManagedResource updateManagedResource(ManagedResource resource) throws InvalidRequestException, ArangoDaoException, AttributeConstraintViolationException {
         String timerId = startTimer("updateManagedResource");
         try {
             lockManager.lock();
@@ -210,121 +219,11 @@ public class ManagedResourceManager extends Manager {
                 throw new InvalidRequestException("Invalid OperationalStatus:[" + resource.getOperationalStatus() + "]");
             }
 
+            this.schemaSession.validateResourceSchema(resource);
+
             resource.setLastModifiedDate(new Date());
             DocumentUpdateEntity<ManagedResource> updatedEntity = this.managedResourceDao.updateResource(resource);
             ManagedResource updatedResource = updatedEntity.getNew();
-            //
-            // Update the related dependencies
-            //
-            try {
-                List<String> relatedCircuits = new ArrayList<>();
-                //
-                // Transcrever para um filtro, que busca os recursos relacionados
-                // Eventualmente irá se tornar um método no CircuitManager
-                //
-                String filter = "@resourceId in  doc.relatedNodes[*]";
-                Map<String, Object> bindVars = new HashMap<>();
-                bindVars.put("resourceId", updatedResource.getId());
-
-                this.resourceConnectionDao.findResourceByFilter(filter, bindVars, updatedResource.getDomain()).forEach((connection) -> {
-
-                    if (connection.getFrom().getKey().equals(updatedResource.getKey())) {
-                        //
-                        // Update from
-                        //
-
-                        connection.setFrom(updatedResource);
-                        //
-                        // validando 
-                        //
-
-                    } else if (connection.getTo().getKey().equals(updatedResource.getKey())) {
-                        //
-                        // Update to
-                        //
-                        connection.setTo(updatedResource);
-
-                    }
-
-                    //
-                    // Avalia o status final da Conexão, imagino que isso 
-                    // deveria ir para o listener...pois já está trabalhando no evento em si
-                    //
-                    boolean circuitStateChanged = false;
-                    if (connection.getFrom().getOperationalStatus().equals("UP")
-                            && connection.getTo().getOperationalStatus().equals("UP")) {
-                        
-                        if (connection.getOperationalStatus().equals("DOWN")) {
-                            connection.setOperationalStatus("UP");
-                            circuitStateChanged = true;
-                        }
-                    } else {
-                        if (connection.getOperationalStatus().equals("UP")) {
-                            connection.setOperationalStatus("DOWN");
-                            circuitStateChanged = true;
-                        }
-                    }
-                    if (circuitStateChanged) {
-                        try {
-                            resourceConnectionManager.updateResourceConnection(connection); // <- Atualizou a conexão no banco
-                            //
-                            // Now Update related Circuits..
-                            //
-                            if (connection.getCircuits() != null) {
-                                if (!connection.getCircuits().isEmpty()) {
-                                    for (String circuitId : connection.getCircuits()) {
-                                        if (!relatedCircuits.contains(circuitId)) {
-                                            //
-                                            // Garante que só incluímos o mesmo circuito uma vez
-                                            //
-                                            relatedCircuits.add(circuitId);
-                                        }
-                                    }
-                                }
-                            }
-                        } catch (ArangoDaoException ex) {
-                            logger.error("Failed to Update Circuit: [{}]", connection.getId(), ex);
-                        }
-                    }
-
-                });
-
-                //
-                // Note que ele só terá circuitos relacionados se houver mudança de status do circuito.
-                //
-                if (!relatedCircuits.isEmpty()) {
-                    for (String circuitId : relatedCircuits) {
-                        try {
-                            CircuitResource circuit = this.circuitResourceDao.findResource(new CircuitResource(updatedResource.getDomain(), circuitId));
-                            if (circuit.getaPoint().getId().equals(updatedResource.getKey())) {
-                                circuit.setaPoint(updatedResource);
-                                circuit = this.circuitResourceManager.updateCircuitResource(circuit);
-                            } else if (circuit.getzPoint().getId().equals(updatedResource.getKey())) {
-                                circuit.setzPoint(updatedResource);
-                                circuit = this.circuitResourceManager.updateCircuitResource(circuit);
-                            }
-
-                            //
-                            // Circuit Integrity must be checked here,
-                            // So we fire an event that will later request that
-                            //
-                            this.eventManager.notifyResourceEvent(new ProcessCircuityIntegrityEvent(circuit));
-
-                        } catch (ResourceNotFoundException ex) {
-                            //
-                            // This should never happen...but if happen please try to treat the error
-                            //
-                            logger.error("Inconsistent Database on Domain Please check Related Circuit Resources: ResourceID:[" + updatedResource.getId() + "]", ex);
-                        } catch (ArangoDaoException ex) {
-                            logger.error("Arango Level Error", ex);
-                        }
-                    }
-                }
-
-            } catch (IOException | IllegalStateException ex) {
-                logger.error("Failed to Update Resource Connection Relation", ex);
-            }
-
             eventManager.notifyResourceEvent(new ManagedResourceUpdatedEvent(updatedEntity.getOld(), updatedEntity.getNew()));
             return updatedResource;
         } finally {
@@ -454,6 +353,10 @@ public class ManagedResourceManager extends Manager {
     @Subscribe
     public void onManagedResourceUpdatedEvent(ManagedResourceUpdatedEvent updateEvent) {
         logger.debug("Managed Resource [{}] Updated: ", updateEvent.getOldResource().getId());
+        //
+        // Garante que vai processar as dependencias.
+        //
+
     }
 
 }

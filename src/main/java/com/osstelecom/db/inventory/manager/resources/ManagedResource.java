@@ -56,7 +56,7 @@ public class ManagedResource extends BasicResource {
         //
         // Prioritize name,nodeAddress
         //
-        this.setClassName(null);
+//        this.setClassName(null);
         this.setAttributeSchemaName(null);
     }
 

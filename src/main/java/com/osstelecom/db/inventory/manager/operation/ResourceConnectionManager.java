@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.locks.ReentrantLock;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -12,10 +11,13 @@ import org.springframework.stereotype.Service;
 import com.arangodb.entity.DocumentCreateEntity;
 import com.arangodb.entity.DocumentUpdateEntity;
 import com.arangodb.entity.MultiDocumentEntity;
+import com.google.common.eventbus.Subscribe;
 import com.osstelecom.db.inventory.graph.arango.GraphList;
 import com.osstelecom.db.inventory.manager.dao.ResourceConnectionDao;
 import com.osstelecom.db.inventory.manager.dto.FilterDTO;
+import com.osstelecom.db.inventory.manager.events.ManagedResourceUpdatedEvent;
 import com.osstelecom.db.inventory.manager.events.ResourceConnectionCreatedEvent;
+import com.osstelecom.db.inventory.manager.events.ResourceConnectionUpdatedEvent;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
@@ -26,32 +28,46 @@ import com.osstelecom.db.inventory.manager.exception.ScriptRuleException;
 import com.osstelecom.db.inventory.manager.listeners.EventManagerListener;
 import com.osstelecom.db.inventory.manager.resources.BasicResource;
 import com.osstelecom.db.inventory.manager.resources.Domain;
+import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstraintViolationException;
 import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
 import com.osstelecom.db.inventory.manager.session.DynamicRuleSession;
 import com.osstelecom.db.inventory.manager.session.SchemaSession;
+import java.io.IOException;
+import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 
 @Service
 public class ResourceConnectionManager extends Manager {
-
+    
     @Autowired
     private EventManagerListener eventManager;
-
+    
     @Autowired
     private LockManager lockManager;
-
+    
     @Autowired
     private SchemaSession schemaSession;
-
+    
     @Autowired
     private DomainManager domainManager;
-
+    
     @Autowired
     private ResourceConnectionDao resourceConnectionDao;
-
+    
     @Autowired
     private DynamicRuleSession dynamicRuleSession;
+    
+    private Logger logger = LoggerFactory.getLogger(ResourceConnectionManager.class);
+    
+    @EventListener(ApplicationReadyEvent.class)
+    private void onStartUp() {
+        this.eventManager.registerListener(this);
+    }
 
     /**
      * Cria uma nova Conexão entre dois elementos, Note que a ordem é importante
@@ -72,16 +88,16 @@ public class ResourceConnectionManager extends Manager {
                 lockManager.unlock();
             }
             endTimer(timerId);
-
+            
         }
     }
-
+    
     public ResourceConnection createResourceConnection(ResourceConnection connection) throws GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, ArangoDaoException {
         String timerId = startTimer("createResourceConnection");
         try {
             lockManager.lock();
             connection.setKey(this.getUUID());
-
+            
             ResourceSchemaModel schemaModel = schemaSession.loadSchema(connection.getAttributeSchemaName());
             connection.setSchemaModel(schemaModel);
             schemaSession.validateResourceSchema(connection);
@@ -116,7 +132,7 @@ public class ResourceConnectionManager extends Manager {
      * @return
      */
     public ResourceConnection createResourceConnection(BasicResource from, BasicResource to, Domain domain) throws ArangoDaoException {
-
+        
         String timerId = startTimer("createResourceConnection");
         try {
             lockManager.lock();
@@ -134,7 +150,7 @@ public class ResourceConnectionManager extends Manager {
             DocumentCreateEntity<ResourceConnection> result = resourceConnectionDao.insertResource(connection);
             connection.setKey(result.getId());
             connection.setRevisionId(result.getRev());
-
+            
             ResourceConnectionCreatedEvent event = new ResourceConnectionCreatedEvent(connection);
             this.eventManager.notifyResourceEvent(event);
             return connection;
@@ -158,7 +174,7 @@ public class ResourceConnectionManager extends Manager {
         String timerId = startTimer("findResourceConnection");
         try {
             lockManager.lock();
-
+            
             return this.resourceConnectionDao.findResource(connection);
         } finally {
             if (lockManager.isLocked()) {
@@ -179,7 +195,10 @@ public class ResourceConnectionManager extends Manager {
         try {
             lockManager.lock();
             connection.setLastModifiedDate(new Date());
-            return this.resourceConnectionDao.updateResource(connection);
+            DocumentUpdateEntity<ResourceConnection> result = this.resourceConnectionDao.updateResource(connection);
+            ResourceConnectionUpdatedEvent updateEvent = new ResourceConnectionUpdatedEvent(result);
+            this.eventManager.notifyResourceEvent(updateEvent);
+            return result;
         } finally {
             if (lockManager.isLocked()) {
                 lockManager.unlock();
@@ -217,21 +236,128 @@ public class ResourceConnectionManager extends Manager {
             endTimer(timerId);
         }
     }
-
+    
     public GraphList<ResourceConnection> getConnectionsByFilter(FilterDTO filter, String domainName) throws ArangoDaoException, DomainNotFoundException, InvalidRequestException {
         Domain domain = domainManager.getDomain(domainName);
         if (filter.getObjects().contains("connections")) {
             HashMap<String, Object> bindVars = new HashMap<>();
-
+            
             if (filter.getClasses() != null && !filter.getClasses().isEmpty()) {
                 bindVars.put("classes", filter.getClasses());
             }
-
+            
             if (filter.getBindings() != null && !filter.getBindings().isEmpty()) {
                 bindVars.putAll(filter.getBindings());
             }
             return this.resourceConnectionDao.findResourceByFilter(filter.getAqlFilter(), bindVars, domain);
         }
         throw new InvalidRequestException("getConnectionsByFilter() can only retrieve connections objects");
+    }
+
+    /**
+     * Recebi uma notificação de que um recurso foi atualizado, vou procurar as
+     * conexões que ele possui e atualizar as referencias.
+     *
+     * @param updateEvent
+     */
+    @Subscribe
+    public void onManagedResourceUpdatedEvent(ManagedResourceUpdatedEvent updateEvent) {
+        ManagedResource updatedResource = updateEvent.getNewResource();
+        // Update the related dependencies
+        //
+        try {
+            List<String> relatedCircuits = new ArrayList<>();
+            //
+            // Transcrever para um filtro, que busca os recursos relacionados
+            // Eventualmente irá se tornar um método no CircuitManager
+            //
+            String filter = "@resourceId in  doc.relatedNodes[*]";
+            Map<String, Object> bindVars = new HashMap<>();
+            bindVars.put("resourceId", updatedResource.getId());
+            //
+            // Procura as conexões relacionadas no mesmo dominio
+            //
+            this.resourceConnectionDao.findResourceByFilter(filter, bindVars, updatedResource.getDomain()).forEach((connection) -> {
+                
+                if (connection.getFrom().getKey().equals(updatedResource.getKey())) {
+                    //
+                    // Update from
+                    //
+
+                    connection.setFrom(updatedResource);
+                    //
+                    // validando 
+                    //
+
+                } else if (connection.getTo().getKey().equals(updatedResource.getKey())) {
+                    //
+                    // Update to
+                    //
+                    connection.setTo(updatedResource);
+                    
+                }
+
+                //
+                // Reflete o estado da conexão
+                //
+                if (!connection.getOperationalStatus().equals(updatedResource.getOperationalStatus())) {
+                    connection.setOperationalStatus(updatedResource.getOperationalStatus());
+                }
+                
+                try {
+                    //
+                    // Atualiza a conexão
+                    //
+                    this.updateResourceConnection(connection); // <- Atualizou a conexão no banco
+//                    //
+//                    // Now Update related Circuits..
+//                    //
+//                    if (connection.getCircuits() != null) {
+//                        if (!connection.getCircuits().isEmpty()) {
+//                            for (String circuitId : connection.getCircuits()) {
+//                                if (!relatedCircuits.contains(circuitId)) {
+//                                    //
+//                                    // Garante que só incluímos o mesmo circuito uma vez
+//                                    //
+//                                    relatedCircuits.add(circuitId);
+//                                }
+//                            }
+//                        }
+//                    }
+                } catch (ArangoDaoException ex) {
+                    logger.error("Failed to Update Circuit: [{}]", connection.getId(), ex);
+                }
+            });
+//
+//            //
+//            // Note que ele só terá circuitos relacionados se houver mudança de status do circuito.
+//            //
+//            if (!relatedCircuits.isEmpty()) {
+//                for (String circuitId : relatedCircuits) {
+//                    try {
+//                        CircuitResource circuit = this.circuitResourceDao.findResource(new CircuitResource(updatedResource.getDomain(), circuitId));
+//                        if (circuit.getaPoint().getId().equals(updatedResource.getKey())) {
+//                            circuit.setaPoint(updatedResource);
+//                            circuit = this.circuitResourceManager.updateCircuitResource(circuit);
+//                        } else if (circuit.getzPoint().getId().equals(updatedResource.getKey())) {
+//                            circuit.setzPoint(updatedResource);
+//                            circuit = this.circuitResourceManager.updateCircuitResource(circuit);
+//                        }
+//
+//                    } catch (ResourceNotFoundException ex) {
+//                        //
+//                        // This should never happen...but if happen please try to treat the error
+//                        //
+//                        logger.error("Inconsistent Database on Domain Please check Related Circuit Resources: ResourceID:[" + updatedResource.getId() + "]", ex);
+//                    } catch (ArangoDaoException ex) {
+//                        logger.error("Arango Level Error", ex);
+//                    }
+//                }
+//            }
+
+        } catch (IOException | IllegalStateException | ArangoDaoException ex) {
+            logger.error("Failed to Update Resource Connection Relation", ex);
+            
+        }
     }
 }

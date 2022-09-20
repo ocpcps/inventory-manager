@@ -34,7 +34,7 @@ import com.arangodb.entity.DocumentCreateEntity;
 import com.arangodb.entity.DocumentUpdateEntity;
 import com.google.common.eventbus.Subscribe;
 import com.osstelecom.db.inventory.manager.dao.ServiceResourceDao;
-import com.osstelecom.db.inventory.manager.events.CircuitStateTransionedEvent;
+import com.osstelecom.db.inventory.manager.events.CircuitResourceUpdatedEvent;
 import com.osstelecom.db.inventory.manager.events.ProcessServiceIntegrityEvent;
 import com.osstelecom.db.inventory.manager.events.ServiceResourceCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.ServiceResourceUpdatedEvent;
@@ -434,13 +434,16 @@ public class ServiceManager extends Manager {
     }
 
     /**
-     * Recebe as transições de estado dos circuitos e processa o estado final do
-     * serviço
+     * Recebe as notificações de udpate dos serviços serviço
      *
      * @param event
      */
     @Subscribe
-    public void onCircuitStateTransionedEvent(CircuitStateTransionedEvent event) throws ResourceNotFoundException, ArangoDaoException, IOException, DomainNotFoundException {
+    public void onCircuitResourceUpdatedEvent(CircuitResourceUpdatedEvent event) throws ResourceNotFoundException, ArangoDaoException, IOException, DomainNotFoundException {
+        //
+        // Um Circuito Sofre alteração, mas ele foi alterado de estado ? 
+        //
+
         if (event.getNewResource().getServices() != null) {
             if (!event.getNewResource().getServices().isEmpty()) {
                 logger.debug("Circuit:[{}] State Changed, Impacted Services Count:[{}]",
@@ -489,6 +492,7 @@ public class ServiceManager extends Manager {
 
             }
         }
+
     }
 
     /**
@@ -498,7 +502,6 @@ public class ServiceManager extends Manager {
      * @throws ArangoDaoException
      */
     private void updateServiceReferences(ServiceResource service) throws ArangoDaoException, ResourceNotFoundException, IOException, DomainNotFoundException {
-        DocumentUpdateEntity<ServiceResource> updateResult = this.serviceDao.updateResource(service);
 
         /**
          * Verifica se este serviço é necessário para algum outro, ou seja, do
@@ -524,12 +527,20 @@ public class ServiceManager extends Manager {
                     dependentService.getDependencies().removeIf(d -> d.getId().equals(service.getId()));
                     dependentService.getDependencies().add(service);
                     try {
+                        //
+                        // Computa primeiro para saber o estado
+                        //
                         this.computeServiceIntegrity(dependentService);
+                        DocumentUpdateEntity<ServiceResource> updateResult = this.serviceDao.updateResource(dependentService);
+                        //
+                        // Salva no Banco de dados
+                        //
                         this.updateServiceReferences(dependentService);
                     } catch (ArangoDaoException | ResourceNotFoundException | DomainNotFoundException | IOException ex) {
                         logger.error("Failed to Update Service Dependecies", ex);
                     }
                 }
+
             }
 
             /**

@@ -18,8 +18,9 @@ import com.osstelecom.db.inventory.manager.dao.CircuitResourceDao;
 import com.osstelecom.db.inventory.manager.dao.ResourceConnectionDao;
 import com.osstelecom.db.inventory.manager.events.CircuitResourceCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.CircuitResourceUpdatedEvent;
-import com.osstelecom.db.inventory.manager.events.CircuitStateTransionedEvent;
+import com.osstelecom.db.inventory.manager.events.ManagedResourceUpdatedEvent;
 import com.osstelecom.db.inventory.manager.events.ProcessCircuityIntegrityEvent;
+import com.osstelecom.db.inventory.manager.events.ResourceConnectionUpdatedEvent;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
@@ -33,6 +34,10 @@ import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstrai
 import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
 import com.osstelecom.db.inventory.manager.session.DynamicRuleSession;
 import com.osstelecom.db.inventory.manager.session.SchemaSession;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.logging.Level;
 
 @Service
 public class CircuitResourceManager extends Manager {
@@ -166,11 +171,80 @@ public class CircuitResourceManager extends Manager {
         eventManager.registerListener(this);
     }
 
+    /**
+     * Recebemos a notificação de que uma conexão foi atualizada
+     *
+     * @param updatedEvent
+     */
     @Subscribe
-    public void onProcessCircuityIntegrityEvent(ProcessCircuityIntegrityEvent processEvent) throws ArangoDaoException {
-        logger.debug("A Circuit[{}] Dependency has been updated ,Integrity Needs to be recalculated",
-                processEvent.getNewResource().getId());
-        this.computeCircuitIntegrity(processEvent.getNewResource());
+    public void onResourceConnectionUpdatedEvent(ResourceConnectionUpdatedEvent updatedEvent) {
+        ResourceConnection newConnection = updatedEvent.getNewResource();
+        ResourceConnection oldConnection = updatedEvent.getOldResource();
+        if (newConnection.getCircuits() != null) {
+            if (!newConnection.getCircuits().isEmpty()) {
+                //
+                // Uma Conexão foi atualizada.
+                //
+                if (!newConnection.getOperationalStatus().equals(oldConnection.getOperationalStatus())) {
+                    //
+                    // Trasicionou o estado da conexão.
+                    //
+                    for (String circuitId : newConnection.getCircuits()) {
+                        try {
+                            CircuitResource circuit = this.findCircuitResource(new CircuitResource(newConnection.getDomain(), circuitId));
+                            this.computeCircuitIntegrity(circuit);
+                        } catch (ResourceNotFoundException ex) {
+                            logger.warn("Inconsistent Database Detetected");
+                        } catch (ArangoDaoException ex) {
+                            logger.warn("Generic Error", ex);
+                        }
+                    }
+
+                }
+            }
+        }
+
+    }
+
+    /**
+     * Recebi uma notificação de que um recurso foi atualizado
+     *
+     * @param updatedEvent
+     */
+    @Subscribe
+    public void onManagedResourceUpdatedEvent(ManagedResourceUpdatedEvent updatedEvent) throws ArangoDaoException, IOException {
+
+        //
+        // Vamos filtrar se algum circuito usa  a gente
+        //
+        String filter = "(doc.aPoint._id == @resourceId or doc.zPoint._id == @resourceId) ";
+        Map<String, Object> bindVars = new HashMap<>();
+        bindVars.put("resourceId", updatedEvent.getNewResource().getId());
+        try {
+            this.circuitResourceDao.findResourceByFilter(filter, bindVars, updatedEvent.getNewResource().getDomain()).forEach(circuit -> {
+                try {
+                    if (circuit.getaPoint().getId().equals(updatedEvent.getNewResource().getId())) {
+
+                        circuit.setaPoint(updatedEvent.getNewResource());
+                        logger.debug("Updated A Point in Circuit [{}]", circuit.getId());
+                    } else if (circuit.getzPoint().getId().equals(updatedEvent.getNewResource().getId())) {
+
+                        circuit.setzPoint(updatedEvent.getNewResource());
+                        logger.debug("Updated Z Point in Circuit [{}]", circuit.getId());
+                    } else {
+                        logger.warn("Inconsistent Database Data Detected");
+
+                    }
+                    this.updateCircuitResource(circuit);
+                } catch (ArangoDaoException ex) {
+                    logger.error("Failed to Update Resources on circuit", ex);
+                }
+            });
+        } catch (ResourceNotFoundException ex) {
+            //
+            // This is expetected
+            //
+        }
     }
 
     /**
@@ -190,7 +264,7 @@ public class CircuitResourceManager extends Manager {
         List<ResourceConnection> connections = this.findCircuitPaths(circuit).toList();
         boolean degratedFlag = false;
         for (ResourceConnection connection : connections) {
-
+            logger.debug("Connection [{}] Status:[{}]", connection.getId(), connection.getOperationalStatus());
             //
             // get current node status
             //
@@ -261,24 +335,24 @@ public class CircuitResourceManager extends Manager {
             stateChanged = true;
 
         }
-        
+
         if (circuit.getBroken()) {
             circuit.setOperationalStatus("DOWN");
             circuit.setDegrated(true);
         } else {
             circuit.setOperationalStatus("UP");
         }
-        if (circuit.getBrokenResources() != null ) {
+        if (circuit.getBrokenResources() != null) {
             if (!circuit.getBroken() && !circuit.getBrokenResources().isEmpty()) {
                 stateChanged = true;
                 circuit.getBrokenResources().clear();
             }
-        } 
+        }
 
         Long end = System.currentTimeMillis();
         Long took = end - start;
-        logger.debug("Check Circuit Integrity for [{}] Took: {} ms State Changed: {} Broken Count:[{}]",
-                circuit.getId(), took, stateChanged, circuit.getBrokenResources().size());
+        logger.debug("Check Circuit Integrity for [{}] Took: {} ms State Changed: {} Broken Count:[{}] Total Connections:[{}]",
+                circuit.getId(), took, stateChanged, circuit.getBrokenResources().size(), connections.size());
         if (stateChanged) {
             this.updateCircuitResource(circuit);
         }
@@ -291,64 +365,7 @@ public class CircuitResourceManager extends Manager {
      */
     @Subscribe
     public void onCircuitResourceCreatedEvent(CircuitResourceCreatedEvent circuit) {
-        logger.debug("Resource Connection[{}] Created ID:[{}]]", circuit.getOldResource().getId(),
-                circuit.getNewResource().getId());
-    }
-
-    /**
-     * Recebe as notificações para Circuitos Atualizados, note que ele trata a
-     * transição de dependencia do circuito,
-     *
-     * @param updateEvent
-     */
-    @Subscribe
-    public void onCircuitResourceUpdatedEvent(CircuitResourceUpdatedEvent updateEvent) {
-        //
-        // flag para dizer se houve transição relevante para o circuito
-        //
-        boolean circuitTransioned = false;
-        if (!updateEvent.getOldResource().getOperationalStatus()
-                .equals(updateEvent.getNewResource().getOperationalStatus())) {
-            logger.debug("Resource Connection[{}] Updated FOM:[{}] TO:[{}]", updateEvent.getOldResource().getId(),
-                    updateEvent.getOldResource().getOperationalStatus(),
-                    updateEvent.getNewResource().getOperationalStatus());
-            //
-            // Transitou de status de UP->DOWN ou DOWN-> UP
-            // Produzir evento de notificação, agora devemos processar os serviços.
-            //
-            circuitTransioned = true;
-        } else {
-            //
-            // O serviço não ficou quebrado, mas pode ter transitado para degradado, ou mesmo retornado
-            //
-            if (updateEvent.getOldResource().getDegrated() != updateEvent.getNewResource().getDegrated()) {
-                //
-                // Trabalha a propagação do Evento do Recurso -> Conexão -> Circuito -> Serviço
-                //
-                if (updateEvent.getNewResource().getDegrated()) {
-                    //
-                    // Saiu de OK para Degradado
-                    //
-                    circuitTransioned = true;
-                } else {
-                    //
-                    // Saiu de Degrado para OK
-                    //
-                    circuitTransioned = true;
-                }
-            }
-        }
-
-        if (circuitTransioned) {
-            //
-            // Gera o Evento de Notificação de transição para o serviço
-            //
-            CircuitStateTransionedEvent circuitStateTransitionedEvent = new CircuitStateTransionedEvent(updateEvent.getOldResource(), updateEvent.getNewResource());
-            //
-            // Deverá ser consumido lá do ServiceManager
-            //
-            this.eventManager.notifyResourceEvent(circuitStateTransitionedEvent);
-        }
+        logger.debug("Resource Created ID:[{}]]", circuit.getNewResource().getId());
     }
 
 }

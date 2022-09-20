@@ -312,7 +312,11 @@ public class ResourceConnectionDao extends AbstractArangoDao<ResourceConnection>
         bindVars.put("aPoint", circuit.getaPoint().getId());
         bindVars.put("zPoint", circuit.getzPoint().getId());
         bindVars.put("circuitId", circuit.getId());
+        logger.info("(query) RUNNING: AQL:[{}]", aql);
+        bindVars.forEach((k, v) -> {
+            logger.info("\t  [@{}]=[{}]", k, v);
 
+        });
         ArangoCursor<ResourceConnection> cursor = this.getDb().query(aql, bindVars,
                 new AqlQueryOptions().count(true).batchSize(5000), ResourceConnection.class);
         return new GraphList<>(cursor);

@@ -90,6 +90,7 @@ public class DynamicRuleSession {
         //
         // Eval the resource chain
         //
+
         if (this.configurationManager.loadConfiguration().getDynamicRulesEnabled()) {
             String scriptPath = resource.getClassName();
 
@@ -143,5 +144,6 @@ public class DynamicRuleSession {
                 //
             }
         }
+
     }
 }

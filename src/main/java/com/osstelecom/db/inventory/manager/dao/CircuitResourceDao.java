@@ -100,7 +100,6 @@ public class CircuitResourceDao extends AbstractArangoDao<CircuitResource> {
 //            if (resource.getOperationalStatus() != null) {
 //                bindVars.put("operationalStatus", resource.getOperationalStatus());
 //            }
-
             //
             // Creates AQL
             //
@@ -224,7 +223,7 @@ public class CircuitResourceDao extends AbstractArangoDao<CircuitResource> {
     }
 
     @Override
-    public GraphList<CircuitResource> findResourceByFilter(String filter, Map<String, Object> bindVars, Domain domain) throws ArangoDaoException {
+    public GraphList<CircuitResource> findResourceByFilter(String filter, Map<String, Object> bindVars, Domain domain) throws ArangoDaoException, ResourceNotFoundException {
         try {
             String aql = " for doc in   " + domain.getCircuits();
             aql += " filter doc.domainName == @domainName ";
@@ -235,6 +234,8 @@ public class CircuitResourceDao extends AbstractArangoDao<CircuitResource> {
             }
             aql += " return doc";
             return this.query(aql, bindVars, CircuitResource.class, this.getDb());
+        } catch (ResourceNotFoundException ex) {
+            throw ex;
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         }
