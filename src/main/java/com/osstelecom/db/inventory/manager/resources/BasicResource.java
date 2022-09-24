@@ -111,7 +111,16 @@ public class BasicResource {
      */
     private String className = null;
 
+    //
+    // Atributos Offline
+    //
     private Map<String, Object> attributes = new ConcurrentHashMap<>();
+
+    //
+    // Atributos do discovery
+    //
+    private Map<String, Object> discoveryAttributes = new ConcurrentHashMap<>();
+
     /**
      * Cuidado com os campos a seguir!
      */
@@ -235,6 +244,7 @@ public class BasicResource {
     public BasicResource(Domain domain) {
         this.attributeSchemaName = "default";
         this.domain = domain;
+        this.domainName = domain.getDomainName();
     }
 
     public BasicResource(Domain domain, String key, String id) {
@@ -842,5 +852,19 @@ public class BasicResource {
             return false;
         }
         return true;
+    }
+
+    /**
+     * @return the discoveryAttributes
+     */
+    public Map<String, Object> getDiscoveryAttributes() {
+        return discoveryAttributes;
+    }
+
+    /**
+     * @param discoveryAttributes the discoveryAttributes to set
+     */
+    public void setDiscoveryAttributes(Map<String, Object> discoveryAttributes) {
+        this.discoveryAttributes = discoveryAttributes;
     }
 }

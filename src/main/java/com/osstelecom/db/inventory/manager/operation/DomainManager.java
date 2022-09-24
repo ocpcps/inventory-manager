@@ -136,6 +136,7 @@ public class DomainManager extends Manager {
         try {
             lockManager.lock();
             domain = this.getDomain(domain.getDomainName());
+            this.domains.remove(domain.getDomainName());
             return this.domainDao.deleteDomain(domain);
         } finally {
             if (lockManager.isLocked()) {
@@ -153,9 +154,13 @@ public class DomainManager extends Manager {
      */
     public Domain getDomain(String domainName) throws DomainNotFoundException {
         if (!domains.containsKey(domainName)) {
+            //
+            // Isso é para gerar a lista de domains existentes... achei overkill
+            //
             List<String> domainsList = domains.values().stream()
                     .map(Domain::getDomainName)
                     .collect(Collectors.toList());
+
             throw new DomainNotFoundException(
                     "Domain :[" + domainName + "] not found Available Domains are: [" + String.join(",", domainsList)
                     + "]");

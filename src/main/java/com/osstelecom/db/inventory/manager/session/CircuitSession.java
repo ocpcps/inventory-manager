@@ -129,7 +129,11 @@ public class CircuitSession {
         CircuitResource circuit = request.getPayLoad();
         if (circuit.getAttributeSchemaName() == null) {
             circuit.setAttributeSchemaName("circuit.default");
+        }else if (circuit.getAttributeSchemaName().equals("default")){
+            circuit.setAttributeSchemaName("circuit.default");
         }
+        
+       
 
         if (circuit.getClassName() == null) {
             circuit.setClassName("circuit.Default");

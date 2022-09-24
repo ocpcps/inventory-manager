@@ -24,7 +24,10 @@ package com.osstelecom.db.inventory.manager.resources;
  */
 public abstract class AbsRelatedResource extends BasicResource {
 
-    private String denpendsOnService;
+    //
+    // ID Do Serviço que ele depende.
+    //
+    private ServiceResource dependentService;
 
     public AbsRelatedResource(String attributeSchema, Domain domain) {
         super(attributeSchema, domain);
@@ -49,12 +52,20 @@ public abstract class AbsRelatedResource extends BasicResource {
     public AbsRelatedResource() {
     }
 
-    public String getDenpendsOnService() {
-        return denpendsOnService;
+    /**
+     * @return the dependentService
+     */
+    public ServiceResource getDependentService() {
+        return dependentService;
     }
 
-    public void setDenpendsOnService(String denpendsOnService) {
-        this.denpendsOnService = denpendsOnService;
+    /**
+     * @param dependentService the dependentService to set
+     */
+    public void setDependentService(ServiceResource dependentService) {
+        this.dependentService = dependentService;
     }
+
+    
 
 }

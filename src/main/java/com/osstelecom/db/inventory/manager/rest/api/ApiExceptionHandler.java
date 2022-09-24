@@ -17,7 +17,7 @@
  */
 package com.osstelecom.db.inventory.manager.rest.api;
 
-import com.osstelecom.db.inventory.manager.dto.ApiErroDTO;
+import com.osstelecom.db.inventory.manager.dto.ApiErrorDTO;
 import com.osstelecom.db.inventory.manager.exception.BasicException;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
@@ -40,7 +40,7 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(BasicException.class)
     protected ResponseEntity<Object> handleGenericException(
             BasicException ex) {
-        ApiErroDTO apiError = new ApiErroDTO();
+        ApiErrorDTO apiError = new ApiErrorDTO();
         apiError.setMsg(ex.getMessage());
         apiError.setStatusCode(ex.getStatusCode());
         apiError.setClassName(ex.getClass().getSimpleName());

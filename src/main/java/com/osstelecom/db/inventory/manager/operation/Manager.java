@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.osstelecom.db.inventory.manager.configuration.ConfigurationManager;
-import com.osstelecom.db.inventory.manager.dto.TimerDto;
+import com.osstelecom.db.inventory.manager.dto.TimerDTO;
 
 /**
  *
@@ -35,7 +35,7 @@ import com.osstelecom.db.inventory.manager.dto.TimerDto;
  */
 public abstract class Manager {
 
-    private Map<String, TimerDto> timers = new ConcurrentHashMap<>();
+    private Map<String, TimerDTO> timers = new ConcurrentHashMap<>();
 
     @Autowired
     private ConfigurationManager configurationManager;
@@ -50,7 +50,7 @@ public abstract class Manager {
      */
     public String startTimer(String operation) {
         String uid = UUID.randomUUID().toString();
-        timers.put(uid, new TimerDto(uid, operation, System.currentTimeMillis()));
+        timers.put(uid, new TimerDTO(uid, operation, System.currentTimeMillis()));
         return uid;
     }
 
@@ -62,7 +62,7 @@ public abstract class Manager {
     public Long endTimer(String key) {
         Long endTimer = System.currentTimeMillis();
         if (timers.containsKey(key)) {
-            TimerDto timer = timers.remove(key);
+            TimerDTO timer = timers.remove(key);
             Long tookTimer = endTimer - timer.getStartTimer();
             if (configurationManager.loadConfiguration().getTrackTimers()) {
                 logger.debug("Timer: [{}] Operation:[{}] Took: {} ms", timer.getKey(), timer.getOperation(), tookTimer);

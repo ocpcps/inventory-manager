@@ -31,6 +31,20 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public class ServiceResource extends BasicResource {
 
     /**
+     * @return the relatedManagedResources
+     */
+    public List<String> getRelatedManagedResources() {
+        return relatedManagedResources;
+    }
+
+    /**
+     * @param relatedManagedResources the relatedManagedResources to set
+     */
+    public void setRelatedManagedResources(List<String> relatedManagedResources) {
+        this.relatedManagedResources = relatedManagedResources;
+    }
+
+    /**
      *
      * IDS of Services that this services depends on, like parent service.
      */

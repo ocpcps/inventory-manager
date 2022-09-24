@@ -212,8 +212,8 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
         }
         bindVars.put("className", className);
 //        this.database.collection("").getd
-        String aql = "FOR doc IN "
-                + domain.getNodes() + " FILTER ";
+        String aql = "FOR doc IN `"
+                + domain.getNodes() + "` FILTER ";
 
         if (nodeAddress != null && !nodeAddress.equals("")) {
             bindVars.remove("name");

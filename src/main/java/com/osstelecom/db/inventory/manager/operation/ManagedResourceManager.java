@@ -32,9 +32,7 @@ import com.arangodb.entity.DocumentCreateEntity;
 import com.arangodb.entity.DocumentUpdateEntity;
 import com.google.common.eventbus.Subscribe;
 import com.osstelecom.db.inventory.graph.arango.GraphList;
-import com.osstelecom.db.inventory.manager.dao.CircuitResourceDao;
 import com.osstelecom.db.inventory.manager.dao.ManagedResourceDao;
-import com.osstelecom.db.inventory.manager.dao.ResourceConnectionDao;
 import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import com.osstelecom.db.inventory.manager.events.ManagedResourceCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.ManagedResourceUpdatedEvent;
@@ -49,6 +47,7 @@ import com.osstelecom.db.inventory.manager.exception.ScriptRuleException;
 import com.osstelecom.db.inventory.manager.listeners.EventManagerListener;
 import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
+import com.osstelecom.db.inventory.manager.resources.ServiceResource;
 import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstraintViolationException;
 import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
 import com.osstelecom.db.inventory.manager.session.DynamicRuleSession;
@@ -79,17 +78,20 @@ public class ManagedResourceManager extends Manager {
     @Autowired
     private ManagedResourceDao managedResourceDao;
 
-    @Autowired
-    private ResourceConnectionDao resourceConnectionDao;
+//    @Autowired
+//    private ResourceConnectionDao resourceConnectionDao;
+//
+//    @Autowired
+//    private ResourceConnectionManager resourceConnectionManager;
+//
+//    @Autowired
+//    private CircuitResourceDao circuitResourceDao;
+//
+//    @Autowired
+//    private CircuitResourceManager circuitResourceManager;
 
     @Autowired
-    private ResourceConnectionManager resourceConnectionManager;
-
-    @Autowired
-    private CircuitResourceDao circuitResourceDao;
-
-    @Autowired
-    private CircuitResourceManager circuitResourceManager;
+    private ServiceManager serviceManager;
 
     @Autowired
     private DomainManager domainManager;
@@ -118,7 +120,7 @@ public class ManagedResourceManager extends Manager {
      * @throws AttributeConstraintViolationException
      * @throws GenericException
      */
-    public ManagedResource create(ManagedResource resource) throws SchemaNotFoundException, AttributeConstraintViolationException, GenericException, ScriptRuleException, ArangoDaoException {
+    public ManagedResource create(ManagedResource resource) throws SchemaNotFoundException, AttributeConstraintViolationException, GenericException, ScriptRuleException, ArangoDaoException, InvalidRequestException, ResourceNotFoundException, DomainNotFoundException {
         String timerId = startTimer("createManagedResource");
         try {
             lockManager.lock();
@@ -128,6 +130,26 @@ public class ManagedResourceManager extends Manager {
             if (resource.getKey() == null) {
                 resource.setKey(getUUID());
             }
+
+            if (resource.getDependentService() != null) {
+                //
+                // Valida se o serviço existe
+                //
+                ServiceResource service = this.serviceManager.getService(resource.getDependentService());
+
+                //
+                // Atualiza para referencia do DB
+                //
+                resource.setDependentService(service);
+
+                //
+                // Agora vamos ver se o serviço é de um dominio diferente do recurso... não podem ser do mesmo
+                //
+                if (service.getDomain().getDomainName().equals(resource.getDomain().getDomainName())) {
+                    throw new InvalidRequestException("Resource and Parent Service cannot be in the same domain.");
+                }
+            }
+
             resource.setAtomId(resource.getDomain().addAndGetId());
             ResourceSchemaModel schemaModel = schemaSession.loadSchema(resource.getAttributeSchemaName());
             resource.setSchemaModel(schemaModel);
@@ -156,7 +178,7 @@ public class ManagedResourceManager extends Manager {
     }
 
     public ManagedResource update(ManagedResource resource) throws InvalidRequestException, ArangoDaoException, AttributeConstraintViolationException {
-       return this.updateManagedResource(resource);
+        return this.updateManagedResource(resource);
     }
 
     public ManagedResource findManagedResource(ManagedResource resource) throws ResourceNotFoundException, ArangoDaoException {
@@ -222,7 +244,12 @@ public class ManagedResourceManager extends Manager {
             this.schemaSession.validateResourceSchema(resource);
 
             resource.setLastModifiedDate(new Date());
+            //
+            // Demora ?
+            //
+            String timerId2 = startTimer("updateManagedResource.1");
             DocumentUpdateEntity<ManagedResource> updatedEntity = this.managedResourceDao.updateResource(resource);
+            endTimer(timerId2);
             ManagedResource updatedResource = updatedEntity.getNew();
             eventManager.notifyResourceEvent(new ManagedResourceUpdatedEvent(updatedEntity.getOld(), updatedEntity.getNew()));
             return updatedResource;
@@ -331,7 +358,11 @@ public class ManagedResourceManager extends Manager {
      */
     @Subscribe
     public void onManagedResourceCreatedEvent(ManagedResourceCreatedEvent resource) {
-
+        if (resource.getNewResource().getDependentService()!=null){
+            //
+            // Temos um Service, vamos notificar ele que um recurso uso ele.
+            //
+        }
     }
 
     /**
@@ -350,12 +381,17 @@ public class ManagedResourceManager extends Manager {
         this.processSchemaUpdatedEvent(update);
     }
 
+    /**
+     * Recebe as atualizações de Managed Resource
+     * @param updateEvent 
+     */
     @Subscribe
     public void onManagedResourceUpdatedEvent(ManagedResourceUpdatedEvent updateEvent) {
         logger.debug("Managed Resource [{}] Updated: ", updateEvent.getOldResource().getId());
         //
-        // Garante que vai processar as dependencias.
+        // Um Recurso foi Atualizado
         //
+
 
     }
 

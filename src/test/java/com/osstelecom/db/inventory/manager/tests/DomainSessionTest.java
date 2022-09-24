@@ -62,7 +62,6 @@ public class DomainSessionTest {
     @DisplayName("Create Domain Test")
     @Order(2)
     public void createDomainTest() throws Exception {
-
         CreateDomainRequest request = new CreateDomainRequest();
         request.setPayLoad(new Domain());
         request.getPayLoad().setDomainName("test");

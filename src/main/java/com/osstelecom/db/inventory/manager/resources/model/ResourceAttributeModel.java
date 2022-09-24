@@ -18,6 +18,7 @@ package com.osstelecom.db.inventory.manager.resources.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Classe que representa um Atributo
@@ -32,7 +33,7 @@ public class ResourceAttributeModel {
     private String variableType;
     private String description; //Updateble
     private String defaultValue;
-    private ArrayList<String> allowedValues;
+    private List<String> allowedValues;
     private Boolean required;
     private Boolean isList;
     private Boolean trackChanges;
@@ -44,7 +45,18 @@ public class ResourceAttributeModel {
     private Boolean validate;
     private String itemHash;
     private Boolean doRemove;
+    //
+    //  Diz se é um atributo fornecido pelo discovery
+    //
+    private Boolean isDiscovery = false;
 
+    //
+    // Diz se é um atributo fornecido pelo usuário ou mesmo federado
+    //
+    private Boolean isUserAttribute = true;
+
+    
+        
     public String getVariableType() {
         return variableType;
     }
@@ -178,14 +190,14 @@ public class ResourceAttributeModel {
     /**
      * @return the allowedValues
      */
-    public ArrayList<String> getAllowedValues() {
+    public List<String> getAllowedValues() {
         return allowedValues;
     }
 
     /**
      * @param allowedValues the allowedValues to set
      */
-    public void setAllowedValues(ArrayList<String> allowedValues) {
+    public void setAllowedValues(List<String> allowedValues) {
         this.allowedValues = allowedValues;
     }
 
@@ -257,6 +269,20 @@ public class ResourceAttributeModel {
      */
     public void setDoRemove(Boolean doRemove) {
         this.doRemove = doRemove;
+    }
+
+    /**
+     * @return the isDiscovery
+     */
+    public Boolean getIsDiscovery() {
+        return isDiscovery;
+    }
+
+    /**
+     * @param isDiscovery the isDiscovery to set
+     */
+    public void setIsDiscovery(Boolean isDiscovery) {
+        this.isDiscovery = isDiscovery;
     }
 
 }

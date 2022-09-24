@@ -30,6 +30,7 @@ public class ManagedResource extends AbsRelatedResource {
 
     public ManagedResource(String attributeSchema, Domain domain) {
         super(attributeSchema, domain);
+        
     }
 
     public ManagedResource(Domain domain, String uid, String id) {

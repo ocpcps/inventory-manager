@@ -61,7 +61,7 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
                 throw new ArangoDaoException("Missing Domain Information for Resource");
             }
 
-            String aql = " for doc in " + resource.getDomain().getNodes() + " filter ";
+            String aql = " for doc in `" + resource.getDomain().getNodes() + "` filter ";
 
             Map<String, Object> bindVars = new HashMap<>();
             aql += " doc.domainName == @domainName";
@@ -186,7 +186,7 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
     @Override
     public GraphList<ManagedResource> findResourcesBySchemaName(String attributeSchemaName, Domain domain) throws ResourceNotFoundException, ArangoDaoException {
         try {
-            String aql = "for doc in " + domain.getNodes() + "filter doc.attributeSchemaName = @attributeSchemaName return doc";
+            String aql = "for doc in `" + domain.getNodes() + "` filter doc.attributeSchemaName = @attributeSchemaName return doc";
             Map<String, Object> bindVars = new HashMap<>();
 
             bindVars.put("attributeSchemaName", attributeSchemaName);
@@ -199,7 +199,7 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
     @Override
     public GraphList<ManagedResource> findResourcesByClassName(String className, Domain domain) throws ResourceNotFoundException, ArangoDaoException {
         try {
-            String aql = "for doc in " + domain.getNodes() + " filter doc.className = @className return doc";
+            String aql = "for doc in `" + domain.getNodes() + "` filter doc.className = @className return doc";
             Map<String, Object> bindVars = new HashMap<>();
             bindVars.put("attributeSchemaName", className);
             return this.query(aql, bindVars, ManagedResource.class, this.getDb());
@@ -211,7 +211,7 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
     @Override
     public GraphList<ManagedResource> findResourceByFilter(String filter, Map<String, Object> bindVars, Domain domain) throws ArangoDaoException {
         try {
-            String aql = " for doc in   " + domain.getNodes();
+            String aql = " for doc in   `" + domain.getNodes() +"`";
             aql += " filter doc.domainName == @domainName ";
             bindVars.put("domainName", domain.getDomainName());
 

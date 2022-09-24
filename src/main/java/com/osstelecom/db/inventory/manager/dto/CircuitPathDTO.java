@@ -31,8 +31,7 @@ public class CircuitPathDTO {
 
     private CircuitResource circuit;
     private List<ResourceConnection> paths = new ArrayList<>();
-//    private Boolean degrated = false;
-//    private Boolean broken = false;
+
 
     /**
      * @return the circuit

@@ -60,17 +60,17 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class SchemaSession implements RemovalListener<String, ResourceSchemaModel> {
-    
+
     private String schemaDir;
-    
+
     private Logger logger = LoggerFactory.getLogger(SchemaSession.class);
-    
+
     @Autowired
     private UtilSession utilSession;
-    
+
     @Autowired
     private ConfigurationManager configurationManager;
-    
+
     @Autowired
     private EventManagerListener eventManager;
 
@@ -78,7 +78,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
      * Local Cache keeps the Schema for 1 Minute in memory, most of 5k Records
      */
     private Cache<String, ResourceSchemaModel> schemaCache;
-    
+
     @EventListener(ApplicationReadyEvent.class)
     private void initSchemaSession() {
         this.schemaCache = CacheBuilder
@@ -139,7 +139,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                 result.getAttributes().put(key, model);
             }
         }
-        
+
     }
 
     /**
@@ -156,7 +156,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
         schemaName = schemaName.replaceAll("\\.", "/");
         File f = new File(this.schemaDir + "/" + schemaName + ".json");
         logger.debug("Trying to load Schema from: " + schemaName);
-        
+
         if (f.exists()) {
             try {
                 //
@@ -169,9 +169,9 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                 }
                 logger.debug("Loaded  SchemaName: [" + resourceModel.getSchemaName() + "]");
                 jsonReader.close();
-                
+
                 this.mergeSchemaModelSession(result, resourceModel);
-                
+
                 if (!resourceModel.getFromSchema().equals(".")) {
                     result = this.loadSchemaFromDisk(resourceModel.getFromSchema(), result);
                 }
@@ -187,7 +187,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
         } else {
             throw new SchemaNotFoundException("Schema With Name:[" + schemaName + "] was not found");
         }
-        
+
     }
 
     /**
@@ -196,7 +196,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
      * @param model
      */
     public CreateResourceSchemaModelResponse createResourceSchemaModel(ResourceSchemaModel model) throws GenericException, SchemaNotFoundException, InvalidRequestException {
-        
+
         if (model == null) {
             throw new GenericException("Request Cannot Be Null");
         }
@@ -213,11 +213,11 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
             //
             this.loadSchema(model.getFromSchema());
         }
-        
+
         this.writeModelToDisk(model, false);
         this.clearSchemaCache();
         return new CreateResourceSchemaModelResponse(this.loadSchema(model.getSchemaName()));
-        
+
     }
 
     /**
@@ -248,12 +248,12 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
             resource.getSchemaModel().setAllowAll(false);
         }
         if (!resource.getSchemaModel().getAllowAll()) {
-            
+
             for (String key : resource.getAttributes().keySet()) {
                 if (!resource.getSchemaModel().getAttributes().containsKey(key)) {
                     resource.getSchemaModel().setIsValid(false);
                     throw new AttributeConstraintViolationException("Invalid Attribute named:[" + key + "] for model: [" + resource.getSchemaModel().getSchemaName() + "]");
-                    
+
                 }
             }
 
@@ -274,7 +274,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                                 // Lança a exception de validação
                                 //
                                 resource.getSchemaModel().setIsValid(false);
-                                
+
                                 throw new AttributeConstraintViolationException("Missing Required Attribute Named:[" + entry.getName() + "]");
                             }
                         } else {
@@ -294,11 +294,48 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                         }
                     }
                 }
+
+                //
+                // Segunda parte valida os atributos da rede
+                //
+                if (resource.getDiscoveryAttributes() != null && !resource.getDiscoveryAttributes().isEmpty()) {
+                    //
+                    // Note que só validamos o typecasting 
+                    //
+                    for (Map.Entry<String, Object> data : resource.getDiscoveryAttributes().entrySet()) {
+                        String name = data.getKey();
+                        Object value = data.getValue();
+                        ResourceAttributeModel model = resource.getSchemaModel().getAttributes().get(name);
+                        if (model != null) {
+                            if (model.getIsDiscovery()) {
+                                //
+                                // Podemos usar aqui :)
+                                //
+                                resource.getDiscoveryAttributes().put(name, this.getAttributeValue(model, value));
+                            } else {
+                                throw new AttributeConstraintViolationException("Attribute named:[" + name + "] is not discovery attribute for model: [" + resource.getSchemaModel().getSchemaName() + "]");
+                            }
+                        } else {
+                            throw new AttributeConstraintViolationException("Invalid Discovery Attribute named:[" + name + "] for model: [" + resource.getSchemaModel().getSchemaName() + "]");
+                        }
+                    }
+
+                }
+                //
+                // Se bateu aqui tá tudo certinho :)
+                //
                 resource.getSchemaModel().setIsValid(true);
+
             } catch (AttributeConstraintViolationException acve) {
+                //
+                // Erro em alguma validação, marca o schemamodel do recurso como inválido
+                //
                 resource.getSchemaModel().setIsValid(false);
                 throw acve;
             }
+            //
+            // Se bateu aqui tá tudo certinho :)
+            //
             resource.getSchemaModel().setIsValid(true);
         } else {
             logger.warn("Allow ALL Is Enable, please fix me!");
@@ -320,16 +357,16 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
         try {
             if (model.getAllowedValues() != null) {
                 if (!model.getAllowedValues().isEmpty()) {
-                    if (!model.getAllowedValues().contains(value)) {
+                    if (!model.getAllowedValues().contains(value.toString())) {
                         //
-                        // Pode Prosseguir 
+                        // Não Pode Prosseguir 
                         //
                         throw new AttributeConstraintViolationException("Attribute [" + model.getName() + "] of type:" + model.getVariableType() + " Value : [" + value + "] is not allowed here Allowed vars are:[" + String.join(",", model.getAllowedValues()) + "]");
-                        
+
                     }
                 }
             }
-            
+
             if (model.getVariableType().equalsIgnoreCase("String")) {
                 //
                 // String will get the String representation as it is..
@@ -359,7 +396,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                 }
                 return Float.parseFloat(value.toString());
             } else if (model.getVariableType().equalsIgnoreCase("Date")) {
-                
+
                 SimpleDateFormat sdf = new SimpleDateFormat(configurationManager.loadConfiguration().getDateFormat());
                 sdf.setLenient(false);
                 try {
@@ -367,7 +404,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                 } catch (ParseException ex) {
                     throw new AttributeConstraintViolationException("Attribute [" + model.getName() + "] of type:" + model.getVariableType() + " Cannot Parse Date Value : [" + value + "] With Mask: [" + configurationManager.loadConfiguration().getDateFormat() + "]", ex);
                 }
-                
+
             } else if (model.getVariableType().equalsIgnoreCase("DateTime")) {
                 SimpleDateFormat sdf = new SimpleDateFormat(configurationManager.loadConfiguration().getDateTimeFormat());
                 sdf.setLenient(false);
@@ -375,7 +412,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                     return sdf.parse(value.toString());
                 } catch (ParseException ex) {
                     throw new AttributeConstraintViolationException("Attribute [" + model.getName() + "] of type:" + model.getVariableType() + " Cannot Parse Date Time Value : [" + value + "] With Mask: [" + configurationManager.loadConfiguration().getDateTimeFormat() + "]", ex);
-                    
+
                 }
             } else {
                 throw new AttributeConstraintViolationException("Attribute [" + model.getName() + "] of type:" + model.getVariableType() + " Cannot be parsed");
@@ -383,7 +420,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
         } catch (NumberFormatException ex) {
             throw new AttributeConstraintViolationException("Value: [" + value + "] Cannot be parsed do Number", ex);
         }
-        
+
     }
 
     /**
@@ -397,13 +434,13 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
      * @throws SchemaNotFoundException
      */
     public PatchResourceSchemaModelResponse patchSchemaModel(ResourceSchemaModel update) throws InvalidRequestException, GenericException, SchemaNotFoundException {
-        
+
         if (update == null) {
             throw new InvalidRequestException("Attribute Schema Model not found");
         }
-        
+
         ResourceSchemaModel original = this.loadSchema(update.getSchemaName());
-        
+
         if (update.getSchemaName() != null) {
             if (!update.getSchemaName().equals(original.getSchemaName())) {
                 //
@@ -412,7 +449,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                 throw new InvalidRequestException("Schema Name Cannot Ne changed...");
             }
         }
-        
+
         if (update.getFromSchema() != null) {
             if (!update.getFromSchema().equals(original.getFromSchema())) {
                 //
@@ -422,13 +459,13 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                 original.setAttributesChanged(true);
             }
         }
-        
+
         if (update.getAllowAll() != null) {
             if (!update.getAllowAll().equals(original.getAllowAll())) {
                 original.setAllowAll(update.getAllowAll());
             }
         }
-        
+
         if (!update.getAttributes().isEmpty()) {
             //
             // The hard part of comparing and merging maps
@@ -444,7 +481,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                 if (updateModel.getDoRemove() == null) {
                     updateModel.setDoRemove(false);
                 }
-                
+
                 if (updateModel.getDoRemove()) {
                     if (original.getAttributes().containsKey(updateAttrName)) {
                         original.getAttributes().remove(updateAttrName);
@@ -465,7 +502,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                         // Hard Part
                         //
                         ResourceAttributeModel originalAttributeModel = original.getAttributes().get(updateAttrName);
-                        
+
                         if (originalAttributeModel != null) {
                             //
                             // Compare one by one..
@@ -477,42 +514,42 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                                     original.setAttributesChanged(true);
                                 }
                             }
-                            
+
                             if (updateModel.getRequired() != null) {
                                 if (!updateModel.getRequired().equals(originalAttributeModel.getRequired())) {
                                     originalAttributeModel.setRequired(updateModel.getRequired());
                                     original.setAttributesChanged(true);
                                 }
                             }
-                            
+
                             if (updateModel.getValidationRegex() != null) {
                                 if (!updateModel.getValidationRegex().equals(originalAttributeModel.getValidationRegex())) {
                                     originalAttributeModel.setValidationRegex(updateModel.getValidationRegex());
                                     original.setAttributesChanged(true);
                                 }
                             }
-                            
+
                             if (updateModel.getValidationScript() != null) {
                                 if (!updateModel.getValidationScript().equals(originalAttributeModel.getValidationScript())) {
                                     originalAttributeModel.setValidationScript(updateModel.getValidationScript());
                                     original.setAttributesChanged(true);
                                 }
                             }
-                            
+
                             if (updateModel.getValidate() != null) {
                                 if (!updateModel.getValidate().equals(originalAttributeModel.getValidate())) {
                                     originalAttributeModel.setValidate(updateModel.getValidate());
                                     original.setAttributesChanged(true);
                                 }
                             }
-                            
+
                             if (updateModel.getDefaultValue() != null) {
                                 if (!updateModel.getDefaultValue().equals(originalAttributeModel.getDefaultValue())) {
                                     originalAttributeModel.setDefaultValue(updateModel.getDefaultValue());
                                     original.setAttributesChanged(true);
                                 }
                             }
-                            
+
                         }
                         //
                         // Do not need to show this to the user and file..
@@ -522,13 +559,13 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                         }
                     }
                 }
-                
+
             });
-            
+
         }
-        
+
         if (original.getAttributesChanged()) {
-            
+
             this.writeModelToDisk(original, true);
             this.clearSchemaCache();
             //
@@ -569,7 +606,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                 // Dont Save Attribute change flag to disk.
                 //
                 model.setAttributesChanged(null);
-                
+
                 FileWriter writer = new FileWriter(f);
                 this.utilSession.getGson().toJson(model, writer);
                 writer.flush();

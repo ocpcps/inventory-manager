@@ -22,7 +22,7 @@ package com.osstelecom.db.inventory.manager.dto;
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 15.12.2021
  */
-public class ApiErroDTO {
+public class ApiErrorDTO {
 
     private String msg;
     private Integer statusCode = 500;

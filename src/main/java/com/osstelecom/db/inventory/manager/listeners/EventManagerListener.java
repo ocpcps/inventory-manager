@@ -68,7 +68,7 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
      */
     public synchronized boolean notifyResourceEvent(BasicResourceEvent event) {
         //
-        // the queue is limited to 1000 Events
+        // the queue is limited to 1000 Events, after that will be blocking...
         //
         return eventQueue.offer(event);
     }
