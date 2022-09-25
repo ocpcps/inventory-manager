@@ -17,6 +17,8 @@
  */
 package com.osstelecom.db.inventory.manager.events;
 
+import com.arangodb.entity.DocumentCreateEntity;
+import com.arangodb.entity.DocumentUpdateEntity;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 
 /**
@@ -30,4 +32,15 @@ public class ManagedResourceCreatedEvent extends BasicResourceEvent<ManagedResou
         super(resource);
     }
 
+    public ManagedResourceCreatedEvent(DocumentCreateEntity<ManagedResource> entity) {
+        super(entity);
+    }
+
+    public ManagedResourceCreatedEvent(ManagedResource oldResource, ManagedResource newResource) {
+        super(oldResource, newResource);
+    }
+
+    
+
+    
 }

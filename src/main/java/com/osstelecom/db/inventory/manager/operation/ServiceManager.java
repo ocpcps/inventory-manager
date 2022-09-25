@@ -49,6 +49,7 @@ import com.osstelecom.db.inventory.manager.listeners.EventManagerListener;
 import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
+import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import com.osstelecom.db.inventory.manager.resources.ServiceResource;
 import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
 import com.osstelecom.db.inventory.manager.session.DynamicRuleSession;
@@ -398,7 +399,44 @@ public class ServiceManager extends Manager {
         eventManager.registerListener(this);
     }
 
-    private void updateServiceManagedResourceReferenceUpdateEvent(ManagedResourceCreatedEvent createdEvent) throws ResourceNotFoundException, ArangoDaoException, DomainNotFoundException {
+    /**
+     * Quando uma conexão é criada
+     *
+     * @param createdEvent
+     */
+    private void updateServiceResourceConnectionReferenceCreateEvent(ResourceConnectionCreatedEvent createdEvent) throws ResourceNotFoundException, ArangoDaoException, DomainNotFoundException {
+        ResourceConnection connection = createdEvent.getNewResource();
+        if (connection.getDependentService() != null) {
+            //
+            // Temos referencia a um serviço
+            //
+            ServiceResource service = connection.getDependentService();
+            //
+            // Recupera a referencia do DB
+            //
+            service = this.getService(service);
+            if (service.getRelatedResourceConnections() == null) {
+                service.setRelatedResourceConnections(new ArrayList<>());
+            }
+
+            if (!service.getRelatedResourceConnections().contains(connection.getId())) {
+                service.getRelatedResourceConnections().add(connection.getId());
+                this.serviceDao.updateResource(service);
+            }
+        }
+    }
+
+    /**
+     * Quando um recurso é criado. Este método cuida de atualizar as relações
+     * entre o Serviço e os supostos recursos dos demais dominios. Atenção é
+     * quando o recurso é criado!
+     *
+     * @param createdEvent
+     * @throws ResourceNotFoundException
+     * @throws ArangoDaoException
+     * @throws DomainNotFoundException
+     */
+    private void updateServiceManagedResourceReferenceCreateEvent(ManagedResourceCreatedEvent createdEvent) throws ResourceNotFoundException, ArangoDaoException, DomainNotFoundException {
         ManagedResource resource = createdEvent.getNewResource();
         if (resource.getDependentService() != null) {
             ServiceResource service = resource.getDependentService();
@@ -417,6 +455,18 @@ public class ServiceManager extends Manager {
         }
     }
 
+    /**
+     * Quando um recurso é atualizado. Este método cuida de atualizar as
+     * relações entre o Serviço e os supostos recursos dos demais dominios.
+     * Atenção é quando o recurso é atualizado! Durante a atualização é mais
+     * complicado, pois o recurso pode ter sido movido de um serviço para o
+     * outro, e precisamos manter as referencias atualizadas
+     *
+     * @param createdEvent
+     * @throws ResourceNotFoundException
+     * @throws ArangoDaoException
+     * @throws DomainNotFoundException
+     */
     private void updateServiceManagedResourceReferenceUpdateEvent(ManagedResourceUpdatedEvent updateEvent) throws ResourceNotFoundException, ArangoDaoException, DomainNotFoundException {
         if (updateEvent.getOldResource() == null && updateEvent.getNewResource() != null) {
             ManagedResource resource = updateEvent.getNewResource();
@@ -478,7 +528,6 @@ public class ServiceManager extends Manager {
                     //
                     if (oldService.getRelatedManagedResources() != null && !oldService.getRelatedManagedResources().isEmpty()) {
                         if (oldService.getRelatedManagedResources().remove(resource.getId())) {
-//                            this.serviceDao.updateResource(oldService);
                             this.updateService(oldService);
                         } else {
                             logger.debug("Resource: [{}] Not Found on Old Service:[{}]", resource.getId(), oldService.getId());
@@ -490,7 +539,6 @@ public class ServiceManager extends Manager {
 
                     if (!newService.getRelatedManagedResources().contains(resource.getId())) {
                         newService.getRelatedManagedResources().add(resource.getId());
-//                        this.serviceDao.updateResource(newService);
                         this.updateService(newService);
                     }
 
@@ -509,7 +557,6 @@ public class ServiceManager extends Manager {
      * @throws ArangoDaoException
      */
     private void updateServiceCircuitReference(ServiceResource service) throws ArangoDaoException, ResourceNotFoundException, IOException, DomainNotFoundException {
-
         /**
          * Verifica se este serviço é necessário para algum outro, ou seja, do
          * pai, procura os filhos. Note que este método só encontra serviços do
@@ -740,13 +787,6 @@ public class ServiceManager extends Manager {
                         servicesToUpdate.add(dependency);
                     }
 
-//                    if (dependency.getDomainName().equals(createdEvent.getNewResource().getDomainName())) {
-//
-//                    } else {
-//                        //
-//                        // Domain Jump
-//                        //
-//                    }
                 }
                 //
                 // Atualiza na origem a depedencia
@@ -848,7 +888,7 @@ public class ServiceManager extends Manager {
             // Temos um Service, vamos notificar ele que um recurso uso ele.
             //
             logger.debug("New Link Between Managed Resource:[{}] and Service found:[{}]", resource.getNewResource().getId(), resource.getNewResource().getDependentService().getId());
-            this.updateServiceManagedResourceReferenceUpdateEvent(resource);
+            this.updateServiceManagedResourceReferenceCreateEvent(resource);
 
         }
     }
@@ -859,11 +899,12 @@ public class ServiceManager extends Manager {
      * @param resource
      */
     @Subscribe
-    public void onResourceConnectionCreatedEvent(ResourceConnectionCreatedEvent resource) {
+    public void onResourceConnectionCreatedEvent(ResourceConnectionCreatedEvent resource) throws ResourceNotFoundException, ArangoDaoException, DomainNotFoundException {
         if (resource.getNewResource().getDependentService() != null) {
             //
             // Ok Temos um serviço para atualizar.
             //
+            this.updateServiceResourceConnectionReferenceCreateEvent(resource);
         }
     }
 

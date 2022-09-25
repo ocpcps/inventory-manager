@@ -78,18 +78,6 @@ public class ManagedResourceManager extends Manager {
     @Autowired
     private ManagedResourceDao managedResourceDao;
 
-//    @Autowired
-//    private ResourceConnectionDao resourceConnectionDao;
-//
-//    @Autowired
-//    private ResourceConnectionManager resourceConnectionManager;
-//
-//    @Autowired
-//    private CircuitResourceDao circuitResourceDao;
-//
-//    @Autowired
-//    private CircuitResourceManager circuitResourceManager;
-
     @Autowired
     private ServiceManager serviceManager;
 
@@ -98,10 +86,22 @@ public class ManagedResourceManager extends Manager {
 
     private Logger logger = LoggerFactory.getLogger(ManagedResourceManager.class);
 
+    /**
+     * Gets a Managed Resource
+     *
+     * @param resource
+     * @return
+     */
     public ManagedResource get(ManagedResource resource) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
+    /**
+     * Delete a Managed Resource
+     *
+     * @param resource
+     * @return
+     */
     public ManagedResource delete(ManagedResource resource) {
         throw new UnsupportedOperationException("Not supported yet.");
     }
@@ -122,6 +122,7 @@ public class ManagedResourceManager extends Manager {
      */
     public ManagedResource create(ManagedResource resource) throws SchemaNotFoundException, AttributeConstraintViolationException, GenericException, ScriptRuleException, ArangoDaoException, InvalidRequestException, ResourceNotFoundException, DomainNotFoundException {
         String timerId = startTimer("createManagedResource");
+        Boolean useUpsert = false;
         try {
             lockManager.lock();
             //
@@ -129,6 +130,11 @@ public class ManagedResourceManager extends Manager {
             //
             if (resource.getKey() == null) {
                 resource.setKey(getUUID());
+            } else {
+                //
+                // Teve um ID declarado pelo usuário ou solicitante, podemos converter isso para um upsert
+                //
+                useUpsert = true;
             }
 
             if (resource.getDependentService() != null) {
@@ -158,14 +164,19 @@ public class ManagedResourceManager extends Manager {
             //
             // END - Subir as validações para session
             //
-            DocumentCreateEntity<ManagedResource> result = this.managedResourceDao.insertResource(resource);
+            DocumentCreateEntity<ManagedResource> result;
+            if (useUpsert) {
+                result = this.managedResourceDao.upsertResource(resource);
+            } else {
+                result = this.managedResourceDao.insertResource(resource);
+            }
             resource.setId(result.getId());
             resource.setKey(result.getKey());
             resource.setRevisionId(result.getRev());
             //
             // Aqui criou o managed resource
             //
-            ManagedResourceCreatedEvent event = new ManagedResourceCreatedEvent(resource);
+            ManagedResourceCreatedEvent event = new ManagedResourceCreatedEvent(result);
             this.eventManager.notifyResourceEvent(event);
             return resource;
         } finally {
@@ -177,10 +188,27 @@ public class ManagedResourceManager extends Manager {
 
     }
 
+    /**
+     * Updates a Managed Resource
+     *
+     * @param resource
+     * @return
+     * @throws InvalidRequestException
+     * @throws ArangoDaoException
+     * @throws AttributeConstraintViolationException
+     */
     public ManagedResource update(ManagedResource resource) throws InvalidRequestException, ArangoDaoException, AttributeConstraintViolationException {
         return this.updateManagedResource(resource);
     }
 
+    /**
+     * Search for a Managed Resource
+     *
+     * @param resource
+     * @return
+     * @throws ResourceNotFoundException
+     * @throws ArangoDaoException
+     */
     public ManagedResource findManagedResource(ManagedResource resource) throws ResourceNotFoundException, ArangoDaoException {
         if (resource.getId() != null) {
             if (!resource.getId().contains("/")) {
@@ -261,6 +289,17 @@ public class ManagedResourceManager extends Manager {
         }
     }
 
+    /**
+     * Search a list of Managed Resources by filter
+     *
+     * @param filter
+     * @param domainName
+     * @return
+     * @throws DomainNotFoundException
+     * @throws ResourceNotFoundException
+     * @throws ArangoDaoException
+     * @throws InvalidRequestException
+     */
     public GraphList<ManagedResource> getNodesByFilter(FilterDTO filter, String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
         Domain domain = domainManager.getDomain(domainName);
         if (filter.getObjects().contains("nodes")) {
@@ -278,6 +317,14 @@ public class ManagedResourceManager extends Manager {
         throw new InvalidRequestException("getNodesByFilter() can only retrieve nodes objects");
     }
 
+    /**
+     * Retrieve a Stream list ( GraphList) from a SchemaModelName
+     * @param model
+     * @param domain
+     * @return
+     * @throws ResourceNotFoundException
+     * @throws ArangoDaoException 
+     */
     public GraphList<ManagedResource> findManagedResourcesBySchemaName(ResourceSchemaModel model, Domain domain) throws ResourceNotFoundException, ArangoDaoException {
         return this.managedResourceDao.findResourcesBySchemaName(model.getSchemaName(), domain);
     }
@@ -358,11 +405,7 @@ public class ManagedResourceManager extends Manager {
      */
     @Subscribe
     public void onManagedResourceCreatedEvent(ManagedResourceCreatedEvent resource) {
-        if (resource.getNewResource().getDependentService()!=null){
-            //
-            // Temos um Service, vamos notificar ele que um recurso uso ele.
-            //
-        }
+
     }
 
     /**
@@ -383,15 +426,12 @@ public class ManagedResourceManager extends Manager {
 
     /**
      * Recebe as atualizações de Managed Resource
-     * @param updateEvent 
+     *
+     * @param updateEvent
      */
     @Subscribe
     public void onManagedResourceUpdatedEvent(ManagedResourceUpdatedEvent updateEvent) {
         logger.debug("Managed Resource [{}] Updated: ", updateEvent.getOldResource().getId());
-        //
-        // Um Recurso foi Atualizado
-        //
-
 
     }
 

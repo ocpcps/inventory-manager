@@ -100,7 +100,13 @@ public class ResourceConnectionManager extends Manager {
         String timerId = startTimer("createResourceConnection");
         try {
             lockManager.lock();
-            connection.setKey(this.getUUID());
+
+            Boolean useUpsert = false;
+            if (connection.getKey() == null) {
+                connection.setKey(this.getUUID());
+            } else {
+                useUpsert = true;
+            }
 
             if (connection.getDependentService() != null) {
                 connection.setDependentService(connection.getDependentService());
@@ -127,17 +133,29 @@ public class ResourceConnectionManager extends Manager {
             connection.setSchemaModel(schemaModel);
             schemaSession.validateResourceSchema(connection);
             dynamicRuleSession.evalResource(connection, "I", this);
-            //
-            // Creates the connection on DB
-            //
-            DocumentCreateEntity<ResourceConnection> result = resourceConnectionDao.insertResource(connection);
+
+            DocumentCreateEntity<ResourceConnection> result;
+
+            if (useUpsert) {
+                //
+                // Will Try to update or insert the connection
+                //
+                result = this.resourceConnectionDao.upsertResource(connection);
+            } else {
+                //
+                // Creates the connection on DB
+                //
+                result = resourceConnectionDao.insertResource(connection);
+
+            }
+
             connection.setKey(result.getId());
             connection.setRevisionId(result.getRev());
             //
             // Update Edges
             //
 
-            ResourceConnectionCreatedEvent event = new ResourceConnectionCreatedEvent(connection);
+            ResourceConnectionCreatedEvent event = new ResourceConnectionCreatedEvent(result);
             eventManager.notifyResourceEvent(event);
             return connection;
         } finally {
