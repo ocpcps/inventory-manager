@@ -129,4 +129,16 @@ public abstract class BasicException extends Exception implements Serializable {
     public Map<String, Object> getDetails() {
         return details;
     }
+
+    @Override
+    public void printStackTrace() {
+        if (this.details != null) {
+            this.details.forEach((k, v) -> {
+                System.err.println("k: -> " + v);
+            });
+
+        }
+        super.printStackTrace(); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/OverriddenMethodBody
+    }
+
 }

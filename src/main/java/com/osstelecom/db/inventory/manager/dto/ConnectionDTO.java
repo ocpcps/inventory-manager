@@ -17,6 +17,7 @@
  */
 package com.osstelecom.db.inventory.manager.dto;
 
+import com.osstelecom.db.inventory.manager.resources.ServiceResource;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -42,6 +43,7 @@ public class ConnectionDTO {
     private Boolean propagateOperStatus;
     private String operationalStatus = "UP";
     private Map<String, Object> attributes = new ConcurrentHashMap<>();
+    private ServiceResource dependentService;
 
     /**
      * @return the attributes
@@ -252,4 +254,18 @@ public class ConnectionDTO {
     public void setToId(String toId) {
         this.toId = toId;
     }
+
+    /**
+     * @param denpendsOnService the denpendsOnService to set
+     */
+    public void setDependentService(ServiceResource denpendsOnService) {
+        this.dependentService = denpendsOnService;
+    }
+
+    public ServiceResource getDependentService() {
+        return dependentService;
+    }
+
+    
+    
 }

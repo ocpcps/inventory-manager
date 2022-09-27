@@ -17,30 +17,18 @@
  */
 package com.osstelecom.db.inventory.manager.events;
 
-import com.arangodb.entity.DocumentCreateEntity;
 import com.arangodb.entity.DocumentUpdateEntity;
-import com.osstelecom.db.inventory.manager.resources.ManagedResource;
+import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 10.04.2022
  */
-public class ManagedResourceCreatedEvent extends BasicResourceEvent<ManagedResource> {
+public class ResourceConnectionUpdatedEvent extends BasicResourceEvent<ResourceConnection> {
 
-    public ManagedResourceCreatedEvent(ManagedResource resource) {
-        super(resource);
-    }
-
-    public ManagedResourceCreatedEvent(DocumentCreateEntity<ManagedResource> entity) {
+    public ResourceConnectionUpdatedEvent(DocumentUpdateEntity<ResourceConnection> entity) {
         super(entity);
     }
 
-    public ManagedResourceCreatedEvent(ManagedResource oldResource, ManagedResource newResource) {
-        super(oldResource, newResource);
-    }
-
-    
-
-    
 }

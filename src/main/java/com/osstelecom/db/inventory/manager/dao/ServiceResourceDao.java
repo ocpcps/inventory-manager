@@ -238,7 +238,7 @@ public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
     }
 
     @Override
-    public GraphList<ServiceResource> findResourceByFilter(String filter, Map<String, Object> bindVars, Domain domain) throws ArangoDaoException {
+    public GraphList<ServiceResource> findResourceByFilter(String filter, Map<String, Object> bindVars, Domain domain) throws ArangoDaoException, ResourceNotFoundException {
         String aql = "";
         try {
             aql += " for doc in   " + domain.getServices();
@@ -250,6 +250,11 @@ public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
             }
             aql += " return doc";
             return this.query(aql, bindVars, ServiceResource.class, this.getDb());
+        } catch (ResourceNotFoundException ex) {
+            //
+            // Sobe essa excpetion
+            //
+            throw ex;
         } catch (Exception ex) {
             ArangoDaoException exa = new ArangoDaoException(ex);
             exa.addDetails("aql", aql);

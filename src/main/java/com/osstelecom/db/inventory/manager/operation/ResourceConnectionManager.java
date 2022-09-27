@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.locks.ReentrantLock;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -12,10 +11,13 @@ import org.springframework.stereotype.Service;
 import com.arangodb.entity.DocumentCreateEntity;
 import com.arangodb.entity.DocumentUpdateEntity;
 import com.arangodb.entity.MultiDocumentEntity;
+import com.google.common.eventbus.Subscribe;
 import com.osstelecom.db.inventory.graph.arango.GraphList;
 import com.osstelecom.db.inventory.manager.dao.ResourceConnectionDao;
 import com.osstelecom.db.inventory.manager.dto.FilterDTO;
+import com.osstelecom.db.inventory.manager.events.ManagedResourceUpdatedEvent;
 import com.osstelecom.db.inventory.manager.events.ResourceConnectionCreatedEvent;
+import com.osstelecom.db.inventory.manager.events.ResourceConnectionUpdatedEvent;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
@@ -26,11 +28,19 @@ import com.osstelecom.db.inventory.manager.exception.ScriptRuleException;
 import com.osstelecom.db.inventory.manager.listeners.EventManagerListener;
 import com.osstelecom.db.inventory.manager.resources.BasicResource;
 import com.osstelecom.db.inventory.manager.resources.Domain;
+import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
+import com.osstelecom.db.inventory.manager.resources.ServiceResource;
 import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstraintViolationException;
 import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
 import com.osstelecom.db.inventory.manager.session.DynamicRuleSession;
 import com.osstelecom.db.inventory.manager.session.SchemaSession;
+import java.io.IOException;
+import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 
 @Service
 public class ResourceConnectionManager extends Manager {
@@ -52,6 +62,16 @@ public class ResourceConnectionManager extends Manager {
 
     @Autowired
     private DynamicRuleSession dynamicRuleSession;
+
+    @Autowired
+    private ServiceManager serviceManager;
+
+    private Logger logger = LoggerFactory.getLogger(ResourceConnectionManager.class);
+
+    @EventListener(ApplicationReadyEvent.class)
+    private void onStartUp() {
+        this.eventManager.registerListener(this);
+    }
 
     /**
      * Cria uma nova Conexão entre dois elementos, Note que a ordem é importante
@@ -76,27 +96,66 @@ public class ResourceConnectionManager extends Manager {
         }
     }
 
-    public ResourceConnection createResourceConnection(ResourceConnection connection) throws GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, ArangoDaoException {
+    public ResourceConnection createResourceConnection(ResourceConnection connection) throws GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException, DomainNotFoundException {
         String timerId = startTimer("createResourceConnection");
         try {
             lockManager.lock();
-            connection.setKey(this.getUUID());
 
+            Boolean useUpsert = false;
+            if (connection.getKey() == null) {
+                connection.setKey(this.getUUID());
+            } else {
+                useUpsert = true;
+            }
+
+            if (connection.getDependentService() != null) {
+                connection.setDependentService(connection.getDependentService());
+            }
+
+            if (connection.getDependentService() != null) {
+                //
+                // Valida se o serviço existe
+                //
+                ServiceResource service = this.serviceManager.getService(connection.getDependentService());
+                //
+                // Arruma com a referencia do DB
+                //
+                connection.setDependentService(service);
+                //
+                // Agora vamos ver se o serviço é de um dominio diferente do recurso... não podem ser do mesmo
+                //
+
+                if (service.getDomain().getDomainName().equals(connection.getDomain().getDomainName())) {
+                    throw new InvalidRequestException("Resource and Parent Service cannot be in the same domain.");
+                }
+            }
             ResourceSchemaModel schemaModel = schemaSession.loadSchema(connection.getAttributeSchemaName());
             connection.setSchemaModel(schemaModel);
             schemaSession.validateResourceSchema(connection);
             dynamicRuleSession.evalResource(connection, "I", this);
-            //
-            // Creates the connection on DB
-            //
-            DocumentCreateEntity<ResourceConnection> result = resourceConnectionDao.insertResource(connection);
+
+            DocumentCreateEntity<ResourceConnection> result;
+
+            if (useUpsert) {
+                //
+                // Will Try to update or insert the connection
+                //
+                result = this.resourceConnectionDao.upsertResource(connection);
+            } else {
+                //
+                // Creates the connection on DB
+                //
+                result = resourceConnectionDao.insertResource(connection);
+
+            }
+
             connection.setKey(result.getId());
             connection.setRevisionId(result.getRev());
             //
             // Update Edges
             //
 
-            ResourceConnectionCreatedEvent event = new ResourceConnectionCreatedEvent(connection);
+            ResourceConnectionCreatedEvent event = new ResourceConnectionCreatedEvent(result);
             eventManager.notifyResourceEvent(event);
             return connection;
         } finally {
@@ -179,7 +238,10 @@ public class ResourceConnectionManager extends Manager {
         try {
             lockManager.lock();
             connection.setLastModifiedDate(new Date());
-            return this.resourceConnectionDao.updateResource(connection);
+            DocumentUpdateEntity<ResourceConnection> result = this.resourceConnectionDao.updateResource(connection);
+            ResourceConnectionUpdatedEvent updateEvent = new ResourceConnectionUpdatedEvent(result);
+            this.eventManager.notifyResourceEvent(updateEvent);
+            return result;
         } finally {
             if (lockManager.isLocked()) {
                 lockManager.unlock();
@@ -218,7 +280,7 @@ public class ResourceConnectionManager extends Manager {
         }
     }
 
-    public GraphList<ResourceConnection> getConnectionsByFilter(FilterDTO filter, String domainName) throws ArangoDaoException, DomainNotFoundException, InvalidRequestException {
+    public GraphList<ResourceConnection> getConnectionsByFilter(FilterDTO filter, String domainName) throws ArangoDaoException, DomainNotFoundException, InvalidRequestException, ResourceNotFoundException {
         Domain domain = domainManager.getDomain(domainName);
         if (filter.getObjects().contains("connections")) {
             HashMap<String, Object> bindVars = new HashMap<>();
@@ -233,5 +295,78 @@ public class ResourceConnectionManager extends Manager {
             return this.resourceConnectionDao.findResourceByFilter(filter.getAqlFilter(), bindVars, domain);
         }
         throw new InvalidRequestException("getConnectionsByFilter() can only retrieve connections objects");
+    }
+
+    /**
+     * Recebi uma notificação de que um recurso foi atualizado, vou procurar as
+     * conexões que ele possui e atualizar as referencias.
+     *
+     * @param updateEvent
+     */
+    @Subscribe
+    public void onManagedResourceUpdatedEvent(ManagedResourceUpdatedEvent updateEvent) {
+        ManagedResource updatedResource = updateEvent.getNewResource();
+        // Update the related dependencies
+        //
+        try {
+            List<String> relatedCircuits = new ArrayList<>();
+            //
+            // Transcrever para um filtro, que busca os recursos relacionados
+            // Eventualmente irá se tornar um método no CircuitManager
+            //
+            String filter = "@resourceId in  doc.relatedNodes[*]";
+            Map<String, Object> bindVars = new HashMap<>();
+            bindVars.put("resourceId", updatedResource.getId());
+            //
+            // Procura as conexões relacionadas no mesmo dominio
+            //
+            try {
+                this.resourceConnectionDao.findResourceByFilter(filter, bindVars, updatedResource.getDomain()).forEach((connection) -> {
+
+                    if (connection.getFrom().getKey().equals(updatedResource.getKey())) {
+                        //
+                        // Update from
+                        //
+
+                        connection.setFrom(updatedResource);
+                        //
+                        // validando 
+                        //
+
+                    } else if (connection.getTo().getKey().equals(updatedResource.getKey())) {
+                        //
+                        // Update to
+                        //
+                        connection.setTo(updatedResource);
+
+                    }
+
+                    //
+                    // Reflete o estado da conexão
+                    //
+                    if (!connection.getOperationalStatus().equals(updatedResource.getOperationalStatus())) {
+                        connection.setOperationalStatus(updatedResource.getOperationalStatus());
+                    }
+
+                    try {
+                        //
+                        // Atualiza a conexão
+                        //
+                        this.updateResourceConnection(connection); // <- Atualizou a conexão no banco
+
+                    } catch (ArangoDaoException ex) {
+                        logger.error("Failed to Update Circuit: [{}]", connection.getId(), ex);
+                    }
+                });
+            } catch (ResourceNotFoundException ex) {
+                //
+                // This is expected
+                //
+            }
+
+        } catch (IOException | IllegalStateException | ArangoDaoException ex) {
+            logger.error("Failed to Update Resource Connection Relation", ex);
+
+        }
     }
 }

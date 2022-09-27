@@ -144,8 +144,12 @@ public class ServiceSession {
         if (payload == null) {
             throw new InvalidRequestException("Payload not found");
         }
-        
-        ServiceResource old = serviceManager.getServiceById(payload);
+        ServiceResource old = null;
+        if (payload.getId() != null) {
+            old = serviceManager.getServiceById(payload);
+        } else {
+            old = serviceManager.getService(payload);
+        }
         payload.setKey(old.getKey());
 
         if ((payload.getCircuits() == null || payload.getCircuits().isEmpty()) && (payload.getDependencies() == null || payload.getDependencies().isEmpty())) {

@@ -31,7 +31,7 @@ import java.util.Date;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-import org.bson.codecs.pojo.annotations.BsonIgnore;
+//import org.bson.codecs.pojo.annotations.BsonIgnore;
 
 /**
  * This is the basic resource of all resources, that can be: Location, Managed,
@@ -111,18 +111,27 @@ public class BasicResource {
      */
     private String className = null;
 
+    //
+    // Atributos Offline
+    //
     private Map<String, Object> attributes = new ConcurrentHashMap<>();
+
+    //
+    // Atributos do discovery
+    //
+    private Map<String, Object> discoveryAttributes = new ConcurrentHashMap<>();
+
     /**
      * Cuidado com os campos a seguir!
      */
     @JsonIgnore
-    @BsonIgnore
+//    @BsonIgnore
     private Map<String, ResourceConnection> connections = new ConcurrentHashMap<>();
     @JsonIgnore
-    @BsonIgnore
+//    @BsonIgnore
     private Map<String, ResourceConnection> connectionCache = new ConcurrentHashMap<>();
     @JsonIgnore
-    @BsonIgnore
+//    @BsonIgnore
     private Map<String, Object> attachments = new ConcurrentHashMap<>();
 
     private Long atomId = 0L;
@@ -235,6 +244,7 @@ public class BasicResource {
     public BasicResource(Domain domain) {
         this.attributeSchemaName = "default";
         this.domain = domain;
+        this.domainName = domain.getDomainName();
     }
 
     public BasicResource(Domain domain, String key, String id) {
@@ -842,5 +852,19 @@ public class BasicResource {
             return false;
         }
         return true;
+    }
+
+    /**
+     * @return the discoveryAttributes
+     */
+    public Map<String, Object> getDiscoveryAttributes() {
+        return discoveryAttributes;
+    }
+
+    /**
+     * @param discoveryAttributes the discoveryAttributes to set
+     */
+    public void setDiscoveryAttributes(Map<String, Object> discoveryAttributes) {
+        this.discoveryAttributes = discoveryAttributes;
     }
 }

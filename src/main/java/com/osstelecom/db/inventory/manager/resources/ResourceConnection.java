@@ -21,10 +21,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * Created so connection and resource can now be represented as a dependent
+ * component of a service,However the service now needs to keep a light
+ * reference of the children resource.
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  */
-public class ResourceConnection extends BasicResource {
+public class ResourceConnection extends AbsRelatedResource {
 
     /**
      * @return the fromResource

@@ -68,7 +68,7 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
      */
     public synchronized boolean notifyResourceEvent(BasicResourceEvent event) {
         //
-        // the queue is limited to 1000 Events
+        // the queue is limited to 1000 Events, after that will be blocking...
         //
         return eventQueue.offer(event);
     }
@@ -107,11 +107,11 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
                 if (event != null) {
                     String eventProcessindInstanceId = UUID.randomUUID().toString();
                     Long start = System.currentTimeMillis();
-                    logger.debug("Processing Event: [{}] ID:[{}]", event.getClass().getCanonicalName(), eventProcessindInstanceId);
+//                    logger.debug("Start Processing Event: [{}] ID:[{}]", event.getClass().getCanonicalName(), eventProcessindInstanceId);
                     eventBus.post(event);
                     Long end = System.currentTimeMillis();
                     Long took = end - start;
-                    logger.debug("Processing Event: [{}] Done ID:[{}] Took:[{}]ms", event.getClass().getCanonicalName(), eventProcessindInstanceId, took);
+                    logger.debug("End Processing Event: [{}] Done ID:[{}] Took:[{}]ms", event.getClass().getCanonicalName(), eventProcessindInstanceId, took);
                 }
             } catch (InterruptedException ex) {
                 logger.error("Error on Processing Event: [{}]", ex.getMessage());

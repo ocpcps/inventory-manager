@@ -49,6 +49,8 @@ import org.slf4j.Logger;
 
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 /**
@@ -75,11 +77,18 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
     /**
      * Local Cache keeps the Schema for 1 Minute in memory, most of 5k Records
      */
-    private Cache<String, ResourceSchemaModel> schemaCache = CacheBuilder
-            .newBuilder()
-            .maximumSize(5000)
-            .removalListener(this)
-            .expireAfterWrite(60, TimeUnit.SECONDS).build(); // alterado para 10s
+    private Cache<String, ResourceSchemaModel> schemaCache;
+
+    @EventListener(ApplicationReadyEvent.class)
+    private void initSchemaSession() {
+        this.schemaCache = CacheBuilder
+                .newBuilder()
+                .maximumSize(5000)
+                .removalListener(this)
+                .expireAfterWrite(this.configurationManager
+                        .loadConfiguration()
+                        .getSchemaCacheTTL(), TimeUnit.SECONDS).build();
+    }
 
     /**
      * Loads the Schema by Name
@@ -285,13 +294,51 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                         }
                     }
                 }
+
+                //
+                // Segunda parte valida os atributos da rede
+                //
+                if (resource.getDiscoveryAttributes() != null && !resource.getDiscoveryAttributes().isEmpty()) {
+                    //
+                    // Note que só validamos o typecasting 
+                    //
+                    for (Map.Entry<String, Object> data : resource.getDiscoveryAttributes().entrySet()) {
+                        String name = data.getKey();
+                        Object value = data.getValue();
+                        ResourceAttributeModel model = resource.getSchemaModel().getAttributes().get(name);
+                        if (model != null) {
+                            if (model.getIsDiscovery()) {
+                                //
+                                // Podemos usar aqui :)
+                                //
+                                resource.getDiscoveryAttributes().put(name, this.getAttributeValue(model, value));
+                            } else {
+                                throw new AttributeConstraintViolationException("Attribute named:[" + name + "] is not discovery attribute for model: [" + resource.getSchemaModel().getSchemaName() + "]");
+                            }
+                        } else {
+                            throw new AttributeConstraintViolationException("Invalid Discovery Attribute named:[" + name + "] for model: [" + resource.getSchemaModel().getSchemaName() + "]");
+                        }
+                    }
+
+                }
+                //
+                // Se bateu aqui tá tudo certinho :)
+                //
                 resource.getSchemaModel().setIsValid(true);
+
             } catch (AttributeConstraintViolationException acve) {
+                //
+                // Erro em alguma validação, marca o schemamodel do recurso como inválido
+                //
                 resource.getSchemaModel().setIsValid(false);
                 throw acve;
             }
+            //
+            // Se bateu aqui tá tudo certinho :)
+            //
             resource.getSchemaModel().setIsValid(true);
         } else {
+            logger.warn("Allow ALL Is Enable, please fix me!");
             resource.getSchemaModel().setIsValid(true);
         }
     }
@@ -310,9 +357,9 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
         try {
             if (model.getAllowedValues() != null) {
                 if (!model.getAllowedValues().isEmpty()) {
-                    if (!model.getAllowedValues().contains(value)) {
+                    if (!model.getAllowedValues().contains(value.toString())) {
                         //
-                        // Pode Prosseguir 
+                        // Não Pode Prosseguir 
                         //
                         throw new AttributeConstraintViolationException("Attribute [" + model.getName() + "] of type:" + model.getVariableType() + " Value : [" + value + "] is not allowed here Allowed vars are:[" + String.join(",", model.getAllowedValues()) + "]");
 

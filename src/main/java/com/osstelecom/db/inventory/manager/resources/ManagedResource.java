@@ -26,10 +26,11 @@ import io.swagger.v3.oas.annotations.media.Schema;
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(description = "This Represents a Managed Object (node) in the dependecies network")
-public class ManagedResource extends BasicResource {
+public class ManagedResource extends AbsRelatedResource {
 
     public ManagedResource(String attributeSchema, Domain domain) {
         super(attributeSchema, domain);
+        
     }
 
     public ManagedResource(Domain domain, String uid, String id) {
@@ -56,11 +57,14 @@ public class ManagedResource extends BasicResource {
         //
         // Prioritize name,nodeAddress
         //
-        this.setClassName(null);
+//        this.setClassName(null);
         this.setAttributeSchemaName(null);
     }
 
     public ManagedResource() {
+        
     }
+    
+    
 
 }

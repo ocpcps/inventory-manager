@@ -31,6 +31,34 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public class ServiceResource extends BasicResource {
 
     /**
+     * @return the relatedResourceConnections
+     */
+    public List<String> getRelatedResourceConnections() {
+        return relatedResourceConnections;
+    }
+
+    /**
+     * @param relatedResourceConnections the relatedResourceConnections to set
+     */
+    public void setRelatedResourceConnections(List<String> relatedResourceConnections) {
+        this.relatedResourceConnections = relatedResourceConnections;
+    }
+
+    /**
+     * @return the relatedManagedResources
+     */
+    public List<String> getRelatedManagedResources() {
+        return relatedManagedResources;
+    }
+
+    /**
+     * @param relatedManagedResources the relatedManagedResources to set
+     */
+    public void setRelatedManagedResources(List<String> relatedManagedResources) {
+        this.relatedManagedResources = relatedManagedResources;
+    }
+
+    /**
      *
      * IDS of Services that this services depends on, like parent service.
      */
@@ -41,10 +69,36 @@ public class ServiceResource extends BasicResource {
      */
     private List<CircuitResource> circuits;
 
-    @Schema(description = "If true, indicates that the circuit has some broken connections")
+    //
+    // The next three realated stuff will bring hell on earth to maintain D:
+    // God Help Our Souls!
+    // @By Nishisan
+    //
+    
+    /**
+     * IDS of Services that this services is parent of This aproach is easier to
+     * maintain.Can be read as the "list of children Services" of this service
+     */
+    private List<String> relatedServices;
+
+    /**
+     * IDS of Managed Resources that this services is parent of This aproach is
+     * easier to maintain.Can be read as the "list of children Services" of this
+     * service
+     */
+    private List<String> relatedManagedResources;
+
+    /**
+     * IDS of Resources Connections that this services is parent of This aproach
+     * is easier to maintain.Can be read as the "list of children Services" of
+     * this service
+     */
+    private List<String> relatedResourceConnections;
+
+    @Schema(description = "If true, indicates that the Service has some broken connections")
     private boolean degrated = false;
 
-    @Schema(description = "If true, indicates that the circuit has some broken connections, and it is broken")
+    @Schema(description = "If true, indicates that the Service has some broken connections, and it is broken")
     private boolean broken = false;
 
     @Schema(description = "The ID List of the broken connections")
@@ -109,5 +163,19 @@ public class ServiceResource extends BasicResource {
      */
     public void setBrokenResources(List<String> brokenResources) {
         this.brokenResources = brokenResources;
+    }
+
+    /**
+     * @return the relatedServices
+     */
+    public List<String> getRelatedServices() {
+        return relatedServices;
+    }
+
+    /**
+     * @param relatedServices the relatedServices to set
+     */
+    public void setRelatedServices(List<String> relatedServices) {
+        this.relatedServices = relatedServices;
     }
 }

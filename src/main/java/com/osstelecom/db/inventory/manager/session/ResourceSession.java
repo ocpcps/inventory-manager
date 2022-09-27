@@ -33,23 +33,22 @@ import com.osstelecom.db.inventory.manager.operation.DomainManager;
 import com.osstelecom.db.inventory.manager.operation.ManagedResourceManager;
 import com.osstelecom.db.inventory.manager.operation.ResourceConnectionManager;
 import com.osstelecom.db.inventory.manager.operation.ResourceLocationManager;
+import com.osstelecom.db.inventory.manager.operation.ServiceManager;
 import com.osstelecom.db.inventory.manager.request.CreateConnectionRequest;
 import com.osstelecom.db.inventory.manager.request.CreateManagedResourceRequest;
-import com.osstelecom.db.inventory.manager.request.CreateResourceLocationRequest;
 import com.osstelecom.db.inventory.manager.request.FilterRequest;
 import com.osstelecom.db.inventory.manager.request.FindManagedResourceRequest;
 import com.osstelecom.db.inventory.manager.request.PatchManagedResourceRequest;
 import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
-import com.osstelecom.db.inventory.manager.resources.ResourceLocation;
+import com.osstelecom.db.inventory.manager.resources.ServiceResource;
 import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstraintViolationException;
 import com.osstelecom.db.inventory.manager.resources.exception.ConnectionAlreadyExistsException;
 import com.osstelecom.db.inventory.manager.resources.exception.MetricConstraintException;
 import com.osstelecom.db.inventory.manager.resources.exception.NoResourcesAvailableException;
 import com.osstelecom.db.inventory.manager.response.CreateManagedResourceResponse;
 import com.osstelecom.db.inventory.manager.response.CreateResourceConnectionResponse;
-import com.osstelecom.db.inventory.manager.response.CreateResourceLocationResponse;
 import com.osstelecom.db.inventory.manager.response.FilterResponse;
 import com.osstelecom.db.inventory.manager.response.FindManagedResourceResponse;
 import com.osstelecom.db.inventory.manager.response.PatchManagedResourceResponse;
@@ -75,48 +74,10 @@ public class ResourceSession {
     private ResourceConnectionManager resourceConnectionManager;
 
     @Autowired
-    ManagedResourceManager managedResourceManager;
+    private ManagedResourceManager managedResourceManager;
 
-    /**
-     * Cria uma localidade
-     *
-     * @param request
-     * @return
-     * @throws GenericException
-     * @throws SchemaNotFoundException
-     * @throws AttributeConstraintViolationException
-     * @throws ScriptRuleException
-     */
-    public CreateResourceLocationResponse createResourceLocation(CreateResourceLocationRequest request) throws GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, InvalidRequestException, DomainNotFoundException {
-
-        if (request.getPayLoad().getName() == null || request.getPayLoad().getName().trim().equals("")) {
-            throw new InvalidRequestException("Please Give a name");
-        }
-
-        if (request.getPayLoad().getNodeAddress() == null) {
-            //
-            // Avaliar se podemos mudar o node address
-            //
-            request.getPayLoad().setNodeAddress(request.getPayLoad().getName());
-        }
-
-        if (request.getPayLoad().getAttributeSchemaName().equals("default")) {
-            request.getPayLoad().setAttributeSchemaName("location.default");
-        }
-
-        if (request.getPayLoad().getClassName().equalsIgnoreCase("Default")) {
-            request.getPayLoad().setClassName("location.Default");
-        }
-
-        request.getPayLoad().setDomain(domainManager.getDomain(request.getRequestDomain()));
-
-        if (request.getPayLoad().getDomain() == null) {
-            throw new DomainNotFoundException("Domain WIth Name:[" + request.getRequestDomain() + "] not found");
-        }
-        request.getPayLoad().setInsertedDate(new Date());
-        resourceLocationManager.createResourceLocation(request.getPayLoad());
-        return new CreateResourceLocationResponse(request.getPayLoad());
-    }
+    @Autowired
+    private ServiceManager serviceManager;
 
     /**
      * Cria uma conexão entre recursos.
@@ -200,6 +161,9 @@ public class ResourceSession {
         connection.setPropagateOperStatus(request.getPayLoad().getPropagateOperStatus());
         CreateResourceConnectionResponse response = new CreateResourceConnectionResponse(connection);
         connection.setInsertedDate(new Date());
+
+        
+
         resourceConnectionManager.createResourceConnection(connection);
         return response;
     }
@@ -229,46 +193,6 @@ public class ResourceSession {
     }
 
     /**
-     * Cria uma conexão entre localidades
-     *
-     * @param request
-     * @return
-     * @throws ResourceNotFoundException
-     * @throws ConnectionAlreadyExistsException
-     * @throws MetricConstraintException
-     * @throws NoResourcesAvailableException
-     * @throws GenericException
-     * @throws SchemaNotFoundException
-     * @throws AttributeConstraintViolationException
-     */
-    public CreateResourceConnectionResponse createResourceLocationConnection(CreateConnectionRequest request) throws ResourceNotFoundException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, DomainNotFoundException, ArangoDaoException {
-
-        ResourceLocation from = resourceLocationManager.findResourceLocation(request.getPayLoad().getFromName(), request.getPayLoad().getFromNodeAddress(), request.getPayLoad().getFromClassName(), request.getRequestDomain());
-        ResourceLocation to = resourceLocationManager.findResourceLocation(request.getPayLoad().getToName(), request.getPayLoad().getToNodeAddress(), request.getPayLoad().getToClassName(), request.getRequestDomain());
-
-        ResourceConnection connection = new ResourceConnection(domainManager.getDomain(request.getRequestDomain()));
-        connection.setName(request.getPayLoad().getConnectionName());
-
-        if (request.getPayLoad().getNodeAddress() != null) {
-            connection.setNodeAddress(request.getPayLoad().getNodeAddress());
-        } else {
-            connection.setNodeAddress(connection.getName());
-        }
-        connection.setClassName(request.getPayLoad().getConnectionClass());
-        connection.setFrom(from);
-        connection.setTo(to);
-        connection.setAttributeSchemaName(request.getPayLoad().getAttributeSchemaName());
-        connection.setDomain(domainManager.getDomain(request.getRequestDomain()));
-        connection.setAttributes(request.getPayLoad().getAttributes());
-        connection.setPropagateOperStatus(request.getPayLoad().getPropagateOperStatus());
-        connection.setOperationalStatus(request.getPayLoad().getOperationalStatus());
-        CreateResourceConnectionResponse response = new CreateResourceConnectionResponse(connection);
-        connection.setInsertedDate(new Date());
-        resourceConnectionManager.createResourceConnection(connection);
-        return response;
-    }
-
-    /**
      * Cria um recurso gerenciavel
      *
      * @param request
@@ -278,7 +202,7 @@ public class ResourceSession {
      * @throws GenericException
      * @throws ScriptRuleException
      */
-    public CreateManagedResourceResponse createManagedResource(CreateManagedResourceRequest request) throws SchemaNotFoundException, AttributeConstraintViolationException, GenericException, ScriptRuleException, InvalidRequestException, DomainNotFoundException, ArangoDaoException {
+    public CreateManagedResourceResponse createManagedResource(CreateManagedResourceRequest request) throws SchemaNotFoundException, AttributeConstraintViolationException, GenericException, ScriptRuleException, InvalidRequestException, DomainNotFoundException, ArangoDaoException, ResourceNotFoundException {
         if (request == null) {
             throw new InvalidRequestException("Request is NULL!");
         }
@@ -290,7 +214,11 @@ public class ResourceSession {
             throw new DomainNotFoundException("Domain WIth Name:[" + request.getRequestDomain() + "] not found");
         }
         if (request.getPayLoad().getName() == null || request.getPayLoad().getName().trim().equals("")) {
-            throw new InvalidRequestException("Please Give a name");
+            if (request.getPayLoad().getNodeAddress() != null && !request.getPayLoad().getNodeAddress().trim().equals("")) {
+                request.getPayLoad().setName(request.getPayLoad().getNodeAddress());
+            } else {
+                throw new InvalidRequestException("Please Give a name");
+            }
         }
 
         if (request.getPayLoad().getAttributeSchemaName() == null) {
@@ -356,7 +284,7 @@ public class ResourceSession {
      * @throws ArangoDaoException
      * @throws InvalidRequestException
      */
-    public PatchManagedResourceResponse patchManagedResource(PatchManagedResourceRequest patchRequest) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
+    public PatchManagedResourceResponse patchManagedResource(PatchManagedResourceRequest patchRequest) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException {
         //
         //
         //
@@ -395,6 +323,49 @@ public class ResourceSession {
         //
         if (requestedPatch.getAdminStatus() != null) {
             fromDBResource.setAdminStatus(requestedPatch.getAdminStatus());
+        }
+
+        //
+        // Atualiza os atributos
+        //
+        if (requestedPatch.getAttributes() != null && !requestedPatch.getAttributes().isEmpty()) {
+            requestedPatch.getAttributes().forEach((name, attribute) -> {
+                if (fromDBResource.getAttributes() != null) {
+                    if (fromDBResource.getAttributes().containsKey(name)) {
+                        fromDBResource.getAttributes().replace(name, attribute);
+                    } else {
+                        fromDBResource.getAttributes().put(name, attribute);
+                    }
+                }
+            });
+        }
+
+        if (requestedPatch.getDependentService() != null) {
+            //
+            // Valida se o serviço existe
+            //
+            ServiceResource service = this.serviceManager.getService(requestedPatch.getDependentService());
+
+            //
+            // Atualiza para referencia do DB
+            //
+            requestedPatch.setDependentService(service);
+
+            //
+            // Agora vamos ver se o serviço é de um dominio diferente do recurso... não podem ser do mesmo
+            //
+            if (service.getDomain().getDomainName().equals(requestedPatch.getDomain().getDomainName())) {
+                throw new InvalidRequestException("Resource and Parent Service cannot be in the same domain.");
+            }
+
+            if (fromDBResource.getDependentService() == null) {
+                //
+                // Está criando a dependencia...
+                //
+                fromDBResource.setDependentService(requestedPatch.getDependentService());
+            } else if (!fromDBResource.getDependentService().equals(service)) {
+                fromDBResource.setDependentService(requestedPatch.getDependentService());
+            }
         }
 
         ManagedResource result = this.managedResourceManager.updateManagedResource(fromDBResource);
