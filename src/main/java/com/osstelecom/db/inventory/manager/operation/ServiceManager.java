@@ -557,12 +557,19 @@ public class ServiceManager extends Manager {
      * @throws ArangoDaoException
      */
     private void updateServiceCircuitReference(ServiceResource service) throws ArangoDaoException, ResourceNotFoundException, IOException, DomainNotFoundException {
+
+        //
+        // Actually Update on DB
+        //
+        this.serviceDao.updateResource(service);
+        
         /**
          * Verifica se este serviço é necessário para algum outro, ou seja, do
          * pai, procura os filhos. Note que este método só encontra serviços do
          * mesmo dominio.
          */
         try {
+
             //
             // Vamos procurar os filhos de outro jeito agora..
             //
@@ -826,11 +833,13 @@ public class ServiceManager extends Manager {
                     // o Circuito só pode impactar serviços do mesmo dominio.
                     //
                     ServiceResource service = new ServiceResource(serviceId);
+
                     service.setDomain(event.getNewResource().getDomain());
                     //
                     // Recupera o serviço do Banco
                     //
                     service = this.getServiceById(service);
+                    logger.debug("Found Service ID:[{}] to Update", service.getId());
                     //
                     // Atualiza as referencias do Circuito
                     //
