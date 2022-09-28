@@ -43,6 +43,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
@@ -87,7 +89,8 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                 .removalListener(this)
                 .expireAfterWrite(this.configurationManager
                         .loadConfiguration()
-                        .getSchemaCacheTTL(), TimeUnit.SECONDS).build();
+                        .getSchemaCacheTTL(), TimeUnit.SECONDS)
+                .build();
     }
 
     /**
@@ -109,6 +112,19 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
             this.schemaCache.put(schemaName, schema);
             return schema;
         }
+    }
+
+    public List<ResourceSchemaResponse> loadSchemas() throws SchemaNotFoundException, GenericException {
+        List<ResourceSchemaResponse> result = new ArrayList<>();
+        String schemaName = configurationManager.loadConfiguration().getSchemaDir();
+        schemaName = schemaName.replaceAll("\\.", "/");
+        File f = new File(schemaName);
+        for (String fileName : f.list()) {
+            if (fileName.contains(".json")) {
+                result.add(loadSchemaByName(fileName.replace(fileName, ".json")));
+            }
+        }
+        return result;
     }
 
     /**
@@ -152,7 +168,8 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
      * @throws SchemaNotFoundException
      * @throws GenericException
      */
-    private ResourceSchemaModel loadSchemaFromDisk(String schemaName, ResourceSchemaModel result) throws SchemaNotFoundException, GenericException {
+    private ResourceSchemaModel loadSchemaFromDisk(String schemaName, ResourceSchemaModel result)
+            throws SchemaNotFoundException, GenericException {
         schemaName = schemaName.replaceAll("\\.", "/");
         File f = new File(this.schemaDir + "/" + schemaName + ".json");
         logger.debug("Trying to load Schema from: " + schemaName);
@@ -163,7 +180,8 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                 // Arquivo existe vamos ler os modelos
                 //
                 FileReader jsonReader = new FileReader(f);
-                ResourceSchemaModel resourceModel = utilSession.getGson().fromJson(jsonReader, ResourceSchemaModel.class);
+                ResourceSchemaModel resourceModel = utilSession.getGson().fromJson(jsonReader,
+                        ResourceSchemaModel.class);
                 if (result == null) {
                     result = resourceModel;
                 }
@@ -195,15 +213,16 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
      *
      * @param model
      */
-    public CreateResourceSchemaModelResponse createResourceSchemaModel(ResourceSchemaModel model) throws GenericException, SchemaNotFoundException, InvalidRequestException {
+    public CreateResourceSchemaModelResponse createResourceSchemaModel(ResourceSchemaModel model)
+            throws GenericException, SchemaNotFoundException, InvalidRequestException {
 
         if (model == null) {
             throw new GenericException("Request Cannot Be Null");
         }
 
-        // 
+        //
         // If the From Schema is null, set to the default
-        // 
+        //
         if (model.getFromSchema() == null) {
             model.setFromSchema("default.json");
         } else {
@@ -252,7 +271,8 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
             for (String key : resource.getAttributes().keySet()) {
                 if (!resource.getSchemaModel().getAttributes().containsKey(key)) {
                     resource.getSchemaModel().setIsValid(false);
-                    throw new AttributeConstraintViolationException("Invalid Attribute named:[" + key + "] for model: [" + resource.getSchemaModel().getSchemaName() + "]");
+                    throw new AttributeConstraintViolationException("Invalid Attribute named:[" + key + "] for model: ["
+                            + resource.getSchemaModel().getSchemaName() + "]");
 
                 }
             }
@@ -268,29 +288,34 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                     if (entry.getRequired()) {
                         if (!resource.getAttributes().containsKey(entry.getName())) {
                             if (entry.getDefaultValue() != null) {
-                                resource.getAttributes().put(entry.getName(), getAttributeValue(entry, entry.getDefaultValue()));
+                                resource.getAttributes().put(entry.getName(),
+                                        getAttributeValue(entry, entry.getDefaultValue()));
                             } else {
                                 //
                                 // Lança a exception de validação
                                 //
                                 resource.getSchemaModel().setIsValid(false);
 
-                                throw new AttributeConstraintViolationException("Missing Required Attribute Named:[" + entry.getName() + "]");
+                                throw new AttributeConstraintViolationException(
+                                        "Missing Required Attribute Named:[" + entry.getName() + "]");
                             }
                         } else {
-                            resource.getAttributes().put(entry.getName(), getAttributeValue(entry, resource.getAttributes().get(entry.getName())));
+                            resource.getAttributes().put(entry.getName(),
+                                    getAttributeValue(entry, resource.getAttributes().get(entry.getName())));
                         }
                     } else {
                         if (!resource.getAttributes().containsKey(entry.getName())) {
                             if (entry.getDefaultValue() != null) {
-                                resource.getAttributes().put(entry.getName(), getAttributeValue(entry, entry.getDefaultValue()));
+                                resource.getAttributes().put(entry.getName(),
+                                        getAttributeValue(entry, entry.getDefaultValue()));
                             } else {
                                 //
                                 // Isso pode gerar inconsistencia
                                 //
                             }
                         } else {
-                            resource.getAttributes().put(entry.getName(), getAttributeValue(entry, resource.getAttributes().get(entry.getName())));
+                            resource.getAttributes().put(entry.getName(),
+                                    getAttributeValue(entry, resource.getAttributes().get(entry.getName())));
                         }
                     }
                 }
@@ -300,7 +325,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                 //
                 if (resource.getDiscoveryAttributes() != null && !resource.getDiscoveryAttributes().isEmpty()) {
                     //
-                    // Note que só validamos o typecasting 
+                    // Note que só validamos o typecasting
                     //
                     for (Map.Entry<String, Object> data : resource.getDiscoveryAttributes().entrySet()) {
                         String name = data.getKey();
@@ -313,10 +338,13 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                                 //
                                 resource.getDiscoveryAttributes().put(name, this.getAttributeValue(model, value));
                             } else {
-                                throw new AttributeConstraintViolationException("Attribute named:[" + name + "] is not discovery attribute for model: [" + resource.getSchemaModel().getSchemaName() + "]");
+                                throw new AttributeConstraintViolationException(
+                                        "Attribute named:[" + name + "] is not discovery attribute for model: ["
+                                                + resource.getSchemaModel().getSchemaName() + "]");
                             }
                         } else {
-                            throw new AttributeConstraintViolationException("Invalid Discovery Attribute named:[" + name + "] for model: [" + resource.getSchemaModel().getSchemaName() + "]");
+                            throw new AttributeConstraintViolationException("Invalid Discovery Attribute named:[" + name
+                                    + "] for model: [" + resource.getSchemaModel().getSchemaName() + "]");
                         }
                     }
 
@@ -351,17 +379,21 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
      * @return
      * @throws ParseException
      */
-    public Object getAttributeValue(ResourceAttributeModel model, Object value) throws AttributeConstraintViolationException {
-//        if (!model.getIsList()) {
+    public Object getAttributeValue(ResourceAttributeModel model, Object value)
+            throws AttributeConstraintViolationException {
+        // if (!model.getIsList()) {
 
         try {
             if (model.getAllowedValues() != null) {
                 if (!model.getAllowedValues().isEmpty()) {
                     if (!model.getAllowedValues().contains(value.toString())) {
                         //
-                        // Não Pode Prosseguir 
+                        // Não Pode Prosseguir
                         //
-                        throw new AttributeConstraintViolationException("Attribute [" + model.getName() + "] of type:" + model.getVariableType() + " Value : [" + value + "] is not allowed here Allowed vars are:[" + String.join(",", model.getAllowedValues()) + "]");
+                        throw new AttributeConstraintViolationException(
+                                "Attribute [" + model.getName() + "] of type:" + model.getVariableType() + " Value : ["
+                                        + value + "] is not allowed here Allowed vars are:["
+                                        + String.join(",", model.getAllowedValues()) + "]");
 
                     }
                 }
@@ -388,7 +420,8 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                 if (value.toString().equalsIgnoreCase("true") || value.toString().equalsIgnoreCase("false")) {
                     return value.toString().equalsIgnoreCase("true");
                 } else {
-                    throw new AttributeConstraintViolationException("Attribute [" + model.getName() + "] of type:" + model.getVariableType() + " Does not accpect value: [" + value + "]");
+                    throw new AttributeConstraintViolationException("Attribute [" + model.getName() + "] of type:"
+                            + model.getVariableType() + " Does not accpect value: [" + value + "]");
                 }
             } else if (model.getVariableType().equalsIgnoreCase("Float")) {
                 if (value instanceof Float) {
@@ -402,20 +435,26 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                 try {
                     return sdf.parse(value.toString());
                 } catch (ParseException ex) {
-                    throw new AttributeConstraintViolationException("Attribute [" + model.getName() + "] of type:" + model.getVariableType() + " Cannot Parse Date Value : [" + value + "] With Mask: [" + configurationManager.loadConfiguration().getDateFormat() + "]", ex);
+                    throw new AttributeConstraintViolationException("Attribute [" + model.getName() + "] of type:"
+                            + model.getVariableType() + " Cannot Parse Date Value : [" + value + "] With Mask: ["
+                            + configurationManager.loadConfiguration().getDateFormat() + "]", ex);
                 }
 
             } else if (model.getVariableType().equalsIgnoreCase("DateTime")) {
-                SimpleDateFormat sdf = new SimpleDateFormat(configurationManager.loadConfiguration().getDateTimeFormat());
+                SimpleDateFormat sdf = new SimpleDateFormat(
+                        configurationManager.loadConfiguration().getDateTimeFormat());
                 sdf.setLenient(false);
                 try {
                     return sdf.parse(value.toString());
                 } catch (ParseException ex) {
-                    throw new AttributeConstraintViolationException("Attribute [" + model.getName() + "] of type:" + model.getVariableType() + " Cannot Parse Date Time Value : [" + value + "] With Mask: [" + configurationManager.loadConfiguration().getDateTimeFormat() + "]", ex);
+                    throw new AttributeConstraintViolationException("Attribute [" + model.getName() + "] of type:"
+                            + model.getVariableType() + " Cannot Parse Date Time Value : [" + value + "] With Mask: ["
+                            + configurationManager.loadConfiguration().getDateTimeFormat() + "]", ex);
 
                 }
             } else {
-                throw new AttributeConstraintViolationException("Attribute [" + model.getName() + "] of type:" + model.getVariableType() + " Cannot be parsed");
+                throw new AttributeConstraintViolationException(
+                        "Attribute [" + model.getName() + "] of type:" + model.getVariableType() + " Cannot be parsed");
             }
         } catch (NumberFormatException ex) {
             throw new AttributeConstraintViolationException("Value: [" + value + "] Cannot be parsed do Number", ex);
@@ -433,7 +472,8 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
      * @throws GenericException
      * @throws SchemaNotFoundException
      */
-    public PatchResourceSchemaModelResponse patchSchemaModel(ResourceSchemaModel update) throws InvalidRequestException, GenericException, SchemaNotFoundException {
+    public PatchResourceSchemaModelResponse patchSchemaModel(ResourceSchemaModel update)
+            throws InvalidRequestException, GenericException, SchemaNotFoundException {
 
         if (update == null) {
             throw new InvalidRequestException("Attribute Schema Model not found");
@@ -445,7 +485,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
             if (!update.getSchemaName().equals(original.getSchemaName())) {
                 //
                 // Schema Name cannot Be Changed
-                // 
+                //
                 throw new InvalidRequestException("Schema Name Cannot Ne changed...");
             }
         }
@@ -454,7 +494,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
             if (!update.getFromSchema().equals(original.getFromSchema())) {
                 //
                 // Changing Parent Class...are we going to allow it?
-                // 
+                //
                 original.setFromSchema(update.getFromSchema());
                 original.setAttributesChanged(true);
             }
@@ -476,7 +516,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
             //
             update.getAttributes().forEach((updateAttrName, updateModel) -> {
                 //
-                //  Check if need to remove the Attribute
+                // Check if need to remove the Attribute
                 //
                 if (updateModel.getDoRemove() == null) {
                     updateModel.setDoRemove(false);
@@ -523,14 +563,16 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                             }
 
                             if (updateModel.getValidationRegex() != null) {
-                                if (!updateModel.getValidationRegex().equals(originalAttributeModel.getValidationRegex())) {
+                                if (!updateModel.getValidationRegex()
+                                        .equals(originalAttributeModel.getValidationRegex())) {
                                     originalAttributeModel.setValidationRegex(updateModel.getValidationRegex());
                                     original.setAttributesChanged(true);
                                 }
                             }
 
                             if (updateModel.getValidationScript() != null) {
-                                if (!updateModel.getValidationScript().equals(originalAttributeModel.getValidationScript())) {
+                                if (!updateModel.getValidationScript()
+                                        .equals(originalAttributeModel.getValidationScript())) {
                                     originalAttributeModel.setValidationScript(updateModel.getValidationScript());
                                     original.setAttributesChanged(true);
                                 }
@@ -569,8 +611,9 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
             this.writeModelToDisk(original, true);
             this.clearSchemaCache();
             //
-            // Notifica o Message Bus da Atualização, ele vai varrer a base procurando utilizações...
-            // 
+            // Notifica o Message Bus da Atualização, ele vai varrer a base procurando
+            // utilizações...
+            //
             eventManager.notifyGenericEvent(new ResourceSchemaUpdatedEvent(original));
         }
         return new PatchResourceSchemaModelResponse(this.loadSchema(original.getSchemaName()));
@@ -584,9 +627,10 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
      * @throws GenericException
      * @throws InvalidRequestException
      */
-    private void writeModelToDisk(ResourceSchemaModel model, Boolean overwrite) throws GenericException, InvalidRequestException {
+    private void writeModelToDisk(ResourceSchemaModel model, Boolean overwrite)
+            throws GenericException, InvalidRequestException {
         //
-        // Ok lets check the target directory: 
+        // Ok lets check the target directory:
         //
         String modelName = model.getSchemaName();
         String modelPathStr = modelName.replace(".", "/");
@@ -630,7 +674,8 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
      */
     @Override
     public void onRemoval(RemovalNotification<String, ResourceSchemaModel> rn) {
-//        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        // throw new UnsupportedOperationException("Not supported yet."); //To change
+        // body of generated methods, choose Tools | Templates.
         logger.debug("Schema: [" + rn.getKey() + "] Removed From Cache...[" + rn.getCause().name() + "]");
     }
 }

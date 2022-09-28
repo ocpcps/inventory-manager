@@ -415,7 +415,7 @@ public class ManagedResourceManager extends Manager {
      * @param update
      */
     @Subscribe
-    public void onResourceSchameUpdatedEvent(ResourceSchemaUpdatedEvent update) {
+    public void onResourceSchemaUpdatedEvent(ResourceSchemaUpdatedEvent update) {
         //
         // Notify the schema session that a schema has changed
         // Now, it will search for:

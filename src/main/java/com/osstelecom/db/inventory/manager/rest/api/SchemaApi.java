@@ -30,6 +30,8 @@ import com.osstelecom.db.inventory.manager.response.TypedMapResponse;
 import com.osstelecom.db.inventory.manager.security.model.AuthenticatedCall;
 import com.osstelecom.db.inventory.manager.session.SchemaSession;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -59,11 +61,11 @@ public class SchemaApi extends BaseApi {
      * @param schema
      * @return
      */
-    @AuthenticatedCall(role = {"user"})
-    @GetMapping(path = "/{schema}", produces = "application/json")
-    public ResourceSchemaResponse getSchameDefinition(@PathVariable("schema") String schema) throws GenericException, SchemaNotFoundException {
+    @AuthenticatedCall(role = { "user" })
+    @GetMapping(produces = "application/json")
+    public List<ResourceSchemaResponse> getSchemasDefinition() throws GenericException, SchemaNotFoundException {
         try {
-            return schemaSession.loadSchemaByName(schema);
+            return schemaSession.loadSchemas();
         } catch (SchemaNotFoundException ex) {
             logger.error("Failed To Load Schema", ex);
             throw ex;
@@ -71,6 +73,19 @@ public class SchemaApi extends BaseApi {
             logger.error("Generic EX  Load Schema", ex);
             throw ex;
         }
+    }
+
+    /**
+     * Retrieves the schema representation
+     *
+     * @param schema
+     * @return
+     */
+    @AuthenticatedCall(role = { "user" })
+    @GetMapping(path = "/{schema}", produces = "application/json")
+    public ResourceSchemaResponse getSchemaDefinition(@PathVariable("schema") String schema)
+            throws GenericException, SchemaNotFoundException {
+        return schemaSession.loadSchemaByName(schema);
     }
 
     /**
@@ -79,19 +94,13 @@ public class SchemaApi extends BaseApi {
      * @param schemaName
      * @return
      */
-    @AuthenticatedCall(role = {"user"})
+    @AuthenticatedCall(role = { "user" })
     @PatchMapping(path = "/{schema}", produces = "application/json")
-    public PatchResourceSchemaModelResponse patchSchameDefinition(@PathVariable("schema") String schemaName, @RequestBody PatchResourceSchemaModelRequest request) throws GenericException, SchemaNotFoundException, InvalidRequestException {
-        try {
-            request.getPayLoad().setSchemaName(schemaName);
-            return schemaSession.patchSchemaModel(request.getPayLoad());
-        } catch (SchemaNotFoundException ex) {
-            logger.error("Failed To Load Schema", ex);
-            throw ex;
-        } catch (GenericException ex) {
-            logger.error("Generic EX  Load Schema", ex);
-            throw ex;
-        }
+    public PatchResourceSchemaModelResponse patchSchemaDefinition(@PathVariable("schema") String schemaName,
+            @RequestBody PatchResourceSchemaModelRequest request)
+            throws GenericException, SchemaNotFoundException, InvalidRequestException {
+        request.getPayLoad().setSchemaName(schemaName);
+        return schemaSession.patchSchemaModel(request.getPayLoad());
     }
 
     /**
@@ -100,9 +109,10 @@ public class SchemaApi extends BaseApi {
      * @param reqBody
      * @return
      */
-    @AuthenticatedCall(role = {"user", "operator"})
+    @AuthenticatedCall(role = { "user", "operator" })
     @PostMapping(path = "/", produces = "application/json", consumes = "application/json")
-    public CreateResourceSchemaModelResponse createSchema(@RequestBody CreateResourceSchemaModelRequest model) throws GenericException, SchemaNotFoundException, InvalidRequestException {
+    public CreateResourceSchemaModelResponse createSchema(@RequestBody CreateResourceSchemaModelRequest model)
+            throws GenericException, SchemaNotFoundException, InvalidRequestException {
         return this.schemaSession.createResourceSchemaModel(model.getPayLoad());
     }
 
@@ -111,7 +121,7 @@ public class SchemaApi extends BaseApi {
      *
      * @return
      */
-    @AuthenticatedCall(role = {"user", "operator"})
+    @AuthenticatedCall(role = { "user", "operator" })
     @PostMapping(path = "/cache/clear", produces = "application/json")
     public EmptyOkResponse clearCachedSchema() {
         this.schemaSession.clearSchemaCache();
@@ -123,7 +133,7 @@ public class SchemaApi extends BaseApi {
      *
      * @return
      */
-    @AuthenticatedCall(role = {"user", "operator"})
+    @AuthenticatedCall(role = { "user", "operator" })
     @GetMapping(path = "/cache", produces = "application/json")
     public TypedMapResponse getCachedSchemas() {
         return new TypedMapResponse(this.schemaSession.getCachedSchemas());
