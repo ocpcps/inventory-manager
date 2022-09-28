@@ -114,14 +114,16 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
         }
     }
 
-    public List<ResourceSchemaResponse> loadSchemas() throws SchemaNotFoundException, GenericException {
+    public List<ResourceSchemaResponse> loadSchemas() {
         List<ResourceSchemaResponse> result = new ArrayList<>();
-        String schemaName = configurationManager.loadConfiguration().getSchemaDir();
-        schemaName = schemaName.replaceAll("\\.", "/");
-        File f = new File(schemaName);
+        String schemaDir = configurationManager.loadConfiguration().getSchemaDir();
+        schemaDir = schemaDir.replaceAll("\\.", "/");
+        File f = new File(schemaDir);
         for (String fileName : f.list()) {
             if (fileName.contains(".json")) {
-                result.add(loadSchemaByName(fileName.replace(fileName, ".json")));
+                ResourceSchemaModel model = new ResourceSchemaModel();
+                model.setSchemaName(fileName.replace(fileName, ".json"));
+                result.add(new ResourceSchemaResponse(model));
             }
         }
         return result;

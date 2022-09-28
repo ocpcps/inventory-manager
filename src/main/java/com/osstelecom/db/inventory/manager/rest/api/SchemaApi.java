@@ -63,16 +63,8 @@ public class SchemaApi extends BaseApi {
      */
     @AuthenticatedCall(role = { "user" })
     @GetMapping(produces = "application/json")
-    public List<ResourceSchemaResponse> getSchemasDefinition() throws GenericException, SchemaNotFoundException {
-        try {
-            return schemaSession.loadSchemas();
-        } catch (SchemaNotFoundException ex) {
-            logger.error("Failed To Load Schema", ex);
-            throw ex;
-        } catch (GenericException ex) {
-            logger.error("Generic EX  Load Schema", ex);
-            throw ex;
-        }
+    public List<ResourceSchemaResponse> getSchemasDefinition() {
+        return schemaSession.loadSchemas();
     }
 
     /**
