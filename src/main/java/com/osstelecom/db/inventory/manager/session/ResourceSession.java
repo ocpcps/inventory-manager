@@ -340,6 +340,23 @@ public class ResourceSession {
             });
         }
 
+        
+         //
+        // Atualiza os atributos de rede
+        //
+        if (requestedPatch.getDiscoveryAttributes()!= null && !requestedPatch.getDiscoveryAttributes().isEmpty()) {
+            requestedPatch.getDiscoveryAttributes().forEach((name, attribute) -> {
+                if (fromDBResource.getDiscoveryAttributes() != null) {
+                    if (fromDBResource.getDiscoveryAttributes().containsKey(name)) {
+                        fromDBResource.getDiscoveryAttributes().replace(name, attribute);
+                    } else {
+                        fromDBResource.getDiscoveryAttributes().put(name, attribute);
+                    }
+                }
+            });
+        }
+
+        
         if (requestedPatch.getDependentService() != null) {
             //
             // Valida se o serviço existe

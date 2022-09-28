@@ -278,7 +278,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                                 throw new AttributeConstraintViolationException("Missing Required Attribute Named:[" + entry.getName() + "]");
                             }
                         } else {
-                            resource.getAttributes().put(entry.getName(), getAttributeValue(entry, resource.getAttributes().get(entry.getName())));
+                            resource.getAttributes().put(entry.getName(), this.getAttributeValue(entry, resource.getAttributes().get(entry.getName())));
                         }
                     } else {
                         if (!resource.getAttributes().containsKey(entry.getName())) {
@@ -371,7 +371,11 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                 //
                 // String will get the String representation as it is..
                 //
-                return value;
+                if (value instanceof String) {
+                    return value;
+                } else {
+                    throw new AttributeConstraintViolationException("Attribute [" + model.getName() + "] of type:" + model.getVariableType() + " Does not accpect value: [" + value + "] of type:" + value.getClass().getCanonicalName());
+                }
             } else if (model.getVariableType().equalsIgnoreCase("Number")) {
                 if (value instanceof Long) {
                     return value;
