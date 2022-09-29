@@ -56,6 +56,7 @@ import com.osstelecom.db.inventory.manager.response.CreateResourceSchemaModelRes
 import com.osstelecom.db.inventory.manager.response.GetSchemasResponse;
 import com.osstelecom.db.inventory.manager.response.PatchResourceSchemaModelResponse;
 import com.osstelecom.db.inventory.manager.response.ResourceSchemaResponse;
+import org.apache.tools.ant.DirectoryScanner;
 
 /**
  *
@@ -115,16 +116,46 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
         }
     }
 
-    public GetSchemasResponse loadSchemas() {
+    /**
+     * Loads all schemas
+     *
+     * @return
+     */
+    public GetSchemasResponse loadSchemas() throws SchemaNotFoundException, GenericException {
+        this.schemaDir = configurationManager.loadConfiguration().getSchemaDir();
         List<String> result = new ArrayList<>();
         String schemaDirectory = configurationManager.loadConfiguration().getSchemaDir();
         schemaDirectory = schemaDirectory.replace("\\.", "/");
-        File f = new File(schemaDirectory);
-        for (String fileName : f.list()) {
-            if (fileName.contains(".json")) {                
-                result.add(fileName.replace(".json",""));
+        DirectoryScanner scanner = new DirectoryScanner();
+        String[] filter = new String[1];
+        filter[0] = "**/*.json";
+        scanner.setIncludes(filter);
+        scanner.setBasedir(schemaDirectory);
+        scanner.setCaseSensitive(false);
+        scanner.scan();
+
+        for (String schemaFile : scanner.getIncludedFiles()) {
+            logger.debug("Found Schema Definition AT:[{}]", schemaFile);
+            if (schemaFile.startsWith("resource")
+                    || schemaFile.startsWith("location")
+                    || schemaFile.startsWith("connection")
+                    || schemaFile.startsWith("service")
+                    || schemaFile.startsWith("circuit")) {
+
+                schemaFile = schemaFile.replaceAll("\\/", ".").replaceAll("\\.json", "");
+                logger.debug("Normalized  As:[{}]", schemaFile);
+                ResourceSchemaModel schema = this.loadSchemaFromDisk(schemaFile, null);
+                result.add(schema.getSchemaName());
             }
+
         }
+
+//        File f = new File(schemaDirectory);
+//        for (String fileName : f.list()) {
+//            if (fileName.contains(".json")) {
+//                result.add(fileName.replace(".json", ""));
+//            }
+//        }
         return new GetSchemasResponse(result);
     }
 
@@ -171,8 +202,8 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
      */
     private ResourceSchemaModel loadSchemaFromDisk(String schemaName, ResourceSchemaModel result) throws SchemaNotFoundException, GenericException {
         schemaName = schemaName.replaceAll("\\.", "/");
-        File f = new File(this.schemaDir + "/" + schemaName + ".json");
         logger.debug("Trying to load Schema from: " + schemaName);
+        File f = new File(this.schemaDir + "/" + schemaName + ".json");
 
         if (f.exists()) {
             try {
@@ -202,7 +233,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                 throw new GenericException(ex.getMessage(), ex);
             }
         } else {
-            throw new SchemaNotFoundException("Schema With Name:[" + schemaName + "] was not found");
+            throw new SchemaNotFoundException("Schema With Name:[" + schemaName + "] was not found File: [" + this.schemaDir + "/" + schemaName + ".json" + "]");
         }
 
     }
