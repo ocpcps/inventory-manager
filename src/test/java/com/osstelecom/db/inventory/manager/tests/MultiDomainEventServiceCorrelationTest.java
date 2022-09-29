@@ -207,19 +207,19 @@ public class MultiDomainEventServiceCorrelationTest {
         this.circuitSession.createCircuitPath(request);
     }
     
-    @Test
-    @DisplayName("Create A-Z Circuit Path")
-    @Order(8)
-    public void createService() throws Exception {
-        CreateServiceRequest request = new CreateServiceRequest();
-        request.setRequestDomain("test_1");
-        Domain domain = this.domainSession.getDomain("test_1").getPayLoad();
-        ServiceResource service = new ServiceResource();
-        
-        service.setDomain(domain);
-        service.setDomainName(domain.getDomainName());
-        this.serviceSession.createService(request);
-    }
+//    @Test
+//    @DisplayName("Create A-Z Circuit Path")
+//    @Order(8)
+//    public void createService() throws Exception {
+//        CreateServiceRequest request = new CreateServiceRequest();
+//        request.setRequestDomain("test_1");
+//        Domain domain = this.domainSession.getDomain("test_1").getPayLoad();
+//        ServiceResource service = new ServiceResource();
+//        
+//        service.setDomain(domain);
+//        service.setDomainName(domain.getDomainName());
+//        this.serviceSession.createService(request);
+//    }
     
     @Test
     @DisplayName("Delete Domain Test")
