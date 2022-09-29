@@ -17,23 +17,6 @@
  */
 package com.osstelecom.db.inventory.manager.session;
 
-import com.osstelecom.db.inventory.manager.listeners.EventManagerListener;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.RemovalListener;
-import com.google.common.cache.RemovalNotification;
-import com.osstelecom.db.inventory.manager.configuration.ConfigurationManager;
-import com.osstelecom.db.inventory.manager.events.ResourceSchemaUpdatedEvent;
-import com.osstelecom.db.inventory.manager.exception.GenericException;
-import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
-import com.osstelecom.db.inventory.manager.exception.SchemaNotFoundException;
-import com.osstelecom.db.inventory.manager.resources.BasicResource;
-import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstraintViolationException;
-import com.osstelecom.db.inventory.manager.resources.model.ResourceAttributeModel;
-import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
-import com.osstelecom.db.inventory.manager.response.CreateResourceSchemaModelResponse;
-import com.osstelecom.db.inventory.manager.response.PatchResourceSchemaModelResponse;
-import com.osstelecom.db.inventory.manager.response.ResourceSchemaResponse;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -43,15 +26,36 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import org.slf4j.Logger;
 
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.RemovalListener;
+import com.google.common.cache.RemovalNotification;
+import com.osstelecom.db.inventory.manager.configuration.ConfigurationManager;
+import com.osstelecom.db.inventory.manager.events.ResourceSchemaUpdatedEvent;
+import com.osstelecom.db.inventory.manager.exception.GenericException;
+import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
+import com.osstelecom.db.inventory.manager.exception.SchemaNotFoundException;
+import com.osstelecom.db.inventory.manager.listeners.EventManagerListener;
+import com.osstelecom.db.inventory.manager.resources.BasicResource;
+import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstraintViolationException;
+import com.osstelecom.db.inventory.manager.resources.model.ResourceAttributeModel;
+import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
+import com.osstelecom.db.inventory.manager.response.CreateResourceSchemaModelResponse;
+import com.osstelecom.db.inventory.manager.response.GetSchemasResponse;
+import com.osstelecom.db.inventory.manager.response.PatchResourceSchemaModelResponse;
+import com.osstelecom.db.inventory.manager.response.ResourceSchemaResponse;
 
 /**
  *
@@ -109,6 +113,19 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
             this.schemaCache.put(schemaName, schema);
             return schema;
         }
+    }
+
+    public GetSchemasResponse loadSchemas() {
+        List<String> result = new ArrayList<>();
+        String schemaDirectory = configurationManager.loadConfiguration().getSchemaDir();
+        schemaDirectory = schemaDirectory.replace("\\.", "/");
+        File f = new File(schemaDirectory);
+        for (String fileName : f.list()) {
+            if (fileName.contains(".json")) {                
+                result.add(fileName.replace(".json",""));
+            }
+        }
+        return new GetSchemasResponse(result);
     }
 
     /**
