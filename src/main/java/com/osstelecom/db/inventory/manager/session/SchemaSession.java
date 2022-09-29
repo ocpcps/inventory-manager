@@ -135,7 +135,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
         scanner.scan();
 
         for (String schemaFile : scanner.getIncludedFiles()) {
-            logger.debug("Found Schema Definition AT:[{}]", schemaFile);
+//            logger.debug("Found Schema Definition AT:[{}]", schemaFile);
             if (schemaFile.startsWith("resource")
                     || schemaFile.startsWith("location")
                     || schemaFile.startsWith("connection")
@@ -143,19 +143,13 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                     || schemaFile.startsWith("circuit")) {
 
                 schemaFile = schemaFile.replaceAll("\\/", ".").replaceAll("\\.json", "");
-                logger.debug("Normalized  As:[{}]", schemaFile);
+//                logger.debug("Normalized  As:[{}]", schemaFile);
                 ResourceSchemaModel schema = this.loadSchemaFromDisk(schemaFile, null);
                 result.add(schema.getSchemaName());
             }
 
         }
 
-//        File f = new File(schemaDirectory);
-//        for (String fileName : f.list()) {
-//            if (fileName.contains(".json")) {
-//                result.add(fileName.replace(".json", ""));
-//            }
-//        }
         return new GetSchemasResponse(result);
     }
 
