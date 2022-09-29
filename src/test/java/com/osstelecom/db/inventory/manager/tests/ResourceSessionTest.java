@@ -45,7 +45,7 @@ import org.springframework.boot.test.context.SpringBootTest;
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 17.09.2022
  */
-@SpringBootTest
+//@SpringBootTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @TestClassOrder(ClassOrderer.OrderAnnotation.class)
 @Order(2)

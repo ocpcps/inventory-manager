@@ -26,13 +26,11 @@ import com.osstelecom.db.inventory.manager.request.CreateCircuitRequest;
 import com.osstelecom.db.inventory.manager.request.CreateConnectionRequest;
 import com.osstelecom.db.inventory.manager.request.CreateDomainRequest;
 import com.osstelecom.db.inventory.manager.request.CreateManagedResourceRequest;
-import com.osstelecom.db.inventory.manager.request.CreateServiceRequest;
 import com.osstelecom.db.inventory.manager.request.DeleteDomainRequest;
 import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
-import com.osstelecom.db.inventory.manager.resources.ServiceResource;
 import com.osstelecom.db.inventory.manager.response.CreateCircuitResponse;
 import com.osstelecom.db.inventory.manager.response.CreateDomainResponse;
 import com.osstelecom.db.inventory.manager.response.CreateManagedResourceResponse;
@@ -58,7 +56,7 @@ import org.springframework.boot.test.context.SpringBootTest;
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 23.09.2022
  */
-@SpringBootTest
+//@SpringBootTest
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @TestClassOrder(ClassOrderer.OrderAnnotation.class)
 @Order(4)
