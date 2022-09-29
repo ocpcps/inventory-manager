@@ -1,6 +1,6 @@
+image: maven:3.8-jdk-11
 stages:
   - build
-
 build-java-project:
   stage: build
   script:
