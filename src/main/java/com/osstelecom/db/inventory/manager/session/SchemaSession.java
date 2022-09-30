@@ -117,21 +117,6 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
         }
     }
 
-    public List<ResourceSchemaResponse> loadSchemas() {
-        List<ResourceSchemaResponse> result = new ArrayList<>();
-        String schemaDir = configurationManager.loadConfiguration().getSchemaDir();
-        schemaDir = schemaDir.replaceAll("\\.", "/");
-        File f = new File(schemaDir);
-        for (String fileName : f.list()) {
-            if (fileName.contains(".json")) {
-                ResourceSchemaModel model = new ResourceSchemaModel();
-                model.setSchemaName(fileName.replace(fileName, ".json"));
-                result.add(new ResourceSchemaResponse(model));
-            }
-        }
-        return result;
-    }
-
     /**
      * Loads all schemas
      *
