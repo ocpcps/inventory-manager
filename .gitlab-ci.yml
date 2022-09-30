@@ -1,5 +1,14 @@
 stages:
+  - test
   - build
+test-java-project:
+  stage: test
+  script:
+    mvn test
+  artifacts:
+    paths:
+      - /home/gitlab-runner/
+
 build-java-project:
   stage: build
   script:
