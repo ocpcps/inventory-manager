@@ -89,17 +89,9 @@ public class SchemaApi extends BaseApi {
     @PatchMapping(path = "/{schema}", produces = "application/json")
     public PatchResourceSchemaModelResponse patchSchameDefinition(@PathVariable("schema") String schemaName,
             @RequestBody PatchResourceSchemaModelRequest request)
-            throws GenericException, SchemaNotFoundException, InvalidRequestException {
-        try {
-            request.getPayLoad().setSchemaName(schemaName);
-            return schemaSession.patchSchemaModel(request.getPayLoad());
-        } catch (SchemaNotFoundException ex) {
-            logger.error("Failed To Load Schema", ex);
-            throw ex;
-        } catch (GenericException ex) {
-            logger.error("Generic EX  Load Schema", ex);
-            throw ex;
-        }
+            throws GenericException, SchemaNotFoundException, InvalidRequestException {        
+        request.getPayLoad().setSchemaName(schemaName);
+        return schemaSession.patchSchemaModel(request.getPayLoad());
     }
 
     /**
