@@ -57,7 +57,7 @@ public class DefaultExample {
         topology.addConnection(router7, router6);
         topology.addConnection(router7, router5);
 
-        Boolean stressMe = true;
+        Boolean stressMe = false;
         if (stressMe) {
             Integer fakeNodCount = 1000;
             ConcurrentHashMap<String, INetworkNode> nodes = new ConcurrentHashMap<>();
