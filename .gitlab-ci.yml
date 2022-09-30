@@ -1,0 +1,9 @@
+stages:
+  - build
+build-java-project:
+  stage: build
+  script:
+    mvn package
+  artifacts:
+    paths:
+      - /home/gitlab-runner/
