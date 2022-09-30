@@ -41,67 +41,67 @@ import org.springframework.boot.test.context.SpringBootTest;
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 17.09.2022
  */
-//@SpringBootTest
-//@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
-//@TestClassOrder(ClassOrderer.OrderAnnotation.class)
-//@Order(1)
+@SpringBootTest
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@TestClassOrder(ClassOrderer.OrderAnnotation.class)
+@Order(1)
 public class DomainSessionTest {
 
-//    @Autowired
-//    private DomainSession domainSession;
-//
-//    @Test
-//    @DisplayName("Check if Domain Session Exists")
-//    @Order(1)
-//    public void domainSessionExists() throws Exception {
-//        Assertions.assertNotNull(domainSession);
-//
-//    }
-//
-//    @Test
-//    @DisplayName("Create Domain Test")
-//    @Order(2)
-//    public void createDomainTest() throws Exception {
-//        CreateDomainRequest request = new CreateDomainRequest();
-//        request.setPayLoad(new Domain());
-//        request.getPayLoad().setDomainName("test");
-//        CreateDomainResponse response = domainSession.createDomain(request);
-//        Assertions.assertTrue(response.getStatusCode() == 200);
-//    }
-//
-//    @Test
-//    @DisplayName("Create Duplicated Domain Test")
-//    @Order(3)
-//    public void createDuplicatedTest() throws Exception {
-//
-//        CreateDomainRequest request = new CreateDomainRequest();
-//        request.setPayLoad(new Domain());
-//        request.getPayLoad().setDomainName("test");
-//        Assertions.assertThrows(DomainAlreadyExistsException.class, () -> {
-//            CreateDomainResponse response = domainSession.createDomain(request);
-//            Assertions.assertFalse(response.getStatusCode() == 200);
-//        });
-//    }
-//
-//    @Test
-//    @DisplayName("Delete Domain Test")
-//    @Order(4)
-//    public void deleteDomainTest() throws Exception {
-//        DeleteDomainRequest request = new DeleteDomainRequest("test");
-//        DeleteDomainResponse response = domainSession.deleteDomain(request);
-//        Assertions.assertTrue(response.getStatusCode() == 200);
-//    }
+    @Autowired
+    private DomainSession domainSession;
 
-//    @Test
-//    @Order(5)
-//    @DisplayName("Create Domain Test Again")
-//    public void createDomainAgainTest() throws Exception {
-//        CreateDomainRequest request = new CreateDomainRequest();
-//        request.setPayLoad(new Domain());
-//        request.getPayLoad().setDomainName("test");
-//        CreateDomainResponse response = domainSession.createDomain(request);
-//        Assertions.assertTrue(response.getStatusCode() == 200);
-//
-//    }
+    @Test
+    @DisplayName("Check if Domain Session Exists")
+    @Order(1)
+    public void domainSessionExists() throws Exception {
+        Assertions.assertNotNull(domainSession);
+
+    }
+
+    @Test
+    @DisplayName("Create Domain Test")
+    @Order(2)
+    public void createDomainTest() throws Exception {
+        CreateDomainRequest request = new CreateDomainRequest();
+        request.setPayLoad(new Domain());
+        request.getPayLoad().setDomainName("test");
+        CreateDomainResponse response = domainSession.createDomain(request);
+        Assertions.assertTrue(response.getStatusCode() == 200);
+    }
+
+    @Test
+    @DisplayName("Create Duplicated Domain Test")
+    @Order(3)
+    public void createDuplicatedTest() throws Exception {
+
+        CreateDomainRequest request = new CreateDomainRequest();
+        request.setPayLoad(new Domain());
+        request.getPayLoad().setDomainName("test");
+        Assertions.assertThrows(DomainAlreadyExistsException.class, () -> {
+            CreateDomainResponse response = domainSession.createDomain(request);
+            Assertions.assertFalse(response.getStatusCode() == 200);
+        });
+    }
+
+    @Test
+    @DisplayName("Delete Domain Test")
+    @Order(4)
+    public void deleteDomainTest() throws Exception {
+        DeleteDomainRequest request = new DeleteDomainRequest("test");
+        DeleteDomainResponse response = domainSession.deleteDomain(request);
+        Assertions.assertTrue(response.getStatusCode() == 200);
+    }
+
+    @Test
+    @Order(5)
+    @DisplayName("Create Domain Test Again")
+    public void createDomainAgainTest() throws Exception {
+        CreateDomainRequest request = new CreateDomainRequest();
+        request.setPayLoad(new Domain());
+        request.getPayLoad().setDomainName("test");
+        CreateDomainResponse response = domainSession.createDomain(request);
+        Assertions.assertTrue(response.getStatusCode() == 200);
+
+    }
 
 }
