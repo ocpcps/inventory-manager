@@ -42,6 +42,7 @@ import com.osstelecom.db.inventory.manager.events.ResourceConnectionCreatedEvent
 import com.osstelecom.db.inventory.manager.events.ResourceConnectionUpdatedEvent;
 import com.osstelecom.db.inventory.manager.events.ServiceResourceCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.ServiceResourceUpdatedEvent;
+import com.osstelecom.db.inventory.manager.events.ServiceStateTransionedEvent;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
@@ -308,17 +309,18 @@ public class ServiceManager extends Manager {
     public ServiceResource updateService(ServiceResource service) throws ArangoDaoException, ResourceNotFoundException {
         String timerId = startTimer("updateServiceResource");
         try {
-            lockManager.lock();
+            this.lockManager.lock();
             service.setLastModifiedDate(new Date());
             //
             // Está salvando null de nested resources... ver o que fazer..
             // 
             this.computeServiceIntegrity(service);
-            DocumentUpdateEntity<ServiceResource> result = serviceDao.updateResource(service);
+            DocumentUpdateEntity<ServiceResource> result = this.serviceDao.updateResource(service);
             ServiceResource newService = result.getNew();
             ServiceResource oldService = result.getOld();
-
             this.resolveCircuitServiceLinks(newService, oldService);
+
+            this.evaluateServiceStateTransition(result);
 
             ServiceResourceUpdatedEvent event = new ServiceResourceUpdatedEvent(oldService, newService);
             this.eventManager.notifyResourceEvent(event);
@@ -421,7 +423,7 @@ public class ServiceManager extends Manager {
 
             if (!service.getRelatedResourceConnections().contains(connection.getId())) {
                 service.getRelatedResourceConnections().add(connection.getId());
-                this.serviceDao.updateResource(service);
+                this.evaluateServiceStateTransition(this.serviceDao.updateResource(service));
             }
         }
     }
@@ -450,7 +452,7 @@ public class ServiceManager extends Manager {
 
             if (!service.getRelatedManagedResources().contains(resource.getId())) {
                 service.getRelatedManagedResources().add(resource.getId());
-                this.serviceDao.updateResource(service);
+                this.evaluateServiceStateTransition(this.serviceDao.updateResource(service));
             }
         }
     }
@@ -482,7 +484,7 @@ public class ServiceManager extends Manager {
 
                 if (!service.getRelatedManagedResources().contains(resource.getId())) {
                     service.getRelatedManagedResources().add(resource.getId());
-                    this.serviceDao.updateResource(service);
+                    this.evaluateServiceStateTransition(this.serviceDao.updateResource(service));
                 }
             }
         } else if (updateEvent.getOldResource() != null && updateEvent.getNewResource() != null) {
@@ -503,7 +505,7 @@ public class ServiceManager extends Manager {
 
                 if (!service.getRelatedManagedResources().contains(resource.getId())) {
                     service.getRelatedManagedResources().add(resource.getId());
-                    this.serviceDao.updateResource(service);
+                    this.evaluateServiceStateTransition(this.serviceDao.updateResource(service));
                 }
             } else if (updateEvent.getOldResource().getDependentService() != null && updateEvent.getNewResource().getDependentService() != null) {
                 ManagedResource resource = updateEvent.getNewResource();
@@ -551,6 +553,30 @@ public class ServiceManager extends Manager {
     }
 
     /**
+     * Avalia se houve transição de estado para notificação do evento de
+     * transição. Este cara que deve avisar o ResrouceManager sobre as
+     * alterações
+     *
+     * @param update
+     */
+    private void evaluateServiceStateTransition(DocumentUpdateEntity<ServiceResource> update) {
+        //
+        // Verifica se houve transição de estado.
+        //
+
+        if (update.getNew() != null && update.getOld() != null) {
+            if (!update.getNew().getOperationalStatus().equals(update.getOld().getOperationalStatus())) {
+                //
+                // Houve Transição de estado
+                //
+                ServiceStateTransionedEvent serviceTrasitionEvent = new ServiceStateTransionedEvent(update);
+                this.eventManager.notifyResourceEvent(serviceTrasitionEvent);
+                logger.debug("Service: [{}] Transitioned from:[{}] to:[{}]", update.getNew().getId(), update.getOld().getOperationalStatus(), update.getNew().getOperationalStatus());
+            }
+        }
+    }
+
+    /**
      * Atualiza a referencia de um circuito com serviço.
      *
      * @param service
@@ -561,8 +587,8 @@ public class ServiceManager extends Manager {
         //
         // Actually Update on DB
         //
-        this.serviceDao.updateResource(service);
-        
+        this.evaluateServiceStateTransition(this.serviceDao.updateResource(service));
+
         /**
          * Verifica se este serviço é necessário para algum outro, ou seja, do
          * pai, procura os filhos. Note que este método só encontra serviços do
@@ -592,7 +618,8 @@ public class ServiceManager extends Manager {
                         // Computa primeiro para saber o estado
                         //
                         this.computeServiceIntegrity(dependentService);
-                        DocumentUpdateEntity<ServiceResource> updateResult = this.serviceDao.updateResource(dependentService);
+//                        DocumentUpdateEntity<ServiceResource> updateResult = this.serviceDao.updateResource(dependentService);
+                        this.evaluateServiceStateTransition(this.serviceDao.updateResource(dependentService));
                         //
                         // Salva no Banco de dados
                         //
@@ -660,6 +687,7 @@ public class ServiceManager extends Manager {
                     if (workingCircuits.isEmpty()) {
                         if (!service.getBroken()) {
                             service.setBroken(true);
+                            service.setOperationalStatus("DOWN");
                         }
                     } else {
                         /**
@@ -669,6 +697,7 @@ public class ServiceManager extends Manager {
                          */
                         if (service.getBroken()) {
                             service.setBroken(false);
+                            service.setOperationalStatus("UP");
                             if (!brokenCircuits.isEmpty()) {
                                 service.setDegrated(true);
                             } else {
@@ -686,6 +715,7 @@ public class ServiceManager extends Manager {
                     if (!service.getBroken()) {
                         service.setBroken(true);
                         service.setDegrated(true);
+                        service.setOperationalStatus("DOWN");
                     }
 
                 }
@@ -707,6 +737,7 @@ public class ServiceManager extends Manager {
                 //
                 service.setDegrated(service.getDependencies().get(0).getDegrated());
                 service.setBroken(service.getDependencies().get(0).getBroken());
+                service.setOperationalStatus(service.getDependencies().get(0).getOperationalStatus());
             } else {
                 //
                 // Temos multiplos serviços.
@@ -724,11 +755,13 @@ public class ServiceManager extends Manager {
                     if (workingServices.isEmpty()) {
                         if (!service.getBroken()) {
                             service.setBroken(true);
+                            service.setOperationalStatus("DOWN");
                         }
                     } else {
 
                         if (service.getBroken()) {
                             service.setBroken(false);
+                            service.setOperationalStatus("UP");
                             if (!brokenServices.isEmpty()) {
                                 service.setDegrated(true);
                             } else {
@@ -745,6 +778,7 @@ public class ServiceManager extends Manager {
                     if (!service.getBroken()) {
                         service.setBroken(true);
                         service.setDegrated(true);
+                        service.setOperationalStatus("DOWN");
                     }
 
                 }
@@ -761,7 +795,7 @@ public class ServiceManager extends Manager {
     }
 
     @Subscribe
-    public void onProcessServiceResourceUpdatedEvent(ServiceResourceUpdatedEvent processEvent)
+    public void onServiceResourceUpdatedEvent(ServiceResourceUpdatedEvent processEvent)
             throws ArangoDaoException, IllegalStateException, IOException, ResourceNotFoundException, DomainNotFoundException {
         this.updateServiceCircuitReference(processEvent.getNewResource());
     }
@@ -860,7 +894,8 @@ public class ServiceManager extends Manager {
                     this.computeServiceIntegrity(service);
                     /**
                      * Manda para um método especifico só para atualizar as
-                     * referencias. do Circuito e seu Status
+                     * referencias. do Circuito e seu Status. Como foi chamado
+                     * após o calculo ele também atualiza
                      */
                     this.updateServiceCircuitReference(service);
 

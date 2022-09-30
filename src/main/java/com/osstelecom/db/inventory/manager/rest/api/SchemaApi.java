@@ -17,21 +17,6 @@
  */
 package com.osstelecom.db.inventory.manager.rest.api;
 
-import com.osstelecom.db.inventory.manager.exception.GenericException;
-import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
-import com.osstelecom.db.inventory.manager.exception.SchemaNotFoundException;
-import com.osstelecom.db.inventory.manager.request.CreateResourceSchemaModelRequest;
-import com.osstelecom.db.inventory.manager.request.PatchResourceSchemaModelRequest;
-import com.osstelecom.db.inventory.manager.response.CreateResourceSchemaModelResponse;
-import com.osstelecom.db.inventory.manager.response.EmptyOkResponse;
-import com.osstelecom.db.inventory.manager.response.PatchResourceSchemaModelResponse;
-import com.osstelecom.db.inventory.manager.response.ResourceSchemaResponse;
-import com.osstelecom.db.inventory.manager.response.TypedMapResponse;
-import com.osstelecom.db.inventory.manager.security.model.AuthenticatedCall;
-import com.osstelecom.db.inventory.manager.session.SchemaSession;
-
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -40,6 +25,20 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.osstelecom.db.inventory.manager.exception.GenericException;
+import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
+import com.osstelecom.db.inventory.manager.exception.SchemaNotFoundException;
+import com.osstelecom.db.inventory.manager.request.CreateResourceSchemaModelRequest;
+import com.osstelecom.db.inventory.manager.request.PatchResourceSchemaModelRequest;
+import com.osstelecom.db.inventory.manager.response.CreateResourceSchemaModelResponse;
+import com.osstelecom.db.inventory.manager.response.EmptyOkResponse;
+import com.osstelecom.db.inventory.manager.response.GetSchemasResponse;
+import com.osstelecom.db.inventory.manager.response.PatchResourceSchemaModelResponse;
+import com.osstelecom.db.inventory.manager.response.ResourceSchemaResponse;
+import com.osstelecom.db.inventory.manager.response.TypedMapResponse;
+import com.osstelecom.db.inventory.manager.security.model.AuthenticatedCall;
+import com.osstelecom.db.inventory.manager.session.SchemaSession;
 
 /**
  * Handles the Dynamic Schema Mapping and Operations
@@ -63,7 +62,7 @@ public class SchemaApi extends BaseApi {
      */
     @AuthenticatedCall(role = { "user" })
     @GetMapping(produces = "application/json")
-    public List<ResourceSchemaResponse> getSchemasDefinition() {
+    public GetSchemasResponse getSchemasDefinition() throws SchemaNotFoundException, GenericException {
         return schemaSession.loadSchemas();
     }
 
@@ -75,7 +74,7 @@ public class SchemaApi extends BaseApi {
      */
     @AuthenticatedCall(role = { "user" })
     @GetMapping(path = "/{schema}", produces = "application/json")
-    public ResourceSchemaResponse getSchemaDefinition(@PathVariable("schema") String schema)
+    public ResourceSchemaResponse getSchameDefinition(@PathVariable("schema") String schema)
             throws GenericException, SchemaNotFoundException {
         return schemaSession.loadSchemaByName(schema);
     }
@@ -88,9 +87,9 @@ public class SchemaApi extends BaseApi {
      */
     @AuthenticatedCall(role = { "user" })
     @PatchMapping(path = "/{schema}", produces = "application/json")
-    public PatchResourceSchemaModelResponse patchSchemaDefinition(@PathVariable("schema") String schemaName,
+    public PatchResourceSchemaModelResponse patchSchameDefinition(@PathVariable("schema") String schemaName,
             @RequestBody PatchResourceSchemaModelRequest request)
-            throws GenericException, SchemaNotFoundException, InvalidRequestException {
+            throws GenericException, SchemaNotFoundException, InvalidRequestException {        
         request.getPayLoad().setSchemaName(schemaName);
         return schemaSession.patchSchemaModel(request.getPayLoad());
     }

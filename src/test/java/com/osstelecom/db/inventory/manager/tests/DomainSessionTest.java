@@ -92,16 +92,25 @@ public class DomainSessionTest {
         Assertions.assertTrue(response.getStatusCode() == 200);
     }
 
-//    @Test
-//    @Order(5)
-//    @DisplayName("Create Domain Test Again")
-//    public void createDomainAgainTest() throws Exception {
-//        CreateDomainRequest request = new CreateDomainRequest();
-//        request.setPayLoad(new Domain());
-//        request.getPayLoad().setDomainName("test");
-//        CreateDomainResponse response = domainSession.createDomain(request);
-//        Assertions.assertTrue(response.getStatusCode() == 200);
-//
-//    }
+    @Test
+    @Order(5)
+    @DisplayName("Create Domain Test Again")
+    public void createDomainAgainTest() throws Exception {
+        CreateDomainRequest request = new CreateDomainRequest();
+        request.setPayLoad(new Domain());
+        request.getPayLoad().setDomainName("test");
+        CreateDomainResponse response = domainSession.createDomain(request);
+        Assertions.assertTrue(response.getStatusCode() == 200);
+
+    }
+
+    @Test
+    @DisplayName("Delete Domain Test Again")
+    @Order(6)
+    public void deleteDomainTest2() throws Exception {
+        DeleteDomainRequest request = new DeleteDomainRequest("test");
+        DeleteDomainResponse response = domainSession.deleteDomain(request);
+        Assertions.assertTrue(response.getStatusCode() == 200);
+    }
 
 }

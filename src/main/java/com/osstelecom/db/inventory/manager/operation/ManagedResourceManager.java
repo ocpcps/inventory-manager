@@ -36,6 +36,7 @@ import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import com.osstelecom.db.inventory.manager.events.ManagedResourceCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.ManagedResourceUpdatedEvent;
 import com.osstelecom.db.inventory.manager.events.ResourceSchemaUpdatedEvent;
+import com.osstelecom.db.inventory.manager.events.ServiceStateTransionedEvent;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
@@ -92,8 +93,8 @@ public class ManagedResourceManager extends Manager {
      * @param resource
      * @return
      */
-    public ManagedResource get(ManagedResource resource) {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public ManagedResource get(ManagedResource resource) throws ResourceNotFoundException, ArangoDaoException {
+        return this.findManagedResource(resource);
     }
 
     /**
@@ -319,11 +320,12 @@ public class ManagedResourceManager extends Manager {
 
     /**
      * Retrieve a Stream list ( GraphList) from a SchemaModelName
+     *
      * @param model
      * @param domain
      * @return
      * @throws ResourceNotFoundException
-     * @throws ArangoDaoException 
+     * @throws ArangoDaoException
      */
     public GraphList<ManagedResource> findManagedResourcesBySchemaName(ResourceSchemaModel model, Domain domain) throws ResourceNotFoundException, ArangoDaoException {
         return this.managedResourceDao.findResourcesBySchemaName(model.getSchemaName(), domain);
@@ -433,6 +435,48 @@ public class ManagedResourceManager extends Manager {
     public void onManagedResourceUpdatedEvent(ManagedResourceUpdatedEvent updateEvent) {
         logger.debug("Managed Resource [{}] Updated: ", updateEvent.getOldResource().getId());
 
+    }
+
+    /**
+     * Recebe as notificações de Serviços
+     *
+     * @param serviceUpdateEvent
+     */
+    @Subscribe
+    public void onServiceStateTransionedEvent(ServiceStateTransionedEvent serviceStateTransitionedEvent) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException {
+        if (serviceStateTransitionedEvent.getNewResource().getRelatedManagedResources() != null
+                && !serviceStateTransitionedEvent.getNewResource().getRelatedManagedResources().isEmpty()) {
+
+            for (String managedResourceId : serviceStateTransitionedEvent.getNewResource().getRelatedManagedResources()) {
+                String domainName = this.domainManager.getDomainNameFromId(managedResourceId);
+                if (!domainName.equals(serviceStateTransitionedEvent.getNewResource().getDomainName())) {
+                    //
+                    // Só propaga se o serviço e o recurso estiverem em dominios diferentes!
+                    // Isto é para "tentar" evitar uma referencia circular, é para tentar, pois não garante.
+                    //
+
+                    //
+                    // Então sabemos que o Serviço em questão afeta recursos de outros dominios!
+                    //
+                    Domain domain = this.domainManager.getDomain(domainName);
+                    ManagedResource resource = new ManagedResource(domain, managedResourceId);
+
+                    //
+                    // Obtem a referencia do DB
+                    //
+                    resource = this.get(resource);
+
+                    //
+                    // Replica o estado do Serviço no Recurso.
+                    // 
+                    resource.setOperationalStatus(serviceStateTransitionedEvent.getNewResource().getOperationalStatus());
+                    //
+                    // Atualiza tudo, retrigando todo ciclo novamente
+                    //
+                    this.update(resource);
+                }
+            }
+        }
     }
 
 }

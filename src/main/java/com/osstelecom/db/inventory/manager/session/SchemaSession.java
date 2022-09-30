@@ -17,23 +17,6 @@
  */
 package com.osstelecom.db.inventory.manager.session;
 
-import com.osstelecom.db.inventory.manager.listeners.EventManagerListener;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.RemovalListener;
-import com.google.common.cache.RemovalNotification;
-import com.osstelecom.db.inventory.manager.configuration.ConfigurationManager;
-import com.osstelecom.db.inventory.manager.events.ResourceSchemaUpdatedEvent;
-import com.osstelecom.db.inventory.manager.exception.GenericException;
-import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
-import com.osstelecom.db.inventory.manager.exception.SchemaNotFoundException;
-import com.osstelecom.db.inventory.manager.resources.BasicResource;
-import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstraintViolationException;
-import com.osstelecom.db.inventory.manager.resources.model.ResourceAttributeModel;
-import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
-import com.osstelecom.db.inventory.manager.response.CreateResourceSchemaModelResponse;
-import com.osstelecom.db.inventory.manager.response.PatchResourceSchemaModelResponse;
-import com.osstelecom.db.inventory.manager.response.ResourceSchemaResponse;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -47,13 +30,33 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import org.slf4j.Logger;
 
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.RemovalListener;
+import com.google.common.cache.RemovalNotification;
+import com.osstelecom.db.inventory.manager.configuration.ConfigurationManager;
+import com.osstelecom.db.inventory.manager.events.ResourceSchemaUpdatedEvent;
+import com.osstelecom.db.inventory.manager.exception.GenericException;
+import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
+import com.osstelecom.db.inventory.manager.exception.SchemaNotFoundException;
+import com.osstelecom.db.inventory.manager.listeners.EventManagerListener;
+import com.osstelecom.db.inventory.manager.resources.BasicResource;
+import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstraintViolationException;
+import com.osstelecom.db.inventory.manager.resources.model.ResourceAttributeModel;
+import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
+import com.osstelecom.db.inventory.manager.response.CreateResourceSchemaModelResponse;
+import com.osstelecom.db.inventory.manager.response.GetSchemasResponse;
+import com.osstelecom.db.inventory.manager.response.PatchResourceSchemaModelResponse;
+import com.osstelecom.db.inventory.manager.response.ResourceSchemaResponse;
+import org.apache.tools.ant.DirectoryScanner;
 
 /**
  *
@@ -130,6 +133,41 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
     }
 
     /**
+     * Loads all schemas
+     *
+     * @return
+     */
+    public GetSchemasResponse loadSchemas() throws SchemaNotFoundException, GenericException {
+        this.schemaDir = configurationManager.loadConfiguration().getSchemaDir();
+        List<String> result = new ArrayList<>();
+        String schemaDirectory = configurationManager.loadConfiguration().getSchemaDir();
+        schemaDirectory = schemaDirectory.replace("\\.", "/");
+        DirectoryScanner scanner = new DirectoryScanner();
+        String[] filter = new String[1];
+        filter[0] = "**/*.json";
+        scanner.setIncludes(filter);
+        scanner.setBasedir(schemaDirectory);
+        scanner.setCaseSensitive(true);
+        scanner.scan();
+
+        for (String schemaFile : scanner.getIncludedFiles()) {
+            if (schemaFile.startsWith("resource")
+                    || schemaFile.startsWith("location")
+                    || schemaFile.startsWith("connection")
+                    || schemaFile.startsWith("service")
+                    || schemaFile.startsWith("circuit")) {
+
+                schemaFile = schemaFile.replaceAll("\\/", ".").replaceAll("\\.json", "");
+                ResourceSchemaModel schema = this.loadSchemaFromDisk(schemaFile, null);
+                result.add(schema.getSchemaName());
+            }
+
+        }
+
+        return new GetSchemasResponse(result);
+    }
+
+    /**
      * Loads the Schema by Name
      *
      * @param schemaName
@@ -173,8 +211,8 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
     private ResourceSchemaModel loadSchemaFromDisk(String schemaName, ResourceSchemaModel result)
             throws SchemaNotFoundException, GenericException {
         schemaName = schemaName.replaceAll("\\.", "/");
-        File f = new File(this.schemaDir + "/" + schemaName + ".json");
         logger.debug("Trying to load Schema from: " + schemaName);
+        File f = new File(this.schemaDir + "/" + schemaName + ".json");
 
         if (f.exists()) {
             try {
@@ -205,7 +243,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                 throw new GenericException(ex.getMessage(), ex);
             }
         } else {
-            throw new SchemaNotFoundException("Schema With Name:[" + schemaName + "] was not found");
+            throw new SchemaNotFoundException("Schema With Name:[" + schemaName + "] was not found File: [" + this.schemaDir + "/" + schemaName + ".json" + "]");
         }
 
     }
@@ -302,8 +340,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                                         "Missing Required Attribute Named:[" + entry.getName() + "]");
                             }
                         } else {
-                            resource.getAttributes().put(entry.getName(),
-                                    getAttributeValue(entry, resource.getAttributes().get(entry.getName())));
+                            resource.getAttributes().put(entry.getName(), this.getAttributeValue(entry, resource.getAttributes().get(entry.getName())));
                         }
                     } else {
                         if (!resource.getAttributes().containsKey(entry.getName())) {
@@ -405,7 +442,11 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                 //
                 // String will get the String representation as it is..
                 //
-                return value;
+                if (value instanceof String) {
+                    return value;
+                } else {
+                    throw new AttributeConstraintViolationException("Attribute [" + model.getName() + "] of type:" + model.getVariableType() + " Does not accpect value: [" + value + "] of type:" + value.getClass().getCanonicalName());
+                }
             } else if (model.getVariableType().equalsIgnoreCase("Number")) {
                 if (value instanceof Long) {
                     return value;

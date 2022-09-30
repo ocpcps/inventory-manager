@@ -1,0 +1,16 @@
+/home/lucas/NetBeansProjects/inventory-manager/inventory-manager-commom/src/main/java/com/osstelecom/db/inventory/manager/http/request/IRequest.java
+/home/lucas/NetBeansProjects/inventory-manager/inventory-manager-commom/src/main/java/com/osstelecom/db/inventory/manager/objects/BasicObject.java
+/home/lucas/NetBeansProjects/inventory-manager/inventory-manager-commom/src/main/java/com/osstelecom/db/inventory/manager/http/response/IResponse.java
+/home/lucas/NetBeansProjects/inventory-manager/inventory-manager-commom/src/main/java/com/osstelecom/db/inventory/manager/http/request/BasicRequest.java
+/home/lucas/NetBeansProjects/inventory-manager/inventory-manager-commom/src/main/java/com/osstelecom/db/inventory/manager/client/InventoryManagerClient.java
+/home/lucas/NetBeansProjects/inventory-manager/inventory-manager-commom/src/main/java/com/osstelecom/db/inventory/manager/http/response/BasicResponse.java
+/home/lucas/NetBeansProjects/inventory-manager/inventory-manager-commom/src/main/java/com/osstelecom/db/inventory/manager/objects/Filter.java
+/home/lucas/NetBeansProjects/inventory-manager/inventory-manager-commom/src/main/java/com/osstelecom/db/inventory/manager/objects/ManagedResource.java
+/home/lucas/NetBeansProjects/inventory-manager/inventory-manager-commom/src/main/java/com/osstelecom/db/inventory/manager/http/request/FilterRequest.java
+/home/lucas/NetBeansProjects/inventory-manager/inventory-manager-commom/src/main/java/com/osstelecom/db/inventory/manager/objects/BasicResource.java
+/home/lucas/NetBeansProjects/inventory-manager/inventory-manager-commom/src/main/java/com/osstelecom/db/inventory/manager/http/response/GetFilterResponse.java
+/home/lucas/NetBeansProjects/inventory-manager/inventory-manager-commom/src/main/java/com/osstelecom/db/inventory/manager/http/IMHttpClient.java
+/home/lucas/NetBeansProjects/inventory-manager/inventory-manager-commom/src/main/java/com/osstelecom/db/inventory/manager/client/InventoryManagementStreamClient.java
+/home/lucas/NetBeansProjects/inventory-manager/inventory-manager-commom/src/main/java/com/osstelecom/db/inventory/manager/objects/ResourceConnection.java
+/home/lucas/NetBeansProjects/inventory-manager/inventory-manager-commom/src/main/java/com/osstelecom/db/inventory/manager/objects/Domain.java
+/home/lucas/NetBeansProjects/inventory-manager/inventory-manager-commom/src/main/java/com/osstelecom/db/inventory/manager/http/response/GetDomainsResponse.java
