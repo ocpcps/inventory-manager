@@ -94,8 +94,6 @@ public class ResourceSession {
      */
     public CreateResourceConnectionResponse createResourceConnection(CreateConnectionRequest request) throws ResourceNotFoundException, ConnectionAlreadyExistsException, MetricConstraintException, NoResourcesAvailableException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, InvalidRequestException, DomainNotFoundException, ArangoDaoException {
 
-        //ManagedResource from = domainManager.findManagedResource(request.getPayLoad().getFromName(), request.getPayLoad().getFromNodeAddress(), request.getPayLoad().getFromClassName(), request.getRequestDomain());
-        //ManagedResource to = domainManager.findManagedResource(request.getPayLoad().getToName(), request.getPayLoad().getToNodeAddress(), request.getPayLoad().getToClassName(), request.getRequestDomain());
         ResourceConnection connection = new ResourceConnection(domainManager.getDomain(request.getRequestDomain()));
         connection.setName(request.getPayLoad().getConnectionName());
         connection.setClassName(request.getPayLoad().getConnectionClass());
@@ -161,8 +159,6 @@ public class ResourceSession {
         connection.setPropagateOperStatus(request.getPayLoad().getPropagateOperStatus());
         CreateResourceConnectionResponse response = new CreateResourceConnectionResponse(connection);
         connection.setInsertedDate(new Date());
-
-        
 
         resourceConnectionManager.createResourceConnection(connection);
         return response;
@@ -340,11 +336,10 @@ public class ResourceSession {
             });
         }
 
-        
-         //
+        //
         // Atualiza os atributos de rede
         //
-        if (requestedPatch.getDiscoveryAttributes()!= null && !requestedPatch.getDiscoveryAttributes().isEmpty()) {
+        if (requestedPatch.getDiscoveryAttributes() != null && !requestedPatch.getDiscoveryAttributes().isEmpty()) {
             requestedPatch.getDiscoveryAttributes().forEach((name, attribute) -> {
                 if (fromDBResource.getDiscoveryAttributes() != null) {
                     if (fromDBResource.getDiscoveryAttributes().containsKey(name)) {
@@ -356,7 +351,6 @@ public class ResourceSession {
             });
         }
 
-        
         if (requestedPatch.getDependentService() != null) {
             //
             // Valida se o serviço existe
