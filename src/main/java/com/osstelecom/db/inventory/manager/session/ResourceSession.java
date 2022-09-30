@@ -240,6 +240,8 @@ public class ResourceSession {
             request.getPayLoad().setNodeAddress(request.getPayLoad().getName());
         }
 
+        resource.setOwner(request.getUserId());
+        resource.setAuthor(request.getUserId());
         resource.setInsertedDate(new Date());
         resource = manager.create(resource);
         return new CreateManagedResourceResponse(resource);

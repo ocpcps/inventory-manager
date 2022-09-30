@@ -107,6 +107,7 @@ public class InventoryApi extends BaseApi {
     @PutMapping(path = "/{domain}/location/connection", produces = "application/json", consumes = "application/json")
     public CreateResourceConnectionResponse createResourceLocationConnection(@RequestBody CreateConnectionRequest request, @PathVariable("domain") String domain) throws ArangoDaoException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, ResourceNotFoundException, DomainNotFoundException, InvalidRequestException {
         try {
+            this.setUserDetails(request);
             request.setRequestDomain(domain);
             return resourceLocationSession.createResourceLocationConnection(request);
         } catch (ArangoDBException ex) {
@@ -134,6 +135,7 @@ public class InventoryApi extends BaseApi {
     @PutMapping(path = "/{domain}/resource", produces = "application/json", consumes = "application/json")
     public CreateManagedResourceResponse createManagedResource(@RequestBody CreateManagedResourceRequest request, @PathVariable("domain") String domain) throws GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, InvalidRequestException, DomainNotFoundException, ArangoDaoException, ResourceNotFoundException {
         try {
+            this.setUserDetails(request);
             request.setRequestDomain(domain);
             return resourceSession.createManagedResource(request);
         } catch (ArangoDBException ex) {
@@ -158,6 +160,7 @@ public class InventoryApi extends BaseApi {
     @GetMapping(path = "/{domain}/resource/{resourceId}", produces = "application/json")
     public FindManagedResourceResponse findManagedResourceById(@PathVariable("domain") String domain, @PathVariable("resourceId") String resourceId) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
         FindManagedResourceRequest findRequest = new FindManagedResourceRequest(resourceId, domain);
+        this.setUserDetails(findRequest);
         return resourceSession.findManagedResourceById(findRequest);
     }
 
@@ -173,6 +176,7 @@ public class InventoryApi extends BaseApi {
     @PutMapping(path = "/{domain}/resource/connection", produces = "application/json", consumes = "application/json")
     public CreateResourceConnectionResponse createResourceConnection(@RequestBody CreateConnectionRequest request, @PathVariable("domain") String domain) throws GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, InvalidRequestException, ResourceNotFoundException, ConnectionAlreadyExistsException, MetricConstraintException, NoResourcesAvailableException, DomainNotFoundException, ArangoDaoException {
         try {
+            this.setUserDetails(request);
             request.setRequestDomain(domain);
             return resourceSession.createResourceConnection(request);
         } catch (ArangoDBException ex) {
@@ -200,6 +204,7 @@ public class InventoryApi extends BaseApi {
     @AuthenticatedCall(role = {"user"})
     @PostMapping(path = "/{domain}/filter", produces = "application/json", consumes = "application/json")
     public FilterResponse findManagedResourceByFilter(@RequestBody FilterRequest filter, @PathVariable("domain") String domain) throws ArangoDaoException, ResourceNotFoundException, DomainNotFoundException, InvalidRequestException {
+        this.setUserDetails(filter);
         filter.setRequestDomain(domain);
         return resourceSession.findManagedResourceByFilter(filter);
     }
@@ -219,6 +224,7 @@ public class InventoryApi extends BaseApi {
     @AuthenticatedCall(role = {"user"})
     @PatchMapping(path = "/{domain}/resource/{resourceId}", produces = "application/json", consumes = "application/json")
     public PatchManagedResourceResponse patchManagedResource(@RequestBody PatchManagedResourceRequest request, @PathVariable("domain") String domainName, @PathVariable("resourceId") String resourceId) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException {
+        this.setUserDetails(request);
         request.setRequestDomain(domainName);
         request.getPayLoad().setId(resourceId);
         return this.resourceSession.patchManagedResource(request);
@@ -227,6 +233,7 @@ public class InventoryApi extends BaseApi {
     @AuthenticatedCall(role = {"user"})
     @PatchMapping(path = "/{domain}/resource/", produces = "application/json", consumes = "application/json")
     public PatchManagedResourceResponse patchManagedResource(@RequestBody PatchManagedResourceRequest request, @PathVariable("domain") String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException {
+        this.setUserDetails(request);
         request.setRequestDomain(domainName);
         return this.resourceSession.patchManagedResource(request);
     }

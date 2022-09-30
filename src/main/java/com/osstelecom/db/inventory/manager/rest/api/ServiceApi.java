@@ -50,7 +50,7 @@ import com.osstelecom.db.inventory.manager.session.ServiceSession;
  */
 @RestController
 @RequestMapping("inventory/v1")
-public class ServiceApi {
+public class ServiceApi extends BaseApi {
 
     @Autowired
     private ServiceSession serviceSession;
@@ -60,6 +60,7 @@ public class ServiceApi {
     public GetServiceResponse getServiceById(@PathVariable("domainName") String domainName,
             @PathVariable("serviceId") String serviceId) throws InvalidRequestException, ResourceNotFoundException, DomainNotFoundException, ArangoDaoException {
         GetServiceRequest request = new GetServiceRequest();
+        this.setUserDetails(request);
         request.setRequestDomain(domainName);
         request.setPayLoad(new ServiceResource(serviceId));
         return serviceSession.getServiceById(request);
@@ -69,6 +70,7 @@ public class ServiceApi {
     @DeleteMapping(path = "/{domainName}/service/{serviceId}", produces = "application/json")
     public DeleteServiceResponse deleteService(@PathVariable("serviceId") String serviceId, @PathVariable("domainName") String domainName) throws DomainNotFoundException, ArangoDaoException {
         DeleteServiceRequest request = new DeleteServiceRequest(serviceId);
+        this.setUserDetails(request);
         request.setRequestDomain(domainName);
         return serviceSession.deleteService(request);
     }
@@ -76,6 +78,7 @@ public class ServiceApi {
     @AuthenticatedCall(role = {"user"})
     @PutMapping(path = "/{domainName}/service/", produces = "application/json", consumes = "application/json")
     public CreateServiceResponse createService(@RequestBody CreateServiceRequest request, @PathVariable("domainName") String domainName) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
+        this.setUserDetails(request);
         request.setRequestDomain(domainName);
         return serviceSession.createService(request);
     }
@@ -83,6 +86,7 @@ public class ServiceApi {
     @AuthenticatedCall(role = {"user"})
     @PatchMapping(path = "/{domainName}/service/{serviceId}", produces = "application/json", consumes = "application/json")
     public PatchServiceResponse patchManagedResource(@RequestBody PatchServiceRequest request, @PathVariable("domainName") String domainName, @PathVariable("serviceId") String serviceId) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
+        this.setUserDetails(request);
         request.setRequestDomain(domainName);
         request.getPayLoad().setId(serviceId);
         return serviceSession.updateService(request);
@@ -91,6 +95,7 @@ public class ServiceApi {
     @AuthenticatedCall(role = {"user"})
     @PatchMapping(path = "/{domainName}/service/", produces = "application/json", consumes = "application/json")
     public PatchServiceResponse patchManagedResource(@RequestBody PatchServiceRequest request, @PathVariable("domainName") String domainName) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
+        this.setUserDetails(request);
         request.setRequestDomain(domainName);
         return serviceSession.updateService(request);
     }

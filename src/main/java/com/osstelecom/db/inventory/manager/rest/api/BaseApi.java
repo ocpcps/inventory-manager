@@ -17,8 +17,12 @@
  */
 package com.osstelecom.db.inventory.manager.rest.api;
 
+import com.osstelecom.db.inventory.manager.request.BasicRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.core.oidc.StandardClaimNames;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 
 /**
  *
@@ -30,6 +34,24 @@ public class BaseApi {
     /**
      * Take care of Json Serialization
      */
-//    protected Gson gson = new GsonBuilder().setPrettyPrinting().create();
     protected Logger logger = LoggerFactory.getLogger(this.getClass());
+
+    protected void setUserDetails(BasicRequest req) {
+        if (req != null) {
+            Object details = SecurityContextHolder.getContext().getAuthentication();
+            if (details instanceof JwtAuthenticationToken) {
+                JwtAuthenticationToken userDetails = (JwtAuthenticationToken) details;
+
+                String userName = (String) userDetails.getToken().getClaimAsString(StandardClaimNames.NAME);
+                String userLogin = (String) userDetails.getToken().getClaimAsString(StandardClaimNames.PREFERRED_USERNAME);
+                String userId = (String) userDetails.getToken().getClaimAsString(StandardClaimNames.SUB);
+                String email = (String) userDetails.getToken().getClaimAsString(StandardClaimNames.EMAIL);
+                req.setUserId(userId);
+                req.setUserEmail(email);
+                req.setUserName(userName);
+                req.setUserLogin(userLogin);
+            }
+        }
+    }
+
 }

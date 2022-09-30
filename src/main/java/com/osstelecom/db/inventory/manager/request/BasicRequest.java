@@ -17,8 +17,6 @@
  */
 package com.osstelecom.db.inventory.manager.request;
 
-import com.osstelecom.db.inventory.manager.resources.BasicResource;
-
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
@@ -31,6 +29,10 @@ public abstract class BasicRequest<T> implements IRequest<T> {
     private String requestTarget;
     private String requestDomain;
     private String className;
+    private String userId;
+    private String userEmail;
+    private String userName;
+    private String userLogin;
     private T payLoad;
 
     public String getClassName() {
@@ -74,6 +76,62 @@ public abstract class BasicRequest<T> implements IRequest<T> {
     @Override
     public void setRequestDomain(String requestDomain) {
         this.requestDomain = requestDomain;
+    }
+
+    /**
+     * @return the userId
+     */
+    public String getUserId() {
+        return userId;
+    }
+
+    /**
+     * @param userId the userId to set
+     */
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    /**
+     * @return the userEmail
+     */
+    public String getUserEmail() {
+        return userEmail;
+    }
+
+    /**
+     * @param userEmail the userEmail to set
+     */
+    public void setUserEmail(String userEmail) {
+        this.userEmail = userEmail;
+    }
+
+    /**
+     * @return the userName
+     */
+    public String getUserName() {
+        return userName;
+    }
+
+    /**
+     * @param userName the userName to set
+     */
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    /**
+     * @return the userLogin
+     */
+    public String getUserLogin() {
+        return userLogin;
+    }
+
+    /**
+     * @param userLogin the userLogin to set
+     */
+    public void setUserLogin(String userLogin) {
+        this.userLogin = userLogin;
     }
 
 }
