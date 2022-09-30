@@ -104,4 +104,13 @@ public class DomainSessionTest {
 
     }
 
+    @Test
+    @DisplayName("Delete Domain Test Again")
+    @Order(6)
+    public void deleteDomainTest2() throws Exception {
+        DeleteDomainRequest request = new DeleteDomainRequest("test");
+        DeleteDomainResponse response = domainSession.deleteDomain(request);
+        Assertions.assertTrue(response.getStatusCode() == 200);
+    }
+
 }
