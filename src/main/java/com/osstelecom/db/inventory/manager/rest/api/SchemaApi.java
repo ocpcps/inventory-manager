@@ -62,7 +62,7 @@ public class SchemaApi extends BaseApi {
      */
     @AuthenticatedCall(role = { "user" })
     @GetMapping(produces = "application/json")
-    public GetSchemasResponse getSchemasDefinition() {
+    public GetSchemasResponse getSchemasDefinition() throws SchemaNotFoundException, GenericException {
         return schemaSession.loadSchemas();
     }
 
