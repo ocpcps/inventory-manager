@@ -296,7 +296,12 @@ public class DefaultImpactManager extends ImpactManager {
      * @return
      */
     public List<INetworkNode> getWeakNodes(Integer connLimit, Boolean all, Integer threadCount, Boolean useCache, ArrayList<INetworkNode> nodes) {
+
         weakDone.set(0L);
+        //
+        // Trata a quantidade de threads, não pode ser maior que a quantidade
+        //  de nós a serem testadas
+        //
         if (threadCount > this.getTopology().getNodes().size()) {
             threadCount = this.getTopology().getNodes().size() - 1;
         }
@@ -308,6 +313,7 @@ public class DefaultImpactManager extends ImpactManager {
 
         //
         // Esses nunca vão chegar lá....
+        // Já elege pelo DFS os que não tocam nenhuma saída...
         //
         ArrayList<INetworkNode> alreadyDown = this.getUnreacheableNodes();
         logger.debug("Removing: " + alreadyDown.size() + " Because Already Unreacheable");
@@ -565,6 +571,8 @@ public class DefaultImpactManager extends ImpactManager {
                             //
                             // Já é fraco por natureza...
                             //
+//                            step = 1;
+//                            walkAllPaths(workload.getSource(), workload.getTarget(), workload.getLimit());
                         } else {
                             step = 1;
                             this.mayIStop = false;
@@ -575,6 +583,7 @@ public class DefaultImpactManager extends ImpactManager {
                         logger.debug("Took " + took + " ms to process: " + workload.getSource().getName() + "(" + workload.getSource().getEndpointConnectionsCount() + ") Queue is:" + weakQueue.size() + " [" + String.format("%.2f", getCurrentWorkPerc()) + "] % Stopped:[" + this.mayIStop + "]");
                         logger.debug("--------------------------------------------------------------------------");
                     }
+//                    workload.getSource().setUnvisited();
                 }
 
             }
@@ -597,27 +606,28 @@ public class DefaultImpactManager extends ImpactManager {
         /**
          * Caminha pot todos os possiveis caminhos de ponto A para ponto B
          *
-         * @param s
-         * @param d
+         * @param sourceNode
+         * @param targetNode
          */
-        public void walkAllPaths(INetworkNode s, INetworkNode d, Integer limit) {
+        public void walkAllPaths(INetworkNode sourceNode, INetworkNode targetNode, Integer limit) {
             ArrayList<INetworkNode> pathList = new ArrayList<>();
-            pathList.add(s);
+            pathList.add(sourceNode);
             step = 2;
             if (useCache) {
-                while (s.getUnprobedConnections().size() > 0) {
+                while (sourceNode.getUnprobedConnections().size() > 0) {
                     step = 2;
                     if (!mayIStop) {
-                        computeAllPossiblePathsToTarget(s, d, pathList, limit, 0);
+                        computeAllPossiblePathsToTarget(sourceNode, targetNode, pathList, limit, 0);
                         step = 3;
                     } else {
+//                        logger.debug("STOP FOR:" + sourceNode.getName());
                         break;
                     }
                 }
             } else {
                 if (!mayIStop) {
                     step = 2;
-                    computeAllPossiblePathsToTarget(s, d, pathList, limit, 0);
+                    computeAllPossiblePathsToTarget(sourceNode, targetNode, pathList, limit, 0);
                     step = 3;
                 }
             }
@@ -648,9 +658,12 @@ public class DefaultImpactManager extends ImpactManager {
             source.setVisited();
             level++;
             if (debug) {
-                logger.debug(getSpaces(level) + "Processing Node:" + source.getName() + " Connections to Endpoint: [" + source.getEndpointConnectionsCount() + "]");
+                logger.debug(getSpaces(level) + "Processing Node:" + source.getName() + " Connections to Endpoint: [" + source.getEndpointConnectionsCount() + "/" + source.getConnections().size() + "]");
             }
             for (INetworkConnection connection : source.getConnections()) {
+                if (debug) {
+                    logger.debug(getSpaces(level) + " Processing Node:" + source.getName() + " Connection: " + connection.getName());
+                }
                 step = 5;
                 //
                 // Só leva em considerações nós ativos
@@ -669,6 +682,9 @@ public class DefaultImpactManager extends ImpactManager {
                             pathList.add(other);
 
                             if (mayIStop) {
+                                if (debug) {
+                                    logger.debug(getSpaces(level) + " mayIStop IS TRUE FOR:" + source.getName() + " To :" + other.getName() + "  to Endpoint: [" + other.getEndpointConnectionsCount(source) + "] Unvisted:" + source.getUnVisitedConnections().size());
+                                }
                                 markSegmentAsReacheable(pathList, level, false);
                                 return;
                             }
@@ -709,14 +725,34 @@ public class DefaultImpactManager extends ImpactManager {
                             pathList.remove(other);
                         } else {
                             if (debug) {
-                                logger.debug(getSpaces(level) + " --> Skipping:" + other.getName() + " Already Visited");
+                                logger.debug(getSpaces(level) + "  --> Skipping:" + other.getName() + "(" + other.getEndpointConnectionsCount(source) + ") From:[" + source.getName() + "] Already Visited");
                             }
+                            //
+                            // Já Visitei. Este segmento, tem conexões com o EndPoint ? 
+                            //
+                            if (other.getEndpointConnectionsCount(source) > 0) {
+                                pathList.add(other);
+                                markSegmentAsReacheable(pathList, level, false);
+                                pathList.remove(other);
+                                if (debug) {
+                                    logger.debug(getSpaces(level) + "  Connection:" + connection.getName() + " OK TO ENDPOINT!!!");
+                                }
+                            } else {
+                                if (debug) {
+                                    logger.debug(getSpaces(level) + "  Connection:" + connection.getName() + " NOOOOT OK TO ENDPOINT!!!");
+                                }
+                            }
+//                            return;
+                        }
+                    } else {
+                        if (debug) {
+                            logger.debug(getSpaces(level) + " Other Side is null from:[" + source.getName() + "]");
                         }
                     }
 
                 } else {
                     if (debug) {
-                        logger.debug(getSpaces(level) + "Inactive Connection Found!");
+                        logger.debug(getSpaces(level) + "Inactive Connection Found! IN:[" + source.getName() + "]");
                     }
                 }
 

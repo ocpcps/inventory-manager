@@ -46,7 +46,6 @@ public class BaseApi {
             Object details = SecurityContextHolder.getContext().getAuthentication();
             if (details instanceof JwtAuthenticationToken) {
                 JwtAuthenticationToken userDetails = (JwtAuthenticationToken) details;
-
                 String userName = (String) userDetails.getToken().getClaimAsString(StandardClaimNames.NAME);
                 String userLogin = (String) userDetails.getToken().getClaimAsString(StandardClaimNames.PREFERRED_USERNAME);
                 String userId = (String) userDetails.getToken().getClaimAsString(StandardClaimNames.SUB);
