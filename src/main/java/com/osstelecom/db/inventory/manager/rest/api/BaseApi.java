@@ -36,6 +36,11 @@ public class BaseApi {
      */
     protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    /**
+     * Obtem os dados de usuário do JWT
+     *
+     * @param req
+     */
     protected void setUserDetails(BasicRequest req) {
         if (req != null) {
             Object details = SecurityContextHolder.getContext().getAuthentication();

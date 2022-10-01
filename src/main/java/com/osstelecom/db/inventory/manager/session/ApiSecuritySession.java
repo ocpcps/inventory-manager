@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
  * @created 12.06.2022
  */
 @Service
+@Deprecated
 public class ApiSecuritySession {
 
     public void checkApiToken(HttpServletRequest request) throws ApiSecurityException {
