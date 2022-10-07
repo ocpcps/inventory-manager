@@ -486,6 +486,8 @@ public class ServiceManager extends Manager {
                     service.getRelatedManagedResources().add(resource.getId());
                     this.evaluateServiceStateTransition(this.serviceDao.updateResource(service));
                 }
+            }else{
+                logger.debug("No Resource to Update");
             }
         } else if (updateEvent.getOldResource() != null && updateEvent.getNewResource() != null) {
 
@@ -513,7 +515,7 @@ public class ServiceManager extends Manager {
                 //
                 // Tinha serviço nos 2
                 //
-                if (!updateEvent.getOldResource().getDependentService().equals(updateEvent.getNewResource().getDependentService())) {
+                if (!updateEvent.getOldResource().getDependentService().getId().equals(updateEvent.getNewResource().getDependentService().getId())) {
                     //
                     // Trocou o serviço, agora a gente precisa remover a referencia do antigo e atualizar no novo
                     //
@@ -541,6 +543,101 @@ public class ServiceManager extends Manager {
 
                     if (!newService.getRelatedManagedResources().contains(resource.getId())) {
                         newService.getRelatedManagedResources().add(resource.getId());
+                        this.updateService(newService);
+                    }
+
+                } else {
+                    logger.debug("Services Are Equal Not Updating...");
+                }
+
+            }
+        }
+    }
+
+    /**
+     * Quando uma conexão é atualizada. Este método cuida de atualizar as
+     * relações entre o Serviço e os supostos recursos dos demais dominios.
+     * Atenção é quando o recurso é atualizado! Durante a atualização é mais
+     * complicado, pois o recurso pode ter sido movido de um serviço para o
+     * outro, e precisamos manter as referencias atualizadas
+     *
+     * @param createdEvent
+     * @throws ResourceNotFoundException
+     * @throws ArangoDaoException
+     * @throws DomainNotFoundException
+     */
+    private void updateServiceResourceConnectionReferenceUpdateEvent(ResourceConnectionUpdatedEvent updateEvent) throws ResourceNotFoundException, ArangoDaoException, DomainNotFoundException {
+        if (updateEvent.getOldResource() == null && updateEvent.getNewResource() != null) {
+            ResourceConnection resource = updateEvent.getNewResource();
+            if (resource.getDependentService() != null) {
+                ServiceResource service = resource.getDependentService();
+                //
+                // Recupera a referencia do DB
+                //
+                service = this.getService(service);
+                if (service.getRelatedResourceConnections() == null) {
+                    service.setRelatedResourceConnections(new ArrayList<>());
+                }
+
+                if (!service.getRelatedResourceConnections().contains(resource.getId())) {
+                    service.getRelatedResourceConnections().add(resource.getId());
+                    this.evaluateServiceStateTransition(this.serviceDao.updateResource(service));
+                }
+            }
+        } else if (updateEvent.getOldResource() != null && updateEvent.getNewResource() != null) {
+
+            if (updateEvent.getOldResource().getDependentService() == null && updateEvent.getNewResource().getDependentService() != null) {
+                logger.debug("Linking Service from Dependency to:[{}]", updateEvent.getNewResource().getDependentService().getId());
+
+                //
+                // Neste cenário não tinha depedencia e agora tem então é só salvar a referencia.
+                //
+                ServiceResource service = updateEvent.getNewResource().getDependentService();
+                ResourceConnection resource = updateEvent.getNewResource();
+
+                service = this.getService(service);
+                if (service.getRelatedResourceConnections() == null) {
+                    service.setRelatedResourceConnections(new ArrayList<>());
+                }
+
+                if (!service.getRelatedResourceConnections().contains(resource.getId())) {
+                    service.getRelatedResourceConnections().add(resource.getId());
+                    this.evaluateServiceStateTransition(this.serviceDao.updateResource(service));
+                }
+            } else if (updateEvent.getOldResource().getDependentService() != null && updateEvent.getNewResource().getDependentService() != null) {
+                ResourceConnection resource = updateEvent.getNewResource();
+                logger.debug("Changing Service from Dependency from:[{}] to:[{}]", updateEvent.getOldResource().getDependentService().getId(), updateEvent.getNewResource().getDependentService().getId());
+                //
+                // Tinha serviço nos 2
+                //
+                if (!updateEvent.getOldResource().getDependentService().getId().equals(updateEvent.getNewResource().getDependentService().getId())) {
+                    //
+                    // Trocou o serviço, agora a gente precisa remover a referencia do antigo e atualizar no novo
+                    //
+                    ServiceResource newService = updateEvent.getNewResource().getDependentService();
+                    ServiceResource oldService = updateEvent.getOldResource().getDependentService();
+                    //
+                    // Obtem as referencias
+                    //
+                    oldService = this.getService(oldService);
+                    newService = this.getService(newService);
+
+                    //
+                    // No Old Service vamos remover a referencia.
+                    //
+                    if (oldService.getRelatedResourceConnections() != null && !oldService.getRelatedResourceConnections().isEmpty()) {
+                        if (oldService.getRelatedResourceConnections().remove(resource.getId())) {
+                            this.updateService(oldService);
+                        } else {
+                            logger.debug("Resource: [{}] Not Found on Old Service:[{}]", resource.getId(), oldService.getId());
+                        }
+                    }
+                    if (newService.getRelatedResourceConnections() == null) {
+                        newService.setRelatedResourceConnections(new ArrayList<>());
+                    }
+
+                    if (!newService.getRelatedResourceConnections().contains(resource.getId())) {
+                        newService.getRelatedResourceConnections().add(resource.getId());
                         this.updateService(newService);
                     }
 
@@ -867,13 +964,21 @@ public class ServiceManager extends Manager {
                     // o Circuito só pode impactar serviços do mesmo dominio.
                     //
                     ServiceResource service = new ServiceResource(serviceId);
-
                     service.setDomain(event.getNewResource().getDomain());
                     //
                     // Recupera o serviço do Banco
                     //
                     service = this.getServiceById(service);
-                    logger.debug("Found Service ID:[{}] to Update", service.getId());
+                    logger.debug("Found Service ID:[{}] to Update Related ManagedResources", service.getId());
+
+                    if (service.getRelatedManagedResources() != null) {
+                        logger.debug("\t Service ID:[{}] Has: [{}] Managed Resource Links", service.getId(), service.getRelatedManagedResources().size());
+                    }
+
+                    if (service.getRelatedResourceConnections() != null) {
+                        logger.debug("\t Service ID:[{}] Has: [{}] Resource Connections Links", service.getId(), service.getRelatedResourceConnections().size());
+                    }
+
                     //
                     // Atualiza as referencias do Circuito
                     //
@@ -958,7 +1063,13 @@ public class ServiceManager extends Manager {
      * @param resource
      */
     @Subscribe
-    public void onResourceConnectionUpdatedEvent(ResourceConnectionUpdatedEvent updateEvent) {
+    public void onResourceConnectionUpdatedEvent(ResourceConnectionUpdatedEvent updateEvent) throws ResourceNotFoundException, ArangoDaoException, DomainNotFoundException {
+
+        this.updateServiceResourceConnectionReferenceUpdateEvent(updateEvent);
+
+        //
+        // Avaliar se preciso disso agora...
+        //
         if (updateEvent.getOldResource().getDependentService() == null && updateEvent.getNewResource().getDependentService() != null) {
             //
             // Neste cenário não tinha depedencia e agora tem então é só salvar a referencia.

@@ -17,7 +17,6 @@
 package com.osstelecom.db.inventory.manager.resources.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import java.util.ArrayList;
 import java.util.List;
 
 /**

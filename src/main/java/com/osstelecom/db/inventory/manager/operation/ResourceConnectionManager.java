@@ -17,6 +17,7 @@ import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import com.osstelecom.db.inventory.manager.events.ManagedResourceUpdatedEvent;
 import com.osstelecom.db.inventory.manager.events.ResourceConnectionCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.ResourceConnectionUpdatedEvent;
+import com.osstelecom.db.inventory.manager.events.ServiceStateTransionedEvent;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
@@ -233,11 +234,14 @@ public class ResourceConnectionManager extends Manager {
      * @param connection
      * @return
      */
-    public DocumentUpdateEntity<ResourceConnection> updateResourceConnection(ResourceConnection connection) throws ArangoDaoException {
+    public DocumentUpdateEntity<ResourceConnection> updateResourceConnection(ResourceConnection connection) throws ArangoDaoException, AttributeConstraintViolationException {
         String timerId = startTimer("updateResourceConnection");
         try {
             lockManager.lock();
             connection.setLastModifiedDate(new Date());
+
+            schemaSession.validateResourceSchema(connection);
+
             DocumentUpdateEntity<ResourceConnection> result = this.resourceConnectionDao.updateResource(connection);
             ResourceConnectionUpdatedEvent updateEvent = new ResourceConnectionUpdatedEvent(result);
             this.eventManager.notifyResourceEvent(updateEvent);
@@ -354,7 +358,7 @@ public class ResourceConnectionManager extends Manager {
                         //
                         this.updateResourceConnection(connection); // <- Atualizou a conexão no banco
 
-                    } catch (ArangoDaoException ex) {
+                    } catch (ArangoDaoException | AttributeConstraintViolationException ex) {
                         logger.error("Failed to Update Circuit: [{}]", connection.getId(), ex);
                     }
                 });
@@ -367,6 +371,49 @@ public class ResourceConnectionManager extends Manager {
         } catch (IOException | IllegalStateException | ArangoDaoException ex) {
             logger.error("Failed to Update Resource Connection Relation", ex);
 
+        }
+    }
+
+    /**
+     * Recebe as notificações de Serviços
+     *
+     * @param serviceUpdateEvent
+     */
+    @Subscribe
+    public void onServiceStateTransionedEvent(ServiceStateTransionedEvent serviceStateTransitionedEvent) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException {
+        if (serviceStateTransitionedEvent.getNewResource().getRelatedManagedResources() != null
+                && !serviceStateTransitionedEvent.getNewResource().getRelatedManagedResources().isEmpty()) {
+
+            for (String connectionId : serviceStateTransitionedEvent.getNewResource().getRelatedResourceConnections()) {
+                String domainName = this.domainManager.getDomainNameFromId(connectionId);
+                if (!domainName.equals(serviceStateTransitionedEvent.getNewResource().getDomainName())) {
+                    //
+                    // Só propaga se o serviço e o recurso estiverem em dominios diferentes!
+                    // Isto é para "tentar" evitar uma referencia circular, é para tentar, pois não garante.
+                    //
+
+                    //
+                    // Então sabemos que o Serviço em questão afeta recursos de outros dominios!
+                    //
+                    Domain domain = this.domainManager.getDomain(domainName);
+                    ResourceConnection connection = new ResourceConnection(domain, connectionId);
+
+                    //
+                    // Obtem a referencia do DB
+                    //
+                    connection = this.findResourceConnection(connection);
+
+                    //
+                    // Replica o estado do Serviço no Recurso.
+                    // 
+                    connection.setOperationalStatus(serviceStateTransitionedEvent.getNewResource().getOperationalStatus());
+                    connection.setDependentService(serviceStateTransitionedEvent.getNewResource());
+                    //
+                    // Atualiza tudo, retrigando todo ciclo novamente
+                    //
+                    this.updateResourceConnection(connection);
+                }
+            }
         }
     }
 }

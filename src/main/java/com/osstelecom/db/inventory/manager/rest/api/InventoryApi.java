@@ -31,6 +31,7 @@ import com.osstelecom.db.inventory.manager.request.CreateResourceLocationRequest
 import com.osstelecom.db.inventory.manager.request.FilterRequest;
 import com.osstelecom.db.inventory.manager.request.FindManagedResourceRequest;
 import com.osstelecom.db.inventory.manager.request.PatchManagedResourceRequest;
+import com.osstelecom.db.inventory.manager.request.PatchResourceConnectionRequest;
 import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstraintViolationException;
 import com.osstelecom.db.inventory.manager.resources.exception.ConnectionAlreadyExistsException;
 import com.osstelecom.db.inventory.manager.resources.exception.MetricConstraintException;
@@ -41,6 +42,7 @@ import com.osstelecom.db.inventory.manager.response.CreateResourceLocationRespon
 import com.osstelecom.db.inventory.manager.response.FilterResponse;
 import com.osstelecom.db.inventory.manager.response.FindManagedResourceResponse;
 import com.osstelecom.db.inventory.manager.response.PatchManagedResourceResponse;
+import com.osstelecom.db.inventory.manager.response.PatchResourceConnectionResponse;
 import com.osstelecom.db.inventory.manager.session.ResourceSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -236,6 +238,14 @@ public class InventoryApi extends BaseApi {
         this.setUserDetails(request);
         request.setRequestDomain(domainName);
         return this.resourceSession.patchManagedResource(request);
+    }
+
+    @AuthenticatedCall(role = {"user"})
+    @PatchMapping(path = "/{domain}/connection/", produces = "application/json", consumes = "application/json")
+    public PatchResourceConnectionResponse patchResourceConnection(@RequestBody PatchResourceConnectionRequest request, @PathVariable("domain") String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException {
+        this.setUserDetails(request);
+        request.setRequestDomain(domainName);
+        return this.resourceSession.patchResourceConnection(request);
     }
 
 //    /**

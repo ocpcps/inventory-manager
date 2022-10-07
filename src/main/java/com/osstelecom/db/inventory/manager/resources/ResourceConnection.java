@@ -85,6 +85,15 @@ public class ResourceConnection extends AbsRelatedResource {
         super(domain);
     }
 
+    public ResourceConnection(Domain domain, String id) {
+        super(domain, id);
+        //
+        // Prioritize ID
+        //
+        this.setClassName(null);
+        this.setAttributeSchemaName(null);
+    }
+
     public ResourceConnection() {
     }
 

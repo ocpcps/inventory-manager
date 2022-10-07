@@ -470,12 +470,15 @@ public class ManagedResourceManager extends Manager {
                     // Replica o estado do Serviço no Recurso.
                     // 
                     resource.setOperationalStatus(serviceStateTransitionedEvent.getNewResource().getOperationalStatus());
+                    resource.setDependentService(serviceStateTransitionedEvent.getNewResource());
                     //
                     // Atualiza tudo, retrigando todo ciclo novamente
                     //
                     this.update(resource);
                 }
             }
+        }else{
+            logger.debug("Service Transaction Ignored");
         }
     }
 

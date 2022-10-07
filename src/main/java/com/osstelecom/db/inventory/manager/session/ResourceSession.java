@@ -17,6 +17,7 @@
  */
 package com.osstelecom.db.inventory.manager.session;
 
+import com.arangodb.entity.DocumentUpdateEntity;
 import java.util.Date;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +40,8 @@ import com.osstelecom.db.inventory.manager.request.CreateManagedResourceRequest;
 import com.osstelecom.db.inventory.manager.request.FilterRequest;
 import com.osstelecom.db.inventory.manager.request.FindManagedResourceRequest;
 import com.osstelecom.db.inventory.manager.request.PatchManagedResourceRequest;
+import com.osstelecom.db.inventory.manager.request.PatchResourceConnectionRequest;
+import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
@@ -52,6 +55,7 @@ import com.osstelecom.db.inventory.manager.response.CreateResourceConnectionResp
 import com.osstelecom.db.inventory.manager.response.FilterResponse;
 import com.osstelecom.db.inventory.manager.response.FindManagedResourceResponse;
 import com.osstelecom.db.inventory.manager.response.PatchManagedResourceResponse;
+import com.osstelecom.db.inventory.manager.response.PatchResourceConnectionResponse;
 
 /**
  *
@@ -273,6 +277,10 @@ public class ResourceSession {
         return this.manager.findManagedResource(resource);
     }
 
+    public ResourceConnection findResourceConnection(ResourceConnection connection) throws ResourceNotFoundException, ArangoDaoException {
+        return this.resourceConnectionManager.findResourceConnection(connection);
+    }
+
     /**
      * Atualiza um Managed Resource
      *
@@ -384,6 +392,112 @@ public class ResourceSession {
 
         ManagedResource result = this.managedResourceManager.updateManagedResource(fromDBResource);
         return new PatchManagedResourceResponse(result);
-
     }
+
+    public PatchResourceConnectionResponse patchResourceConnection(PatchResourceConnectionRequest request) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException {
+        //
+        //
+        //
+        ResourceConnection requestedPatch = request.getPayLoad();
+
+        //
+        // Arruma o domain para funcionar certinho
+        //
+        requestedPatch.setDomain(this.domainManager.getDomain(request.getRequestDomain()));
+        requestedPatch.setDomainName(requestedPatch.getDomain().getDomainName());
+
+        ResourceConnection fromDBResource = this.findResourceConnection(requestedPatch);
+
+        //
+        // Se chegamos aqui, temos coisas para atualizar...
+        // @ Todo, comparar para ver se houve algo que realmente mudou..
+        //
+        if (requestedPatch.getName() != null) {
+            fromDBResource.setName(requestedPatch.getName());
+        }
+
+        if (requestedPatch.getNodeAddress() != null) {
+            fromDBResource.setNodeAddress(requestedPatch.getNodeAddress());
+        }
+
+        if (requestedPatch.getClassName() != null && !requestedPatch.getClassName().equals("Default")) {
+            fromDBResource.setClassName(requestedPatch.getClassName());
+        }
+
+        if (requestedPatch.getOperationalStatus() != null) {
+            fromDBResource.setOperationalStatus(requestedPatch.getOperationalStatus());
+        }
+
+        //
+        // Pode atualizar o AtributeSchemaModel ? isso é bem custosooo vamos tratar isso em outro lugar...
+        //
+        if (requestedPatch.getAdminStatus() != null) {
+            fromDBResource.setAdminStatus(requestedPatch.getAdminStatus());
+        }
+
+        //
+        // Atualiza os atributos
+        //
+        if (requestedPatch.getAttributes() != null && !requestedPatch.getAttributes().isEmpty()) {
+            requestedPatch.getAttributes().forEach((name, attribute) -> {
+                if (fromDBResource.getAttributes() != null) {
+                    if (fromDBResource.getAttributes().containsKey(name)) {
+                        fromDBResource.getAttributes().replace(name, attribute);
+                    } else {
+                        fromDBResource.getAttributes().put(name, attribute);
+                    }
+                }
+            });
+        }
+
+        //
+        // Atualiza os atributos de rede
+        //
+        if (requestedPatch.getDiscoveryAttributes() != null && !requestedPatch.getDiscoveryAttributes().isEmpty()) {
+            requestedPatch.getDiscoveryAttributes().forEach((name, attribute) -> {
+                if (fromDBResource.getDiscoveryAttributes() != null) {
+                    if (fromDBResource.getDiscoveryAttributes().containsKey(name)) {
+                        fromDBResource.getDiscoveryAttributes().replace(name, attribute);
+                    } else {
+                        fromDBResource.getDiscoveryAttributes().put(name, attribute);
+                    }
+                }
+            });
+        }
+        
+        
+      
+
+        if (requestedPatch.getDependentService() != null) {
+            //
+            // Valida se o serviço existe
+            //
+            ServiceResource service = this.serviceManager.getService(requestedPatch.getDependentService());
+
+            //
+            // Atualiza para referencia do DB
+            //
+            requestedPatch.setDependentService(service);
+
+            //
+            // Agora vamos ver se o serviço é de um dominio diferente do recurso... não podem ser do mesmo
+            //
+            if (service.getDomain().getDomainName().equals(requestedPatch.getDomain().getDomainName())) {
+                throw new InvalidRequestException("Resource and Parent Service cannot be in the same domain.");
+            }
+
+            if (fromDBResource.getDependentService() == null) {
+                //
+                // Está criando a dependencia...
+                //
+                fromDBResource.setDependentService(requestedPatch.getDependentService());
+            } else if (!fromDBResource.getDependentService().equals(service)) {
+                fromDBResource.setDependentService(requestedPatch.getDependentService());
+            }
+        }
+
+        DocumentUpdateEntity<ResourceConnection> result = this.resourceConnectionManager.updateResourceConnection(fromDBResource);
+        return new PatchResourceConnectionResponse(result.getNew());
+    }
+
 }

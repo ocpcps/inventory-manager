@@ -251,19 +251,25 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
         // Sanitização do Nome
         //
         if (model.getSchemaName() != null) {
-
             if (model.getSchemaName().matches("[a-zA-Z,0-9,\\.,\\-]+")) {
-
                 if (model.getSchemaName().startsWith("resource")
                         || model.getSchemaName().startsWith("circuit")
                         || model.getSchemaName().startsWith("location")
+                        || model.getSchemaName().startsWith("connection")
                         || model.getSchemaName().startsWith("service")) {
 
                 } else {
-                    throw new InvalidRequestException("Schema Name Must Start with [resource,circuit,location,service]");
+                    throw new InvalidRequestException("Schema Name Must Start with [resource,circuit,location,service,connection]");
                 }
             } else {
                 throw new InvalidRequestException("Schema Name Must Contains Only Letters, Numbers or [.,-]");
+            }
+            
+            //
+            // Valida se o nome do schema e do from schema são diferentes.
+            //
+            if (model.getSchemaName().equals(model.getFromSchema())) {
+                throw new InvalidRequestException("Schema Name Must not be equal from Schema Name");
             }
         }
 
