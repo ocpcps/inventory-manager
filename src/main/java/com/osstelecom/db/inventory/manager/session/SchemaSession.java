@@ -240,9 +240,45 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
      */
     public CreateResourceSchemaModelResponse createResourceSchemaModel(ResourceSchemaModel model)
             throws GenericException, SchemaNotFoundException, InvalidRequestException {
-
+        //
+        // Sanitization
+        //
         if (model == null) {
-            throw new GenericException("Request Cannot Be Null");
+            throw new InvalidRequestException("Request Cannot Be Null");
+        }
+
+        //
+        // Sanitização do Nome
+        //
+        if (model.getSchemaName() != null) {
+
+            if (model.getSchemaName().matches("[a-zA-Z,0-9,\\.,\\-]+")) {
+
+                if (model.getSchemaName().startsWith("resource")
+                        || model.getSchemaName().startsWith("circuit")
+                        || model.getSchemaName().startsWith("location")
+                        || model.getSchemaName().startsWith("service")) {
+
+                } else {
+                    throw new InvalidRequestException("Schema Name Must Start with [resource,circuit,location,service]");
+                }
+            } else {
+                throw new InvalidRequestException("Schema Name Must Contains Only Letters, Numbers or [.,-]");
+            }
+        }
+
+        //
+        // Check if Model Exists
+        //
+        if (this.loadSchemas().getPayLoad().contains(model.getSchemaName())) {
+            //
+            // Já existe 
+            //
+            throw new InvalidRequestException("Model Named:[" + model.getSchemaName() + "] Already Exists");
+        }
+
+        if (model.getSchemaName().contains(" ")) {
+            throw new InvalidRequestException("Schema Name Cannot Have Spaces");
         }
 
         //
@@ -257,6 +293,30 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
             //
             this.loadSchema(model.getFromSchema());
         }
+
+        List<String> removeAttributes = new ArrayList<>();
+
+        //
+        // Sanitização dos Atributos
+        //
+        model.getAttributes().forEach((k, v) -> {
+            if (v.getId() != null && !v.getId().equals("")) {
+                removeAttributes.add(k);
+            }
+
+            if (v.getVariableType() == null) {
+                //
+                // Seta o default para String
+                //
+                v.setVariableType("String");
+            } else if (v.getVariableType().trim().equals("")) {
+                v.setVariableType("String");
+            }
+        });
+
+        removeAttributes.forEach(attribute -> {
+            model.getAttributes().remove(attribute);
+        });
 
         this.writeModelToDisk(model, false);
         this.clearSchemaCache();
@@ -364,7 +424,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                             } else {
                                 throw new AttributeConstraintViolationException(
                                         "Attribute named:[" + name + "] is not discovery attribute for model: ["
-                                                + resource.getSchemaModel().getSchemaName() + "]");
+                                        + resource.getSchemaModel().getSchemaName() + "]");
                             }
                         } else {
                             throw new AttributeConstraintViolationException("Invalid Discovery Attribute named:[" + name
@@ -416,8 +476,8 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                         //
                         throw new AttributeConstraintViolationException(
                                 "Attribute [" + model.getName() + "] of type:" + model.getVariableType() + " Value : ["
-                                        + value + "] is not allowed here Allowed vars are:["
-                                        + String.join(",", model.getAllowedValues()) + "]");
+                                + value + "] is not allowed here Allowed vars are:["
+                                + String.join(",", model.getAllowedValues()) + "]");
 
                     }
                 }
@@ -514,7 +574,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                 //
                 // Schema Name cannot Be Changed
                 //
-                throw new InvalidRequestException("Schema Name Cannot Ne changed...");
+                throw new InvalidRequestException("Schema Name Cannot Be changed...");
             }
         }
 

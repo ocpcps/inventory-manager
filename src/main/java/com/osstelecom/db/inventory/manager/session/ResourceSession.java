@@ -127,7 +127,6 @@ public class ResourceSession {
             if (request.getPayLoad().getFromClassName().contains("location")) {
                 connection.setFrom(resourceLocationManager.findResourceLocation(request.getPayLoad().getFromName(), request.getPayLoad().getFromNodeAddress(), request.getPayLoad().getFromClassName(), request.getRequestDomain()));
             } else if (request.getPayLoad().getFromClassName().contains("resource")) {
-
                 connection.setFrom(manager.findManagedResource(new ManagedResource(requestDomain, request.getPayLoad().getFromName(), request.getPayLoad().getFromNodeAddress(), request.getPayLoad().getFromClassName())));
             } else {
                 throw new InvalidRequestException("Invalid From Class");
@@ -223,6 +222,8 @@ public class ResourceSession {
 
         if (request.getPayLoad().getClassName() == null) {
             request.getPayLoad().setClassName("resource.Default");
+        } else if (!request.getPayLoad().getClassName().startsWith("resource")) {
+            throw new InvalidRequestException("Class Name Has to Start with resource.");
         }
 
         if (request.getPayLoad().getOperationalStatus() == null) {

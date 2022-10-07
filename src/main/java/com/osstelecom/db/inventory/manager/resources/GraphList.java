@@ -39,7 +39,6 @@ public class GraphList<T> implements AutoCloseable {
 
     public GraphList(ArangoCursor<T> cursor) {
         this.cursor = cursor;
-
     }
 
     /**

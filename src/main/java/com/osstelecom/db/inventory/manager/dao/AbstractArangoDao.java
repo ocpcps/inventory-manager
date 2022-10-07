@@ -115,6 +115,7 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
         });
         GraphList<T> result = new GraphList<>(
                 db.query(aql, bindVars, new AqlQueryOptions().fullCount(true).count(true), type));
+        
         if (result.isEmpty()) {
             ResourceNotFoundException ex = new ResourceNotFoundException();
             //

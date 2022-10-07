@@ -12,7 +12,6 @@ import com.osstelecom.db.inventory.topology.DefaultTopology;
 import com.osstelecom.db.inventory.topology.exception.GraphNotEnabledException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -40,10 +39,10 @@ public class DefaultExample {
         DefaultNode router5 = new DefaultNode("router5", 5, topology);
         DefaultNode router6 = new DefaultNode("router6", 6, topology);
         DefaultNode router7 = new DefaultNode("router7", 7, topology);
-        DefaultNode router8 = new DefaultNode("router8", 8, topology);
-        DefaultNode router9 = new DefaultNode("router9", 9, topology);
-        DefaultNode router10 = new DefaultNode("router10", 10, topology);
-        //
+//        DefaultNode router8 = new DefaultNode("router8", 8, topology);
+//        DefaultNode router9 = new DefaultNode("router9", 9, topology);
+//        DefaultNode router10 = new DefaultNode("router10", 10, topology);
+//        //
         // Conexões
         //
         topology.addConnection(router1, saida);
@@ -59,15 +58,15 @@ public class DefaultExample {
         topology.addConnection(router6, router4);
         topology.addConnection(router7, router6);
         topology.addConnection(router7, router5);
-        topology.addConnection(router7, router8);
-        topology.addConnection(router7, router9);
-        topology.addConnection(router10, router9);
-        topology.addConnection(router10, router8);
-        topology.addConnection(router10, router1);
+//        topology.addConnection(router7, router8);
+//        topology.addConnection(router7, router9);
+//        topology.addConnection(router10, router9);
+//        topology.addConnection(router10, router8);
+//        topology.addConnection(router10, router1);
 
-        Boolean stressMe = true;
+        Boolean stressMe = false;
         if (stressMe) {
-            Integer fakeNodCount = 1000;
+            Integer fakeNodCount = 100;
 //            ConcurrentHashMap<String, INetworkNode> nodes = new ConcurrentHashMap<>();
             for (int x = 0; x < fakeNodCount; x++) {
                 DefaultNode router = new DefaultNode("DYN-1-" + x, 10000 + x, topology);
@@ -85,7 +84,7 @@ public class DefaultExample {
         System.out.println("Weak Nodes:");
         System.out.println("-------------------------------------------------------------");
         Long start = System.currentTimeMillis();
-        List<INetworkNode> weak = topology.getImpactManager().getWeakNodes(1, false, 4, false);
+        List<INetworkNode> weak = topology.getImpactManager().getWeakNodes(1, false, 1, false);
         Long end = System.currentTimeMillis();
         Long took = end - start;
         System.out.println("Found " + weak.size() + " Weak Nodes Took:" + took + " ms");

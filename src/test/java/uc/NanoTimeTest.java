@@ -28,13 +28,13 @@ public class NanoTimeTest {
 //            Long n = System.nanoTime();
 //            System.out.println(n);
 //        }
+        String name = "circuit.lucas";
 
-        try {
-            System.out.println("Nishi");
-            return;
-        } finally {
-            System.out.println("Nishi 2");
+        if (name.matches("[a-zA-Z,0-9,\\.,\\-]+")) {
+            System.out.println("OK");
+        } else {
+            System.out.println("NO OK");
         }
-       
+
     }
 }

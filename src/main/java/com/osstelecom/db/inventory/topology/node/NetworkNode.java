@@ -54,6 +54,7 @@ public abstract class NetworkNode implements INetworkNode {
     private ArrayList<INetworkConnection> probedConnections = new ArrayList<>();
     private List<ArrayList<INetworkNode>> solutions = Collections.synchronizedList(new ArrayList<ArrayList<INetworkNode>>());
     private ConcurrentHashMap<String, Object> attributes = new ConcurrentHashMap<>();
+    
 
     @Override
     public void addAttribute(String key, Object value) {
