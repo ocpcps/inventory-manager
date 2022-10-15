@@ -1,6 +1,5 @@
 package com.osstelecom.db.inventory.manager.operation;
 
-import java.util.concurrent.locks.ReentrantLock;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

@@ -1,4 +1,18 @@
-image: maven:3-jdk-11
+stages:
+  - test
+  - build
+test-java-project:
+  stage: test
+  script:
+    mvn test
+  artifacts:
+    paths:
+      - /home/gitlab-runner/
 
-build:
-  script: "mvn test -B"
+build-java-project:
+  stage: build
+  script:
+    mvn package
+  artifacts:
+    paths:
+      - /home/gitlab-runner/
