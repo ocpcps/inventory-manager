@@ -40,7 +40,9 @@ import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.GraphList;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
+import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import com.osstelecom.db.inventory.manager.resources.ResourceLocation;
+import java.io.IOException;
 
 /**
  *
@@ -254,4 +256,12 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
         throw new ResourceNotFoundException("2 Resource With Node Address:[" + nodeAddress + "] and Class: [" + className + "] Not Found in Domain:" + domain.getDomainName());
     }
 
+    @Override
+    public int getCount(Domain domain) throws ResourceNotFoundException, IOException {
+        String aql = "for doc in `" + domain.getConnections() + "` return doc";
+        GraphList<ResourceLocation> result = this.query(aql, null, ResourceLocation.class, this.getDb());
+        Integer longValue = result.size();
+        result.close();
+        return longValue;
+    }
 }

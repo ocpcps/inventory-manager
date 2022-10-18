@@ -264,7 +264,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
             } else {
                 throw new InvalidRequestException("Schema Name Must Contains Only Letters, Numbers or [.,-]");
             }
-            
+
             //
             // Valida se o nome do schema e do from schema são diferentes.
             //
@@ -291,13 +291,21 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
         // If the From Schema is null, set to the default
         //
         if (model.getFromSchema() == null) {
-            model.setFromSchema("default.json");
+            model.setFromSchema("default");
         } else {
             //
             // Check if the from Schema Exists...
             // We try to load it to check if it exists.
             //
             this.loadSchema(model.getFromSchema());
+        }
+
+        if (model.getFromSchema().contains("json")) {
+            throw new InvalidRequestException("FromSchema  Cannot Have .json");
+        }
+
+        if (model.getSchemaName().contains("json")) {
+            throw new InvalidRequestException("Schema Name Cannot Have .json");
         }
 
         List<String> removeAttributes = new ArrayList<>();
@@ -546,6 +554,9 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                             + configurationManager.loadConfiguration().getDateTimeFormat() + "]", ex);
 
                 }
+            } else if (model.getVariableType().equalsIgnoreCase("geoLine")) {
+                List<Float> data = (List<Float>) value;
+                return data;
             } else {
                 throw new AttributeConstraintViolationException(
                         "Attribute [" + model.getName() + "] of type:" + model.getVariableType() + " Cannot be parsed");

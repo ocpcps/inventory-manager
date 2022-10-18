@@ -38,6 +38,7 @@ import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.GraphList;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
+import java.io.IOException;
 
 /**
  *
@@ -173,7 +174,7 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
     @Override
     public DocumentDeleteEntity<ManagedResource> deleteResource(ManagedResource resource) throws ArangoDaoException {
         try {
-            return this.getDb().collection(resource.getDomain().getNodes()).deleteDocument(resource.getId(), ManagedResource.class, new DocumentDeleteOptions().returnOld(true));
+            return this.getDb().collection(resource.getDomain().getNodes()).deleteDocument(resource.getKey(), ManagedResource.class, new DocumentDeleteOptions().returnOld(true));
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         } finally {
@@ -211,11 +212,11 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
     @Override
     public GraphList<ManagedResource> findResourceByFilter(String filter, Map<String, Object> bindVars, Domain domain) throws ArangoDaoException {
         try {
-            String aql = " for doc in   `" + domain.getNodes() +"`";
+            String aql = " for doc in   `" + domain.getNodes() + "`";
             aql += " filter doc.domainName == @domainName ";
             bindVars.put("domainName", domain.getDomainName());
 
-            if (filter != null) {
+            if (filter != null && !filter.trim().equals("")) {
                 aql += " and " + filter;
             }
             aql += " return doc";
@@ -233,5 +234,14 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         }
+    }
+
+    @Override
+    public int getCount(Domain domain) throws ResourceNotFoundException, IOException {
+        String aql = "for doc in `" + domain.getNodes() + "` return doc";
+        GraphList<ManagedResource> result = this.query(aql, null, ManagedResource.class, this.getDb());
+        Integer longValue = result.size();
+        result.close();
+        return longValue;
     }
 }

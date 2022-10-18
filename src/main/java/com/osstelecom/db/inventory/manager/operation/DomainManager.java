@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -36,13 +35,18 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import com.google.common.eventbus.Subscribe;
+import com.osstelecom.db.inventory.manager.dao.CircuitResourceDao;
 import com.osstelecom.db.inventory.manager.dao.DomainDao;
+import com.osstelecom.db.inventory.manager.dao.ManagedResourceDao;
+import com.osstelecom.db.inventory.manager.dao.ResourceConnectionDao;
+import com.osstelecom.db.inventory.manager.dao.ServiceResourceDao;
 import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import com.osstelecom.db.inventory.manager.events.ConsumableMetricCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.DomainCreatedEvent;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.DomainAlreadyExistsException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
+import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.listeners.EventManagerListener;
 import com.osstelecom.db.inventory.manager.resources.BasicResource;
 import com.osstelecom.db.inventory.manager.resources.ConsumableMetric;
@@ -53,6 +57,9 @@ import com.osstelecom.db.inventory.topology.DefaultTopology;
 import com.osstelecom.db.inventory.topology.ITopology;
 import com.osstelecom.db.inventory.topology.node.DefaultNode;
 import com.osstelecom.db.inventory.topology.node.INetworkNode;
+import java.io.IOException;
+import java.util.Calendar;
+import java.util.Date;
 
 /**
  * This class is the main Domain Manager it will handle all operations related
@@ -79,6 +86,18 @@ public class DomainManager extends Manager {
     @Autowired
     private DomainDao domainDao;
 
+    @Autowired
+    private ManagedResourceDao managedResourceDao;
+
+    @Autowired
+    private ResourceConnectionDao resourceConnectionDao;
+
+    @Autowired
+    private ServiceResourceDao serviceResourceDao;
+
+    @Autowired
+    private CircuitResourceDao circuitResourceDao;
+
     private Logger logger = LoggerFactory.getLogger(DomainManager.class);
 
     /**
@@ -87,9 +106,16 @@ public class DomainManager extends Manager {
     @EventListener(ApplicationReadyEvent.class)
     private void onStartUp() throws ArangoDaoException {
         eventManager.registerListener(this);
+        this.loadDomainsFromDb();
+
+    }
+
+    private void loadDomainsFromDb() throws ArangoDaoException {
         this.domainDao.getDomains().forEach(d -> {
             logger.debug("\tFound Domain: [{}] Atomic ID:[{}]", d.getDomainName(), d.getAtomicId());
-            this.domains.put(d.getDomainName(), d);
+            if (!this.domains.containsKey(d.getDomainName())) {
+                this.domains.put(d.getDomainName(), d);
+            }
         });
     }
 
@@ -132,7 +158,7 @@ public class DomainManager extends Manager {
         return domain;
     }
 
-    public Domain deleteDomain(Domain domain) throws DomainNotFoundException {
+    public Domain deleteDomain(Domain domain) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, IOException {
         try {
             lockManager.lock();
             domain = this.getDomain(domain.getDomainName());
@@ -152,20 +178,60 @@ public class DomainManager extends Manager {
      * @return
      * @throws DomainNotFoundException
      */
-    public Domain getDomain(String domainName) throws DomainNotFoundException {
+    public Domain getDomain(String domainName) throws DomainNotFoundException, ArangoDaoException {
         if (!domains.containsKey(domainName)) {
-            //
-            // Isso é para gerar a lista de domains existentes... achei overkill
-            //
-            List<String> domainsList = domains.values().stream()
-                    .map(Domain::getDomainName)
-                    .collect(Collectors.toList());
 
-            throw new DomainNotFoundException(
-                    "Domain :[" + domainName + "] not found Available Domains are: [" + String.join(",", domainsList)
-                    + "]");
+            //
+            // Pega de novo
+            //
+            this.loadDomainsFromDb();
+
+            if (!domains.containsKey(domainName)) {
+                //
+                // Isso é para gerar a lista de domains existentes... achei overkill
+                //
+                List<String> domainsList = domains.values().stream()
+                        .map(Domain::getDomainName)
+                        .collect(Collectors.toList());
+
+                throw new DomainNotFoundException(
+                        "Domain :[" + domainName + "] not found Available Domains are: [" + String.join(",", domainsList)
+                        + "]");
+            }
         }
-        return domains.get(domainName);
+
+        Domain domain = domains.get(domainName);
+        this.calcStats(domain);
+        return domain;
+    }
+
+    /**
+     * Calcula as estatisticas do dominio a cada 5 minutos.
+     *
+     * @param domain
+     */
+    private void calcStats(Domain domain) {
+        try {
+            if (domain.getLastStatsCalc() == null) {
+                domain.setResourceCount(managedResourceDao.getCount(domain));
+                domain.setConnectionCount(resourceConnectionDao.getCount(domain));
+                domain.setCircuitCount(circuitResourceDao.getCount(domain));
+                domain.setServiceCount(serviceResourceDao.getCount(domain));
+                domain.setLastStatsCalc(new Date());
+            } else {
+                Calendar cal = Calendar.getInstance();
+                cal.add(Calendar.MINUTE, -5);
+
+                if (domain.getLastStatsCalc().before(cal.getTime())) {
+                    domain.setResourceCount(managedResourceDao.getCount(domain));
+                    domain.setConnectionCount(resourceConnectionDao.getCount(domain));
+                    domain.setCircuitCount(circuitResourceDao.getCount(domain));
+                    domain.setServiceCount(serviceResourceDao.getCount(domain));
+                    domain.setLastStatsCalc(new Date());
+                }
+            }
+        } catch (IOException | ResourceNotFoundException ex) {
+        }
     }
 
     /**
@@ -177,6 +243,7 @@ public class DomainManager extends Manager {
         List<Domain> result = new ArrayList<>();
 
         this.domains.forEach((name, domain) -> {
+            this.calcStats(domain);
             result.add(domain);
         });
         return result;

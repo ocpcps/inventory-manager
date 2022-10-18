@@ -40,6 +40,12 @@ public class UtilSession {
     private Gson gson = new GsonBuilder().setPrettyPrinting().create();
     private ObjectMapper objectMapper = new ObjectMapper();
 
+    /**
+     * Returns the md5 hash from the string
+     *
+     * @param input
+     * @return
+     */
     public String getMd5(String input) {
         try {
             MessageDigest digest = MessageDigest.getInstance("MD5");
@@ -59,18 +65,57 @@ public class UtilSession {
 
     }
 
+    /**
+     * Verifica se um nome é valido ou seja, só contém Letras, números pontos ou
+     * traços.
+     *
+     * @param value
+     * @return
+     */
+    public Boolean isValidStringValue(String value) {
+        return this.isValidStringValue(value, "[a-zA-Z,0-9,\\.,\\-]+");
+    }
+
+    public Boolean isValidStringValue(String value, String regex) {
+        if (value.contains(" ")) {
+            return false;
+        }
+        return value.matches(regex);
+    }
+
+    /**
+     * Gets the google GSON Object Serializer
+     *
+     * @return
+     */
     public Gson getGson() {
         return this.gson;
     }
 
+    /**
+     * Return a UUID Request ID
+     *
+     * @return
+     */
     public synchronized String getRequestId() {
         return UUID.randomUUID().toString();
     }
 
+    /**
+     * Return a UUID Response ID
+     *
+     * @return
+     */
     public synchronized String getResponseId() {
         return UUID.randomUUID().toString();
     }
 
+    /**
+     * Tries to serialize an object to json using google gson
+     *
+     * @param obj
+     * @return
+     */
     public String toJson(Object obj) {
         try {
             return objectMapper.writeValueAsString(obj);

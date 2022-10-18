@@ -19,6 +19,7 @@ package com.osstelecom.db.inventory.manager.resources;
 
 import com.arangodb.entity.DocumentField;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import java.util.Date;
 
 /**
  *
@@ -38,7 +39,13 @@ public class Domain {
     private String serviceLayer;
     private String circuits;
     private String circuitsLayer;
+    private int resourceCount;
+    private int connectionCount;
+    private int circuitCount;
+    private int serviceCount;
     private Long atomicId;
+    private Date lastStatsCalc;
+  
 
     /**
      * @return the domainName
@@ -185,6 +192,76 @@ public class Domain {
             this.atomicId = 0L;
         }
         return this.atomicId++;
+    }
+
+    /**
+     * @return the resourceCount
+     */
+    public int getResourceCount() {
+        return resourceCount;
+    }
+
+    /**
+     * @param resourceCount the resourceCount to set
+     */
+    public void setResourceCount(int resourceCount) {
+        this.resourceCount = resourceCount;
+    }
+
+    /**
+     * @return the connectionCount
+     */
+    public int getConnectionCount() {
+        return connectionCount;
+    }
+
+    /**
+     * @param connectionCount the connectionCount to set
+     */
+    public void setConnectionCount(int connectionCount) {
+        this.connectionCount = connectionCount;
+    }
+
+    /**
+     * @return the circuitCount
+     */
+    public int getCircuitCount() {
+        return circuitCount;
+    }
+
+    /**
+     * @param circuitCount the circuitCount to set
+     */
+    public void setCircuitCount(int circuitCount) {
+        this.circuitCount = circuitCount;
+    }
+
+    /**
+     * @return the serviceCount
+     */
+    public int getServiceCount() {
+        return serviceCount;
+    }
+
+    /**
+     * @param serviceCount the serviceCount to set
+     */
+    public void setServiceCount(int serviceCount) {
+        this.serviceCount = serviceCount;
+    }
+
+    /**
+     * @return the lastStatsCalc
+     */
+    public Date getLastStatsCalc() {
+        return lastStatsCalc;
+    }
+
+    /**
+     * @param lastStatsCalc the lastStatsCalc to set
+     */
+    public void setLastStatsCalc(Date lastStatsCalc) {
+        this.lastStatsCalc = lastStatsCalc;
     }
 
 }

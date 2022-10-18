@@ -23,6 +23,12 @@ package uc;
 public class EquipTest {
 
     public static void main(String[] args) {
+        
+        String nome = "lucas.nishimura9";
+        
+        if (!nome.matches("[a-z,A-Z,0-9,\\.,\\-]")){
+            System.out.println("HELLO");
+        }
 //        try {
 //            DomainManager domainManager = new DomainManager();
 //

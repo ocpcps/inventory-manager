@@ -41,6 +41,7 @@ import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.GraphList;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
+import java.io.IOException;
 
 /**
  *
@@ -327,4 +328,12 @@ public class ResourceConnectionDao extends AbstractArangoDao<ResourceConnection>
         return new GraphList<>(cursor);
     }
 
+    @Override
+    public int getCount(Domain domain) throws ResourceNotFoundException, IOException {
+        String aql = "for doc in `" + domain.getConnections() + "` return doc";
+        GraphList<ResourceConnection> result = this.query(aql, null, ResourceConnection.class, this.getDb());
+        Integer longValue = result.size();
+        result.close();
+        return longValue;
+    }
 }

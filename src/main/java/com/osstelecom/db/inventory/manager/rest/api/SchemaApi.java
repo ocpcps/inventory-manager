@@ -39,11 +39,6 @@ import com.osstelecom.db.inventory.manager.response.ResourceSchemaResponse;
 import com.osstelecom.db.inventory.manager.response.TypedMapResponse;
 import com.osstelecom.db.inventory.manager.security.model.AuthenticatedCall;
 import com.osstelecom.db.inventory.manager.session.SchemaSession;
-import java.security.Principal;
-import org.springframework.boot.autoconfigure.security.oauth2.resource.OAuth2ResourceServerProperties.Jwt;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
-import org.springframework.web.bind.annotation.RequestMethod;
 
 /**
  * Handles the Dynamic Schema Mapping and Operations

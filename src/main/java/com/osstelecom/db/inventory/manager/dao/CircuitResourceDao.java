@@ -33,12 +33,12 @@ import com.arangodb.model.DocumentDeleteOptions;
 import com.arangodb.model.DocumentUpdateOptions;
 import com.arangodb.model.OverwriteMode;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
-import com.osstelecom.db.inventory.manager.exception.BasicException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.GraphList;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
+import java.io.IOException;
 
 /**
  *
@@ -370,4 +370,12 @@ public class CircuitResourceDao extends AbstractArangoDao<CircuitResource> {
     // throw new ResourceNotFoundException("4 Resource With ID:[" + id + "] Not
     // Found in Domain:" + domain.getDomainName());
     // }
+    @Override
+    public int getCount(Domain domain) throws ResourceNotFoundException, IOException {
+        String aql = "for doc in `" + domain.getCircuits() + "` return doc";
+        GraphList<CircuitResource> result = this.query(aql, null, CircuitResource.class, this.getDb());
+        Integer longValue = result.size();
+        result.close();
+        return longValue;
+    }
 }

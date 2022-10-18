@@ -17,10 +17,12 @@
  */
 package com.osstelecom.db.inventory.manager.session;
 
+import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.DomainAlreadyExistsException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
 import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
+import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.operation.DomainManager;
 
 import com.osstelecom.db.inventory.manager.request.CreateDomainRequest;
@@ -29,6 +31,7 @@ import com.osstelecom.db.inventory.manager.response.CreateDomainResponse;
 import com.osstelecom.db.inventory.manager.response.DeleteDomainResponse;
 import com.osstelecom.db.inventory.manager.response.DomainResponse;
 import com.osstelecom.db.inventory.manager.response.GetDomainsResponse;
+import java.io.IOException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -43,7 +46,7 @@ public class DomainSession {
     @Autowired
     private DomainManager domainManager;
 
-    public DeleteDomainResponse deleteDomain(DeleteDomainRequest request) throws DomainNotFoundException {
+    public DeleteDomainResponse deleteDomain(DeleteDomainRequest request) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, IOException {
         return new DeleteDomainResponse(domainManager.deleteDomain(request.getPayLoad()));
     }
 
@@ -61,7 +64,7 @@ public class DomainSession {
         return new GetDomainsResponse(this.domainManager.getAllDomains());
     }
 
-    public DomainResponse getDomain(String domainName) throws DomainNotFoundException, InvalidRequestException {
+    public DomainResponse getDomain(String domainName) throws DomainNotFoundException, InvalidRequestException, ArangoDaoException, ResourceNotFoundException, IOException {
         if (domainName == null) {
             throw new InvalidRequestException("domainName cannot be null");
         }

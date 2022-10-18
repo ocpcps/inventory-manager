@@ -8,3 +8,82 @@ FOR v, e, p IN 1..64 ANY 'network_nodes/68492e7f-8134-4728-939e-1576eb727c37' GR
                       id = v._id,
                     attr = v.attributes.name
        RETURN {className,id,attr}
+
+
+
+/**
+  * Find Intersecs
+  */
+for doc in osp_circuits
+   let nc=(
+      for n in osp_circuits
+         filter GEO_INTERSECTS(geo_linestring(n.attributes.tracado),geo_linestring(doc.attributes.tracado)) ==true
+          and n._id != doc._id
+          and n.aPoint._id != doc.aPoint._id
+          and n.aPoint._id != doc.zPoint._id
+          and n.zPoint._id != doc.zPoint._id
+          and n.zPoint._id != doc.aPoint._id
+      return n
+   )
+   filter length(nc)> 0
+return {circuitName:doc.name,circuitId:doc._id,intersectCount:length(nc),names:CONCAT_SEPARATOR(',',nc[*].name)}
+
+
+BR.SE.circuit.29483
+CM.RC.circuit.52269,
+CM.RC.circuit.52278
+
+let colors = {'randColor':true,'color':['#A93226','#AF7AC5','#85C1E9','#F9E79F','#BA4A00']}
+for doc in osp_circuits
+return merge(geo_linestring(doc.attributes.tracado),colors,{'name':doc.name})
+
+
+
+let colors = {'randColor':true,'color':['#A93226','#AF7AC5','#85C1E9','#F9E79F','#BA4A00']}
+//let colors = {'randColor':true,'color':['red','green','blue']}
+for doc in osp_circuits
+filter doc.name == 'BR.SE.circuit.29483'
+or doc.name == 'CM.RC.circuit.52269'
+or doc.name == 'CM.RC.circuit.52278'
+return merge(geo_linestring(doc.attributes.tracado),colors,{'name':doc.name})
+
+
+/**
+  * Find Intersecs
+  */
+for doc in osp_circuits
+   let nc=(
+      for n in osp_circuits
+         filter GEO_INTERSECTS(geo_linestring(n.attributes.tracado),geo_linestring(doc.attributes.tracado)) ==true
+          and n._id != doc._id
+          and n.aPoint._id != doc.aPoint._id
+          and n.aPoint._id != doc.zPoint._id
+          and n.zPoint._id != doc.zPoint._id
+          and n.zPoint._id != doc.aPoint._id
+      return n
+   )
+   filter length(nc)> 0
+   sort length(nc) desc
+return {circuitName:doc.name,intersectCount:length(nc),intersectsWith:CONCAT_SEPARATOR(', ',nc[*].name)}
+
+
+
+let colors = {'randColor':true,'color':['#A93226','#AF7AC5','#85C1E9','#F9E79F','#BA4A00']}
+let sites=(for doc in osp_nodes
+return geo_point(doc.attributes.latLong[0],doc.attributes.latLong[1]))
+let tracados=(for doc in osp_circuits
+return MERGE(GEO_LINESTRING(doc.attributes.tracado),colors,{'name':doc.name}))
+
+for x in UNION(sites,tracados)
+return x
+
+
+let colors = {'randColor':true,'color':['#A93226','#AF7AC5','#85C1E9','#F9E79F','#BA4A00']}
+let sites=(for doc in osp_nodes
+filter doc.name != 'MS'
+return merge(geo_point(doc.attributes.latLong[0],doc.attributes.latLong[1]),{'name':doc.name}))
+let tracados=(for doc in osp_circuits
+return MERGE(GEO_LINESTRING(doc.attributes.tracado),colors,{'name':doc.name}))
+
+for x in UNION(sites,tracados)
+return x

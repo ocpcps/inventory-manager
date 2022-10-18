@@ -109,24 +109,33 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
     public GraphList<T> query(String aql, Map<String, Object> bindVars, Class<T> type, ArangoDatabase db)
             throws ResourceNotFoundException {
         logger.info("(query) RUNNING: AQL:[{}]", aql);
-        bindVars.forEach((k, v) -> {
-            logger.info("\t  [@{}]=[{}]", k, v);
+        if (bindVars != null) {
+            bindVars.forEach((k, v) -> {
+                logger.info("\t  [@{}]=[{}]", k, v);
+            });
 
-        });
-        GraphList<T> result = new GraphList<>(
-                db.query(aql, bindVars, new AqlQueryOptions().fullCount(true).count(true), type));
-        
-        if (result.isEmpty()) {
-            ResourceNotFoundException ex = new ResourceNotFoundException();
-            //
-            // Create a Detail map to the user
-            //
-            ex.addDetails("AQL", aql);
-            ex.addDetails("params", bindVars);
-            throw ex;
+            GraphList<T> result = new GraphList<>(
+                    db.query(aql, bindVars, new AqlQueryOptions().fullCount(true).count(true), type));
+
+            if (result.isEmpty()) {
+                ResourceNotFoundException ex = new ResourceNotFoundException();
+                //
+                // Create a Detail map to the user
+                //
+                ex.addDetails("AQL", aql);
+                ex.addDetails("params", bindVars);
+                throw ex;
+            }
+            return result;
+        } else {
+            GraphList<T> result = new GraphList<>(
+                    db.query(aql, new AqlQueryOptions().fullCount(true).count(true), type));
+            return result;
         }
-        return result;
+
     }
+
+    public abstract int getCount(Domain domain) throws ResourceNotFoundException, IOException ;
 
     public ArangoDatabase getDb() {
         return this.arangoDatabase;

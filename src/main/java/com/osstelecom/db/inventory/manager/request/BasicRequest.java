@@ -17,6 +17,8 @@
  */
 package com.osstelecom.db.inventory.manager.request;
 
+import com.osstelecom.db.inventory.manager.resources.BasicResource;
+
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>

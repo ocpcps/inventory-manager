@@ -18,6 +18,7 @@
 package com.osstelecom.db.inventory.manager.session;
 
 import com.arangodb.entity.DocumentUpdateEntity;
+import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import java.util.Date;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +31,7 @@ import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.SchemaNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.ScriptRuleException;
+import com.osstelecom.db.inventory.manager.operation.CircuitResourceManager;
 import com.osstelecom.db.inventory.manager.operation.DomainManager;
 import com.osstelecom.db.inventory.manager.operation.ManagedResourceManager;
 import com.osstelecom.db.inventory.manager.operation.ResourceConnectionManager;
@@ -37,12 +39,15 @@ import com.osstelecom.db.inventory.manager.operation.ResourceLocationManager;
 import com.osstelecom.db.inventory.manager.operation.ServiceManager;
 import com.osstelecom.db.inventory.manager.request.CreateConnectionRequest;
 import com.osstelecom.db.inventory.manager.request.CreateManagedResourceRequest;
+import com.osstelecom.db.inventory.manager.request.DeleteManagedResourceRequest;
 import com.osstelecom.db.inventory.manager.request.FilterRequest;
 import com.osstelecom.db.inventory.manager.request.FindManagedResourceRequest;
+import com.osstelecom.db.inventory.manager.request.ListManagedResourceRequest;
 import com.osstelecom.db.inventory.manager.request.PatchManagedResourceRequest;
 import com.osstelecom.db.inventory.manager.request.PatchResourceConnectionRequest;
 import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 import com.osstelecom.db.inventory.manager.resources.Domain;
+import com.osstelecom.db.inventory.manager.resources.GraphList;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import com.osstelecom.db.inventory.manager.resources.ServiceResource;
@@ -52,10 +57,14 @@ import com.osstelecom.db.inventory.manager.resources.exception.MetricConstraintE
 import com.osstelecom.db.inventory.manager.resources.exception.NoResourcesAvailableException;
 import com.osstelecom.db.inventory.manager.response.CreateManagedResourceResponse;
 import com.osstelecom.db.inventory.manager.response.CreateResourceConnectionResponse;
+import com.osstelecom.db.inventory.manager.response.DeleteManagedResourceResponse;
 import com.osstelecom.db.inventory.manager.response.FilterResponse;
 import com.osstelecom.db.inventory.manager.response.FindManagedResourceResponse;
 import com.osstelecom.db.inventory.manager.response.PatchManagedResourceResponse;
 import com.osstelecom.db.inventory.manager.response.PatchResourceConnectionResponse;
+import com.osstelecom.db.inventory.manager.response.TypedListResponse;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  *
@@ -79,6 +88,9 @@ public class ResourceSession {
 
     @Autowired
     private ManagedResourceManager managedResourceManager;
+
+    @Autowired
+    private CircuitResourceManager circuitManager;
 
     @Autowired
     private ServiceManager serviceManager;
@@ -168,6 +180,68 @@ public class ResourceSession {
     }
 
     /**
+     * Try to delete a resource on the domain
+     * @param request
+     * @return
+     * @throws InvalidRequestException
+     * @throws DomainNotFoundException
+     * @throws ArangoDaoException
+     * @throws ResourceNotFoundException
+     */
+    public DeleteManagedResourceResponse deleteManagedResource(DeleteManagedResourceRequest request) throws InvalidRequestException, DomainNotFoundException, ArangoDaoException, ResourceNotFoundException {
+        if (request.getResourceId() == null) {
+            throw new InvalidRequestException("Please Provide Resource ID to delete");
+        } else if (request.getRequestDomain() == null) {
+            throw new InvalidRequestException("Please Provide Domain Name of Resource to  delete");
+        }
+
+        Domain domain = this.domainManager.getDomain(request.getRequestDomain());
+        //
+        // Precisa Enconrar o Recurso.
+        //
+        ManagedResource resource = this.managedResourceManager.findManagedResourceById(new ManagedResource(domain, request.getResourceId()));
+
+        //
+        // O Problema do delete de um recurso é que ele pode ser necessário para alguma conexão e consequentemente um circuito...
+        // Então vamos ver se esse recurso é necessário para alguma conexão deste dominio
+        //
+        Map<String, Object> bindings = new HashMap<>();
+        bindings.put("resourceId", resource.getId());
+        FilterDTO connectionFilter = new FilterDTO();
+        connectionFilter.setAqlFilter("doc.fromResource._id == @resourceId or doc.toResource._id == @resourceId ");
+        connectionFilter.getObjects().add("connections");
+        connectionFilter.setBindings(bindings);
+        try {
+            GraphList<ResourceConnection> connections = resourceConnectionManager.getConnectionsByFilter(connectionFilter, domain.getDomainName());
+            //
+            // Se chegou aqui é porque tem conexões que dependem do recurso, não podemos deletar
+            //
+            throw new InvalidRequestException(("Resource ID is Used By:[" + connections.size() + "] Connections, please remove theses dependencies, before delete"));
+        } catch (ResourceNotFoundException ex) {
+            //
+            // Neste Caso isso é desejado, não tem conexões que dependem dele...
+            // 
+
+            FilterDTO circuitFilter = new FilterDTO();
+            circuitFilter.setAqlFilter("doc.aPoint._id == @resourceId or doc.zPoint._id == @resourceId ");
+            circuitFilter.getObjects().add("connections");
+            circuitFilter.setBindings(bindings);
+            try {
+                GraphList<CircuitResource> circuits = circuitManager.findCircuitsByFilter(circuitFilter, domain);
+                throw new InvalidRequestException(("Resource ID is Used By:[" + circuits.size() + "] Circuits, please remove theses dependencies, before delete"));
+            } catch (ResourceNotFoundException exCic) {
+                resource = this.managedResourceManager.delete(resource);
+                DeleteManagedResourceResponse response = new DeleteManagedResourceResponse(resource);
+                //
+                // Precisa de um evento de Delete ?
+                // 
+                return response;
+            }
+        }
+
+    }
+
+    /**
      * Obtem o managed Resource By ID
      *
      * @param request
@@ -179,7 +253,16 @@ public class ResourceSession {
      */
     public FindManagedResourceResponse findManagedResourceById(FindManagedResourceRequest request) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
         if (request.getResourceId() == null) {
-            throw new InvalidRequestException("Field resourceId cannot be empty or null");
+            if (request.getRequestDomain() == null) {
+                throw new InvalidRequestException("Field resourceId and domain cannot be empty or null");
+            } else {
+                try {
+                    Domain domain = this.domainManager.getDomain(request.getRequestDomain());
+                    return new FindManagedResourceResponse(this.manager.findManagedResource(new ManagedResource(domain, request.getResourceId())));
+                } catch (IllegalArgumentException exception) {
+                    throw new InvalidRequestException("ResourceId Invalid DOMAIN:[" + request.getRequestDomain() + "]");
+                }
+            }
         } else {
             try {
                 Domain domain = this.domainManager.getDomain(request.getRequestDomain());
@@ -189,6 +272,17 @@ public class ResourceSession {
             }
 
         }
+
+    }
+
+    public TypedListResponse listManagedResources(ListManagedResourceRequest request) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
+        FilterDTO filter = new FilterDTO();
+        filter.setAqlFilter("");
+        filter.getObjects().add("nodes");
+        TypedListResponse response
+                = new TypedListResponse(this.managedResourceManager
+                        .getNodesByFilter(filter, request.getRequestDomain()).toList());
+        return response;
     }
 
     /**
@@ -464,9 +558,6 @@ public class ResourceSession {
                 }
             });
         }
-        
-        
-      
 
         if (requestedPatch.getDependentService() != null) {
             //

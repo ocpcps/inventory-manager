@@ -19,6 +19,7 @@ package com.osstelecom.db.inventory.manager.dto;
 
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -30,7 +31,7 @@ import java.util.Map;
 public class FilterDTO {
 
     private List<String> classes;
-    private List<String> objects;
+    private List<String> objects = new ArrayList<>();
     private String aqlFilter;
     private Map<String, Object> bindings;
     private String targetRegex;

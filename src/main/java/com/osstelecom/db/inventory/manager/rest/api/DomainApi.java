@@ -17,10 +17,12 @@
  */
 package com.osstelecom.db.inventory.manager.rest.api;
 
+import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.DomainAlreadyExistsException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
 import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
+import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.request.CreateDomainRequest;
 import com.osstelecom.db.inventory.manager.request.DeleteDomainRequest;
 import com.osstelecom.db.inventory.manager.response.CreateDomainResponse;
@@ -29,6 +31,7 @@ import com.osstelecom.db.inventory.manager.response.DomainResponse;
 import com.osstelecom.db.inventory.manager.response.GetDomainsResponse;
 import com.osstelecom.db.inventory.manager.security.model.AuthenticatedCall;
 import com.osstelecom.db.inventory.manager.session.DomainSession;
+import java.io.IOException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -61,7 +64,7 @@ public class DomainApi extends BaseApi {
      */
     @AuthenticatedCall(role = {"user", "operator"})
     @GetMapping(path = "/{domain}", produces = "application/json")
-    public DomainResponse getDomain(@PathVariable("domain") String domainName) throws DomainNotFoundException, InvalidRequestException {
+    public DomainResponse getDomain(@PathVariable("domain") String domainName) throws DomainNotFoundException, InvalidRequestException, ArangoDaoException, ResourceNotFoundException, IOException {
         return domainSession.getDomain(domainName);
     }
 
@@ -74,7 +77,7 @@ public class DomainApi extends BaseApi {
      */
     @AuthenticatedCall(role = {"user", "operator"})
     @DeleteMapping(path = "/{domainName}", produces = "application/json")
-    public DeleteDomainResponse deleteDomain(@PathVariable("domainName") String domainName) throws DomainNotFoundException {
+    public DeleteDomainResponse deleteDomain(@PathVariable("domainName") String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, IOException {
         DeleteDomainRequest request = new DeleteDomainRequest(domainName);
         return domainSession.deleteDomain(request);
     }

@@ -103,8 +103,13 @@ public class ManagedResourceManager extends Manager {
      * @param resource
      * @return
      */
-    public ManagedResource delete(ManagedResource resource) {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public ManagedResource delete(ManagedResource resource) throws ArangoDaoException {
+        //
+        // Cuidar dessa lógica é triste...
+        //
+//        throw new UnsupportedOperationException("Not supported yet.");
+
+        return this.managedResourceDao.deleteResource(resource).getOld();
     }
 
     @EventListener(ApplicationReadyEvent.class)

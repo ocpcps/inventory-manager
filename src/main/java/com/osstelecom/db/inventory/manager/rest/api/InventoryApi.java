@@ -28,8 +28,10 @@ import com.osstelecom.db.inventory.manager.exception.ScriptRuleException;
 import com.osstelecom.db.inventory.manager.request.CreateConnectionRequest;
 import com.osstelecom.db.inventory.manager.request.CreateManagedResourceRequest;
 import com.osstelecom.db.inventory.manager.request.CreateResourceLocationRequest;
+import com.osstelecom.db.inventory.manager.request.DeleteManagedResourceRequest;
 import com.osstelecom.db.inventory.manager.request.FilterRequest;
 import com.osstelecom.db.inventory.manager.request.FindManagedResourceRequest;
+import com.osstelecom.db.inventory.manager.request.ListManagedResourceRequest;
 import com.osstelecom.db.inventory.manager.request.PatchManagedResourceRequest;
 import com.osstelecom.db.inventory.manager.request.PatchResourceConnectionRequest;
 import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstraintViolationException;
@@ -39,10 +41,12 @@ import com.osstelecom.db.inventory.manager.resources.exception.NoResourcesAvaila
 import com.osstelecom.db.inventory.manager.response.CreateManagedResourceResponse;
 import com.osstelecom.db.inventory.manager.response.CreateResourceConnectionResponse;
 import com.osstelecom.db.inventory.manager.response.CreateResourceLocationResponse;
+import com.osstelecom.db.inventory.manager.response.DeleteManagedResourceResponse;
 import com.osstelecom.db.inventory.manager.response.FilterResponse;
 import com.osstelecom.db.inventory.manager.response.FindManagedResourceResponse;
 import com.osstelecom.db.inventory.manager.response.PatchManagedResourceResponse;
 import com.osstelecom.db.inventory.manager.response.PatchResourceConnectionResponse;
+import com.osstelecom.db.inventory.manager.response.TypedListResponse;
 import com.osstelecom.db.inventory.manager.session.ResourceSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -54,6 +58,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.osstelecom.db.inventory.manager.security.model.AuthenticatedCall;
 import com.osstelecom.db.inventory.manager.session.ResourceLocationSession;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 
 /**
@@ -82,12 +87,13 @@ public class InventoryApi extends BaseApi {
      */
     @AuthenticatedCall(role = {"user"})
     @PutMapping(path = "/{domain}/location", produces = "application/json", consumes = "application/json")
-    public CreateResourceLocationResponse createLocation(@RequestBody CreateResourceLocationRequest request, @PathVariable("domain") String domain) throws GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, InvalidRequestException, DomainNotFoundException {
+    public CreateResourceLocationResponse createLocation(@RequestBody CreateResourceLocationRequest request, @PathVariable("domain") String domain) throws GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, InvalidRequestException, DomainNotFoundException, ArangoDaoException {
         try {
             //
             // Prevalesce o domain da URL.... será que deixo assim ?
             //
             request.setRequestDomain(domain);
+            this.setUserDetails(request);
             return resourceLocationSession.createResourceLocation(request);
         } catch (ArangoDBException ex) {
             GenericException exa = new GenericException(ex.getMessage());
@@ -164,6 +170,28 @@ public class InventoryApi extends BaseApi {
         FindManagedResourceRequest findRequest = new FindManagedResourceRequest(resourceId, domain);
         this.setUserDetails(findRequest);
         return resourceSession.findManagedResourceById(findRequest);
+    }
+    
+   
+    @AuthenticatedCall(role = {"user"})
+    @DeleteMapping(path = "/{domain}/resource/{resourceId}", produces = "application/json")
+    public DeleteManagedResourceResponse deleteManagedResourceById(@PathVariable("domain") String domain, @PathVariable("resourceId") String resourceId) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
+        DeleteManagedResourceRequest deleteRequest = new DeleteManagedResourceRequest(resourceId, domain);
+        this.setUserDetails(deleteRequest);
+        return resourceSession.deleteManagedResource(deleteRequest);
+    }
+    
+
+    @AuthenticatedCall(role = {"user"})
+    @GetMapping(path = "/{domain}/resource", produces = "application/json")
+    public TypedListResponse listManagedResource(@PathVariable("domain") String domain) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
+        //
+        // This is a Find ALL Query
+        //
+        ListManagedResourceRequest listRequest = new ListManagedResourceRequest(domain);
+        this.setUserDetails(listRequest);
+
+        return resourceSession.listManagedResources(listRequest);
     }
 
     /**

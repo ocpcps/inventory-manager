@@ -57,6 +57,9 @@ public class ResourceLocationSession {
     @Autowired
     private ResourceConnectionManager resourceConnectionManager;
 
+    @Autowired
+    private UtilSession utils;
+
     private Logger logger = LoggerFactory.getLogger(ResourceLocationSession.class);
 
     /**
@@ -109,7 +112,7 @@ public class ResourceLocationSession {
      * @throws AttributeConstraintViolationException
      * @throws ScriptRuleException
      */
-    public CreateResourceLocationResponse createResourceLocation(CreateResourceLocationRequest request) throws GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, InvalidRequestException, DomainNotFoundException {
+    public CreateResourceLocationResponse createResourceLocation(CreateResourceLocationRequest request) throws GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, InvalidRequestException, DomainNotFoundException, ArangoDaoException {
 
         if (request.getPayLoad().getName() == null || request.getPayLoad().getName().trim().equals("")) {
             throw new InvalidRequestException("Please Give a name");
@@ -128,7 +131,28 @@ public class ResourceLocationSession {
 
         if (request.getPayLoad().getClassName().equalsIgnoreCase("Default")) {
             request.getPayLoad().setClassName("location.Default");
+        } else {
+            if (!request.getPayLoad().getClassName().startsWith("location")) {
+                throw new InvalidRequestException("Location Resource class needs to start with location.");
+            }
         }
+
+        if (!utils.isValidStringValue(request.getPayLoad().getNodeAddress())) {
+            throw new InvalidRequestException("Invalid Node Address [" + request.getPayLoad().getNodeAddress() + "]");
+        }
+        
+        //
+        // No Nome Permite Tudo
+        //
+//        if (!utils.isValidStringValue(request.getPayLoad().getName(),"[a-zA-Z,0-9,\\.,\\-,áàâãéèêíïóôõöúçñ,ÁÀÂÃÉÈÊÍÏÓÔÕÖÚÇÑ]")) {
+//            throw new InvalidRequestException("Invalid Node Name:[" + request.getPayLoad().getName() + "]");
+//        }
+
+        //
+        // Para criação Identifica o usuário criador e assume como dono
+        //
+        request.getPayLoad().setOwner(request.getUserId());
+        request.getPayLoad().setAuthor(request.getUserId());
 
         request.getPayLoad().setDomain(domainManager.getDomain(request.getRequestDomain()));
 
