@@ -58,6 +58,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.osstelecom.db.inventory.manager.security.model.AuthenticatedCall;
 import com.osstelecom.db.inventory.manager.session.ResourceLocationSession;
+import java.util.ArrayList;
+import java.util.List;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 
@@ -171,8 +173,7 @@ public class InventoryApi extends BaseApi {
         this.setUserDetails(findRequest);
         return resourceSession.findManagedResourceById(findRequest);
     }
-    
-   
+
     @AuthenticatedCall(role = {"user"})
     @DeleteMapping(path = "/{domain}/resource/{resourceId}", produces = "application/json")
     public DeleteManagedResourceResponse deleteManagedResourceById(@PathVariable("domain") String domain, @PathVariable("resourceId") String resourceId) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
@@ -180,7 +181,6 @@ public class InventoryApi extends BaseApi {
         this.setUserDetails(deleteRequest);
         return resourceSession.deleteManagedResource(deleteRequest);
     }
-    
 
     @AuthenticatedCall(role = {"user"})
     @GetMapping(path = "/{domain}/resource", produces = "application/json")
@@ -266,6 +266,48 @@ public class InventoryApi extends BaseApi {
         this.setUserDetails(request);
         request.setRequestDomain(domainName);
         return this.resourceSession.patchManagedResource(request);
+    }
+
+    @AuthenticatedCall(role = {"user"})
+    @GetMapping(path = "/{domain}/resource/category", produces = "application/json", consumes = "application/json")
+    public TypedListResponse getResourceCategories(@PathVariable("domain") String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException {
+        List<String> mockList = new ArrayList<>();
+        mockList.add("default");
+        TypedListResponse response = new TypedListResponse(mockList);
+        return response;
+    }
+
+    @AuthenticatedCall(role = {"user"})
+    @GetMapping(path = "/{domain}/resource/businessStatus", produces = "application/json", consumes = "application/json")
+    public TypedListResponse getBusinessStatus(@PathVariable("domain") String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException {
+        List<String> mockList = new ArrayList<>();
+        mockList.add("Planned");
+        mockList.add("Pending Connection");
+        mockList.add("Active");
+        mockList.add("Pending Disconnection");
+        mockList.add("Inactive");
+        TypedListResponse response = new TypedListResponse(mockList);
+        return response;
+    }
+
+    @AuthenticatedCall(role = {"user"})
+    @GetMapping(path = "/{domain}/resource/operStatus", produces = "application/json", consumes = "application/json")
+    public TypedListResponse getOperStatus(@PathVariable("domain") String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException {
+        List<String> mockList = new ArrayList<>();
+        mockList.add("Up");
+        mockList.add("Down");
+        TypedListResponse response = new TypedListResponse(mockList);
+        return response;
+    }
+
+    @AuthenticatedCall(role = {"user"})
+    @GetMapping(path = "/{domain}/resource/adminStatus", produces = "application/json", consumes = "application/json")
+    public TypedListResponse getAdminStatus(@PathVariable("domain") String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException {
+        List<String> mockList = new ArrayList<>();
+        mockList.add("Up");
+        mockList.add("Down");
+        TypedListResponse response = new TypedListResponse(mockList);
+        return response;
     }
 
     @AuthenticatedCall(role = {"user"})

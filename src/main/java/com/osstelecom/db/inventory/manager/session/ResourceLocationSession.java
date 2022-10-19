@@ -81,13 +81,24 @@ public class ResourceLocationSession {
         ResourceLocation to = resourceLocationManager.findResourceLocation(request.getPayLoad().getToName(), request.getPayLoad().getToNodeAddress(), request.getPayLoad().getToClassName(), request.getRequestDomain());
 
         ResourceConnection connection = new ResourceConnection(domainManager.getDomain(request.getRequestDomain()));
-        connection.setName(request.getPayLoad().getConnectionName());
+
+        if (request.getPayLoad().getConnectionName() == null && request.getPayLoad().getNodeAddress() == null) {
+            throw new InvalidRequestException("Please Provide at Least a Name[name] or Node Address [nodeAddress]");
+        }
+
+        if (request.getPayLoad().getConnectionName() != null && !request.getPayLoad().getConnectionName().trim().equals("")) {
+            connection.setName(request.getPayLoad().getConnectionName());
+        }
 
         if (request.getPayLoad().getNodeAddress() != null) {
             connection.setNodeAddress(request.getPayLoad().getNodeAddress());
         } else {
             connection.setNodeAddress(connection.getName());
         }
+        //
+        // Validação dos nomes
+        //
+        utils.validadeNodeAddressAndName(connection);
         connection.setClassName(request.getPayLoad().getConnectionClass());
         connection.setFrom(from);
         connection.setTo(to);
@@ -96,9 +107,17 @@ public class ResourceLocationSession {
         connection.setAttributes(request.getPayLoad().getAttributes());
         connection.setPropagateOperStatus(request.getPayLoad().getPropagateOperStatus());
         connection.setOperationalStatus(request.getPayLoad().getOperationalStatus());
-        CreateResourceConnectionResponse response = new CreateResourceConnectionResponse(connection);
+        utils.validateCanonicalName(connection);
+
+        //
+        // Dependencias de Location deveriam começar com connection ? Ainda tenho dúvidas.
+        //
+        if (!connection.getClassName().startsWith("connection") || !connection.getAttributeSchemaName().startsWith("connection")) {
+            throw new InvalidRequestException("Class Name and Atribute Schema Name has to start with 'connection', provided values: className:[" + connection.getClassName() + "] attributeSchemaName:[" + connection.getAttributeSchemaName() + "]");
+        }
+
         connection.setInsertedDate(new Date());
-        resourceConnectionManager.createResourceConnection(connection);
+        CreateResourceConnectionResponse response = new CreateResourceConnectionResponse(resourceConnectionManager.createResourceConnection(connection));
         return response;
     }
 
@@ -136,17 +155,14 @@ public class ResourceLocationSession {
                 throw new InvalidRequestException("Location Resource class needs to start with location.");
             }
         }
-
-        if (!utils.isValidStringValue(request.getPayLoad().getNodeAddress())) {
-            throw new InvalidRequestException("Invalid Node Address [" + request.getPayLoad().getNodeAddress() + "]");
-        }
-        
         //
-        // No Nome Permite Tudo
+        // Valida se o name e nodeAddress contém os caracteres aceitos
         //
-//        if (!utils.isValidStringValue(request.getPayLoad().getName(),"[a-zA-Z,0-9,\\.,\\-,áàâãéèêíïóôõöúçñ,ÁÀÂÃÉÈÊÍÏÓÔÕÖÚÇÑ]")) {
-//            throw new InvalidRequestException("Invalid Node Name:[" + request.getPayLoad().getName() + "]");
-//        }
+        utils.validadeNodeAddressAndName(request.getPayLoad());
+        //
+        // Valida o className e o AttributeSchema Name
+        //
+        utils.validateCanonicalName(request.getPayLoad());
 
         //
         // Para criação Identifica o usuário criador e assume como dono

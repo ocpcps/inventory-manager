@@ -21,6 +21,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
+import com.osstelecom.db.inventory.manager.resources.BasicResource;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -73,13 +75,10 @@ public class UtilSession {
      * @return
      */
     public Boolean isValidStringValue(String value) {
-        return this.isValidStringValue(value, "[a-zA-Z,0-9,\\.,\\-]+");
+        return this.isValidStringValue(value, "^[a-zA-Z0-9\\-\\.]+$");
     }
 
     public Boolean isValidStringValue(String value, String regex) {
-        if (value.contains(" ")) {
-            return false;
-        }
         return value.matches(regex);
     }
 
@@ -123,5 +122,46 @@ public class UtilSession {
             Logger.getLogger(UtilSession.class.getName()).log(Level.SEVERE, null, ex);
         }
         return "{}";
+    }
+
+    /**
+     * Valida se o Basic Resource possui uma convenção de nome correta
+     *
+     * @param resource
+     * @throws InvalidRequestException
+     */
+    public void validadeNodeAddressAndName(BasicResource resource) throws InvalidRequestException {
+        //
+        // Valida os padrões de Nome do Node Address
+        //
+        if (resource.getNodeAddress() != null) {
+            if (!this.isValidStringValue(resource.getNodeAddress())) {
+                throw new InvalidRequestException("Invalid Node Address [" + resource.getNodeAddress() + "]");
+            }
+        }
+
+        //
+        // No Nome Permite, Letras, Números, Pontos , Espaços,Acentos e "/"
+        //
+        if (resource.getName() != null) {
+            if (!this.isValidStringValue(resource.getName(), "^[a-zA-Z0-9\\.\\-áàâãéèêíïóôõöúçñÁÀÂÃÉÈÊÍÏÓÔÕÖÚÇÑ\\s/\\_]+$")) {
+                throw new InvalidRequestException("Invalid Node Name:[" + resource.getName() + "]");
+            }
+        }
+
+    }
+
+    public void validateCanonicalName(BasicResource resource) throws InvalidRequestException {
+        if (resource.getAttributeSchemaName() != null && resource.getClassName() != null) {
+            if (!this.isValidStringValue(resource.getAttributeSchemaName(), "^[a-zA-Z0-9\\.\\-]+$")) {
+                throw new InvalidRequestException("Invalid Attribute Schema Name:[" + resource.getAttributeSchemaName() + "]");
+            }
+
+            if (!this.isValidStringValue(resource.getClassName(), "^[a-zA-Z0-9\\.\\-]+$")) {
+                throw new InvalidRequestException("Invalid Class Name Name:[" + resource.getClassName() + "]");
+            }
+        } else {
+            throw new InvalidRequestException("Please Provide Atribute Schema Name and ClassName Values");
+        }
     }
 }
