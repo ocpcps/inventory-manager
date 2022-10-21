@@ -115,7 +115,7 @@ public class ResourceLocationSession {
         if (!connection.getClassName().startsWith("connection") || !connection.getAttributeSchemaName().startsWith("connection")) {
             throw new InvalidRequestException("Class Name and Atribute Schema Name has to start with 'connection', provided values: className:[" + connection.getClassName() + "] attributeSchemaName:[" + connection.getAttributeSchemaName() + "]");
         }
-
+    
         connection.setInsertedDate(new Date());
         CreateResourceConnectionResponse response = new CreateResourceConnectionResponse(resourceConnectionManager.createResourceConnection(connection));
         return response;

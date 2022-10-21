@@ -269,7 +269,7 @@ public class InventoryApi extends BaseApi {
     }
 
     @AuthenticatedCall(role = {"user"})
-    @GetMapping(path = "/{domain}/resource/category", produces = "application/json", consumes = "application/json")
+    @GetMapping(path = "/{domain}/resource/category", produces = "application/json")
     public TypedListResponse getResourceCategories(@PathVariable("domain") String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException {
         List<String> mockList = new ArrayList<>();
         mockList.add("default");
@@ -278,7 +278,7 @@ public class InventoryApi extends BaseApi {
     }
 
     @AuthenticatedCall(role = {"user"})
-    @GetMapping(path = "/{domain}/resource/businessStatus", produces = "application/json", consumes = "application/json")
+    @GetMapping(path = "/{domain}/resource/businessStatus", produces = "application/json")
     public TypedListResponse getBusinessStatus(@PathVariable("domain") String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException {
         List<String> mockList = new ArrayList<>();
         mockList.add("Planned");
@@ -291,7 +291,7 @@ public class InventoryApi extends BaseApi {
     }
 
     @AuthenticatedCall(role = {"user"})
-    @GetMapping(path = "/{domain}/resource/operStatus", produces = "application/json", consumes = "application/json")
+    @GetMapping(path = "/{domain}/resource/operStatus", produces = "application/json")
     public TypedListResponse getOperStatus(@PathVariable("domain") String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException {
         List<String> mockList = new ArrayList<>();
         mockList.add("Up");
@@ -301,7 +301,7 @@ public class InventoryApi extends BaseApi {
     }
 
     @AuthenticatedCall(role = {"user"})
-    @GetMapping(path = "/{domain}/resource/adminStatus", produces = "application/json", consumes = "application/json")
+    @GetMapping(path = "/{domain}/resource/adminStatus", produces = "application/json")
     public TypedListResponse getAdminStatus(@PathVariable("domain") String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException {
         List<String> mockList = new ArrayList<>();
         mockList.add("Up");

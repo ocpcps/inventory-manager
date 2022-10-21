@@ -554,7 +554,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                             + configurationManager.loadConfiguration().getDateTimeFormat() + "]", ex);
 
                 }
-            } else if (model.getVariableType().equalsIgnoreCase("geoLine")) {
+            } else if (model.getVariableType().equalsIgnoreCase("GeoLine")) {
                 List<Float> data = (List<Float>) value;
                 return data;
             } else {
@@ -722,6 +722,17 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
             eventManager.notifyGenericEvent(new ResourceSchemaUpdatedEvent(original));
         }
         return new PatchResourceSchemaModelResponse(this.loadSchema(original.getSchemaName()));
+    }
+
+    public List<String> validAttributesType() {
+        List<String> validTypes = new ArrayList<>();
+        validTypes.add("Number");
+        validTypes.add("Boolean");
+        validTypes.add("Float");
+        validTypes.add("Date");
+        validTypes.add("DateTime");
+        validTypes.add("GeoLine");
+        return validTypes;
     }
 
     /**

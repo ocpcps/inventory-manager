@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: netcompass-api-replicaset
+  labels:
+    app: netcompass-api
+spec:
+  #
+  # If On Minikube keep 1
+  #  
+  replicas: 1
+  selector:
+    matchLabels:
+      app: netcompass-api
+  template:
+    metadata:
+      labels:
+        app: netcompass-api
+    spec:
+      containers:
+      - name: inventory-manager-api
+        image:  192.168.59.103:5000/osstelecom-jdk11
+      ports:
+        - name: api-https
+          containerPort: 9000
+          protocol: TCP
+      volumeMounts:
+        - mountPath: "/app/inventory-manager"
+          name: netcompass-app-storage
+      env:
+        - name: JAR_PATH
+          value: /app/inventory-manager
+        - name: JAR_ARGS
+          value: -Xmx4G
+        - name: JAR_NAME
+          value: inventory-manager-1.0.0-alpha-security.jar

@@ -36,6 +36,7 @@ import com.osstelecom.db.inventory.manager.response.EmptyOkResponse;
 import com.osstelecom.db.inventory.manager.response.GetSchemasResponse;
 import com.osstelecom.db.inventory.manager.response.PatchResourceSchemaModelResponse;
 import com.osstelecom.db.inventory.manager.response.ResourceSchemaResponse;
+import com.osstelecom.db.inventory.manager.response.TypedListResponse;
 import com.osstelecom.db.inventory.manager.response.TypedMapResponse;
 import com.osstelecom.db.inventory.manager.security.model.AuthenticatedCall;
 import com.osstelecom.db.inventory.manager.session.SchemaSession;
@@ -77,6 +78,14 @@ public class SchemaApi extends BaseApi {
     public ResourceSchemaResponse getSchameDefinition(@PathVariable("schema") String schema)
             throws GenericException, SchemaNotFoundException {
         return schemaSession.loadSchemaByName(schema);
+    }
+
+    @AuthenticatedCall(role = {"user"})
+    @GetMapping(path = "/types", produces = "application/json")
+    public TypedListResponse getSupportedTypes()
+            throws GenericException, SchemaNotFoundException {
+        TypedListResponse response = new TypedListResponse(schemaSession.validAttributesType());
+        return response;
     }
 
     /**

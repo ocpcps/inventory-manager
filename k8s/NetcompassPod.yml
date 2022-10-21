@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: inventory-manager-api
+spec:
+  volumes:
+    - name: netcompass-app-storage
+      persistentVolumeClaim:
+        claimName: netcompass-app-volume-claim
+  containers:
+    - name: netcompass
+      image:  192.168.59.103:5000/osstelecom-jdk11
+      ports:
+        - name: api-https
+          containerPort: 9000
+          protocol: TCP
+      volumeMounts:
+        - mountPath: "/app/inventory-manager"
+          name: netcompass-app-storage
+      env:
+        - name: JAR_PATH
+          value: /app/inventory-manager
+        - name: JAR_ARGS
+          value: -Xmx4G
+        - name: JAR_NAME
+          value: inventory-manager-1.0.0-alpha-security.jar
