@@ -217,7 +217,7 @@ public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
     @Override
     public GraphList<ServiceResource> findResourcesBySchemaName(String attributeSchemaName, Domain domain) throws ArangoDaoException {
         try {
-            String aql = "for doc in " + domain.getServices() + "filter doc.attributeSchemaName = @attributeSchemaName return doc";
+            String aql = "for doc in " + domain.getServices() + "filter doc.attributeSchemaName == @attributeSchemaName return doc";
             Map<String, Object> bindVars = new HashMap<>();
 
             bindVars.put("attributeSchemaName", attributeSchemaName);
@@ -230,7 +230,7 @@ public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
     @Override
     public GraphList<ServiceResource> findResourcesByClassName(String className, Domain domain) throws ArangoDaoException {
         try {
-            String aql = "for doc in " + domain.getServices() + " filter doc.className = @className return doc";
+            String aql = "for doc in " + domain.getServices() + " filter doc.className == @className return doc";
             Map<String, Object> bindVars = new HashMap<>();
             bindVars.put("attributeSchemaName", className);
             return this.query(aql, bindVars, ServiceResource.class, this.getDb());

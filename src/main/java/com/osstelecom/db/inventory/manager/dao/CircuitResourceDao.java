@@ -198,7 +198,7 @@ public class CircuitResourceDao extends AbstractArangoDao<CircuitResource> {
     @Override
     public GraphList<CircuitResource> findResourcesBySchemaName(String attributeSchemaName, Domain domain) throws ArangoDaoException {
         try {
-            String aql = "for doc in `" + domain.getCircuits() + "` filter doc.attributeSchemaName = @attributeSchemaName return doc";
+            String aql = "for doc in `" + domain.getCircuits() + "` filter doc.attributeSchemaName == @attributeSchemaName return doc";
             Map<String, Object> bindVars = new HashMap<>();
 
             bindVars.put("attributeSchemaName", attributeSchemaName);
@@ -211,7 +211,7 @@ public class CircuitResourceDao extends AbstractArangoDao<CircuitResource> {
     @Override
     public GraphList<CircuitResource> findResourcesByClassName(String className, Domain domain) throws ArangoDaoException {
         try {
-            String aql = "for doc in `" + domain.getCircuits() + "` filter doc.className = @className return doc";
+            String aql = "for doc in `" + domain.getCircuits() + "` filter doc.className == @className return doc";
             Map<String, Object> bindVars = new HashMap<>();
             bindVars.put("attributeSchemaName", className);
             return this.query(aql, bindVars, CircuitResource.class, this.getDb());

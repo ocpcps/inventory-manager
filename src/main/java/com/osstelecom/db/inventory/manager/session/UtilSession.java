@@ -144,7 +144,7 @@ public class UtilSession {
         // No Nome Permite, Letras, Números, Pontos , Espaços,Acentos e "/"
         //
         if (resource.getName() != null) {
-            if (!this.isValidStringValue(resource.getName(), "^[a-zA-Z0-9\\.\\-áàâãéèêíïóôõöúçñÁÀÂÃÉÈÊÍÏÓÔÕÖÚÇÑ\\s/\\_]+$")) {
+            if (!this.isValidStringValue(resource.getName(), "^[a-zA-Z0-9\\.\\-áàâãéèêíïóôõöúçñÁÀÂÃÉÈÊÍÏÓÔÕÖÚÇÑ\\s/\\_&\\(\\)]+$")) {
                 throw new InvalidRequestException("Invalid Node Name:[" + resource.getName() + "]");
             }
         }

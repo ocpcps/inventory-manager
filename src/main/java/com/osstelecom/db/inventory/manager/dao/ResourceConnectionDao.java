@@ -232,7 +232,7 @@ public class ResourceConnectionDao extends AbstractArangoDao<ResourceConnection>
             throws ArangoDaoException {
         try {
             String aql = "for doc in `" + domain.getConnections() + "`"
-                    + "filter doc.attributeSchemaName = @attributeSchemaName return doc";
+                    + "filter doc.attributeSchemaName == @attributeSchemaName return doc";
             Map<String, Object> bindVars = new HashMap<>();
 
             bindVars.put("attributeSchemaName", attributeSchemaName);
@@ -246,7 +246,7 @@ public class ResourceConnectionDao extends AbstractArangoDao<ResourceConnection>
     public GraphList<ResourceConnection> findResourcesByClassName(String className, Domain domain)
             throws ArangoDaoException {
         try {
-            String aql = "for doc in `" + domain.getConnections() + "` filter doc.className = @className return doc";
+            String aql = "for doc in `" + domain.getConnections() + "` filter doc.className == @className return doc";
             Map<String, Object> bindVars = new HashMap<>();
             bindVars.put("attributeSchemaName", className);
             return this.query(aql, bindVars, ResourceConnection.class, this.getDb());

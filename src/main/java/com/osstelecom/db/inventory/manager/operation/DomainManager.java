@@ -218,16 +218,23 @@ public class DomainManager extends Manager {
                 domain.setCircuitCount(circuitResourceDao.getCount(domain));
                 domain.setServiceCount(serviceResourceDao.getCount(domain));
                 domain.setLastStatsCalc(new Date());
+                //
+                // Sync DB
+                //
+                this.domainDao.updateDomain(domain);
             } else {
                 Calendar cal = Calendar.getInstance();
                 cal.add(Calendar.MINUTE, -5);
-
                 if (domain.getLastStatsCalc().before(cal.getTime())) {
                     domain.setResourceCount(managedResourceDao.getCount(domain));
                     domain.setConnectionCount(resourceConnectionDao.getCount(domain));
                     domain.setCircuitCount(circuitResourceDao.getCount(domain));
                     domain.setServiceCount(serviceResourceDao.getCount(domain));
                     domain.setLastStatsCalc(new Date());
+                    //
+                    // Sync DB
+                    //
+                    this.domainDao.updateDomain(domain);
                 }
             }
         } catch (IOException | ResourceNotFoundException ex) {

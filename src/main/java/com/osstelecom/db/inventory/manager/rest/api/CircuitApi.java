@@ -71,6 +71,7 @@ public class CircuitApi extends BaseApi {
     @PutMapping(path = "/{domain}/circuit", produces = "application/json", consumes = "application/json")
     public CreateCircuitResponse createCircuit(@RequestBody CreateCircuitRequest request, @PathVariable("domain") String domain) throws ArangoDaoException, ResourceNotFoundException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, AttributeConstraintViolationException, DomainNotFoundException {
         request.setRequestDomain(domain);
+        this.setUserDetails(request);
         return circuitSession.createCircuit(request);
     }
 
@@ -91,6 +92,7 @@ public class CircuitApi extends BaseApi {
     @PutMapping(path = "/{domain}/circuit/path", produces = "application/json", consumes = "application/json")
     public CreateCircuitPathResponse createCircuitPath(@RequestBody CreateCircuitPathRequest request, @PathVariable("domain") String domain) throws ArangoDaoException, ResourceNotFoundException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, AttributeConstraintViolationException, DomainNotFoundException, InvalidRequestException {
         request.setRequestDomain(domain);
+        this.setUserDetails(request);
         return circuitSession.createCircuitPath(request);
     }
 
@@ -113,6 +115,7 @@ public class CircuitApi extends BaseApi {
     public GetCircuitPathResponse getCircuitPath(@RequestBody GetCircuitPathRequest request, @PathVariable("domain") String domain) throws ArangoDaoException, ResourceNotFoundException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, AttributeConstraintViolationException, DomainNotFoundException {
 //        GetCircuitPathRequest request = gson.fromJson(strReq, GetCircuitPathRequest.class);
         request.setRequestDomain(domain);
+        this.setUserDetails(request);
         return circuitSession.findCircuitPath(request);
     }
 }

@@ -139,7 +139,7 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
     public GraphList<ResourceLocation> findResourcesBySchemaName(String attributeSchemaName, Domain domain) throws BasicException {
 //        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
         try {
-            String aql = "for doc in " + domain.getCircuits() + "filter doc.attributeSchemaName = @attributeSchemaName return doc";
+            String aql = "for doc in " + domain.getCircuits() + "filter doc.attributeSchemaName == @attributeSchemaName return doc";
             Map<String, Object> bindVars = new HashMap<>();
 
             bindVars.put("attributeSchemaName", attributeSchemaName);
@@ -153,7 +153,7 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
     public GraphList<ResourceLocation> findResourcesByClassName(String className, Domain domain) throws BasicException {
 //        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
         try {
-            String aql = "for doc in " + domain.getCircuits() + " filter doc.className = @className return doc";
+            String aql = "for doc in " + domain.getCircuits() + " filter doc.className == @className return doc";
             Map<String, Object> bindVars = new HashMap<>();
             bindVars.put("attributeSchemaName", className);
             return this.query(aql, bindVars, ResourceLocation.class, this.getDb());

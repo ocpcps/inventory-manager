@@ -187,7 +187,7 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
     @Override
     public GraphList<ManagedResource> findResourcesBySchemaName(String attributeSchemaName, Domain domain) throws ResourceNotFoundException, ArangoDaoException {
         try {
-            String aql = "for doc in `" + domain.getNodes() + "` filter doc.attributeSchemaName = @attributeSchemaName return doc";
+            String aql = "for doc in `" + domain.getNodes() + "` filter doc.attributeSchemaName == @attributeSchemaName return doc";
             Map<String, Object> bindVars = new HashMap<>();
 
             bindVars.put("attributeSchemaName", attributeSchemaName);
@@ -200,7 +200,7 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
     @Override
     public GraphList<ManagedResource> findResourcesByClassName(String className, Domain domain) throws ResourceNotFoundException, ArangoDaoException {
         try {
-            String aql = "for doc in `" + domain.getNodes() + "` filter doc.className = @className return doc";
+            String aql = "for doc in `" + domain.getNodes() + "` filter doc.className == @className return doc";
             Map<String, Object> bindVars = new HashMap<>();
             bindVars.put("attributeSchemaName", className);
             return this.query(aql, bindVars, ManagedResource.class, this.getDb());
