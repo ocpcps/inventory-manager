@@ -5,7 +5,7 @@
  */
 package uc;
 
-import com.osstelecom.db.inventory.topology.connection.impact.IImpactManager;
+import com.osstelecom.db.inventory.topology.impact.IImpactManager;
 import com.osstelecom.db.inventory.topology.node.DefaultNode;
 import com.osstelecom.db.inventory.topology.node.INetworkNode;
 import com.osstelecom.db.inventory.topology.DefaultTopology;

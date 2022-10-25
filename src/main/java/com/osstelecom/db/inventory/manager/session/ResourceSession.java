@@ -181,6 +181,7 @@ public class ResourceSession {
 
     /**
      * Try to delete a resource on the domain
+     *
      * @param request
      * @return
      * @throws InvalidRequestException
@@ -390,14 +391,26 @@ public class ResourceSession {
         //
         //
         ManagedResource requestedPatch = patchRequest.getPayLoad();
-
+        ManagedResource searchObj = null;
         //
         // Arruma o domain para funcionar certinho
         //
         requestedPatch.setDomain(this.domainManager.getDomain(patchRequest.getRequestDomain()));
         requestedPatch.setDomainName(requestedPatch.getDomain().getDomainName());
 
-        ManagedResource fromDBResource = this.findManagedResource(requestedPatch);
+        //
+        // Garante que vamos priorizar o ID ou, o KEY ( FUTURO )
+        //
+        if (requestedPatch.getId() != null && !requestedPatch.getId().trim().equals("")) {
+            //
+            // Temos um ID, sanitiza para ficar bom
+            //
+            searchObj = new ManagedResource(requestedPatch.getDomain(), requestedPatch.getId());
+        } else {
+            searchObj = requestedPatch;
+        }
+
+        ManagedResource fromDBResource = this.findManagedResource(searchObj);
 
         //
         // Se chegamos aqui, temos coisas para atualizar...

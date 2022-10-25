@@ -271,7 +271,7 @@ public class ManagedResourceManager extends Manager {
             //
             // Mover isso para session...
             //
-            if (!resource.getOperationalStatus().equals("UP") && !resource.getOperationalStatus().equalsIgnoreCase("DOWN")) {
+            if (!resource.getOperationalStatus().equalsIgnoreCase("UP") && !resource.getOperationalStatus().equalsIgnoreCase("DOWN")) {
                 throw new InvalidRequestException("Invalid OperationalStatus:[" + resource.getOperationalStatus() + "]");
             }
 

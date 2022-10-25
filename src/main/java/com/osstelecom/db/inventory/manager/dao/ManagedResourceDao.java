@@ -69,6 +69,8 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
 
             bindVars.put("domainName", resource.getDomain().getDomainName());
 
+      
+            
             if (resource.getId() != null) {
                 bindVars.put("_id", resource.getId());
             }

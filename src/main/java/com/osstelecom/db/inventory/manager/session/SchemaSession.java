@@ -649,6 +649,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                 }
                 
                 if (updateModel.getDoRemove()) {
+                    original.setAttributesChanged(true);
                     if (original.getAttributes().containsKey(updateAttrName)) {
                         original.getAttributes().remove(updateAttrName);
                     }

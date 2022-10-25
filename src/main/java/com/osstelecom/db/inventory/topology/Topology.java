@@ -19,8 +19,9 @@ package com.osstelecom.db.inventory.topology;
 
 import com.osstelecom.db.inventory.topology.connection.DefaultNetworkConnection;
 import com.osstelecom.db.inventory.topology.connection.INetworkConnection;
-import com.osstelecom.db.inventory.topology.connection.impact.DefaultImpactManager;
-import com.osstelecom.db.inventory.topology.connection.impact.IImpactManager;
+import com.osstelecom.db.inventory.topology.impact.DefaultImpactManager;
+import com.osstelecom.db.inventory.topology.impact.IImpactManager;
+import com.osstelecom.db.inventory.topology.impact.ImpactManager;
 import com.osstelecom.db.inventory.topology.listeners.DefaultTopologyListener;
 import com.osstelecom.db.inventory.topology.listeners.TopologyListener;
 import com.osstelecom.db.inventory.topology.node.INetworkNode;
@@ -37,7 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Nishisan
  */
 public abstract class Topology implements ITopology {
-
+    
     private TopologyListener topologyListener;
     private ArrayList<INetworkNode> nodes = new ArrayList<>();
     private ArrayList<INetworkNode> endPoints = new ArrayList<>();
@@ -47,14 +48,14 @@ public abstract class Topology implements ITopology {
     private Integer width = 1600;
     private Integer heigth = 900;
     private IImpactManager impactManager;
-
+    
     private ArrayList<INetworkNode> topOut = new ArrayList<>();
     private Point2D minPoint;
     private Point2D maxPoint;
     private Point middle;
     private Integer scaleFactor = 1;
     private String uuid;
-
+    
     @Override
     public void destroyTopology() {
         //
@@ -71,15 +72,15 @@ public abstract class Topology implements ITopology {
 //
 //        });
         nodes.clear();
-
+        
         connections.clear();
-
+        
         nodeNames.clear();
-
+        
         connectionNames.clear();
-
+        
     }
-
+    
     @Override
     public void resetDynamicValues() {
 //        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
@@ -87,7 +88,7 @@ public abstract class Topology implements ITopology {
             e.getValue().resetEndPointConnectionsCount();
         });
     }
-
+    
     @Override
     public ArrayList<INetworkNode> getTopOut(int count) {
         if (topOut.isEmpty()) {
@@ -100,7 +101,7 @@ public abstract class Topology implements ITopology {
                 if (topOut.size() < count) {
                     topOut.add(t.getValue());
                 }
-
+                
             });
 
 //            for (INetworkNode t : topOut) {
@@ -109,48 +110,52 @@ public abstract class Topology implements ITopology {
         }
         return topOut;
     }
-
+    
     public Topology() {
-
+        
         this.uuid = UUID.randomUUID().toString();
-
+        
     }
-
+    
     public Topology(Integer scaleFactor) {
-
+        
         this.topologyListener = new DefaultTopologyListener();
         this.setScaleFactor(scaleFactor);
-
+        
     }
-
+    
     public Topology(TopologyListener listener) {
         this.topologyListener = listener;
-
+        
     }
-
+    
     public Topology(TopologyListener listener, Boolean useGraph) {
         this.topologyListener = listener;
-
     }
-
+    
+    public Topology(ImpactManager impactManager) {
+        this.setImpactManager(impactManager);
+        this.setScaleFactor(100);
+    }
+    
     @Override
     public INetworkNode addNode(INetworkNode node) {
         this.topologyListener.onNodeAdded(node);
         if (node.endPoint()) {
             this.endPoints.add(node);
-
+            
         } else {
             nodes.add(node);
             nodeNames.put(node.getName(), node);
         }
-
+        
         return node;
     }
-
+    
     @Override
     public INetworkNode removeNode(INetworkNode node) {
         this.topologyListener.onNodeRemoved(node);
-
+        
         if (node.endPoint()) {
             this.endPoints.remove(node);
         } else {
@@ -160,7 +165,7 @@ public abstract class Topology implements ITopology {
 //        graph.removeNode(node.getUuid());
         return node;
     }
-
+    
     @Override
     public INetworkConnection addConnection(INetworkNode source, INetworkNode target, String name) {
 
@@ -175,9 +180,9 @@ public abstract class Topology implements ITopology {
         } else {
             return connectionNames.get(name);
         }
-
+        
     }
-
+    
     @Override
     public INetworkConnection addConnection(INetworkNode source, INetworkNode target) {
         DefaultNetworkConnection networkConnection = new DefaultNetworkConnection(source, target, this);
@@ -185,7 +190,7 @@ public abstract class Topology implements ITopology {
         getConnections().add(networkConnection);
         return networkConnection;
     }
-
+    
     @Override
     public INetworkConnection removeConnection(INetworkNode source, INetworkNode target, String name) {
         for (INetworkConnection c : source.getConnections()) {
@@ -195,7 +200,7 @@ public abstract class Topology implements ITopology {
                 return c;
             }
         }
-
+        
         return null;
     }
 
@@ -242,12 +247,12 @@ public abstract class Topology implements ITopology {
     public void setHeigth(Integer heigth) {
         this.heigth = heigth;
     }
-
+    
     @Override
     public ArrayList<INetworkNode> getEndPoints() {
         return this.endPoints;
     }
-
+    
     @Override
     public IImpactManager getImpactManager() {
         if (this.impactManager == null) {
@@ -255,34 +260,34 @@ public abstract class Topology implements ITopology {
         }
         return this.impactManager;
     }
-
+    
     @Override
     public void setImpactManager(IImpactManager impactManager) {
         this.impactManager = impactManager;
     }
-
+    
     @Override
     public ArrayList<INetworkNode> getNodes() {
         return this.nodes;
     }
-
+    
     @Override
     public INetworkNode getNodeByName(String name) {
-
+        
         if (nodeNames.containsKey(name)) {
             return nodeNames.get(name);
         }
-
+        
         return null;
     }
-
+    
     public void printConnections() {
         this.getConnections().stream().forEach((c) -> {
             System.out.println(":" + c.getName() + " From: " + c.getSource().getName() + " Target: " + c.getTarget().getName());
         });
-
+        
     }
-
+    
     @Override
     public INetworkConnection getConnectionByName(String name) {
         if (connectionNames.containsKey(name)) {
@@ -290,10 +295,10 @@ public abstract class Topology implements ITopology {
         }
         return null;
     }
-
+    
     @Override
     public void autoArrange() {
-
+        
     }
 
     /**
@@ -309,7 +314,7 @@ public abstract class Topology implements ITopology {
     public void setScaleFactor(Integer scaleFactor) {
         this.scaleFactor = scaleFactor;
     }
-
+    
     public String getUuid() {
         return uuid;
     }

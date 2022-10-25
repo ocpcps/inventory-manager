@@ -5,11 +5,12 @@
  */
 package uc.part2;
 
-import com.osstelecom.db.inventory.topology.connection.impact.IImpactManager;
+import com.osstelecom.db.inventory.topology.impact.IImpactManager;
 import com.osstelecom.db.inventory.topology.node.DefaultNode;
 import com.osstelecom.db.inventory.topology.node.INetworkNode;
 import com.osstelecom.db.inventory.topology.DefaultTopology;
 import com.osstelecom.db.inventory.topology.exception.GraphNotEnabledException;
+import com.osstelecom.db.inventory.topology.impact.WeakNodesImpactManager;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -20,18 +21,18 @@ import java.util.logging.Logger;
  * @author Nishisan
  */
 public class DefaultExample {
-
+    
     public DefaultExample() throws GraphNotEnabledException {
-
+        
         DefaultTopology topology = new DefaultTopology(100);
-
+        topology.setImpactManager(new WeakNodesImpactManager(topology));
         //
         // Elementos da Topologia
         //
         DefaultNode saida = new DefaultNode("saida1", 10, topology);
-
+        
         saida.setEndPoint(true);
-
+        
         DefaultNode router1 = new DefaultNode("router1", 1, topology);
         DefaultNode router2 = new DefaultNode("router2", 2, topology);
         DefaultNode router3 = new DefaultNode("router3", 3, topology);
@@ -46,14 +47,14 @@ public class DefaultExample {
         // Conexões
         //
         topology.addConnection(router1, saida);
-
+        
         topology.addConnection(router2, saida);
-
+        
         topology.addConnection(router2, router1);
         topology.addConnection(router3, router2);
-
+        
         topology.addConnection(router3, router4);
-
+        
         topology.addConnection(router5, router4);
         topology.addConnection(router6, router4);
         topology.addConnection(router7, router6);
@@ -64,9 +65,9 @@ public class DefaultExample {
 //        topology.addConnection(router10, router8);
 //        topology.addConnection(router10, router1);
 
-        Boolean stressMe = false;
+        Boolean stressMe = true;
         if (stressMe) {
-            Integer fakeNodCount = 100;
+            Integer fakeNodCount = 50;
 //            ConcurrentHashMap<String, INetworkNode> nodes = new ConcurrentHashMap<>();
             for (int x = 0; x < fakeNodCount; x++) {
                 DefaultNode router = new DefaultNode("DYN-1-" + x, 10000 + x, topology);
@@ -76,7 +77,7 @@ public class DefaultExample {
 //                nodes.put(router.getName(), router);
 
             }
-
+            
         }
         IImpactManager impactManager = topology.getImpactManager();
         System.out.println("Topologyy Size: " + topology.getNodes().size() + "  Connections:" + topology.getConnections().size());
@@ -105,7 +106,7 @@ public class DefaultExample {
 
 //        topology.getGraph().display();
     }
-
+    
     private void printNodeList(ArrayList<INetworkNode> nodes) {
         System.out.println("");
 //        System.out.println("Source Node:" + sourceNode.getName() + " Reaches:" + saida.getName() + " Via:");
@@ -128,7 +129,7 @@ public class DefaultExample {
         } catch (GraphNotEnabledException ex) {
             Logger.getLogger(DefaultExample.class.getName()).log(Level.SEVERE, null, ex);
         }
-
+        
     }
-
+    
 }

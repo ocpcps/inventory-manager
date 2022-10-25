@@ -15,4 +15,4 @@ build-java-project:
     mvn package
   artifacts:
     paths:
-      - /home/gitlab-runner/
+      - "**/target"

@@ -17,6 +17,8 @@
  */
 package com.osstelecom.db.inventory.topology.node;
 
+import java.util.List;
+
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
@@ -28,6 +30,7 @@ public class SourceTargetWrapper {
     private INetworkNode target;
     private Integer limit;
     private Boolean useCache;
+    private List<String> pathList;
 
     /**
      * @return the source
@@ -83,6 +86,20 @@ public class SourceTargetWrapper {
      */
     public void setUseCache(Boolean useCache) {
         this.useCache = useCache;
+    }
+
+    /**
+     * @return the pathList
+     */
+    public List<String> getPathList() {
+        return pathList;
+    }
+
+    /**
+     * @param pathList the pathList to set
+     */
+    public void setPathList(List<String> pathList) {
+        this.pathList = pathList;
     }
 
 }

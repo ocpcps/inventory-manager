@@ -18,7 +18,7 @@
 package com.osstelecom.db.inventory.topology;
 
 import com.osstelecom.db.inventory.topology.connection.INetworkConnection;
-import com.osstelecom.db.inventory.topology.connection.impact.IImpactManager;
+import com.osstelecom.db.inventory.topology.impact.IImpactManager;
 import com.osstelecom.db.inventory.topology.node.INetworkNode;
 import java.util.ArrayList;
 

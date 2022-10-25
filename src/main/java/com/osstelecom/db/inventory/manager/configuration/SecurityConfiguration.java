@@ -42,7 +42,7 @@ public class SecurityConfiguration {
                 .antMatchers(HttpMethod.DELETE, "/inventory/v1/**")
                 .hasAuthority("SCOPE_write")
                 .anyRequest()
-                .authenticated()
+                .anonymous()
                 .and()
                 .oauth2ResourceServer()
                 //                .jwt().and().authenticationEntryPoint(new BearerTokenAuthenticationEntryPoint());

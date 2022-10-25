@@ -15,26 +15,28 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package com.osstelecom.db.inventory.topology.connection.impact;
+package com.osstelecom.db.inventory.topology.impact;
 
+import com.osstelecom.db.inventory.topology.connection.INetworkConnection;
+import com.osstelecom.db.inventory.topology.node.INetworkNode;
 import com.osstelecom.db.inventory.topology.ITopology;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  *
  * @author Nishisan
  */
-public abstract class ImpactManager implements IImpactManager {
+public interface IImpactManager {
 
-    private final ITopology topology;
+    public ArrayList<INetworkNode> getUnreacheableNodes();
 
-    public ImpactManager(ITopology topology) {
-        this.topology = topology;
-        this.topology.setImpactManager(this);
-    }
+    public List<INetworkNode> getWeakNodes(Integer connLimit, Boolean all, Integer threadCount, Boolean useCache);
 
-    @Override
-    public ITopology getTopology() {
-        return this.topology;
-    }
+    public List<INetworkNode> getWeakNodes(Integer connLimit, ArrayList<INetworkNode> nodes);
+
+    public ITopology getTopology();
+
+    public ArrayList<INetworkConnection> getUnreachableConnections();
 
 }
