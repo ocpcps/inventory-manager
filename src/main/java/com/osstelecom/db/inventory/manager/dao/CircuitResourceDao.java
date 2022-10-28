@@ -32,6 +32,7 @@ import com.arangodb.model.DocumentCreateOptions;
 import com.arangodb.model.DocumentDeleteOptions;
 import com.arangodb.model.DocumentUpdateOptions;
 import com.arangodb.model.OverwriteMode;
+import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.resources.CircuitResource;
@@ -221,15 +222,20 @@ public class CircuitResourceDao extends AbstractArangoDao<CircuitResource> {
     }
 
     @Override
-    public GraphList<CircuitResource> findResourceByFilter(String filter, Map<String, Object> bindVars, Domain domain) throws ArangoDaoException, ResourceNotFoundException {
+    public GraphList<CircuitResource> findResourceByFilter(FilterDTO filter, Map<String, Object> bindVars, Domain domain) throws ArangoDaoException, ResourceNotFoundException {
         try {
             String aql = " for doc in   `" + domain.getCircuits() + "`";
             aql += " filter doc.domainName == @domainName ";
             bindVars.put("domainName", domain.getDomainName());
 
-            if (filter != null) {
-                aql += " and " + filter;
+            if (filter.getAqlFilter() != null && !filter.getAqlFilter().trim().equals("")) {
+                aql += " and " + filter.getAqlFilter();
             }
+
+            if (filter.getSortCondition() != null) {
+                aql += " " + filter.getSortCondition();
+            }
+
             aql += " return doc";
             return this.query(aql, bindVars, CircuitResource.class, this.getDb());
         } catch (ResourceNotFoundException ex) {

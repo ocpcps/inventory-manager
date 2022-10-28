@@ -33,6 +33,7 @@ import com.arangodb.model.DocumentCreateOptions;
 import com.arangodb.model.DocumentDeleteOptions;
 import com.arangodb.model.DocumentUpdateOptions;
 import com.arangodb.model.OverwriteMode;
+import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.BasicException;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
@@ -163,16 +164,21 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
     }
 
     @Override
-    public GraphList<ResourceLocation> findResourceByFilter(String filter, Map<String, Object> bindVars, Domain domain) throws BasicException {
+    public GraphList<ResourceLocation> findResourceByFilter(FilterDTO filter, Map<String, Object> bindVars, Domain domain) throws BasicException {
 //        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
         try {
             String aql = " for doc in   " + domain.getCircuits();
             aql += " filter doc.domainName == @domainName ";
             bindVars.put("domainName", domain.getDomainName());
 
-            if (filter != null) {
-                aql += " and " + filter;
+            if (filter.getAqlFilter() != null && !filter.getAqlFilter().trim().equals("")) {
+                aql += " and " + filter.getAqlFilter();
             }
+
+            if (filter.getSortCondition() != null) {
+                aql += " " + filter.getSortCondition();
+            }
+
             aql += " return doc";
             return this.query(aql, bindVars, ResourceLocation.class, this.getDb());
         } catch (Exception ex) {

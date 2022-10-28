@@ -34,6 +34,7 @@ import com.arangodb.model.DocumentCreateOptions;
 import com.arangodb.model.DocumentDeleteOptions;
 import com.arangodb.model.DocumentUpdateOptions;
 import com.arangodb.model.OverwriteMode;
+import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.resources.CircuitResource;
@@ -256,16 +257,21 @@ public class ResourceConnectionDao extends AbstractArangoDao<ResourceConnection>
     }
 
     @Override
-    public GraphList<ResourceConnection> findResourceByFilter(String filter, Map<String, Object> bindVars,
+    public GraphList<ResourceConnection> findResourceByFilter(FilterDTO filter, Map<String, Object> bindVars,
             Domain domain) throws ArangoDaoException, ResourceNotFoundException {
         try {
             String aql = " for doc in   `" + domain.getConnections() + "` ";
             aql += " filter doc.domainName == @domainName ";
             bindVars.put("domainName", domain.getDomainName());
 
-            if (filter != null) {
-                aql += " and " + filter;
+            if (filter.getAqlFilter() != null && !filter.getAqlFilter().trim().equals("")) {
+                aql += " and " + filter.getAqlFilter();
             }
+
+            if (filter.getSortCondition() != null) {
+                aql += " " + filter.getSortCondition();
+            }
+
             aql += " return doc";
             return this.query(aql, bindVars, ResourceConnection.class, this.getDb());
         } catch (ResourceNotFoundException ex) {

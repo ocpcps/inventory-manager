@@ -296,7 +296,7 @@ public class ResourceConnectionManager extends Manager {
             if (filter.getBindings() != null && !filter.getBindings().isEmpty()) {
                 bindVars.putAll(filter.getBindings());
             }
-            return this.resourceConnectionDao.findResourceByFilter(filter.getAqlFilter(), bindVars, domain);
+            return this.resourceConnectionDao.findResourceByFilter(filter, bindVars, domain);
         }
         throw new InvalidRequestException("getConnectionsByFilter() can only retrieve connections objects");
     }
@@ -325,7 +325,7 @@ public class ResourceConnectionManager extends Manager {
             // Procura as conexões relacionadas no mesmo dominio
             //
             try {
-                this.resourceConnectionDao.findResourceByFilter(filter, bindVars, updatedResource.getDomain()).forEach((connection) -> {
+                this.resourceConnectionDao.findResourceByFilter(new FilterDTO(filter), bindVars, updatedResource.getDomain()).forEach((connection) -> {
 
                     if (connection.getFrom().getKey().equals(updatedResource.getKey())) {
                         //

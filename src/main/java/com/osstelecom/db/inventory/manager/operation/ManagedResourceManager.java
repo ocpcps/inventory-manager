@@ -318,7 +318,7 @@ public class ManagedResourceManager extends Manager {
             if (filter.getBindings() != null && !filter.getBindings().isEmpty()) {
                 bindVars.putAll(filter.getBindings());
             }
-            return this.managedResourceDao.findResourceByFilter(filter.getAqlFilter(), bindVars, domain);
+            return this.managedResourceDao.findResourceByFilter(filter, bindVars, domain);
         }
         throw new InvalidRequestException("getNodesByFilter() can only retrieve nodes objects");
     }

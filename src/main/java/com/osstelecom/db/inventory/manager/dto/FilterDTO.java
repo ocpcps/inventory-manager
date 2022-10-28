@@ -42,7 +42,21 @@ public class FilterDTO {
     private List<ResourceConnection> connections;
     private Integer nodeCount = 0;
     private Integer connectionsCount = 0;
+    private String sortCondition = "";
 
+    public FilterDTO() {
+    }
+
+    public FilterDTO(String aqlFilter) {
+        this.aqlFilter = aqlFilter;
+    }
+
+     public FilterDTO(String aqlFilter,String sortCondition) {
+        this.aqlFilter = aqlFilter;
+        this.sortCondition = sortCondition;
+    }
+    
+    
     public List<ManagedResource> getNodes() {
         return nodes;
     }
@@ -188,5 +202,19 @@ public class FilterDTO {
      */
     public void setBindings(Map<String, Object> bindings) {
         this.bindings = bindings;
+    }
+
+    /**
+     * @return the sortCondition
+     */
+    public String getSortCondition() {
+        return sortCondition;
+    }
+
+    /**
+     * @param sortCondition the sortCondition to set
+     */
+    public void setSortCondition(String sortCondition) {
+        this.sortCondition = sortCondition;
     }
 }

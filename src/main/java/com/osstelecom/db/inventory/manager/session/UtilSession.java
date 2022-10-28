@@ -68,14 +68,14 @@ public class UtilSession {
     }
 
     /**
-     * Verifica se um nome é valido ou seja, só contém Letras, números pontos ou
-     * traços.
+     * Verifica se um nome é valido ou seja, só contém Letras, números pontos ,
+     * traços ou underline.
      *
      * @param value
      * @return
      */
     public Boolean isValidStringValue(String value) {
-        return this.isValidStringValue(value, "^[a-zA-Z0-9\\-\\.]+$");
+        return this.isValidStringValue(value, "^[a-zA-Z0-9\\-\\.\\_]+$");
     }
 
     public Boolean isValidStringValue(String value, String regex) {

@@ -166,7 +166,7 @@ public class CircuitResourceManager extends Manager {
     }
 
     public GraphList<CircuitResource> findCircuitsByFilter(FilterDTO filter, Domain domain) throws ArangoDaoException, ResourceNotFoundException {
-        return this.circuitResourceDao.findResourceByFilter(filter.getAqlFilter(), filter.getBindings(), domain);
+        return this.circuitResourceDao.findResourceByFilter(filter, filter.getBindings(), domain);
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -224,7 +224,7 @@ public class CircuitResourceManager extends Manager {
         Map<String, Object> bindVars = new HashMap<>();
         bindVars.put("resourceId", updatedEvent.getNewResource().getId());
         try {
-            this.circuitResourceDao.findResourceByFilter(filter, bindVars, updatedEvent.getNewResource().getDomain()).forEach(circuit -> {
+            this.circuitResourceDao.findResourceByFilter(new FilterDTO(filter,"sort doc.nodeAddress"), bindVars, updatedEvent.getNewResource().getDomain()).forEach(circuit -> {
                 try {
                     if (circuit.getaPoint().getId().equals(updatedEvent.getNewResource().getId())) {
 

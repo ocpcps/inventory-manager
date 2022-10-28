@@ -34,6 +34,7 @@ import com.arangodb.entity.DocumentDeleteEntity;
 import com.arangodb.entity.DocumentUpdateEntity;
 import com.arangodb.entity.MultiDocumentEntity;
 import com.arangodb.model.AqlQueryOptions;
+import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.BasicException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
@@ -72,7 +73,7 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
 
     public abstract GraphList<T> findResourcesByClassName(String className, Domain domain) throws BasicException;
 
-    public abstract GraphList<T> findResourceByFilter(String aql, Map<String, Object> bindVars, Domain domain)
+    public abstract GraphList<T> findResourceByFilter(FilterDTO filter, Map<String, Object> bindVars, Domain domain)
             throws BasicException;
 
     protected String buildAqlFromBindings(String aql, Map<String, Object> bindVars, boolean appendReturn) {

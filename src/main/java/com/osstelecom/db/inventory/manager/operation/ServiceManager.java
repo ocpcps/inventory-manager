@@ -34,6 +34,7 @@ import com.arangodb.entity.DocumentCreateEntity;
 import com.arangodb.entity.DocumentUpdateEntity;
 import com.google.common.eventbus.Subscribe;
 import com.osstelecom.db.inventory.manager.dao.ServiceResourceDao;
+import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import com.osstelecom.db.inventory.manager.events.CircuitResourceUpdatedEvent;
 import com.osstelecom.db.inventory.manager.events.ManagedResourceCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.ManagedResourceUpdatedEvent;
@@ -128,7 +129,7 @@ public class ServiceManager extends Manager {
             }
             Map<String, Object> binds = new HashMap<>();
             binds.put("id", service.getId());
-            service = this.serviceDao.findResourceByFilter("doc._id == @id", binds, service.getDomain()).getOne();
+            service = this.serviceDao.findResourceByFilter(new FilterDTO("doc._id == @id"), binds, service.getDomain()).getOne();
             return service;
         } finally {
             if (lockManager.isLocked()) {

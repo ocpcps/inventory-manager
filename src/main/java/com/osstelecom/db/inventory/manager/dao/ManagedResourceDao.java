@@ -32,6 +32,7 @@ import com.arangodb.model.DocumentCreateOptions;
 import com.arangodb.model.DocumentDeleteOptions;
 import com.arangodb.model.DocumentUpdateOptions;
 import com.arangodb.model.OverwriteMode;
+import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.BasicException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
@@ -69,8 +70,6 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
 
             bindVars.put("domainName", resource.getDomain().getDomainName());
 
-      
-            
             if (resource.getId() != null) {
                 bindVars.put("_id", resource.getId());
             }
@@ -212,15 +211,20 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
     }
 
     @Override
-    public GraphList<ManagedResource> findResourceByFilter(String filter, Map<String, Object> bindVars, Domain domain) throws ArangoDaoException {
+    public GraphList<ManagedResource> findResourceByFilter(FilterDTO filter, Map<String, Object> bindVars, Domain domain) throws ArangoDaoException {
         try {
             String aql = " for doc in   `" + domain.getNodes() + "`";
             aql += " filter doc.domainName == @domainName ";
             bindVars.put("domainName", domain.getDomainName());
 
-            if (filter != null && !filter.trim().equals("")) {
-                aql += " and " + filter;
+            if (filter.getAqlFilter() != null && !filter.getAqlFilter().trim().equals("")) {
+                aql += " and " + filter.getAqlFilter();
             }
+
+            if (filter.getSortCondition() != null) {
+                aql += " " + filter.getSortCondition();
+            }
+
             aql += " return doc";
             return this.query(aql, bindVars, ManagedResource.class, this.getDb());
         } catch (Exception ex) {

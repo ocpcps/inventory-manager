@@ -32,6 +32,7 @@ import com.arangodb.model.DocumentCreateOptions;
 import com.arangodb.model.DocumentDeleteOptions;
 import com.arangodb.model.DocumentUpdateOptions;
 import com.arangodb.model.OverwriteMode;
+import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.resources.Domain;
@@ -240,16 +241,21 @@ public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
     }
 
     @Override
-    public GraphList<ServiceResource> findResourceByFilter(String filter, Map<String, Object> bindVars, Domain domain) throws ArangoDaoException, ResourceNotFoundException {
+    public GraphList<ServiceResource> findResourceByFilter(FilterDTO filter, Map<String, Object> bindVars, Domain domain) throws ArangoDaoException, ResourceNotFoundException {
         String aql = "";
         try {
             aql += " for doc in   " + domain.getServices();
             aql += " filter doc.domainName == @domainName ";
             bindVars.put("domainName", domain.getDomainName());
 
-            if (filter != null) {
-                aql += " and " + filter;
+            if (filter.getAqlFilter() != null && !filter.getAqlFilter().trim().equals("")) {
+                aql += " and " + filter.getAqlFilter();
             }
+
+            if (filter.getSortCondition() != null) {
+                aql += " " + filter.getSortCondition();
+            }
+
             aql += " return doc";
             return this.query(aql, bindVars, ServiceResource.class, this.getDb());
         } catch (ResourceNotFoundException ex) {
@@ -264,10 +270,10 @@ public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
             throw exa;
         }
     }
-    
+
     @Override
     public int getCount(Domain domain) throws ResourceNotFoundException, IOException {
-        String aql = "for doc in `" + domain.getServices()+ "` return doc";
+        String aql = "for doc in `" + domain.getServices() + "` return doc";
         GraphList<ServiceResource> result = this.query(aql, null, ServiceResource.class, this.getDb());
         Integer longValue = result.size();
         result.close();
