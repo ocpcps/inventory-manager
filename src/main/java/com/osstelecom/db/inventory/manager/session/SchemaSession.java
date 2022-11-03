@@ -351,7 +351,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
     }
 
     /**
-     * Clear all cached Entries...
+     * Clear all cached Entries.. .
      */
     public void clearSchemaCache() {
         logger.debug("Clearing all Cached Schemas..." + this.schemaCache.size());
@@ -396,11 +396,31 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                     if (entry.getRequired() == null) {
                         entry.setRequired(false);
                     }
+                    if (entry.getValidate() == null) {
+                        entry.setValidate(false);
+                    }
                     if (entry.getRequired()) {
                         if (!resource.getAttributes().containsKey(entry.getName())) {
                             if (entry.getDefaultValue() != null) {
+                                Object value = this.getAttributeValue(entry, entry.getDefaultValue());
+                                
+                                if (!entry.getIsList() && entry.getValidationRegex() != null) {
+                                    //
+                                    // Não é lista e tem uma regex
+                                    //
+                                    if (!entry.getDefaultValue().matches(entry.getValidationRegex())) {
+                                        resource.getSchemaModel().setIsValid(false);
+                                        throw new AttributeConstraintViolationException("Value: [" + entry.getDefaultValue() + "] does not matches validation regex:[" + entry.getValidationRegex() + "]");
+                                    }
+                                    
+                                } else {
+                                    //
+                                    // Valida a lista 
+                                    //
+                                }
+                                
                                 resource.getAttributes().put(entry.getName(),
-                                        getAttributeValue(entry, entry.getDefaultValue()));
+                                        value);
                             } else {
                                 //
                                 // Lança a exception de validação
@@ -411,21 +431,40 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                                         "Missing Required Attribute Named:[" + entry.getName() + "]");
                             }
                         } else {
-                            resource.getAttributes().put(entry.getName(), this.getAttributeValue(entry, resource.getAttributes().get(entry.getName())));
+                            Object value = this.getAttributeValue(entry, resource.getAttributes().get(entry.getName()));
+                            
+                            if (!entry.getIsList() && entry.getValidationRegex() != null && !entry.getValidationRegex().trim().equals("") && entry.getValidate()) {
+                                String stringValue = value.toString();
+                                if (!stringValue.matches(entry.getValidationRegex())) {
+                                    resource.getSchemaModel().setIsValid(false);
+                                    throw new AttributeConstraintViolationException("Value: [" + stringValue + "] does not matches validation regex:[" + entry.getValidationRegex() + "]");
+                                }
+                            }
+                            
+                            resource.getAttributes().put(entry.getName(), value);
                         }
                     } else {
                         if (!resource.getAttributes().containsKey(entry.getName())) {
                             if (entry.getDefaultValue() != null) {
+                                Object value = getAttributeValue(entry, entry.getDefaultValue());
                                 resource.getAttributes().put(entry.getName(),
-                                        getAttributeValue(entry, entry.getDefaultValue()));
+                                        value);
                             } else {
                                 //
                                 // Isso pode gerar inconsistencia
                                 //
                             }
                         } else {
+                            Object value = this.getAttributeValue(entry, resource.getAttributes().get(entry.getName()));
+                            String stringValue = value.toString();
+                            if (entry.getValidationRegex() != null && !entry.getValidationRegex().trim().equals("") && entry.getValidate()) {
+                                if (!stringValue.matches(entry.getValidationRegex())) {
+                                    resource.getSchemaModel().setIsValid(false);
+                                    throw new AttributeConstraintViolationException("Value: [" + stringValue + "] does not matches validation regex:[" + entry.getValidationRegex() + "]");
+                                }
+                            }
                             resource.getAttributes().put(entry.getName(),
-                                    getAttributeValue(entry, resource.getAttributes().get(entry.getName())));
+                                    value);
                         }
                     }
                 }
@@ -492,19 +531,49 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
     public Object getAttributeValue(ResourceAttributeModel model, Object value)
             throws AttributeConstraintViolationException {
         // if (!model.getIsList()) {
-
+        if (value == null) {
+            logger.warn("Value is null for:" + model.getName());
+        }
+        if (model.getIsList() == null) {
+            model.setIsList(false);
+        }
         try {
             if (model.getAllowedValues() != null) {
                 if (!model.getAllowedValues().isEmpty()) {
-                    if (!model.getAllowedValues().contains(value.toString())) {
+                    if (model.getIsList()) {
+                        // 
+                        // Model é uma lista, então precisamos ver se todos os valores da Lista estão no allowed values.
                         //
-                        // Não Pode Prosseguir
-                        //
-                        throw new AttributeConstraintViolationException(
-                                "Attribute [" + model.getName() + "] of type:" + model.getVariableType() + " Value : ["
-                                + value + "] is not allowed here Allowed vars are:["
-                                + String.join(",", model.getAllowedValues()) + "]");
+                        if (value instanceof List) {
+                            List list = (List) value;
+                            for (Object o : list) {
+                                //
+                                // Deve ser migrado para o método validateResourceSchema()
+                                //
+                                if (!model.getAllowedValues().contains(o.toString())) {
+                                    throw new AttributeConstraintViolationException(
+                                            "Attribute [" + model.getName() + "] of type:" + model.getVariableType() + " Value : ["
+                                            + o.toString() + "] is not allowed here Allowed vars are:["
+                                            + String.join(",", model.getAllowedValues()) + "]");
+                                }
+                            }
+                        } else {
+                            throw new AttributeConstraintViolationException(
+                                    "Attribute [" + model.getName() + "] of type:" + model.getVariableType() + " Is a List, please send a list , not a scalar value");
+                            
+                        }
                         
+                    } else {
+                        if (!model.getAllowedValues().contains(value.toString())) {
+                            //
+                            // Não Pode Prosseguir
+                            //
+                            throw new AttributeConstraintViolationException(
+                                    "Attribute [" + model.getName() + "] of type:" + model.getVariableType() + " Value : ["
+                                    + value + "] is not allowed here Allowed vars are:["
+                                    + String.join(",", model.getAllowedValues()) + "]");
+                            
+                        }
                     }
                 }
             }
@@ -522,58 +591,106 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                 //
                 // String will get the String representation as it is..
                 //
-                if (value instanceof String) {
-                    return value;
+                if (model.getIsList() && value instanceof List) {
+                    //
+                    // lista de string
+                    //
+                    List<String> list = (List) value;
+                    return list;
                 } else {
-                    throw new AttributeConstraintViolationException("Attribute [" + model.getName() + "] of type:" + model.getVariableType() + " Does not accpect value: [" + value + "] of type:" + value.getClass().getCanonicalName());
+                    if (value instanceof String) {
+                        return value;
+                    } else {
+                        throw new AttributeConstraintViolationException("Attribute [" + model.getName() + "] of type:" + model.getVariableType() + " Does not accpect value: [" + value + "] of type:" + value.getClass().getCanonicalName());
+                    }
                 }
             } else if (model.getVariableType().equalsIgnoreCase("Number")) {
-                if (value instanceof Long) {
-                    return value;
-                }
-                if (value.toString().contains(".")) {
-                    Double d = Double.parseDouble(value.toString());
-                    return d.longValue();
-                }
-                return Long.parseLong(value.toString());
-            } else if (model.getVariableType().equalsIgnoreCase("Boolean")) {
-                if (value instanceof Boolean) {
-                    return value;
-                }
-                if (value.toString().equalsIgnoreCase("true") || value.toString().equalsIgnoreCase("false")) {
-                    return value.toString().equalsIgnoreCase("true");
+                if (model.getIsList() && value instanceof List) {
+                    //
+                    // lista de string
+                    //
+                    List<Long> list = (List) value;
+                    return list;
                 } else {
-                    throw new AttributeConstraintViolationException("Attribute [" + model.getName() + "] of type:"
-                            + model.getVariableType() + " Does not accpect value: [" + value + "]");
+                    if (value instanceof Long) {
+                        return value;
+                    }
+                    if (value.toString().contains(".")) {
+                        Double d = Double.parseDouble(value.toString());
+                        return d.longValue();
+                    }
+                    return Long.parseLong(value.toString());
+                }
+            } else if (model.getVariableType().equalsIgnoreCase("Boolean")) {
+                if (model.getIsList() && value instanceof List) {
+                    //
+                    // lista de string
+                    //
+                    List<Boolean> list = (List) value;
+                    return list;
+                } else {
+                    if (value instanceof Boolean) {
+                        return value;
+                    }
+                    if (value.toString().equalsIgnoreCase("true") || value.toString().equalsIgnoreCase("false")) {
+                        return value.toString().equalsIgnoreCase("true");
+                    } else {
+                        throw new AttributeConstraintViolationException("Attribute [" + model.getName() + "] of type:"
+                                + model.getVariableType() + " Does not accpect value: [" + value + "]");
+                    }
                 }
             } else if (model.getVariableType().equalsIgnoreCase("Float")) {
-                if (value instanceof Float) {
-                    return value;
+                if (model.getIsList() && value instanceof List) {
+                    //
+                    // lista de string
+                    //
+                    List<Float> list = (List) value;
+                    return list;
+                } else {
+                    if (value instanceof Float) {
+                        return value;
+                    }
+                    return Float.parseFloat(value.toString());
                 }
-                return Float.parseFloat(value.toString());
             } else if (model.getVariableType().equalsIgnoreCase("Date")) {
                 
                 SimpleDateFormat sdf = new SimpleDateFormat(configurationManager.loadConfiguration().getDateFormat());
                 sdf.setLenient(false);
-                try {
-                    return sdf.parse(value.toString());
-                } catch (ParseException ex) {
-                    throw new AttributeConstraintViolationException("Attribute [" + model.getName() + "] of type:"
-                            + model.getVariableType() + " Cannot Parse Date Value : [" + value + "] With Mask: ["
-                            + configurationManager.loadConfiguration().getDateFormat() + "]", ex);
+                if (model.getIsList() && value instanceof List) {
+                    //
+                    // lista de string
+                    //
+                    List list = (List) value;
+                    return list;
+                } else {
+                    try {
+                        return sdf.parse(value.toString());
+                    } catch (ParseException ex) {
+                        throw new AttributeConstraintViolationException("Attribute [" + model.getName() + "] of type:"
+                                + model.getVariableType() + " Cannot Parse Date Value : [" + value + "] With Mask: ["
+                                + configurationManager.loadConfiguration().getDateFormat() + "]", ex);
+                    }
                 }
                 
             } else if (model.getVariableType().equalsIgnoreCase("DateTime")) {
                 SimpleDateFormat sdf = new SimpleDateFormat(
                         configurationManager.loadConfiguration().getDateTimeFormat());
                 sdf.setLenient(false);
-                try {
-                    return sdf.parse(value.toString());
-                } catch (ParseException ex) {
-                    throw new AttributeConstraintViolationException("Attribute [" + model.getName() + "] of type:"
-                            + model.getVariableType() + " Cannot Parse Date Time Value : [" + value + "] With Mask: ["
-                            + configurationManager.loadConfiguration().getDateTimeFormat() + "]", ex);
-                    
+                if (model.getIsList() && value instanceof List) {
+                    //
+                    // lista de string
+                    //
+                    List list = (List) value;
+                    return list;
+                } else {
+                    try {
+                        return sdf.parse(value.toString());
+                    } catch (ParseException ex) {
+                        throw new AttributeConstraintViolationException("Attribute [" + model.getName() + "] of type:"
+                                + model.getVariableType() + " Cannot Parse Date Time Value : [" + value + "] With Mask: ["
+                                + configurationManager.loadConfiguration().getDateTimeFormat() + "]", ex);
+                        
+                    }
                 }
             } else if (model.getVariableType().equalsIgnoreCase("GeoLine")) {
                 List<Float> data = (List<Float>) value;
@@ -689,7 +806,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                                 }
                             }
                             
-                            if (updateModel.getValidationRegex() != null) {
+                            if (updateModel.getValidationRegex() != null && !updateModel.getValidationRegex().trim().equals("")) {
                                 if (!updateModel.getValidationRegex()
                                         .equals(originalAttributeModel.getValidationRegex())) {
                                     originalAttributeModel.setValidationRegex(updateModel.getValidationRegex());
@@ -728,6 +845,13 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                                     originalAttributeModel.setDefaultValue(updateModel.getDefaultValue());
                                     original.setAttributesChanged(true);
                                 }
+                            }
+                            
+                            if (updateModel.getAllowedValues() != null) {
+//                                if (!updateModel.getAllowedValues().equals(originalAttributeModel.getAllowedValues())) {
+                                originalAttributeModel.setAllowedValues(updateModel.getAllowedValues());
+                                original.setAttributesChanged(true);
+//                                }
                             }
                             
                         }

@@ -32,6 +32,7 @@ import com.osstelecom.db.inventory.manager.request.DeleteManagedResourceRequest;
 import com.osstelecom.db.inventory.manager.request.FilterRequest;
 import com.osstelecom.db.inventory.manager.request.FindManagedResourceRequest;
 import com.osstelecom.db.inventory.manager.request.ListManagedResourceRequest;
+import com.osstelecom.db.inventory.manager.request.ListResourceConnectionRequest;
 import com.osstelecom.db.inventory.manager.request.PatchManagedResourceRequest;
 import com.osstelecom.db.inventory.manager.request.PatchResourceConnectionRequest;
 import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstraintViolationException;
@@ -193,6 +194,18 @@ public class InventoryApi extends BaseApi {
 
         return resourceSession.listManagedResources(listRequest);
     }
+    
+    @AuthenticatedCall(role = {"user"})
+    @GetMapping(path = "/{domain}/connection", produces = "application/json")
+    public TypedListResponse listResourceConnections(@PathVariable("domain") String domain) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
+        //
+        // This is a Find ALL Query
+        //
+        ListResourceConnectionRequest listRequest = new ListResourceConnectionRequest(domain);
+        this.setUserDetails(listRequest);
+
+        return resourceSession.listResourceConnection(listRequest);
+    }
 
     /**
      * Cria uma nova conexão
@@ -253,7 +266,7 @@ public class InventoryApi extends BaseApi {
      */
     @AuthenticatedCall(role = {"user"})
     @PatchMapping(path = "/{domain}/resource/{resourceId}", produces = "application/json", consumes = "application/json")
-    public PatchManagedResourceResponse patchManagedResource(@RequestBody PatchManagedResourceRequest request, @PathVariable("domain") String domainName, @PathVariable("resourceId") String resourceId) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException {
+    public PatchManagedResourceResponse patchManagedResource(@RequestBody PatchManagedResourceRequest request, @PathVariable("domain") String domainName, @PathVariable("resourceId") String resourceId) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException, ScriptRuleException {
         this.setUserDetails(request);
         request.setRequestDomain(domainName);
         request.getPayLoad().setId(resourceId);
@@ -261,8 +274,8 @@ public class InventoryApi extends BaseApi {
     }
 
     @AuthenticatedCall(role = {"user"})
-    @PatchMapping(path = "/{domain}/resource/", produces = "application/json", consumes = "application/json")
-    public PatchManagedResourceResponse patchManagedResource(@RequestBody PatchManagedResourceRequest request, @PathVariable("domain") String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException {
+    @PatchMapping(path = "/{domain}/resource", produces = "application/json", consumes = "application/json")
+    public PatchManagedResourceResponse patchManagedResource(@RequestBody PatchManagedResourceRequest request, @PathVariable("domain") String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException, ScriptRuleException {
         this.setUserDetails(request);
         request.setRequestDomain(domainName);
         return this.resourceSession.patchManagedResource(request);
@@ -311,7 +324,7 @@ public class InventoryApi extends BaseApi {
     }
 
     @AuthenticatedCall(role = {"user"})
-    @PatchMapping(path = "/{domain}/connection/", produces = "application/json", consumes = "application/json")
+    @PatchMapping(path = "/{domain}/connection", produces = "application/json", consumes = "application/json")
     public PatchResourceConnectionResponse patchResourceConnection(@RequestBody PatchResourceConnectionRequest request, @PathVariable("domain") String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException {
         this.setUserDetails(request);
         request.setRequestDomain(domainName);

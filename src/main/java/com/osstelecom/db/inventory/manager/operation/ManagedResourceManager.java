@@ -203,7 +203,7 @@ public class ManagedResourceManager extends Manager {
      * @throws ArangoDaoException
      * @throws AttributeConstraintViolationException
      */
-    public ManagedResource update(ManagedResource resource) throws InvalidRequestException, ArangoDaoException, AttributeConstraintViolationException {
+    public ManagedResource update(ManagedResource resource) throws InvalidRequestException, ArangoDaoException, AttributeConstraintViolationException, ScriptRuleException {
         return this.updateManagedResource(resource);
     }
 
@@ -264,7 +264,7 @@ public class ManagedResourceManager extends Manager {
      * @return
      * @throws InvalidRequestException
      */
-    public ManagedResource updateManagedResource(ManagedResource resource) throws InvalidRequestException, ArangoDaoException, AttributeConstraintViolationException {
+    public ManagedResource updateManagedResource(ManagedResource resource) throws InvalidRequestException, ArangoDaoException, AttributeConstraintViolationException, ScriptRuleException {
         String timerId = startTimer("updateManagedResource");
         try {
             lockManager.lock();
@@ -276,6 +276,7 @@ public class ManagedResourceManager extends Manager {
             }
 
             this.schemaSession.validateResourceSchema(resource);
+            dynamicRuleSession.evalResource(resource, "U", this); // <--- Pode não ser verdade , se a chave for duplicada..
 
             resource.setLastModifiedDate(new Date());
             //
@@ -323,6 +324,8 @@ public class ManagedResourceManager extends Manager {
         throw new InvalidRequestException("getNodesByFilter() can only retrieve nodes objects");
     }
 
+    
+    
     /**
      * Retrieve a Stream list ( GraphList) from a SchemaModelName
      *
@@ -448,7 +451,7 @@ public class ManagedResourceManager extends Manager {
      * @param serviceUpdateEvent
      */
     @Subscribe
-    public void onServiceStateTransionedEvent(ServiceStateTransionedEvent serviceStateTransitionedEvent) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException {
+    public void onServiceStateTransionedEvent(ServiceStateTransionedEvent serviceStateTransitionedEvent) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException, ScriptRuleException {
         if (serviceStateTransitionedEvent.getNewResource().getRelatedManagedResources() != null
                 && !serviceStateTransitionedEvent.getNewResource().getRelatedManagedResources().isEmpty()) {
 
@@ -482,7 +485,7 @@ public class ManagedResourceManager extends Manager {
                     this.update(resource);
                 }
             }
-        }else{
+        } else {
             logger.debug("Service Transaction Ignored");
         }
     }

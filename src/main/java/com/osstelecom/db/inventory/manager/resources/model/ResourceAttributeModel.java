@@ -34,7 +34,7 @@ public class ResourceAttributeModel {
     private String defaultValue;
     private List<String> allowedValues;
     private Boolean required;
-    private Boolean isList;
+    private Boolean isList = false;
     private Boolean trackChanges;
     private Integer minOccurrences;
     private Integer maxOccurrences;
@@ -54,8 +54,6 @@ public class ResourceAttributeModel {
     //
     private Boolean isUserAttribute = true;
 
-    
-        
     public String getVariableType() {
         return variableType;
     }

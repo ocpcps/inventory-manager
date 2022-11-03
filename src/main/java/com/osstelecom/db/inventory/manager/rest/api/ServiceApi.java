@@ -76,7 +76,7 @@ public class ServiceApi extends BaseApi {
     }
 
     @AuthenticatedCall(role = {"user"})
-    @PutMapping(path = "/{domainName}/service/", produces = "application/json", consumes = "application/json")
+    @PutMapping(path = "/{domainName}/service", produces = "application/json", consumes = "application/json")
     public CreateServiceResponse createService(@RequestBody CreateServiceRequest request, @PathVariable("domainName") String domainName) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
         this.setUserDetails(request);
         request.setRequestDomain(domainName);
@@ -93,7 +93,7 @@ public class ServiceApi extends BaseApi {
     }
 
     @AuthenticatedCall(role = {"user"})
-    @PatchMapping(path = "/{domainName}/service/", produces = "application/json", consumes = "application/json")
+    @PatchMapping(path = "/{domainName}/service", produces = "application/json", consumes = "application/json")
     public PatchServiceResponse patchManagedResource(@RequestBody PatchServiceRequest request, @PathVariable("domainName") String domainName) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
         this.setUserDetails(request);
         request.setRequestDomain(domainName);

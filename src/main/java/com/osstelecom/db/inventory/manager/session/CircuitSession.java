@@ -43,6 +43,7 @@ import com.osstelecom.db.inventory.manager.request.CreateCircuitRequest;
 import com.osstelecom.db.inventory.manager.request.GetCircuitPathRequest;
 import com.osstelecom.db.inventory.manager.request.PatchCircuitResourceRequest;
 import com.osstelecom.db.inventory.manager.resources.CircuitResource;
+import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstraintViolationException;
@@ -330,10 +331,14 @@ public class CircuitSession {
         // Valida se temos paths...na request
         //
 
+        Domain domain = this.domainManager.getDomain(request.getRequestDomain());
+        
         CircuitResource circuit = request.getPayLoad().getCircuit();
         if (circuit.getDomainName() == null) {
-            String domainName = this.domainManager.getDomainNameFromId(circuit.getId());
-            circuit.setDomainName(domainName);
+            circuit.setDomainName(domain.getDomainName());
+
+//            String domainName = this.domainManager.getDomainNameFromId(circuit.getId());
+//            circuit.setDomainName(domainName);
         }
         circuit.setDomain(domainManager.getDomain(circuit.getDomainName()));
         circuit = circuitResourceManager.findCircuitResource(circuit);
@@ -343,7 +348,11 @@ public class CircuitSession {
             logger.debug("Paths Size: {}", request.getPayLoad().getPaths().size());
             for (ResourceConnection requestedPath : request.getPayLoad().getPaths()) {
                 logger.debug("Path In Domain : {}", requestedPath.getDomainName());
-                requestedPath.setDomain(domainManager.getDomain(requestedPath.getDomainName()));
+                if (requestedPath.getDomainName() == null) {
+                    requestedPath.setDomain(domain);
+                } else {
+                    requestedPath.setDomain(domainManager.getDomain(requestedPath.getDomainName()));
+                }
                 //
                 // Valida se dá para continuar
                 //
