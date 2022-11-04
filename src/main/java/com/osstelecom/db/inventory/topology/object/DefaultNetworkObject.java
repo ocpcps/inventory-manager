@@ -55,11 +55,11 @@ public interface DefaultNetworkObject {
 
     public void setWidth(Integer width);
 
-    public Boolean isVisited();
+    public Boolean isVisited(String uid);
 
-    public void setVisited();
+    public void setVisited(String uid);
 
-    public void setUnvisited();
+    public void setUnvisited(String uid);
 
     public void addAttribute(String key, Object value);
 

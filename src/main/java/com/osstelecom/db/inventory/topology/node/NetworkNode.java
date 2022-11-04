@@ -54,7 +54,6 @@ public abstract class NetworkNode implements INetworkNode {
     private ArrayList<INetworkConnection> probedConnections = new ArrayList<>();
     private List<ArrayList<INetworkNode>> solutions = Collections.synchronizedList(new ArrayList<ArrayList<INetworkNode>>());
     private ConcurrentHashMap<String, Object> attributes = new ConcurrentHashMap<>();
-    
 
     @Override
     public void addAttribute(String key, Object value) {
@@ -143,13 +142,13 @@ public abstract class NetworkNode implements INetworkNode {
     }
 
     @Override
-    public List<INetworkConnection> getVisitedConnections() {
-        return this.connections.parallelStream().filter(c -> c.isVisited()).collect(Collectors.toList());
+    public List<INetworkConnection> getVisitedConnections(String uid) {
+        return this.connections.parallelStream().filter(c -> c.isVisited(uid)).collect(Collectors.toList());
     }
 
     @Override
-    public List<INetworkConnection> getUnVisitedConnections() {
-        return this.connections.parallelStream().filter(c -> !c.isVisited() && c.getActive()).collect(Collectors.toList());
+    public List<INetworkConnection> getUnVisitedConnections(String uid) {
+        return this.connections.parallelStream().filter(c -> !c.isVisited(uid) && c.getActive()).collect(Collectors.toList());
     }
 
     @Override
@@ -208,18 +207,18 @@ public abstract class NetworkNode implements INetworkNode {
     }
 
     @Override
-    public Boolean isVisited() {
-        return visitedThreads.containsKey(Thread.currentThread().getName());
+    public Boolean isVisited(String uid) {
+        return visitedThreads.containsKey(uid);
     }
 
     @Override
-    public void setVisited() {
-        visitedThreads.put(Thread.currentThread().getName(), true);
+    public void setVisited(String uid) {
+        visitedThreads.put(uid, true);
     }
 
     @Override
-    public void setUnvisited() {
-        visitedThreads.remove(Thread.currentThread().getName());
+    public void setUnvisited(String uid) {
+        visitedThreads.remove(uid);
     }
 
     @Override
@@ -247,9 +246,10 @@ public abstract class NetworkNode implements INetworkNode {
     }
 
     /**
-     * Precisa Melhorar
+     * Precisa Melhorar, não funciona!
      *
      * @param node
+     * @deprecated 
      * @return
      */
     @Override

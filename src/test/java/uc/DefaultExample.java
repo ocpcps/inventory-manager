@@ -5,7 +5,6 @@
  */
 package uc;
 
-import com.osstelecom.db.inventory.topology.impact.IImpactManager;
 import com.osstelecom.db.inventory.topology.node.DefaultNode;
 import com.osstelecom.db.inventory.topology.node.INetworkNode;
 import com.osstelecom.db.inventory.topology.DefaultTopology;
@@ -14,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import com.osstelecom.db.inventory.topology.impact.ImpactManagerIf;
 
 /**
  *
@@ -76,7 +76,7 @@ public class DefaultExample {
 //        }
         ArrayList<INetworkNode> nodes = new ArrayList<>();
 
-        IImpactManager impactManager = topology.getImpactManager();
+        ImpactManagerIf impactManager = topology.getImpactManager();
         System.out.println("Topologyy Size: " + topology.getNodes().size() + "  Connections:" + topology.getConnections().size());
         System.out.println("-------------------------------------------------------------");
         System.out.println("Weak Nodes:");

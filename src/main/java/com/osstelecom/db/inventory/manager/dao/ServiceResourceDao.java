@@ -207,9 +207,9 @@ public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
     }
 
     @Override
-    public DocumentDeleteEntity<ManagedResource> deleteResource(ServiceResource resource) throws ArangoDaoException {
+    public DocumentDeleteEntity<ServiceResource> deleteResource(ServiceResource resource) throws ArangoDaoException {
         try {
-            return this.getDb().collection(resource.getDomain().getServices()).deleteDocument(resource.getId(), ManagedResource.class, new DocumentDeleteOptions().returnOld(true));
+            return this.getDb().collection(resource.getDomain().getServices()).deleteDocument(resource.getId(), ServiceResource.class, new DocumentDeleteOptions().returnOld(true));
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         }

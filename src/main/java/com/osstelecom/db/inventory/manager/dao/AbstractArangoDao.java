@@ -67,7 +67,7 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
     public abstract MultiDocumentEntity<DocumentUpdateEntity<T>> updateResources(List<T> resources, Domain domain)
             throws BasicException;
 
-    public abstract DocumentDeleteEntity<ManagedResource> deleteResource(T resource) throws BasicException;
+    public abstract DocumentDeleteEntity<T> deleteResource(T resource) throws BasicException;
 
     public abstract GraphList<T> findResourcesBySchemaName(String schemaName, Domain domain) throws BasicException;
 

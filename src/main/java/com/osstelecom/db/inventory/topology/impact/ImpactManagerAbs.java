@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Lucas Nishimura <lucas.nishimura@gmail.com>
+ * Copyright (C) 2021 Lucas Nishimura <lucas.nishimura@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -15,27 +15,26 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package com.osstelecom.db.inventory.topology.algorithm;
+package com.osstelecom.db.inventory.topology.impact;
 
-import com.osstelecom.db.inventory.topology.node.SourceTargetWrapper;
-import java.util.Map;
-import java.util.Queue;
+import com.osstelecom.db.inventory.topology.ITopology;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
- * @created 24.10.2022
+ * @author Nishisan
  */
-public interface ITopolocyAlgorithm {
+public abstract class ImpactManagerAbs implements ImpactManagerIf {
 
-    /**
-     * Run Algorithm Calculation
-     *
-     * @param weakQueue
-     */
-    public void calculate(Queue<SourceTargetWrapper> weakQueue);
+    private final ITopology topology;
 
-    public void calculate(Queue<SourceTargetWrapper> weakQueue, Map<String, Object> options);
-    
-//    public void start();
+    public ImpactManagerAbs(ITopology topology) {
+        this.topology = topology;
+        this.topology.setImpactManager(this);
+    }
+
+    @Override
+    public ITopology getTopology() {
+        return this.topology;
+    }
+
 }

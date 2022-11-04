@@ -19,9 +19,8 @@ package com.osstelecom.db.inventory.topology;
 
 import com.osstelecom.db.inventory.topology.connection.DefaultNetworkConnection;
 import com.osstelecom.db.inventory.topology.connection.INetworkConnection;
-import com.osstelecom.db.inventory.topology.impact.DefaultImpactManager;
-import com.osstelecom.db.inventory.topology.impact.IImpactManager;
-import com.osstelecom.db.inventory.topology.impact.ImpactManager;
+import com.osstelecom.db.inventory.topology.impact.DefaultImpactManagerImpl;
+import com.osstelecom.db.inventory.topology.impact.ImpactManagerAbs;
 import com.osstelecom.db.inventory.topology.listeners.DefaultTopologyListener;
 import com.osstelecom.db.inventory.topology.listeners.TopologyListener;
 import com.osstelecom.db.inventory.topology.node.INetworkNode;
@@ -32,6 +31,7 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import com.osstelecom.db.inventory.topology.impact.ImpactManagerIf;
 
 /**
  *
@@ -47,7 +47,7 @@ public abstract class Topology implements ITopology {
     private ConcurrentHashMap<String, INetworkNode> nodeNames = new ConcurrentHashMap<>();
     private Integer width = 1600;
     private Integer heigth = 900;
-    private IImpactManager impactManager;
+    private ImpactManagerIf impactManager;
     
     private ArrayList<INetworkNode> topOut = new ArrayList<>();
     private Point2D minPoint;
@@ -133,7 +133,7 @@ public abstract class Topology implements ITopology {
         this.topologyListener = listener;
     }
     
-    public Topology(ImpactManager impactManager) {
+    public Topology(ImpactManagerAbs impactManager) {
         this.setImpactManager(impactManager);
         this.setScaleFactor(100);
     }
@@ -254,15 +254,15 @@ public abstract class Topology implements ITopology {
     }
     
     @Override
-    public IImpactManager getImpactManager() {
+    public ImpactManagerIf getImpactManager() {
         if (this.impactManager == null) {
-            this.impactManager = new DefaultImpactManager(this);
+            this.impactManager = new DefaultImpactManagerImpl(this);
         }
         return this.impactManager;
     }
     
     @Override
-    public void setImpactManager(IImpactManager impactManager) {
+    public void setImpactManager(ImpactManagerIf impactManager) {
         this.impactManager = impactManager;
     }
     

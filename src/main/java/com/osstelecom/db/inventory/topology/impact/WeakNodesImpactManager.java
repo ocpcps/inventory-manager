@@ -17,7 +17,6 @@
  */
 package com.osstelecom.db.inventory.topology.impact;
 
-import com.nimbusds.jose.Algorithm;
 import com.osstelecom.db.inventory.topology.ITopology;
 import com.osstelecom.db.inventory.topology.algorithm.ITopolocyAlgorithm;
 import com.osstelecom.db.inventory.topology.algorithm.WeakNodesAlgorithm;
@@ -26,6 +25,8 @@ import com.osstelecom.db.inventory.topology.node.SourceTargetWrapper;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.stream.Collectors;
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
@@ -33,18 +34,18 @@ import org.slf4j.LoggerFactory;
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 24.10.2022
  */
-public class WeakNodesImpactManager extends DefaultImpactManager {
-    
+public class WeakNodesImpactManager extends DefaultImpactManagerImpl {
+
     private ITopolocyAlgorithm algorithm = new WeakNodesAlgorithm();
-    private org.slf4j.Logger logger = LoggerFactory.getLogger(WeakNodesImpactManager.class);
-    
+    private Logger logger = LoggerFactory.getLogger(WeakNodesImpactManager.class);
+
     public WeakNodesImpactManager(ITopology topology) {
         super(topology);
     }
-    
+
     @Override
     public List<INetworkNode> getWeakNodes(Integer connLimit, Boolean all, Integer threadCount, Boolean useCache) {
-        
+
         LinkedBlockingQueue<SourceTargetWrapper> weakQueue = new LinkedBlockingQueue<>();
         //
         // Esses nunca vão chegar lá....
@@ -60,7 +61,7 @@ public class WeakNodesImpactManager extends DefaultImpactManager {
             if (node.getConnectionCount() < connLimit) {
                 alreadyWeak.add(node);
                 logger.debug("Removing: " + node.getName() + "  Because Already Weak - Connections Size: " + node.getConnectionCount());
-                
+
             }
         }
 
@@ -83,9 +84,15 @@ public class WeakNodesImpactManager extends DefaultImpactManager {
         }
         logger.debug("Commiting Queue With :[{}] Jobs", weakQueue.size());
         this.algorithm.calculate(weakQueue);
-        this.algorithm.start();
-        List<INetworkNode> result = new ArrayList<>();
+
+        List<INetworkNode> result;
+
+        result = this.getTopology()
+                .getNodes()
+                .parallelStream()
+                .filter(n -> n.getEndpointConnectionsCount() <= connLimit && !n.endPoint())
+                .collect(Collectors.toList());
         return result;
     }
-    
+
 }

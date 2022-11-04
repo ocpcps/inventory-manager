@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.arangodb.entity.DocumentCreateEntity;
+import com.arangodb.entity.DocumentDeleteEntity;
 import com.arangodb.entity.DocumentUpdateEntity;
 import com.arangodb.entity.MultiDocumentEntity;
 import com.google.common.eventbus.Subscribe;
@@ -72,6 +73,11 @@ public class ResourceConnectionManager extends Manager {
     @EventListener(ApplicationReadyEvent.class)
     private void onStartUp() {
         this.eventManager.registerListener(this);
+    }
+
+    public ResourceConnection deleteResourceConnection(ResourceConnection connection) throws ArangoDaoException {
+        DocumentDeleteEntity<ResourceConnection> result = this.resourceConnectionDao.deleteResource(connection);
+        return result.getOld();
     }
 
     /**

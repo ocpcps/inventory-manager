@@ -40,6 +40,7 @@ import com.osstelecom.db.inventory.manager.operation.ServiceManager;
 import com.osstelecom.db.inventory.manager.request.CreateConnectionRequest;
 import com.osstelecom.db.inventory.manager.request.CreateManagedResourceRequest;
 import com.osstelecom.db.inventory.manager.request.DeleteManagedResourceRequest;
+import com.osstelecom.db.inventory.manager.request.DeleteResourceConnectionRequest;
 import com.osstelecom.db.inventory.manager.request.FilterRequest;
 import com.osstelecom.db.inventory.manager.request.FindManagedResourceRequest;
 import com.osstelecom.db.inventory.manager.request.ListManagedResourceRequest;
@@ -59,6 +60,7 @@ import com.osstelecom.db.inventory.manager.resources.exception.NoResourcesAvaila
 import com.osstelecom.db.inventory.manager.response.CreateManagedResourceResponse;
 import com.osstelecom.db.inventory.manager.response.CreateResourceConnectionResponse;
 import com.osstelecom.db.inventory.manager.response.DeleteManagedResourceResponse;
+import com.osstelecom.db.inventory.manager.response.DeleteResourceConnectionResponse;
 import com.osstelecom.db.inventory.manager.response.FilterResponse;
 import com.osstelecom.db.inventory.manager.response.FindManagedResourceResponse;
 import com.osstelecom.db.inventory.manager.response.PatchManagedResourceResponse;
@@ -178,6 +180,42 @@ public class ResourceSession {
 
         resourceConnectionManager.createResourceConnection(connection);
         return response;
+    }
+
+    public DeleteResourceConnectionResponse DeleteResourceConnection(DeleteResourceConnectionRequest request) throws InvalidRequestException, DomainNotFoundException, ArangoDaoException, ResourceNotFoundException {
+
+        if (request.getResourceId() == null) {
+            throw new InvalidRequestException("Please Provide Resource ID to delete");
+        } else if (request.getRequestDomain() == null) {
+            throw new InvalidRequestException("Please Provide Domain Name of Resource to  delete");
+        }
+
+        Domain domain = this.domainManager.getDomain(request.getRequestDomain());
+        //
+        // Precisa Enconrar A Connection.
+        //
+        ResourceConnection connection = this.resourceConnectionManager.findResourceConnection(new ResourceConnection(domain, request.getResourceId()));
+        //
+        // Uma vez que achamos a conecction, a gente precisa ver se algum circuito usa ela, pois se usar ela não pode ser removida!
+        //
+        Map<String, Object> bindings = new HashMap<>();
+        bindings.put("connectionId", connection.getId());
+        FilterDTO connectionFilter = new FilterDTO();
+        connectionFilter.setAqlFilter("doc.fromResource._id == @resourceId or doc.toResource._id == @connectionId ");
+        connectionFilter.getObjects().add("connections");
+        connectionFilter.setBindings(bindings);
+
+        try {
+            GraphList<CircuitResource> circuits = circuitManager.findCircuitsByFilter(connectionFilter, domain);
+            //
+            // Se chegou aqui é porque tem conexões que dependem do recurso, não podemos deletar
+            //
+            throw new InvalidRequestException(("Resource ID is Used By:[" + circuits.size() + "] Connections, please remove theses dependencies, before delete"));
+        } catch (ResourceNotFoundException ex) {
+            connection = this.resourceConnectionManager.deleteResourceConnection(connection);
+            DeleteResourceConnectionResponse response = new DeleteResourceConnectionResponse(connection);
+            return response;
+        }
     }
 
     /**

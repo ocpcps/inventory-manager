@@ -123,10 +123,10 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
     }
 
     @Override
-    public DocumentDeleteEntity<ManagedResource> deleteResource(ResourceLocation resource) throws BasicException {
+    public DocumentDeleteEntity<ResourceLocation> deleteResource(ResourceLocation resource) throws BasicException {
 //        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
         try {
-            return this.getDb().collection(resource.getDomain().getCircuits()).deleteDocument(resource.getId(), ManagedResource.class, new DocumentDeleteOptions().returnOld(true));
+            return this.getDb().collection(resource.getDomain().getCircuits()).deleteDocument(resource.getId(), ResourceLocation.class, new DocumentDeleteOptions().returnOld(true));
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         } finally {

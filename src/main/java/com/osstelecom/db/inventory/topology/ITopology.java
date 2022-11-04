@@ -18,9 +18,9 @@
 package com.osstelecom.db.inventory.topology;
 
 import com.osstelecom.db.inventory.topology.connection.INetworkConnection;
-import com.osstelecom.db.inventory.topology.impact.IImpactManager;
 import com.osstelecom.db.inventory.topology.node.INetworkNode;
 import java.util.ArrayList;
+import com.osstelecom.db.inventory.topology.impact.ImpactManagerIf;
 
 /**
  *
@@ -46,9 +46,9 @@ public interface ITopology {
 
     public ArrayList<INetworkNode> getNodes();
 
-    public IImpactManager getImpactManager();
+    public ImpactManagerIf getImpactManager();
 
-    public void setImpactManager(IImpactManager impactManager);
+    public void setImpactManager(ImpactManagerIf impactManager);
 
     public INetworkNode getNodeByName(String name);
 

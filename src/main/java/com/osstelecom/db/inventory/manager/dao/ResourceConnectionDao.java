@@ -215,10 +215,10 @@ public class ResourceConnectionDao extends AbstractArangoDao<ResourceConnection>
     }
 
     @Override
-    public DocumentDeleteEntity<ManagedResource> deleteResource(ResourceConnection resource) throws ArangoDaoException {
+    public DocumentDeleteEntity<ResourceConnection> deleteResource(ResourceConnection resource) throws ArangoDaoException {
         try {
             return this.getDb().collection(resource.getDomain().getConnections()).deleteDocument(resource.getId(),
-                    ManagedResource.class, new DocumentDeleteOptions().returnOld(true));
+                    ResourceConnection.class, new DocumentDeleteOptions().returnOld(true));
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         } finally {

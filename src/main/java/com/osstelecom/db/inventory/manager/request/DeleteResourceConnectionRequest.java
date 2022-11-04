@@ -15,27 +15,39 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package com.osstelecom.db.inventory.topology.algorithm;
+package com.osstelecom.db.inventory.manager.request;
 
-import com.osstelecom.db.inventory.topology.node.SourceTargetWrapper;
-import java.util.Map;
-import java.util.Queue;
+import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
- * @created 24.10.2022
+ * @created 17.10.2022
  */
-public interface ITopolocyAlgorithm {
+public class DeleteResourceConnectionRequest extends BasicRequest<ResourceConnection> {
+
+    //
+    // Isso aqui parece errado
+    //
+    private String resourceId;
+
+    public DeleteResourceConnectionRequest(String resourceId, String domainName) {
+        this.resourceId = resourceId;
+        this.setRequestDomain(domainName);
+    }
 
     /**
-     * Run Algorithm Calculation
-     *
-     * @param weakQueue
+     * @return the resourceId
      */
-    public void calculate(Queue<SourceTargetWrapper> weakQueue);
+    public String getResourceId() {
+        return resourceId;
+    }
 
-    public void calculate(Queue<SourceTargetWrapper> weakQueue, Map<String, Object> options);
-    
-//    public void start();
+    /**
+     * @param resourceId the resourceId to set
+     */
+    public void setResourceId(String resourceId) {
+        this.resourceId = resourceId;
+    }
+
 }

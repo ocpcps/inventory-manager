@@ -92,18 +92,18 @@ public abstract class NetworkConnection implements INetworkConnection {
     }
 
     @Override
-    public Boolean isVisited() {
-        return visitedThreads.containsKey(Thread.currentThread().getName());
+    public Boolean isVisited(String uid) {
+        return visitedThreads.containsKey(uid);
     }
 
     @Override
-    public void setVisited() {
-        visitedThreads.put(Thread.currentThread().getName(), true);
+    public void setVisited(String uid) {
+        visitedThreads.put(uid, true);
     }
 
     @Override
-    public void setUnvisited() {
-        visitedThreads.remove(Thread.currentThread().getName());
+    public void setUnvisited(String uid) {
+        visitedThreads.remove(uid);
     }
 
     @Override
@@ -124,7 +124,6 @@ public abstract class NetworkConnection implements INetworkConnection {
     @Override
     public Boolean isRelatedToNode(INetworkNode node) {
 //        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
-
         if (this.source.equals(node) || this.target.equals(node)) {
             return true;
         } else {

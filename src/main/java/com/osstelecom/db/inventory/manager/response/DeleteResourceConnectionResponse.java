@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Lucas Nishimura <lucas.nishimura@gmail.com>
+ * Copyright (C) 2022 Lucas Nishimura <lucas.nishimura@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -15,26 +15,19 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package com.osstelecom.db.inventory.topology.impact;
+package com.osstelecom.db.inventory.manager.response;
 
-import com.osstelecom.db.inventory.topology.ITopology;
+import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 
 /**
  *
- * @author Nishisan
+ * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @created 03.11.2022
  */
-public abstract class ImpactManager implements IImpactManager {
+public class DeleteResourceConnectionResponse extends BasicResponse<ResourceConnection> {
 
-    private final ITopology topology;
-
-    public ImpactManager(ITopology topology) {
-        this.topology = topology;
-        this.topology.setImpactManager(this);
-    }
-
-    @Override
-    public ITopology getTopology() {
-        return this.topology;
+    public DeleteResourceConnectionResponse(ResourceConnection obj) {
+        super(obj);
     }
 
 }

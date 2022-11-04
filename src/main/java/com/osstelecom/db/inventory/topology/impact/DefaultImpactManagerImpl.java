@@ -37,23 +37,23 @@ import org.slf4j.LoggerFactory;
  *
  * @author Nishisan
  */
-public class DefaultImpactManager extends ImpactManager {
-    
+public class DefaultImpactManagerImpl extends ImpactManagerAbs {
+
     private Boolean working = false;
-    
+
     private LinkedBlockingQueue<SourceTargetWrapper> weakQueue = new LinkedBlockingQueue<>();
     private ArrayList<Thread> threadPool = new ArrayList<>();
-    private org.slf4j.Logger logger = LoggerFactory.getLogger(DefaultImpactManager.class);
+    private org.slf4j.Logger logger = LoggerFactory.getLogger(DefaultImpactManagerImpl.class);
     private Boolean debug = true;
     private Integer runningThreads = 0;
     private AtomicLong weakDone = new AtomicLong(0L);
     private ConcurrentHashMap<String, CalculaTionWeakThread> workingThreads = new ConcurrentHashMap<>();
     private String joininngThread = "N/A";
-    
-    public DefaultImpactManager(ITopology topology) {
+
+    public DefaultImpactManagerImpl(ITopology topology) {
         super(topology);
     }
-    
+
     @Override
     public ArrayList<INetworkConnection> getUnreachableConnections() {
         Long start = System.currentTimeMillis();
@@ -91,7 +91,7 @@ public class DefaultImpactManager extends ImpactManager {
         Long took = end - start;
 //        System.out.println(":::getUnreacheableNodes() Took:" + took + " ms");
         allNodes.removeAll(active);
-        
+
         return allNodes;
     }
 
@@ -118,7 +118,7 @@ public class DefaultImpactManager extends ImpactManager {
         if (walked == null) {
             walked = new ConcurrentHashMap<>();
         }
-        
+
         for (INetworkConnection connection : startNode.getConnections()) {
             INetworkNode next;
             if (connection.getTarget().equals(startNode)) {
@@ -128,14 +128,14 @@ public class DefaultImpactManager extends ImpactManager {
                     next.addEndPointConnection(connection);
                     System.out.println(":::::From: " + startNode.getName() + " To " + next.getName() + " C:" + next.getEndpointConnectionsCount());
                     propagate(next, walked);
-                    
+
                 } else {
                     System.out.println("Aborting:::" + connection.getName());
                 }
             } else {
                 next = connection.getTarget();
             }
-            
+
         }
     }
 
@@ -149,7 +149,7 @@ public class DefaultImpactManager extends ImpactManager {
         if (walkedNodes == null) {
             walkedNodes = new ConcurrentHashMap<>();
         }
-        
+
         if (!walkedNodes.containsKey(node.getUuid())) {
             walkedNodes.put(node.getUuid(), new ConcurrentHashMap<>());
             if (node.getConnections().size() > 0) {
@@ -166,7 +166,7 @@ public class DefaultImpactManager extends ImpactManager {
                                 if (!nodes.contains(node)) {
                                     nodes.add(node);
                                 }
-                                
+
                                 if (node != c.getTarget()) {
                                     //
                                     // Conexao de saída do node
@@ -182,7 +182,7 @@ public class DefaultImpactManager extends ImpactManager {
                         }
                     }
                 }
-                
+
             } else {
                 //
                 // Node orfão
@@ -191,7 +191,7 @@ public class DefaultImpactManager extends ImpactManager {
             }
         }
     }
-    
+
     private INetworkNode getConnectionEndPoint(INetworkConnection connection) {
         if (connection.getTarget().endPoint()) {
             return connection.getTarget();
@@ -222,15 +222,15 @@ public class DefaultImpactManager extends ImpactManager {
         if (startedNode == null) {
             startedNode = currentNode;
         }
-        
+
         if (mainMapWalk == null) {
             mainMapWalk = new ConcurrentHashMap<>();
         }
-        
+
         if (!mainMapWalk.containsKey(currentNode.getUuid())) {
             mainMapWalk.put(currentNode.getUuid(), new ConcurrentHashMap<>());
         }
-        
+
         for (INetworkConnection connection : currentNode.getConnections()) {
             sourceConnection = connection;
             if (!mainMapWalk.get(currentNode.getUuid()).containsKey(connection.getUuid())) {
@@ -250,7 +250,7 @@ public class DefaultImpactManager extends ImpactManager {
                 } else {
                     processNodeEndPoints(next, startedNode, currentNode, sourceConnection, mainMapWalk, level, path);
                 }
-                
+
             } else {
                 INetworkNode end = getConnectionEndPoint(sourceConnection);
                 if (end != null) {
@@ -260,13 +260,13 @@ public class DefaultImpactManager extends ImpactManager {
                 }
             }
         }
-        
+
     }
-    
+
     public List<INetworkNode> getWeakNodes(Integer connLimit, ArrayList<INetworkNode> nodes) {
         return this.getWeakNodes(connLimit, false, 1, false, nodes);
     }
-    
+
     @Override
     public List<INetworkNode> getWeakNodes(Integer connLimit, Boolean all, Integer threadCount, Boolean useCache) {
         return this.getWeakNodes(connLimit, all, threadCount, useCache, null);
@@ -295,7 +295,7 @@ public class DefaultImpactManager extends ImpactManager {
      * @return
      */
     public List<INetworkNode> getWeakNodes(Integer connLimit, Boolean all, Integer threadCount, Boolean useCache, ArrayList<INetworkNode> nodes) {
-        
+
         weakDone.set(0L);
         //
         // Trata a quantidade de threads, não pode ser maior que a quantidade
@@ -304,10 +304,10 @@ public class DefaultImpactManager extends ImpactManager {
         if (threadCount > this.getTopology().getNodes().size()) {
             threadCount = this.getTopology().getNodes().size() - 1;
         }
-        
+
         this.working = true;
         Long start = System.currentTimeMillis();
-        
+
         this.getTopology().resetDynamicValues();
 
         //
@@ -357,7 +357,7 @@ public class DefaultImpactManager extends ImpactManager {
         weakQueue.forEach(o -> {
             logger.debug("Queue From:[" + o.getSource().getName() + "] To: [" + o.getTarget().getName() + "] Created");
         });
-        
+
         ArrayList<Thread> threadPool = new ArrayList<>();
         for (int x = 0; x < threadCount; x++) {
             String threadName = "WEAK-" + x;
@@ -374,28 +374,28 @@ public class DefaultImpactManager extends ImpactManager {
         for (Thread t : threadPool) {
             t.start();
         }
-        
+
         stats.start();
-        
+
         for (Thread t : threadPool) {
             try {
                 joininngThread = t.getName();
                 t.join();
                 logger.debug("Thread:" + t.getName() + " Joined");
                 workingThreads.remove(t.getName());
-                
+
                 if (workingThreads.isEmpty()) {
                     break;
                 }
             } catch (InterruptedException ex) {
-                Logger.getLogger(DefaultImpactManager.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(DefaultImpactManagerImpl.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
         this.working = false;
         logger.debug("Working All DONE, stopping stats Threads");
         stats.interrupt();
         List<INetworkNode> lowConnectedDevices = null;
-        
+
         logger.debug("Working All DONE, Collecting Network Data");
         if (nodes == null) {
             lowConnectedDevices
@@ -408,7 +408,7 @@ public class DefaultImpactManager extends ImpactManager {
             lowConnectedDevices = nodes.parallelStream().filter(n -> n.getEndpointConnectionsCount() <= connLimit && !n.endPoint())
                     .collect(Collectors.toList());
         }
-        
+
         if (all) {
             logger.debug("WEAK Found " + lowConnectedDevices.size() + " Nodes, processing impact");
             //
@@ -418,13 +418,13 @@ public class DefaultImpactManager extends ImpactManager {
             for (INetworkNode node : lowConnectedDevices) {
                 node.disable();
                 for (INetworkConnection connection : node.getConnections()) {
-                    
+
                     connection.disable();
-                    
+
                     this.getTopology().getConnectionByName(connection.getName()).disable();
-                    
+
                 }
-                
+
                 ArrayList<INetworkNode> impacted = this.getUnreacheableNodes();
                 for (INetworkNode impactedBy : impacted) {
                     if (nodes != null) {
@@ -439,14 +439,14 @@ public class DefaultImpactManager extends ImpactManager {
                         }
                     }
                 }
-                
+
                 node.enable();
                 for (INetworkConnection connection : node.getConnections()) {
                     connection.enable();
                     this.getTopology().getConnectionByName(connection.getName()).enable();
                 }
             }
-            
+
             return allImpactedNodes;
         } else {
 //            ArrayList<INetworkNode> alreadyDown = new ArrayList<>();
@@ -481,13 +481,13 @@ public class DefaultImpactManager extends ImpactManager {
 //            }
 
         }
-        
+
         Long end = System.currentTimeMillis();
         Long took = end - start;
-        
+
         return lowConnectedDevices;
     }
-    
+
     private synchronized SourceTargetWrapper getWork() {
         if (!weakQueue.isEmpty()) {
             return weakQueue.poll();
@@ -501,9 +501,9 @@ public class DefaultImpactManager extends ImpactManager {
      * "thread safe"
      */
     private class CalculaTionWeakThread implements Runnable {
-        
+
         private final String myName;
-        
+
         private Boolean printPaths = false;
         private final Boolean useCache;
         private AtomicLong counter = new AtomicLong(0L);
@@ -513,29 +513,29 @@ public class DefaultImpactManager extends ImpactManager {
         private Boolean mayIStop = false;
         private Integer step;
         private Boolean ended = false;
-        
+
         public Long getCounter() {
             Long actual = counter.get();
             Long lastCounter = last.get();
             Long result = actual - lastCounter;
             last.set(actual);
-            
+
             return result;
         }
-        
+
         public Long getActual() {
             return counter.get();
         }
-        
+
         public CalculaTionWeakThread(Boolean useCache, String myName) {
             this.useCache = useCache;
             this.myName = myName;
         }
-        
+
         public SourceTargetWrapper getCurrentWork() {
             return this.workload;
         }
-        
+
         private String getSpaces(int level) {
             String s = "";
             for (int x = 0; x < level; x++) {
@@ -543,24 +543,24 @@ public class DefaultImpactManager extends ImpactManager {
             }
             return s;
         }
-        
+
         public Long getStartTime() {
             return this.start;
         }
-        
+
         public void youMayStop() {
             if (!this.mayIStop) {
                 this.mayIStop = true;
             }
         }
-        
+
         public Boolean canIStop() {
             return this.mayIStop;
         }
-        
+
         @Override
         public void run() {
-            
+
             Long totalWorked = 0L;
             logger.debug("Weak Calculation Thread Started...Queue Size is:" + weakQueue.size());
             runningThreads++;
@@ -572,9 +572,9 @@ public class DefaultImpactManager extends ImpactManager {
                 if (workload != null) {
                     start = System.currentTimeMillis();
                     if (workload.getSource().getEndpointConnectionsCount() <= workload.getLimit()) {
-                        
+
                         logger.debug("Starting to process: [" + workload.getSource().getName() + "](" + workload.getSource().getEndpointConnectionsCount() + ")->[" + workload.getTarget().getName() + "] With :" + workload.getSource().getConnections().size() + " Connections and " + workload.getSource().getUnprobedConnections().size() + " Unprobed Connections");
-                        
+
                         if (workload.getSource().getConnectionCount() <= workload.getLimit()) {
                             //
                             // Já é fraco por natureza...
@@ -592,11 +592,11 @@ public class DefaultImpactManager extends ImpactManager {
                         logger.debug("--------------------------------------------------------------------------");
                     } else {
                         logger.debug("Skipped to process: [" + workload.getSource().getName() + "](" + workload.getSource().getEndpointConnectionsCount() + ")->[" + workload.getTarget().getName() + "] With :" + workload.getSource().getConnections().size() + " Connections and " + workload.getSource().getUnprobedConnections().size() + " Unprobed Connections");
-                        
+
                     }
 //                    workload.getSource().setUnvisited();
                 }
-                
+
             }
 
             //
@@ -609,7 +609,7 @@ public class DefaultImpactManager extends ImpactManager {
             logger.debug("--------------------------------------------------------------------------");
             return;
         }
-        
+
         public Boolean getEnded() {
             return ended;
         }
@@ -664,13 +664,13 @@ public class DefaultImpactManager extends ImpactManager {
 //            }
             step = 4;
             counter.incrementAndGet();
-            
+
             if (source.equals(target)) {
                 markSegmentAsReacheable(pathList, level, false);
                 return;
             }
-            
-            source.setVisited();
+
+            source.setVisited(Thread.currentThread().getName());
             level++;
             if (debug) {
                 logger.debug(getSpaces(level) + "Processing Node:" + source.getName() + " Connections to Endpoint: [" + source.getEndpointConnectionsCount() + "/" + source.getConnections().size() + "]");
@@ -693,26 +693,26 @@ public class DefaultImpactManager extends ImpactManager {
                     //
 
                     if (other != null) {
-                        if (!other.isVisited()) {
+                        if (!other.isVisited(Thread.currentThread().getName())) {
                             pathList.add(other);
-                            
+
                             if (mayIStop) {
                                 if (debug) {
-                                    logger.debug(getSpaces(level) + " mayIStop IS TRUE FOR:" + source.getName() + " To :" + other.getName() + "  to Endpoint: [" + other.getEndpointConnectionsCount(source) + "] Unvisted:" + source.getUnVisitedConnections().size());
+                                    logger.debug(getSpaces(level) + " mayIStop IS TRUE FOR:" + source.getName() + " To :" + other.getName() + "  to Endpoint: [" + other.getEndpointConnectionsCount(source) + "] Unvisted:" + source.getUnVisitedConnections(Thread.currentThread().getName()).size());
                                 }
                                 markSegmentAsReacheable(pathList, level, false);
                                 return;
                             }
-                            
+
                             if (debug) {
-                                logger.debug(getSpaces(level) + " Connection From:" + source.getName() + " To :" + other.getName() + "  to Endpoint: [" + other.getEndpointConnectionsCount(source) + "] Unvisted:" + source.getUnVisitedConnections().size());
+                                logger.debug(getSpaces(level) + " Connection From:" + source.getName() + " To :" + other.getName() + "  to Endpoint: [" + other.getEndpointConnectionsCount(source) + "] Unvisted:" + source.getUnVisitedConnections(Thread.currentThread().getName()).size());
                             }
-                            
+
                             if (!useCache) {
 //                                if (source.getEndpointConnectionsCount() < limit) {
                                 computeAllPossiblePathsToTarget(other, target, pathList, limit, level);
                                 source.markConnectionAsProbed(connection);
-                                
+
                             } else {
                                 //
                                 // Esta é a parte que transfere e reaproveita o conhecimento, parece que está quase ok no monothread :)
@@ -734,7 +734,7 @@ public class DefaultImpactManager extends ImpactManager {
                                 } else {
                                     computeAllPossiblePathsToTarget(other, target, pathList, limit, level);
                                 }
-                                
+
                                 source.markConnectionAsProbed(connection);
                             }
                             pathList.remove(other);
@@ -769,31 +769,31 @@ public class DefaultImpactManager extends ImpactManager {
                             logger.debug(getSpaces(level) + " Other Side is null from:[" + source.getName() + "]");
                         }
                     }
-                    
+
                 } else {
                     if (debug) {
                         logger.debug(getSpaces(level) + "Inactive Connection Found! IN:[" + source.getName() + "]");
                     }
                 }
-                
+
             }
-            
-            source.setUnvisited();
+
+            source.setUnvisited(Thread.currentThread().getName());
             if (debug) {
                 logger.debug(getSpaces(level) + "Done:" + source.getName() + " Has:" + source.getEndpointConnectionsCount());
             }
-            
+
         }
-        
+
         private synchronized void markSegmentAsReacheable(ArrayList<INetworkNode> pathList, Integer level, Boolean cached) {
             String pathStr = "";
-            
+
             for (Integer x = 0; x < pathList.size(); x++) {
                 INetworkNode sourceNode = pathList.get(x);
                 pathStr += sourceNode.getName() + ".";
                 if (x + 1 < pathList.size()) {
                     INetworkNode targetNode = pathList.get(x + 1);
-                    
+
                     ArrayList<INetworkConnection> sourceTargetConnection = sourceNode.getConnectionRelated(targetNode);
                     if (sourceTargetConnection.size() == 1) {
                         //
@@ -828,26 +828,26 @@ public class DefaultImpactManager extends ImpactManager {
                                 }
                             }
                         }
-                        
+
                     }
                 }
-                
+
             }
-            
+
             if (!cached) {
                 //
                 // Avaliar impacto em memória.
                 //
                 pathList.get(0).addSolution(pathList);
             }
-            
+
             if (debug) {
                 logger.debug("---------------------------------------------------------------------------------------------");
                 logger.debug(getSpaces(level) + "Found Path:[" + pathStr + "] From: " + pathList.get(0).getName() + " To:" + pathList.get(1).getName());
                 logger.debug("----------------------------------------------------------------------------------------------");
             }
         }
-        
+
         private String getNodeAddress(ArrayList<INetworkNode> nodes) {
             String result = "";
             for (INetworkNode n : nodes) {
@@ -855,16 +855,16 @@ public class DefaultImpactManager extends ImpactManager {
             }
             return result;
         }
-        
+
         private Integer getStep() {
             return this.step;
         }
     }
-    
+
     private class StatsThread implements Runnable {
-        
+
         private DecimalFormat f = new DecimalFormat("##.00");
-        
+
         @Override
         public void run() {
             Long last = 0L;
@@ -880,7 +880,7 @@ public class DefaultImpactManager extends ImpactManager {
                 } catch (InterruptedException ex) {
                     logger.debug(workingThreads.size() + " Threads Running ::: Done a Total of " + workingThreads.size() + " Interations");
                 }
-                
+
                 runningThreads.set(0L);
                 workingThreads.forEach((s, v) -> {
                     Long lastCounter = v.getCounter();
@@ -899,12 +899,12 @@ public class DefaultImpactManager extends ImpactManager {
                         }
                     }
                 });
-                
+
                 dif = actual.get() - last;
-                
+
                 Long end = System.currentTimeMillis();
                 Long took = end - start;
-                
+
                 result = dif / took.doubleValue();
                 result = result * 1000;
                 Long totalSize = weakQueue.size() + weakDone.get() + workingThreads.size();

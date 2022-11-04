@@ -17,6 +17,7 @@
  */
 package com.osstelecom.db.inventory.topology.node;
 
+import com.osstelecom.db.inventory.topology.connection.INetworkConnection;
 import java.util.List;
 
 /**
@@ -28,9 +29,21 @@ public class SourceTargetWrapper {
 
     private INetworkNode source;
     private INetworkNode target;
+    private INetworkConnection connection;
     private Integer limit;
     private Boolean useCache;
     private List<String> pathList;
+
+    public SourceTargetWrapper() {
+    }
+
+    
+
+    public SourceTargetWrapper(INetworkNode source, INetworkNode target, INetworkConnection connection) {
+        this.source = source;
+        this.target = target;
+        this.connection = connection;
+    }
 
     /**
      * @return the source

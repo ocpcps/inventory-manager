@@ -27,7 +27,7 @@ import java.util.List;
  *
  * @author Nishisan
  */
-public interface IImpactManager {
+public interface ImpactManagerIf {
 
     public ArrayList<INetworkNode> getUnreacheableNodes();
 

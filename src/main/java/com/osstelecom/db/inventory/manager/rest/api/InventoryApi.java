@@ -29,6 +29,7 @@ import com.osstelecom.db.inventory.manager.request.CreateConnectionRequest;
 import com.osstelecom.db.inventory.manager.request.CreateManagedResourceRequest;
 import com.osstelecom.db.inventory.manager.request.CreateResourceLocationRequest;
 import com.osstelecom.db.inventory.manager.request.DeleteManagedResourceRequest;
+import com.osstelecom.db.inventory.manager.request.DeleteResourceConnectionRequest;
 import com.osstelecom.db.inventory.manager.request.FilterRequest;
 import com.osstelecom.db.inventory.manager.request.FindManagedResourceRequest;
 import com.osstelecom.db.inventory.manager.request.ListManagedResourceRequest;
@@ -43,6 +44,7 @@ import com.osstelecom.db.inventory.manager.response.CreateManagedResourceRespons
 import com.osstelecom.db.inventory.manager.response.CreateResourceConnectionResponse;
 import com.osstelecom.db.inventory.manager.response.CreateResourceLocationResponse;
 import com.osstelecom.db.inventory.manager.response.DeleteManagedResourceResponse;
+import com.osstelecom.db.inventory.manager.response.DeleteResourceConnectionResponse;
 import com.osstelecom.db.inventory.manager.response.FilterResponse;
 import com.osstelecom.db.inventory.manager.response.FindManagedResourceResponse;
 import com.osstelecom.db.inventory.manager.response.PatchManagedResourceResponse;
@@ -194,7 +196,7 @@ public class InventoryApi extends BaseApi {
 
         return resourceSession.listManagedResources(listRequest);
     }
-    
+
     @AuthenticatedCall(role = {"user"})
     @GetMapping(path = "/{domain}/connection", produces = "application/json")
     public TypedListResponse listResourceConnections(@PathVariable("domain") String domain) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
@@ -205,29 +207,6 @@ public class InventoryApi extends BaseApi {
         this.setUserDetails(listRequest);
 
         return resourceSession.listResourceConnection(listRequest);
-    }
-
-    /**
-     * Cria uma nova conexão
-     *
-     * @param request
-     * @param domain
-     * @return
-     * @throws GenericException
-     */
-    @AuthenticatedCall(role = {"user"})
-    @PutMapping(path = "/{domain}/resource/connection", produces = "application/json", consumes = "application/json")
-    public CreateResourceConnectionResponse createResourceConnection(@RequestBody CreateConnectionRequest request, @PathVariable("domain") String domain) throws GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, InvalidRequestException, ResourceNotFoundException, ConnectionAlreadyExistsException, MetricConstraintException, NoResourcesAvailableException, DomainNotFoundException, ArangoDaoException {
-        try {
-            this.setUserDetails(request);
-            request.setRequestDomain(domain);
-            return resourceSession.createResourceConnection(request);
-        } catch (ArangoDBException ex) {
-            ex.printStackTrace();
-            GenericException exa = new GenericException(ex.getMessage());
-            exa.setStatusCode(ex.getResponseCode());
-            throw exa;
-        }
     }
 
     /**
@@ -323,12 +302,43 @@ public class InventoryApi extends BaseApi {
         return response;
     }
 
+    /**
+     * Cria uma nova conexão
+     *
+     * @param request
+     * @param domain
+     * @return
+     * @throws GenericException
+     */
     @AuthenticatedCall(role = {"user"})
-    @PatchMapping(path = "/{domain}/connection", produces = "application/json", consumes = "application/json")
+    @PutMapping(path = "/{domain}/resource/connection", produces = "application/json", consumes = "application/json")
+    public CreateResourceConnectionResponse createResourceConnection(@RequestBody CreateConnectionRequest request, @PathVariable("domain") String domain) throws GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, InvalidRequestException, ResourceNotFoundException, ConnectionAlreadyExistsException, MetricConstraintException, NoResourcesAvailableException, DomainNotFoundException, ArangoDaoException {
+        try {
+            this.setUserDetails(request);
+            request.setRequestDomain(domain);
+            return resourceSession.createResourceConnection(request);
+        } catch (ArangoDBException ex) {
+            ex.printStackTrace();
+            GenericException exa = new GenericException(ex.getMessage());
+            exa.setStatusCode(ex.getResponseCode());
+            throw exa;
+        }
+    }
+
+    @AuthenticatedCall(role = {"user"})
+    @PatchMapping(path = "/{domain}/resource/connection", produces = "application/json", consumes = "application/json")
     public PatchResourceConnectionResponse patchResourceConnection(@RequestBody PatchResourceConnectionRequest request, @PathVariable("domain") String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException {
         this.setUserDetails(request);
         request.setRequestDomain(domainName);
         return this.resourceSession.patchResourceConnection(request);
+    }
+
+    @AuthenticatedCall(role = {"user"})
+    @DeleteMapping(path = "/{domain}/resource/{resourceId}", produces = "application/json")
+    public DeleteResourceConnectionResponse DeleteResourceConnectionById(@PathVariable("domain") String domain, @PathVariable("resourceId") String resourceId) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
+        DeleteResourceConnectionRequest deleteRequest = new DeleteResourceConnectionRequest(resourceId, domain);
+        this.setUserDetails(deleteRequest);
+        return resourceSession.DeleteResourceConnection(deleteRequest);
     }
 
 //    /**

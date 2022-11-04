@@ -88,9 +88,9 @@ public interface INetworkNode extends DefaultNetworkObject {
 
     public ConcurrentHashMap<String, INetworkNode> getImpactedNodes();
 
-    public List<INetworkConnection> getVisitedConnections();
+    public List<INetworkConnection> getVisitedConnections(String uid);
 
-    public List<INetworkConnection> getUnVisitedConnections();
+    public List<INetworkConnection> getUnVisitedConnections(String uid);
 
     public Long getActiveConnnectionsCount();
 
