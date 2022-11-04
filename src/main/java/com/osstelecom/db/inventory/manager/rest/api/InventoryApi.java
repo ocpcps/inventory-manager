@@ -334,7 +334,7 @@ public class InventoryApi extends BaseApi {
     }
 
     @AuthenticatedCall(role = {"user"})
-    @DeleteMapping(path = "/{domain}/resource/{resourceId}", produces = "application/json")
+    @DeleteMapping(path = "/{domain}/resource/connection/{resourceId}", produces = "application/json")
     public DeleteResourceConnectionResponse DeleteResourceConnectionById(@PathVariable("domain") String domain, @PathVariable("resourceId") String resourceId) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
         DeleteResourceConnectionRequest deleteRequest = new DeleteResourceConnectionRequest(resourceId, domain);
         this.setUserDetails(deleteRequest);
