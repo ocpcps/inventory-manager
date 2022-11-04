@@ -201,8 +201,8 @@ public class ResourceSession {
         Map<String, Object> bindings = new HashMap<>();
         bindings.put("connectionId", connection.getId());
         FilterDTO connectionFilter = new FilterDTO();
-        connectionFilter.setAqlFilter("doc.fromResource._id == @resourceId or doc.toResource._id == @connectionId ");
-        connectionFilter.getObjects().add("connections");
+        connectionFilter.setAqlFilter("@connectionId in doc.circuitPath[*] @connectionId ");
+        connectionFilter.getObjects().add("circuits");
         connectionFilter.setBindings(bindings);
 
         try {
