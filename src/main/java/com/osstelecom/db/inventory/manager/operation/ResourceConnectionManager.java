@@ -223,6 +223,11 @@ public class ResourceConnectionManager extends Manager {
     public ResourceConnection findResourceConnection(ResourceConnection connection) throws ResourceNotFoundException, ArangoDaoException {
         String timerId = startTimer("findResourceConnection");
         try {
+            
+            if (!connection.getId().contains("/")) {
+                connection.setId(connection.getDomain().getConnections()+ "/" + connection.getId());
+            }
+
             lockManager.lock();
 
             return this.resourceConnectionDao.findResource(connection);

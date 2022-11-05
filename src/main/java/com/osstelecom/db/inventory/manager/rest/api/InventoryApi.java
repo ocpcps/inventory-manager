@@ -184,7 +184,7 @@ public class InventoryApi extends BaseApi {
         this.setUserDetails(deleteRequest);
         return resourceSession.deleteManagedResource(deleteRequest);
     }
-
+    
     @AuthenticatedCall(role = {"user"})
     @GetMapping(path = "/{domain}/resource", produces = "application/json")
     public TypedListResponse listManagedResource(@PathVariable("domain") String domain) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
@@ -335,10 +335,10 @@ public class InventoryApi extends BaseApi {
 
     @AuthenticatedCall(role = {"user"})
     @DeleteMapping(path = "/{domain}/resource/connection/{resourceId}", produces = "application/json")
-    public DeleteResourceConnectionResponse DeleteResourceConnectionById(@PathVariable("domain") String domain, @PathVariable("resourceId") String resourceId) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
+    public DeleteResourceConnectionResponse deleteResourceConnectionById(@PathVariable("domain") String domain, @PathVariable("resourceId") String resourceId) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
         DeleteResourceConnectionRequest deleteRequest = new DeleteResourceConnectionRequest(resourceId, domain);
         this.setUserDetails(deleteRequest);
-        return resourceSession.DeleteResourceConnection(deleteRequest);
+        return resourceSession.deleteResourceConnection(deleteRequest);
     }
 
 //    /**

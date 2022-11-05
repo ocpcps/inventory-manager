@@ -241,7 +241,9 @@ public class CircuitResourceDao extends AbstractArangoDao<CircuitResource> {
         } catch (ResourceNotFoundException ex) {
             throw ex;
         } catch (Exception ex) {
-            throw new ArangoDaoException(ex);
+            ArangoDaoException a = new ArangoDaoException(ex);
+            a.addDetails("filter", bindVars);
+            throw a;
         }
     }
 

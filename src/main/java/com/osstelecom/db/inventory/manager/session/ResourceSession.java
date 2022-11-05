@@ -182,7 +182,7 @@ public class ResourceSession {
         return response;
     }
 
-    public DeleteResourceConnectionResponse DeleteResourceConnection(DeleteResourceConnectionRequest request) throws InvalidRequestException, DomainNotFoundException, ArangoDaoException, ResourceNotFoundException {
+    public DeleteResourceConnectionResponse deleteResourceConnection(DeleteResourceConnectionRequest request) throws InvalidRequestException, DomainNotFoundException, ArangoDaoException, ResourceNotFoundException {
 
         if (request.getResourceId() == null) {
             throw new InvalidRequestException("Please Provide Resource ID to delete");
@@ -195,23 +195,27 @@ public class ResourceSession {
         // Precisa Enconrar A Connection.
         //
         ResourceConnection connection = this.resourceConnectionManager.findResourceConnection(new ResourceConnection(domain, request.getResourceId()));
+
         //
         // Uma vez que achamos a conecction, a gente precisa ver se algum circuito usa ela, pois se usar ela não pode ser removida!
         //
         Map<String, Object> bindings = new HashMap<>();
         bindings.put("connectionId", connection.getId());
         FilterDTO connectionFilter = new FilterDTO();
-        connectionFilter.setAqlFilter("@connectionId in doc.circuitPath[*] @connectionId ");
+        connectionFilter.setAqlFilter("@connectionId in doc.circuitPath[*] ");
         connectionFilter.getObjects().add("circuits");
         connectionFilter.setBindings(bindings);
 
         try {
+
             GraphList<CircuitResource> circuits = circuitManager.findCircuitsByFilter(connectionFilter, domain);
+
             //
             // Se chegou aqui é porque tem conexões que dependem do recurso, não podemos deletar
             //
             throw new InvalidRequestException(("Resource ID is Used By:[" + circuits.size() + "] Connections, please remove theses dependencies, before delete"));
         } catch (ResourceNotFoundException ex) {
+   
             connection = this.resourceConnectionManager.deleteResourceConnection(connection);
             DeleteResourceConnectionResponse response = new DeleteResourceConnectionResponse(connection);
             return response;
