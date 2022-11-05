@@ -21,18 +21,18 @@ import com.osstelecom.db.inventory.topology.impact.ImpactManagerIf;
  * @author Nishisan
  */
 public class DefaultExample {
-    
+
     public DefaultExample() throws GraphNotEnabledException {
-        
-        DefaultTopology topology = new DefaultTopology(100);
-        topology.setImpactManager(new WeakNodesImpactManager(topology));
+//WeakNodesImpactManager a =;
+        DefaultTopology topology = new DefaultTopology(new WeakNodesImpactManager());
+//        topology.setImpactManager();
         //
         // Elementos da Topologia
         //
         DefaultNode saida = new DefaultNode("saida1", 10, topology);
-        
+
         saida.setEndPoint(true);
-        
+
         DefaultNode router1 = new DefaultNode("router1", 1, topology);
         DefaultNode router2 = new DefaultNode("router2", 2, topology);
         DefaultNode router3 = new DefaultNode("router3", 3, topology);
@@ -47,14 +47,14 @@ public class DefaultExample {
         // Conexões
         //
         topology.addConnection(router1, saida);
-        
+
         topology.addConnection(router2, saida);
-        
+
         topology.addConnection(router2, router1);
         topology.addConnection(router3, router2);
-        
+
         topology.addConnection(router3, router4);
-        
+
         topology.addConnection(router5, router4);
         topology.addConnection(router6, router4);
         topology.addConnection(router7, router6);
@@ -77,16 +77,16 @@ public class DefaultExample {
 //                nodes.put(router.getName(), router);
 
             }
-            
+
         }
         ImpactManagerIf impactManager = topology.getImpactManager();
-        
+
         System.out.println("Topologyy Size: " + topology.getNodes().size() + "  Connections:" + topology.getConnections().size());
         System.out.println("-------------------------------------------------------------");
         System.out.println("Weak Nodes:");
         System.out.println("-------------------------------------------------------------");
         Long start = System.currentTimeMillis();
-        List<INetworkNode> weak = topology.getImpactManager().getWeakNodes(1, false, 1, false);
+        List<INetworkNode> weak = topology.getImpactManager().getWeakNodes(1, false, 16, false);
         Long end = System.currentTimeMillis();
         Long took = end - start;
         System.out.println("Found " + weak.size() + " Weak Nodes Took:" + took + " ms");
@@ -107,7 +107,7 @@ public class DefaultExample {
 
 //        topology.getGraph().display();
     }
-    
+
     private void printNodeList(ArrayList<INetworkNode> nodes) {
         System.out.println("");
 //        System.out.println("Source Node:" + sourceNode.getName() + " Reaches:" + saida.getName() + " Via:");
@@ -130,7 +130,7 @@ public class DefaultExample {
         } catch (GraphNotEnabledException ex) {
             Logger.getLogger(DefaultExample.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
+
     }
-    
+
 }

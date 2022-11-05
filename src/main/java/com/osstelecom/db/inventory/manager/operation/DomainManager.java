@@ -55,6 +55,7 @@ import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import com.osstelecom.db.inventory.topology.DefaultTopology;
 import com.osstelecom.db.inventory.topology.ITopology;
+import com.osstelecom.db.inventory.topology.impact.WeakNodesImpactManager;
 import com.osstelecom.db.inventory.topology.node.DefaultNode;
 import com.osstelecom.db.inventory.topology.node.INetworkNode;
 import java.io.IOException;
@@ -312,7 +313,7 @@ public class DomainManager extends Manager {
             // @Todo:Testar memória...
             //
             Long startTime = System.currentTimeMillis();
-            DefaultTopology topology = new DefaultTopology();
+            DefaultTopology topology = new DefaultTopology(new WeakNodesImpactManager());
             AtomicLong localId = new AtomicLong(0L);
             INetworkNode target = createNode(aPoint.getId(), localId.incrementAndGet(), topology);
             //
@@ -333,7 +334,7 @@ public class DomainManager extends Manager {
                     to = createNode(connection.getTo().getId(), localId.incrementAndGet(), topology);
                 }
 
-                if (connection.getOperationalStatus().equals("UP")) {
+                if (connection.getOperationalStatus().equalsIgnoreCase("UP")) {
                     topology.addConnection(from, to, "Connection: " + connection.getId());
                 }
 
@@ -353,7 +354,7 @@ public class DomainManager extends Manager {
             List<INetworkNode> weak = topology.getImpactManager().getUnreacheableNodes();
             Long endTime = System.currentTimeMillis();
             Long tookTime = endTime - startTime;
-            logger.debug("Found {} Unrecheable Nodes IN: {} ms", weak.size(), tookTime);
+            logger.debug("Found [{}] Unrecheable Nodes IN: {} ms", weak.size(), tookTime);
 
             if (!weak.isEmpty()) {
                 weak.forEach(node -> {
@@ -399,7 +400,7 @@ public class DomainManager extends Manager {
                 //
                 // Ok temos algo para Trabalhar, montemos a topologia...
                 //
-                DefaultTopology topology = new DefaultTopology();
+                DefaultTopology topology = new DefaultTopology(new WeakNodesImpactManager());
 
                 targets.forEach(t -> {
                     //

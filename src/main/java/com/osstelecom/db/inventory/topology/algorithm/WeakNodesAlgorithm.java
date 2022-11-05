@@ -37,41 +37,50 @@ import org.slf4j.LoggerFactory;
 public class WeakNodesAlgorithm implements ITopolocyAlgorithm {
 
     private AtomicLong counter = new AtomicLong(0L);
+    private AtomicLong interationCounter = new AtomicLong(0L);
     private Queue<SourceTargetWrapper> queue;
     private Map<String, Object> options;
     private Logger logger = LoggerFactory.getLogger(WeakNodesAlgorithm.class);
+    private int threadSize;
 
     @Override
     public void calculate(Queue<SourceTargetWrapper> queue) {
         this.queue = queue;
+        this.threadSize = 1;
         this.start();
     }
 
     @Override
     public void calculate(Queue<SourceTargetWrapper> queue, Map<String, Object> options) {
         this.options = options;
+        this.threadSize = 1;
+        this.start();
+    }
+
+    @Override
+    public void calculate(Queue<SourceTargetWrapper> queue, int threadCount) {
+        this.queue = queue;
+        this.threadSize = threadCount;
+        this.start();
+
+    }
+
+    @Override
+    public void calculate(Queue<SourceTargetWrapper> queue, Map<String, Object> options, int threadCount) {
+        this.queue = queue;
+        this.options = options;
+        this.threadSize = threadCount;
         this.start();
     }
 
 //    @Override
-    private void start() {
-        //
-        //
-        //
-        
-        int threadSize = 8;
-        
+    public void start() {
+        Long start = System.currentTimeMillis();
         if (this.queue != null && !this.queue.isEmpty()) {
-//            while (!this.queue.isEmpty()) {
-//                SourceTargetWrapper job = this.queue.poll();
-//                if (job != null) {
-//                    counter.incrementAndGet();
-//                }
-//            }
 
             List<Thread> threads = new ArrayList<>();
 
-            for (int x = 0; x < threadSize; x++) {
+            for (int x = 0; x < this.threadSize; x++) {
                 Thread worker = new Thread(new DfsMultiPathThread());
                 threads.add(worker);
             }
@@ -89,8 +98,9 @@ public class WeakNodesAlgorithm implements ITopolocyAlgorithm {
             }
 
         }
-
-        logger.debug("Job Done: Processed: [{}] Tasks", counter.get());
+        Long end = System.currentTimeMillis();
+        Long took = end - start;
+        logger.debug("Job Done: Processed: [{}] Tasks With: [{}] Threads, Iteration Counter:[{}] In :[{}] ms", counter.get(), this.threadSize, this.interationCounter.get(), took);
     }
 
     private class DfsMultiPathThread implements Runnable {
@@ -107,6 +117,7 @@ public class WeakNodesAlgorithm implements ITopolocyAlgorithm {
                     this.computeDfs(job);
                 }
             }
+//            System.out.println(":Processed:" + counter.get());
         }
 
         private void computeDfs(SourceTargetWrapper job) {
@@ -118,27 +129,27 @@ public class WeakNodesAlgorithm implements ITopolocyAlgorithm {
             pathList.add(source.getUuid());
             String uid = source.getUuid();
 
-            Boolean result = this.computeDfsUtils(source, target, pathList, uid, level);
+            if (job.getUseCache()) {
+                this.computeDfsWithCache(source, target, pathList, uid, level);
+            } else {
+                this.computeDfsWithoutCache(source, target, pathList, uid, level);
+            }
 
-            System.out.println("Tested: " + source.getName() + " TO: " + target.getName() + " Result:" + source.getEndpointConnectionsCount());
+//            System.out.println("Tested: " + source.getName() + " TO: " + target.getName() + " Result:" + source.getEndpointConnectionsCount());
         }
 
-        private Boolean computeDfsUtils(INetworkNode source, INetworkNode target, List<String> pathList, String uid, Integer level) {
+        private Boolean computeDfsWithoutCache(INetworkNode source, INetworkNode target, List<String> pathList, String uid, Integer level) {
             //
             // Current Iteration: UID
             //
+            interationCounter.incrementAndGet();
             level++;
-//            System.out.println("\t:[" + level + "] Testing from:" + source.getName() + " TO:" + target.getName());
             Boolean result = false;
             if (source.equals(target)) {
-//                System.out.println("Solution Found:!" + pathList);
-//                System.out.println("\t\tFound AT: [" + level + "]");
                 result = true;
                 level--;
                 return result;
             }
-
-//            System.out.println("Starting from: ["+source.getName()+"]");
             source.setVisited(uid);
             for (INetworkConnection connection : source.getUnVisitedConnections(uid)) {
                 INetworkNode other = source.getOtherSide(connection);
@@ -151,9 +162,63 @@ public class WeakNodesAlgorithm implements ITopolocyAlgorithm {
                         //
                         source.addEndPointConnection(connection);
                         result = true;
-//                        System.out.println("\t\tFound 2 AT: [" + level + "]");
+                    } else if (computeDfsWithoutCache(other, target, pathList, uid, level)) {
+                        source.addEndPointConnection(connection);
+                        result = true;
+                    }
+                }
+                pathList.remove(other.getUuid());
 
-                    } else if (computeDfsUtils(other, target, pathList, uid, level)) {
+            }
+            source.setUnvisited(uid);
+            level--;
+            return result;
+        }
+
+        /**
+         * Este método precisa ser testado melhor
+         *
+         * @param source
+         * @param target
+         * @param pathList
+         * @param uid
+         * @param level
+         * @return
+         */
+        private Boolean computeDfsWithCache(INetworkNode source, INetworkNode target, List<String> pathList, String uid, Integer level) {
+            //
+            // Current Iteration: UID
+            //
+            interationCounter.incrementAndGet();
+            level++;
+            Boolean result = false;
+            if (source.equals(target)) {
+                result = true;
+                level--;
+                return result;
+            }
+            source.setVisited(uid);
+            for (INetworkConnection connection : source.getUnVisitedConnections(uid)) {
+                INetworkNode other = source.getOtherSide(connection);
+
+                if (!other.isVisited(uid)) {
+                    pathList.add(other.getUuid());
+                    if (other.equals(target)) {
+                        //
+                        // Já chegou na saída
+                        //
+                        source.addEndPointConnection(connection);
+                        result = true;
+                    } else if (other.getEndpointConnectionsCount(source) > 0) {
+                        //
+                        // Mark as ok, já que tem uma saída por este nó.
+                        //
+                        source.addEndPointConnection(connection);
+                        result = true;
+                    } else if (computeDfsWithoutCache(other, target, pathList, uid, level)) {
+                        //
+                        // Se for para andar tudo, não vai poder usar o cache., mas depois que descobre pode.
+                        //
                         source.addEndPointConnection(connection);
                         result = true;
                     }

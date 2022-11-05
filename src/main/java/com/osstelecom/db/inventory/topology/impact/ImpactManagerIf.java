@@ -31,11 +31,21 @@ public interface ImpactManagerIf {
 
     public ArrayList<INetworkNode> getUnreacheableNodes();
 
+    /**
+     * 
+     * @param connLimit min connection in nodes
+     * @param all , bring all impacted and weak nodes.
+     * @param threadCount , threadCount for calculations
+     * @param useCache = use Cache
+     * @return 
+     */
     public List<INetworkNode> getWeakNodes(Integer connLimit, Boolean all, Integer threadCount, Boolean useCache);
 
     public List<INetworkNode> getWeakNodes(Integer connLimit, ArrayList<INetworkNode> nodes);
 
     public ITopology getTopology();
+
+    public void setTopology(ITopology topology);
 
     public ArrayList<INetworkConnection> getUnreachableConnections();
 

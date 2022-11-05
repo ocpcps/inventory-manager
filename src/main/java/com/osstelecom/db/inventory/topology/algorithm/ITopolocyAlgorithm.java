@@ -35,7 +35,11 @@ public interface ITopolocyAlgorithm {
      */
     public void calculate(Queue<SourceTargetWrapper> weakQueue);
 
+    public void calculate(Queue<SourceTargetWrapper> weakQueue, int threadCount);
+
     public void calculate(Queue<SourceTargetWrapper> weakQueue, Map<String, Object> options);
-    
+
+    public void calculate(Queue<SourceTargetWrapper> weakQueue, Map<String, Object> options, int threadCount);
+
 //    public void start();
 }
