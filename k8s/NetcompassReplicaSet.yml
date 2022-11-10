@@ -3,7 +3,7 @@ kind: ReplicaSet
 metadata:
   name: netcompass-api-replicaset
   labels:
-    app: netcompass-api
+    app: netcompass
 spec:
   #
   # If On Minikube keep 1
@@ -11,22 +11,22 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: netcompass-api
+      app: inventory-manager-api
   template:
     metadata:
       labels:
-        app: netcompass-api
+        app: inventory-manager-api
     spec:
       containers:
       - name: inventory-manager-api
-        image:  192.168.59.103:5000/osstelecom-jdk11
+        image: quay.apps.mgmt.telcostack.br.telefonica.com/netcompass/netcompass-server/osstelecom-jdk11:0.3
       ports:
         - name: api-https
           containerPort: 9000
           protocol: TCP
       volumeMounts:
         - mountPath: "/app/inventory-manager"
-          name: netcompass-app-storage
+          name: pvc-8e757e50-ce35-4315-8265-fe14095065ca
       env:
         - name: JAR_PATH
           value: /app/inventory-manager

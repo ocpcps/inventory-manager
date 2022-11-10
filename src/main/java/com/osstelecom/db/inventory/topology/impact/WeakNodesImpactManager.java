@@ -103,6 +103,8 @@ public class WeakNodesImpactManager extends DefaultImpactManagerImpl {
                 .parallelStream()
                 .filter(n -> n.getEndpointConnectionsCount() <= connLimit && !n.endPoint())
                 .collect(Collectors.toList());
+        
+        result.removeAll(alreadyWeak);
         return result;
     }
 

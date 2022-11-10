@@ -65,7 +65,7 @@ public class DefaultExample {
 //        topology.addConnection(router10, router8);
 //        topology.addConnection(router10, router1);
 
-        Boolean stressMe = true;
+        Boolean stressMe = false;
         if (stressMe) {
             Integer fakeNodCount = 500;
 //            ConcurrentHashMap<String, INetworkNode> nodes = new ConcurrentHashMap<>();
@@ -86,7 +86,7 @@ public class DefaultExample {
         System.out.println("Weak Nodes:");
         System.out.println("-------------------------------------------------------------");
         Long start = System.currentTimeMillis();
-        List<INetworkNode> weak = topology.getImpactManager().getWeakNodes(1, false, 16, false);
+        List<INetworkNode> weak = topology.getImpactManager().getWeakNodes(1, false, 4, true);
         Long end = System.currentTimeMillis();
         Long took = end - start;
         System.out.println("Found " + weak.size() + " Weak Nodes Took:" + took + " ms");

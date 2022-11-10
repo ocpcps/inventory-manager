@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: inventory-manager-schema-editor
+spec:
+  volumes:
+    - name: pvc-2cf2378e-fa62-4970-97a6-57fa19474e61
+      persistentVolumeClaim:
+        claimName: netcompass-app-volume-claim
+  containers:
+    - name: netcompass-editor
+      image:  ghcr.io/coder/code-server:4.8.3-bullseye
+      ports:
+        - name: api-https
+          containerPort: 9000
+          protocol: TCP
+      volumeMounts:
+        - mountPath: "/app/inventory-manager"
+          name: netcompass-app-storage
+      env:
+        - name: JAR_PATH
+          value: /app/inventory-manager
+        - name: JAR_ARGS
+          value: -Xmx4G
+        - name: JAR_NAME
+          value: inventory-manager-1.0.0-alpha-security.jar

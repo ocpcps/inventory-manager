@@ -29,7 +29,7 @@ public class SecurityConfiguration {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.cors()
-                .and()
+                .and().csrf().disable()
                 .authorizeRequests()
                 .antMatchers(HttpMethod.GET, "/inventory/v1/**")
                 .hasAuthority("SCOPE_read")
@@ -41,6 +41,8 @@ public class SecurityConfiguration {
                 .hasAuthority("SCOPE_write")
                 .antMatchers(HttpMethod.DELETE, "/inventory/v1/**")
                 .hasAuthority("SCOPE_write")
+                .antMatchers(HttpMethod.POST, "/topology/v1/**")
+                .anonymous()
                 .anyRequest()
                 .anonymous()
                 .and()
