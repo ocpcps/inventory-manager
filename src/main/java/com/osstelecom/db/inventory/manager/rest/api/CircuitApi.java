@@ -26,10 +26,12 @@ import com.osstelecom.db.inventory.manager.exception.SchemaNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.ScriptRuleException;
 import com.osstelecom.db.inventory.manager.request.CreateCircuitPathRequest;
 import com.osstelecom.db.inventory.manager.request.CreateCircuitRequest;
+import com.osstelecom.db.inventory.manager.request.FilterRequest;
 import com.osstelecom.db.inventory.manager.request.GetCircuitPathRequest;
 import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstraintViolationException;
 import com.osstelecom.db.inventory.manager.response.CreateCircuitPathResponse;
 import com.osstelecom.db.inventory.manager.response.CreateCircuitResponse;
+import com.osstelecom.db.inventory.manager.response.FilterResponse;
 import com.osstelecom.db.inventory.manager.response.GetCircuitPathResponse;
 import com.osstelecom.db.inventory.manager.security.model.AuthenticatedCall;
 import com.osstelecom.db.inventory.manager.session.CircuitSession;
@@ -117,5 +119,13 @@ public class CircuitApi extends BaseApi {
         request.setRequestDomain(domain);
         this.setUserDetails(request);
         return circuitSession.findCircuitPath(request);
+    }
+
+    @AuthenticatedCall(role = {"user"})
+    @PostMapping(path = "/{domain}/circuit/filter", produces = "application/json", consumes = "application/json")
+    public FilterResponse findCircuitsByFilter(@RequestBody FilterRequest filter, @PathVariable("domain") String domain) throws ArangoDaoException, ResourceNotFoundException, DomainNotFoundException, InvalidRequestException {
+        this.setUserDetails(filter);
+        filter.setRequestDomain(domain);
+        return circuitSession.findCircuitByFilter(filter);
     }
 }

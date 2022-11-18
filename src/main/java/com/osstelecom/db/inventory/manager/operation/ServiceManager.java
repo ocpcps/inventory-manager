@@ -50,6 +50,7 @@ import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.listeners.EventManagerListener;
 import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 import com.osstelecom.db.inventory.manager.resources.Domain;
+import com.osstelecom.db.inventory.manager.resources.GraphList;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import com.osstelecom.db.inventory.manager.resources.ServiceResource;
@@ -307,6 +308,10 @@ public class ServiceManager extends Manager {
 
     }
 
+    public GraphList<ServiceResource> findServiceByFilter(FilterDTO filter, Domain domain) throws ArangoDaoException, ResourceNotFoundException {
+        return this.serviceDao.findResourceByFilter(filter, filter.getBindings(), domain);
+    }
+
     public ServiceResource updateService(ServiceResource service) throws ArangoDaoException, ResourceNotFoundException {
         String timerId = startTimer("updateServiceResource");
         try {
@@ -487,7 +492,7 @@ public class ServiceManager extends Manager {
                     service.getRelatedManagedResources().add(resource.getId());
                     this.evaluateServiceStateTransition(this.serviceDao.updateResource(service));
                 }
-            }else{
+            } else {
                 logger.debug("No Resource to Update");
             }
         } else if (updateEvent.getOldResource() != null && updateEvent.getNewResource() != null) {

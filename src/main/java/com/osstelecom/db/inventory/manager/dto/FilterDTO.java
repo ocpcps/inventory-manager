@@ -17,11 +17,14 @@
  */
 package com.osstelecom.db.inventory.manager.dto;
 
+import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
+import com.osstelecom.db.inventory.manager.resources.ServiceResource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  *
@@ -33,15 +36,19 @@ public class FilterDTO {
     private List<String> classes;
     private List<String> objects = new ArrayList<>();
     private String aqlFilter;
-    private Map<String, Object> bindings;
+    private Map<String, Object> bindings = new ConcurrentHashMap<>();
     private String targetRegex;
     private boolean computeWeakLinks = false;
     private Integer computeThreads = 8;
     private Integer minCuts = 1;
     private List<ManagedResource> nodes;
     private List<ResourceConnection> connections;
+    private List<CircuitResource> circuits;
+    private List<ServiceResource> services;
     private Integer nodeCount = 0;
     private Integer connectionsCount = 0;
+    private Integer circuitCount = 0;
+    private Integer serviceCount = 0;
     private String sortCondition = "";
 
     public FilterDTO() {
@@ -216,5 +223,61 @@ public class FilterDTO {
      */
     public void setSortCondition(String sortCondition) {
         this.sortCondition = sortCondition;
+    }
+
+    /**
+     * @return the circuits
+     */
+    public List<CircuitResource> getCircuits() {
+        return circuits;
+    }
+
+    /**
+     * @param circuits the circuits to set
+     */
+    public void setCircuits(List<CircuitResource> circuits) {
+        this.circuits = circuits;
+    }
+
+    /**
+     * @return the services
+     */
+    public List<ServiceResource> getServices() {
+        return services;
+    }
+
+    /**
+     * @param services the services to set
+     */
+    public void setServices(List<ServiceResource> services) {
+        this.services = services;
+    }
+
+    /**
+     * @return the circuitCount
+     */
+    public Integer getCircuitCount() {
+        return circuitCount;
+    }
+
+    /**
+     * @param circuitCount the circuitCount to set
+     */
+    public void setCircuitCount(Integer circuitCount) {
+        this.circuitCount = circuitCount;
+    }
+
+    /**
+     * @return the serviceCount
+     */
+    public Integer getServiceCount() {
+        return serviceCount;
+    }
+
+    /**
+     * @param serviceCount the serviceCount to set
+     */
+    public void setServiceCount(Integer serviceCount) {
+        this.serviceCount = serviceCount;
     }
 }

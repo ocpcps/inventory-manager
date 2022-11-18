@@ -28,11 +28,14 @@ import com.osstelecom.db.inventory.manager.operation.DomainManager;
 import com.osstelecom.db.inventory.manager.operation.ServiceManager;
 import com.osstelecom.db.inventory.manager.request.CreateServiceRequest;
 import com.osstelecom.db.inventory.manager.request.DeleteServiceRequest;
+import com.osstelecom.db.inventory.manager.request.FilterRequest;
 import com.osstelecom.db.inventory.manager.request.GetServiceRequest;
 import com.osstelecom.db.inventory.manager.request.PatchServiceRequest;
+import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.ServiceResource;
 import com.osstelecom.db.inventory.manager.response.CreateServiceResponse;
 import com.osstelecom.db.inventory.manager.response.DeleteServiceResponse;
+import com.osstelecom.db.inventory.manager.response.FilterResponse;
 import com.osstelecom.db.inventory.manager.response.GetServiceResponse;
 import com.osstelecom.db.inventory.manager.response.PatchServiceResponse;
 
@@ -161,6 +164,19 @@ public class ServiceSession {
         payload = serviceManager.resolveService(payload);
 
         return new PatchServiceResponse(serviceManager.updateService(payload));
+    }
+
+    public FilterResponse findServiceByFilter(FilterRequest filter) throws InvalidRequestException, ArangoDaoException, DomainNotFoundException, ResourceNotFoundException {
+        FilterResponse response = new FilterResponse(filter.getPayLoad());
+        if (filter.getPayLoad().getObjects().contains("service") || filter.getPayLoad().getObjects().contains("services")) {
+            Domain domain = domainManager.getDomain(filter.getRequestDomain());
+            response.getPayLoad().setServices(serviceManager.findServiceByFilter(filter.getPayLoad(), domain).toList());
+            response.getPayLoad().setServiceCount(response.getPayLoad().getServices().size());
+        } else {
+            throw new InvalidRequestException("Filter object does not have service");
+        }
+
+        return response;
     }
 
 }
