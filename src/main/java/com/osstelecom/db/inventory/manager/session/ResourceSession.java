@@ -147,10 +147,18 @@ public class ResourceSession {
             Domain domain = this.domainManager.getDomain(request.getRequestDomain());
             ManagedResource fromResource = new ManagedResource(domain);
             fromResource.setKey(request.getPayLoad().getFromKey());
+            //
+            // Como temos a KEY, vamos ignorar o attributeSchemaName
+            //
+            fromResource.setAttributeSchemaName(null);
             fromResource = manager.findManagedResource(fromResource);
 
             ManagedResource toResource = new ManagedResource(domain);
             toResource.setKey(request.getPayLoad().getToKey());
+            //
+            // Como temos a KEY, vamos ignorar o attributeSchemaName
+            //
+            toResource.setAttributeSchemaName(null);
             toResource = manager.findManagedResource(toResource);
 
             connection.setFrom(fromResource);

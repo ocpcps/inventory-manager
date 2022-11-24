@@ -162,7 +162,7 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
     public GraphList<T> query(FilterDTO filter, Class<T> type, ArangoDatabase db) throws ResourceNotFoundException, InvalidRequestException {
         Long start = System.currentTimeMillis();
         String uid = UUID.randomUUID().toString();
-        logger.info("(query) - [{}] - RUNNING: AQL:[{}]", uid, filter.getAqlFilter());
+
         if (filter.getBindings() != null) {
             filter.getBindings().forEach((k, v) -> {
                 logger.info("\t  [@{}]=[{}]", k, v);
@@ -188,7 +188,10 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
             }
 
             filter.setAqlFilter(filter.getAqlFilter() + " return doc");
-
+            logger.info("(query) - [{}] - RUNNING: AQL:[{}]", uid, filter.getAqlFilter());
+            filter.getBindings().forEach((k, v) -> {
+                logger.info("\t  [@{}]=[{}]", k, v);
+            });
             GraphList<T> result = new GraphList<>(
                     db.query(filter.getAqlFilter(), filter.getBindings(), new AqlQueryOptions().fullCount(true).count(true), type));
 
