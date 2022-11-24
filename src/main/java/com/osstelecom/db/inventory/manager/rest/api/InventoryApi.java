@@ -32,6 +32,7 @@ import com.osstelecom.db.inventory.manager.request.DeleteManagedResourceRequest;
 import com.osstelecom.db.inventory.manager.request.DeleteResourceConnectionRequest;
 import com.osstelecom.db.inventory.manager.request.FilterRequest;
 import com.osstelecom.db.inventory.manager.request.FindManagedResourceRequest;
+import com.osstelecom.db.inventory.manager.request.FindResourceConnectionRequest;
 import com.osstelecom.db.inventory.manager.request.ListManagedResourceRequest;
 import com.osstelecom.db.inventory.manager.request.ListResourceConnectionRequest;
 import com.osstelecom.db.inventory.manager.request.PatchManagedResourceRequest;
@@ -47,6 +48,7 @@ import com.osstelecom.db.inventory.manager.response.DeleteManagedResourceRespons
 import com.osstelecom.db.inventory.manager.response.DeleteResourceConnectionResponse;
 import com.osstelecom.db.inventory.manager.response.FilterResponse;
 import com.osstelecom.db.inventory.manager.response.FindManagedResourceResponse;
+import com.osstelecom.db.inventory.manager.response.FindResourceConnectionResponse;
 import com.osstelecom.db.inventory.manager.response.PatchManagedResourceResponse;
 import com.osstelecom.db.inventory.manager.response.PatchResourceConnectionResponse;
 import com.osstelecom.db.inventory.manager.response.TypedListResponse;
@@ -184,7 +186,7 @@ public class InventoryApi extends BaseApi {
         this.setUserDetails(deleteRequest);
         return resourceSession.deleteManagedResource(deleteRequest);
     }
-    
+
     @AuthenticatedCall(role = {"user"})
     @GetMapping(path = "/{domain}/resource", produces = "application/json")
     public TypedListResponse listManagedResource(@PathVariable("domain") String domain) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
@@ -334,11 +336,28 @@ public class InventoryApi extends BaseApi {
     }
 
     @AuthenticatedCall(role = {"user"})
+    @PatchMapping(path = "/{domain}/resource/connection/{resourceId}", produces = "application/json", consumes = "application/json")
+    public PatchResourceConnectionResponse patchResourceConnection(@RequestBody PatchResourceConnectionRequest request, @PathVariable("domain") String domainName, @PathVariable("resourceId") String resourceId) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException {
+        this.setUserDetails(request);
+        request.setRequestDomain(domainName);
+        request.getPayLoad().setId(resourceId);
+        return this.resourceSession.patchResourceConnection(request);
+    }
+
+    @AuthenticatedCall(role = {"user"})
     @DeleteMapping(path = "/{domain}/resource/connection/{resourceId}", produces = "application/json")
     public DeleteResourceConnectionResponse deleteResourceConnectionById(@PathVariable("domain") String domain, @PathVariable("resourceId") String resourceId) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
         DeleteResourceConnectionRequest deleteRequest = new DeleteResourceConnectionRequest(resourceId, domain);
         this.setUserDetails(deleteRequest);
         return resourceSession.deleteResourceConnection(deleteRequest);
+    }
+
+    @AuthenticatedCall(role = {"user"})
+    @GetMapping(path = "/{domain}/resource/connection/{resourceId}", produces = "application/json")
+    public FindResourceConnectionResponse findResourceConnectionById(@PathVariable("domain") String domain, @PathVariable("resourceId") String resourceId) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
+        FindResourceConnectionRequest findRequest = new FindResourceConnectionRequest(resourceId, domain);
+        this.setUserDetails(findRequest);
+        return resourceSession.findResourceConnectionById(findRequest);
     }
 
 //    /**

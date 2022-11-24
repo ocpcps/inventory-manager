@@ -91,6 +91,7 @@ public class TransientTopologySession {
 //            List<INetworkNode> weakNodes = topology.getImpactManager().getWeakNodes(transientData.getMinConnections(), false, transientData.getThreadCount(), transientData.getDfsCache());
             //
             // Desliguei o cache forçado, pois com cache ele trás resultados não deterministicos.
+            // @todo verificar o bug do cache
             //
             List<INetworkNode> weakNodes = topology.getImpactManager().getWeakNodes(transientData.getMinConnections(), false, transientData.getThreadCount(), false);
             if (weakNodes != null) {
