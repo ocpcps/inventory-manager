@@ -34,6 +34,7 @@ import com.arangodb.model.DocumentUpdateOptions;
 import com.arangodb.model.OverwriteMode;
 import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
+import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.GraphList;
@@ -50,7 +51,7 @@ import java.io.IOException;
 @Component
 public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
 
-    public GraphList<ServiceResource> findUpperResources(ServiceResource resource) throws ArangoDaoException, ResourceNotFoundException {
+    public GraphList<ServiceResource> findUpperResources(ServiceResource resource) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
         try {
             Map<String, Object> bindVars = new HashMap<>();
             String aql = " for doc in   " + resource.getDomain().getServices();
@@ -58,8 +59,9 @@ public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
             aql += " for dep in doc.dependencies ";
             aql += " return doc";
             bindVars.put("id", resource.getId());
-            return this.query(aql, bindVars, ServiceResource.class, this.getDb());
-        } catch (ResourceNotFoundException ex) {
+            FilterDTO filter = new FilterDTO(aql, bindVars);
+            return this.query(filter, ServiceResource.class, this.getDb());
+        } catch (ResourceNotFoundException | InvalidRequestException ex) {
             //
             // Neste caso queremos saber se não existe nada
             //
@@ -216,37 +218,49 @@ public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
     }
 
     @Override
-    public GraphList<ServiceResource> findResourcesBySchemaName(String attributeSchemaName, Domain domain) throws ArangoDaoException {
+    public GraphList<ServiceResource> findResourcesBySchemaName(String attributeSchemaName, Domain domain) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
         try {
-            String aql = "for doc in " + domain.getServices() + "filter doc.attributeSchemaName == @attributeSchemaName return doc";
+            String aql = "for doc in " + domain.getServices() + "filter doc.attributeSchemaName == @attributeSchemaName ";
             Map<String, Object> bindVars = new HashMap<>();
 
             bindVars.put("attributeSchemaName", attributeSchemaName);
-            return this.query(aql, bindVars, ServiceResource.class, this.getDb());
+            FilterDTO filter = new FilterDTO(aql, bindVars);
+            return this.query(filter, ServiceResource.class, this.getDb());
+        } catch (ResourceNotFoundException | InvalidRequestException ex) {
+            //
+            // Neste caso queremos saber se não existe nada
+            //
+            throw ex;
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         }
     }
 
     @Override
-    public GraphList<ServiceResource> findResourcesByClassName(String className, Domain domain) throws ArangoDaoException {
+    public GraphList<ServiceResource> findResourcesByClassName(String className, Domain domain) throws ArangoDaoException, InvalidRequestException, ResourceNotFoundException {
         try {
-            String aql = "for doc in " + domain.getServices() + " filter doc.className == @className return doc";
+            String aql = "for doc in " + domain.getServices() + " filter doc.className == @className";
             Map<String, Object> bindVars = new HashMap<>();
             bindVars.put("attributeSchemaName", className);
-            return this.query(aql, bindVars, ServiceResource.class, this.getDb());
+            FilterDTO filter = new FilterDTO(aql, bindVars);
+            return this.query(filter, ServiceResource.class, this.getDb());
+        } catch (ResourceNotFoundException | InvalidRequestException ex) {
+            //
+            // Neste caso queremos saber se não existe nada
+            //
+            throw ex;
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         }
     }
 
     @Override
-    public GraphList<ServiceResource> findResourceByFilter(FilterDTO filter, Map<String, Object> bindVars, Domain domain) throws ArangoDaoException, ResourceNotFoundException {
+    public GraphList<ServiceResource> findResourceByFilter(FilterDTO filter, Domain domain) throws ArangoDaoException, ResourceNotFoundException {
         String aql = "";
         try {
             aql += " for doc in   " + domain.getServices();
             aql += " filter doc.domainName == @domainName ";
-            bindVars.put("domainName", domain.getDomainName());
+            filter.getBindings().put("domainName", domain.getDomainName());
 
             if (filter.getAqlFilter() != null && !filter.getAqlFilter().trim().equals("")) {
                 aql += " and " + filter.getAqlFilter();
@@ -256,8 +270,9 @@ public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
                 aql += " " + filter.getSortCondition();
             }
 
-            aql += " return doc";
-            return this.query(aql, bindVars, ServiceResource.class, this.getDb());
+//            aql += " return doc";
+            filter.setAqlFilter(aql);
+            return this.query(filter, ServiceResource.class, this.getDb());
         } catch (ResourceNotFoundException ex) {
             //
             // Sobe essa excpetion
@@ -266,16 +281,17 @@ public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
         } catch (Exception ex) {
             ArangoDaoException exa = new ArangoDaoException(ex);
             exa.addDetails("aql", aql);
-            exa.addDetails("binds", bindVars);
+            exa.addDetails("binds", filter.getBindings());
             throw exa;
         }
     }
 
     @Override
-    public int getCount(Domain domain) throws ResourceNotFoundException, IOException {
-        String aql = "for doc in `" + domain.getServices() + "` return doc";
-        GraphList<ServiceResource> result = this.query(aql, null, ServiceResource.class, this.getDb());
-        Integer longValue = result.size();
+    public Long getCount(Domain domain) throws ResourceNotFoundException, IOException, InvalidRequestException {
+        String aql = "for doc in `" + domain.getServices() + "` ";
+        FilterDTO filter = new FilterDTO(aql);
+        GraphList<ServiceResource> result = this.query(filter, ServiceResource.class, this.getDb());
+        Long longValue = result.size();
         result.close();
         return longValue;
     }

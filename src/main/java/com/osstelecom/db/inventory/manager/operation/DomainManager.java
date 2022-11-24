@@ -46,6 +46,7 @@ import com.osstelecom.db.inventory.manager.events.DomainCreatedEvent;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.DomainAlreadyExistsException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
+import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.listeners.EventManagerListener;
 import com.osstelecom.db.inventory.manager.resources.BasicResource;
@@ -214,6 +215,7 @@ public class DomainManager extends Manager {
     private void calcStats(Domain domain) {
         try {
             if (domain.getLastStatsCalc() == null) {
+                logger.debug("Fisrt Time Stats for domain: [{}]", domain.getDomainName());
                 domain.setResourceCount(managedResourceDao.getCount(domain));
                 domain.setConnectionCount(resourceConnectionDao.getCount(domain));
                 domain.setCircuitCount(circuitResourceDao.getCount(domain));
@@ -225,8 +227,11 @@ public class DomainManager extends Manager {
                 this.domainDao.updateDomain(domain);
             } else {
                 Calendar cal = Calendar.getInstance();
+                Date now= new Date();
+                cal.setTime(now);
                 cal.add(Calendar.MINUTE, -5);
-                if (domain.getLastStatsCalc().before(cal.getTime())) {
+                if (domain.getLastStatsCalc().after(cal.getTime())) {
+                    logger.debug("TTL Time Stats for domain: [{}]", domain.getDomainName());
                     domain.setResourceCount(managedResourceDao.getCount(domain));
                     domain.setConnectionCount(resourceConnectionDao.getCount(domain));
                     domain.setCircuitCount(circuitResourceDao.getCount(domain));
@@ -235,10 +240,16 @@ public class DomainManager extends Manager {
                     //
                     // Sync DB
                     //
+                    this.domains.replace(domain.getDomainName(), domain);
                     this.domainDao.updateDomain(domain);
                 }
             }
         } catch (IOException | ResourceNotFoundException ex) {
+            //
+            // Omite o Error
+            //
+        } catch (InvalidRequestException ex) {
+            logger.error("Failed to Get Count", ex);
         }
     }
 

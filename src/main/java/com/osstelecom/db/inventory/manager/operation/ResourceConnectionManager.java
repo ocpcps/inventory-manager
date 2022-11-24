@@ -220,14 +220,15 @@ public class ResourceConnectionManager extends Manager {
      * @throws ResourceNotFoundException
      * @throws ArangoDaoException
      */
-    public ResourceConnection findResourceConnection(ResourceConnection connection) throws ResourceNotFoundException, ArangoDaoException {
+    public ResourceConnection findResourceConnection(ResourceConnection connection) throws ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
         String timerId = startTimer("findResourceConnection");
         try {
-            
-            if (!connection.getId().contains("/")) {
-                connection.setId(connection.getDomain().getConnections()+ "/" + connection.getId());
-            }
 
+            if (connection.getId() != null) {
+                if (!connection.getId().contains("/")) {
+                    connection.setId(connection.getDomain().getConnections() + "/" + connection.getId());
+                }
+            }
             lockManager.lock();
 
             return this.resourceConnectionDao.findResource(connection);
@@ -298,16 +299,16 @@ public class ResourceConnectionManager extends Manager {
     public GraphList<ResourceConnection> getConnectionsByFilter(FilterDTO filter, String domainName) throws ArangoDaoException, DomainNotFoundException, InvalidRequestException, ResourceNotFoundException {
         Domain domain = domainManager.getDomain(domainName);
         if (filter.getObjects().contains("connections")) {
-            HashMap<String, Object> bindVars = new HashMap<>();
+//            HashMap<String, Object> bindVars = new HashMap<>();
 
             if (filter.getClasses() != null && !filter.getClasses().isEmpty()) {
-                bindVars.put("classes", filter.getClasses());
+                filter.getBindings().put("classes", filter.getClasses());
             }
 
             if (filter.getBindings() != null && !filter.getBindings().isEmpty()) {
-                bindVars.putAll(filter.getBindings());
+                filter.getBindings().putAll(filter.getBindings());
             }
-            return this.resourceConnectionDao.findResourceByFilter(filter, bindVars, domain);
+            return this.resourceConnectionDao.findResourceByFilter(filter, domain);
         }
         throw new InvalidRequestException("getConnectionsByFilter() can only retrieve connections objects");
     }
@@ -336,7 +337,7 @@ public class ResourceConnectionManager extends Manager {
             // Procura as conexões relacionadas no mesmo dominio
             //
             try {
-                this.resourceConnectionDao.findResourceByFilter(new FilterDTO(filter), bindVars, updatedResource.getDomain()).forEach((connection) -> {
+                this.resourceConnectionDao.findResourceByFilter(new FilterDTO(filter, bindVars), updatedResource.getDomain()).forEach((connection) -> {
 
                     if (connection.getFrom().getKey().equals(updatedResource.getKey())) {
                         //
@@ -379,7 +380,7 @@ public class ResourceConnectionManager extends Manager {
                 //
             }
 
-        } catch (IOException | IllegalStateException | ArangoDaoException ex) {
+        } catch (IOException | IllegalStateException | InvalidRequestException | ArangoDaoException ex) {
             logger.error("Failed to Update Resource Connection Relation", ex);
 
         }

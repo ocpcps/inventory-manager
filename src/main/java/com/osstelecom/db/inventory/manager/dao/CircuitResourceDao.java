@@ -34,12 +34,14 @@ import com.arangodb.model.DocumentUpdateOptions;
 import com.arangodb.model.OverwriteMode;
 import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
+import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.GraphList;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import java.io.IOException;
+import java.lang.module.ResolutionException;
 
 /**
  *
@@ -50,7 +52,7 @@ import java.io.IOException;
 public class CircuitResourceDao extends AbstractArangoDao<CircuitResource> {
 
     @Override
-    public CircuitResource findResource(CircuitResource resource) throws ArangoDaoException, ResourceNotFoundException {
+    public CircuitResource findResource(CircuitResource resource) throws ArangoDaoException, InvalidRequestException, ResourceNotFoundException {
         try {
             //
             // Pensar no Lock Manager aqui, ou subir para o manager
@@ -105,17 +107,22 @@ public class CircuitResourceDao extends AbstractArangoDao<CircuitResource> {
             //
             // Creates AQL
             //
-            aql = this.buildAqlFromBindings(aql, bindVars, true);
+            aql = this.buildAqlFromBindings(aql, bindVars, false);
 
-            GraphList<CircuitResource> result = this.query(aql, bindVars, CircuitResource.class, this.getDb());
+            FilterDTO filter = new FilterDTO(aql, bindVars);
+
+            GraphList<CircuitResource> result = this.query(filter, CircuitResource.class, this.getDb());
 
             return result.getOne();
-        } catch (ResourceNotFoundException ex) {
+        } catch (ResourceNotFoundException | InvalidRequestException ex) {
             //
             // Sobe essa excpetion
             //
             throw ex;
         } catch (Exception ex) {
+            //
+            // this is generic
+            //
             throw new ArangoDaoException(ex);
         } finally {
             //
@@ -197,36 +204,41 @@ public class CircuitResourceDao extends AbstractArangoDao<CircuitResource> {
     }
 
     @Override
-    public GraphList<CircuitResource> findResourcesBySchemaName(String attributeSchemaName, Domain domain) throws ArangoDaoException {
+    public GraphList<CircuitResource> findResourcesBySchemaName(String attributeSchemaName, Domain domain) throws ArangoDaoException, InvalidRequestException, ResourceNotFoundException {
         try {
-            String aql = "for doc in `" + domain.getCircuits() + "` filter doc.attributeSchemaName == @attributeSchemaName return doc";
+            String aql = "for doc in `" + domain.getCircuits() + "` filter doc.attributeSchemaName == @attributeSchemaName ";
             Map<String, Object> bindVars = new HashMap<>();
-
             bindVars.put("attributeSchemaName", attributeSchemaName);
-            return this.query(aql, bindVars, CircuitResource.class, this.getDb());
+            FilterDTO filter = new FilterDTO(aql, bindVars);
+            return this.query(filter, CircuitResource.class, this.getDb());
+        } catch (InvalidRequestException | ResourceNotFoundException ex) {
+            throw ex;
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         }
     }
 
     @Override
-    public GraphList<CircuitResource> findResourcesByClassName(String className, Domain domain) throws ArangoDaoException {
+    public GraphList<CircuitResource> findResourcesByClassName(String className, Domain domain) throws ArangoDaoException, InvalidRequestException, ResourceNotFoundException {
         try {
-            String aql = "for doc in `" + domain.getCircuits() + "` filter doc.className == @className return doc";
+            String aql = "for doc in `" + domain.getCircuits() + "` filter doc.className == @className ";
             Map<String, Object> bindVars = new HashMap<>();
             bindVars.put("attributeSchemaName", className);
-            return this.query(aql, bindVars, CircuitResource.class, this.getDb());
+            FilterDTO filter = new FilterDTO(aql, bindVars);
+            return this.query(filter, CircuitResource.class, this.getDb());
+        } catch (InvalidRequestException | ResourceNotFoundException ex) {
+            throw ex;
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         }
     }
 
     @Override
-    public GraphList<CircuitResource> findResourceByFilter(FilterDTO filter, Map<String, Object> bindVars, Domain domain) throws ArangoDaoException, ResourceNotFoundException {
+    public GraphList<CircuitResource> findResourceByFilter(FilterDTO filter, Domain domain) throws ArangoDaoException, InvalidRequestException, ResourceNotFoundException {
         try {
             String aql = " for doc in   `" + domain.getCircuits() + "`";
             aql += " filter doc.domainName == @domainName ";
-            bindVars.put("domainName", domain.getDomainName());
+            filter.getBindings().put("domainName", domain.getDomainName());
 
             if (filter.getAqlFilter() != null && !filter.getAqlFilter().trim().equals("")) {
                 aql += " and " + filter.getAqlFilter();
@@ -236,15 +248,16 @@ public class CircuitResourceDao extends AbstractArangoDao<CircuitResource> {
                 aql += " " + filter.getSortCondition();
             }
 
-            aql += " return doc";
-            return this.query(aql, bindVars, CircuitResource.class, this.getDb());
-        } catch (ResourceNotFoundException ex) {
+//            aql += " return doc";
+            filter.setAqlFilter(aql);
+            return this.query(filter, CircuitResource.class, this.getDb());
+        } catch (ResourceNotFoundException | InvalidRequestException ex) {
             throw ex;
         } catch (Exception ex) {
             ex.printStackTrace();
             ArangoDaoException a = new ArangoDaoException(ex);
-            if (bindVars != null) {
-                a.addDetails("filter", bindVars);
+            if (filter.getBindings() != null) {
+                a.addDetails("filter", filter.getBindings());
             }
             throw a;
         }
@@ -382,10 +395,11 @@ public class CircuitResourceDao extends AbstractArangoDao<CircuitResource> {
     // Found in Domain:" + domain.getDomainName());
     // }
     @Override
-    public int getCount(Domain domain) throws ResourceNotFoundException, IOException {
-        String aql = "for doc in `" + domain.getCircuits() + "` return doc";
-        GraphList<CircuitResource> result = this.query(aql, null, CircuitResource.class, this.getDb());
-        Integer longValue = result.size();
+    public Long getCount(Domain domain) throws ResourceNotFoundException, IOException, InvalidRequestException {
+        String aql = "for doc in `" + domain.getCircuits() + "` ";
+        FilterDTO filter = new FilterDTO(aql);
+        GraphList<CircuitResource> result = this.query(filter, CircuitResource.class, this.getDb());
+        Long longValue = result.size();
         result.close();
         return longValue;
     }

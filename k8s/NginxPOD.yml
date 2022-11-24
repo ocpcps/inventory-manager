@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: inventory-manager-proxy
+spec:
+  volumes:
+    - name: netcompass-proxy-volume
+      persistentVolumeClaim:
+        claimName: netcompass-proxy-volume-claim
+  containers:
+    - name: inventory-manager-proxy
+      image: quay.apps.mgmt.telcostack.br.telefonica.com/netcompass/netcompass-server/osstelecom-nginx
+      resources:
+        requests:
+          memory: "2048Mi"
+          cpu: "4"
+        limits:
+          memory: "2048Mi"
+          cpu: "4"
+      ports:
+        - name: http-port
+          containerPort: 1080
+          protocol: TCP
+        - name: https-port
+          containerPort: 10443
+          protocol: TCP
+      volumeMounts:
+        - mountPath: "/var/www/html"
+          name: netcompass-proxy-volume
+      env:
+        - name: NGINX_ENVSUBST_OUTPUT_DIR
+          value: /tmp/
+        - name: INVENTORY_API_ENDPOINT
+          value: https://172.19.174.206:9000
+        - name: USER_API_ENDPOINT
+          value: https://10.200.20.237:9001

@@ -32,6 +32,7 @@ import com.osstelecom.db.inventory.manager.request.FilterRequest;
 import com.osstelecom.db.inventory.manager.request.GetServiceRequest;
 import com.osstelecom.db.inventory.manager.request.PatchServiceRequest;
 import com.osstelecom.db.inventory.manager.resources.Domain;
+import com.osstelecom.db.inventory.manager.resources.GraphList;
 import com.osstelecom.db.inventory.manager.resources.ServiceResource;
 import com.osstelecom.db.inventory.manager.response.CreateServiceResponse;
 import com.osstelecom.db.inventory.manager.response.DeleteServiceResponse;
@@ -170,8 +171,10 @@ public class ServiceSession {
         FilterResponse response = new FilterResponse(filter.getPayLoad());
         if (filter.getPayLoad().getObjects().contains("service") || filter.getPayLoad().getObjects().contains("services")) {
             Domain domain = domainManager.getDomain(filter.getRequestDomain());
-            response.getPayLoad().setServices(serviceManager.findServiceByFilter(filter.getPayLoad(), domain).toList());
-            response.getPayLoad().setServiceCount(response.getPayLoad().getServices().size());
+            GraphList<ServiceResource> graphList = serviceManager.findServiceByFilter(filter.getPayLoad(), domain);
+            response.getPayLoad().setServices(graphList.toList());
+            response.getPayLoad().setServiceCount(graphList.size());
+            response.setSize(graphList.size());
         } else {
             throw new InvalidRequestException("Filter object does not have service");
         }

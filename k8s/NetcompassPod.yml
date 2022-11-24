@@ -4,12 +4,15 @@ metadata:
   name: inventory-manager-api
 spec:
   volumes:
-    - name: pvc-8e757e50-ce35-4315-8265-fe14095065ca
+    - name: netcompass-app-volume
       persistentVolumeClaim:
         claimName: netcompass-app-volume-claim
+    - name: config-volume
+      configMap:
+        name: inventory-config
   containers:
     - name: inventory-manager-api
-      image: quay.apps.mgmt.telcostack.br.telefonica.com/netcompass/netcompass-server/osstelecom-jdk11:0.3
+      image: quay.apps.mgmt.telcostack.br.telefonica.com/netcompass/netcompass-server/osstelecom-jdk11
       resources:
         requests:
           memory: "5120Mi"
@@ -23,7 +26,9 @@ spec:
           protocol: TCP
       volumeMounts:
         - mountPath: "/app/inventory-manager"
-          name: pvc-8e757e50-ce35-4315-8265-fe14095065ca
+          name: netcompass-app-volume
+        - name: config-volume
+          mountPath: /app/inventory-manager/config/
       env:
         - name: JAR_PATH
           value: /app/inventory-manager

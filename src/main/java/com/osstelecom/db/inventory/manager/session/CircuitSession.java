@@ -45,6 +45,7 @@ import com.osstelecom.db.inventory.manager.request.GetCircuitPathRequest;
 import com.osstelecom.db.inventory.manager.request.PatchCircuitResourceRequest;
 import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 import com.osstelecom.db.inventory.manager.resources.Domain;
+import com.osstelecom.db.inventory.manager.resources.GraphList;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstraintViolationException;
@@ -205,7 +206,7 @@ public class CircuitSession {
      */
     public CreateCircuitResponse createCircuit(CreateCircuitRequest request)
             throws ResourceNotFoundException, GenericException, SchemaNotFoundException,
-            AttributeConstraintViolationException, ScriptRuleException, DomainNotFoundException, ArangoDaoException {
+            AttributeConstraintViolationException, ScriptRuleException, DomainNotFoundException, ArangoDaoException, InvalidRequestException {
         if (request.getPayLoad().getaPoint().getDomain() == null) {
             if (request.getPayLoad().getaPoint().getDomainName() != null) {
                 request.getPayLoad().getaPoint()
@@ -273,7 +274,7 @@ public class CircuitSession {
      * @throws ResourceNotFoundException
      */
     public GetCircuitPathResponse findCircuitPath(GetCircuitPathRequest request)
-            throws ResourceNotFoundException, DomainNotFoundException, ArangoDaoException {
+            throws ResourceNotFoundException, DomainNotFoundException, ArangoDaoException, InvalidRequestException {
         CircuitPathDTO circuitDto = request.getPayLoad();
         CircuitResource circuit = circuitDto.getCircuit();
         circuit.setDomainName(request.getRequestDomain());
@@ -418,8 +419,10 @@ public class CircuitSession {
         FilterResponse response = new FilterResponse(filter.getPayLoad());
         if (filter.getPayLoad().getObjects().contains("circuit") || filter.getPayLoad().getObjects().contains("circuits")) {
             Domain domain = domainManager.getDomain(filter.getRequestDomain());
-            response.getPayLoad().setCircuits(circuitResourceManager.findCircuitsByFilter(filter.getPayLoad(), domain).toList());
-            response.getPayLoad().setCircuitCount(response.getPayLoad().getCircuits().size());
+            GraphList<CircuitResource> graphList = circuitResourceManager.findCircuitsByFilter(filter.getPayLoad(), domain);
+            response.getPayLoad().setCircuits(graphList.toList());
+            response.getPayLoad().setCircuitCount(graphList.size());
+            response.setSize(graphList.size());
         } else {
             throw new InvalidRequestException("Filter object does not have circuit");
         }

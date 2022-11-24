@@ -33,15 +33,18 @@ public class ConnectionDTO {
     private String toNodeAddress;
     private String fromClassName;
     private String fromId;
+    private String fromKey;
     private String toId;
+    private String toKey;
     private String toName;
     private String toClassName;
     private String connectionName;
     private String nodeAddress;
     private String connectionClass = "connection.default";
+    private String className = "connection.default";
     private String attributeSchemaName = "connection.default";
     private Boolean propagateOperStatus;
-    private String operationalStatus = "UP";
+    private String operationalStatus = "Up";
     private Map<String, Object> attributes = new ConcurrentHashMap<>();
     private ServiceResource dependentService;
 
@@ -264,6 +267,34 @@ public class ConnectionDTO {
 
     public ServiceResource getDependentService() {
         return dependentService;
+    }
+
+    /**
+     * @return the fromKey
+     */
+    public String getFromKey() {
+        return fromKey;
+    }
+
+    /**
+     * @param fromKey the fromKey to set
+     */
+    public void setFromKey(String fromKey) {
+        this.fromKey = fromKey;
+    }
+
+    /**
+     * @return the toKey
+     */
+    public String getToKey() {
+        return toKey;
+    }
+
+    /**
+     * @param toKey the toKey to set
+     */
+    public void setToKey(String toKey) {
+        this.toKey = toKey;
     }
 
     

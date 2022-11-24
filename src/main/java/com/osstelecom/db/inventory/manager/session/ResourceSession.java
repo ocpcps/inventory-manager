@@ -67,6 +67,7 @@ import com.osstelecom.db.inventory.manager.response.PatchManagedResourceResponse
 import com.osstelecom.db.inventory.manager.response.PatchResourceConnectionResponse;
 import com.osstelecom.db.inventory.manager.response.TypedListResponse;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -134,6 +135,23 @@ public class ResourceSession {
             Domain toDomain = this.domainManager.getDomain(toResourceRequest.getRequestDomain());
             toResourceRequest.setRequestDomain(request.getRequestDomain());
             ManagedResource toResource = manager.findManagedResource(new ManagedResource(toDomain, toResourceRequest.getResourceId()));
+
+            connection.setFrom(fromResource);
+            connection.setTo(toResource);
+
+        } else if (request.getPayLoad().getFromKey() != null && request.getPayLoad().getToKey() != null) {
+
+            //
+            // Temos dois IDs podemos proesseguir com a validação por aqui
+            //
+            Domain domain = this.domainManager.getDomain(request.getRequestDomain());
+            ManagedResource fromResource = new ManagedResource(domain);
+            fromResource.setKey(request.getPayLoad().getFromKey());
+            fromResource = manager.findManagedResource(fromResource);
+
+            ManagedResource toResource = new ManagedResource(domain);
+            toResource.setKey(request.getPayLoad().getToKey());
+            toResource = manager.findManagedResource(toResource);
 
             connection.setFrom(fromResource);
             connection.setTo(toResource);
@@ -215,7 +233,7 @@ public class ResourceSession {
             //
             throw new InvalidRequestException(("Resource ID is Used By:[" + circuits.size() + "] Connections, please remove theses dependencies, before delete"));
         } catch (ResourceNotFoundException ex) {
-   
+
             connection = this.resourceConnectionManager.deleteResourceConnection(connection);
             DeleteResourceConnectionResponse response = new DeleteResourceConnectionResponse(connection);
             return response;
@@ -415,10 +433,21 @@ public class ResourceSession {
 
         FilterResponse response = new FilterResponse(filter.getPayLoad());
         if (filter.getPayLoad().getObjects().contains("nodes") || filter.getPayLoad().getObjects().contains("node")) {
-            response.getPayLoad().setNodes(managedResourceManager.getNodesByFilter(filter.getPayLoad(), filter.getRequestDomain()).toList());
-            response.getPayLoad().setNodeCount(response.getPayLoad().getNodes().size());
+            GraphList<ManagedResource> nodesGraph = managedResourceManager.getNodesByFilter(filter.getPayLoad(), filter.getRequestDomain());
+            List<ManagedResource> nodes = nodesGraph.toList();
+            response.getPayLoad().setNodes(nodes);
+            response.getPayLoad().setNodeCount(nodesGraph.size());
+            response.setSize(nodesGraph.size());
+            response.setArangoStats(nodesGraph.getStats());
         } else if (filter.getPayLoad().getObjects().contains("connections") || filter.getPayLoad().getObjects().contains("connection")) {
-            response.getPayLoad().setConnections(resourceConnectionManager.getConnectionsByFilter(filter.getPayLoad(), filter.getRequestDomain()).toList());
+//            response.getPayLoad().setConnections(resourceConnectionManager.getConnectionsByFilter(filter.getPayLoad(), filter.getRequestDomain()).toList());
+
+            GraphList<ResourceConnection> connectionsGraph = resourceConnectionManager.getConnectionsByFilter(filter.getPayLoad(), filter.getRequestDomain());
+            List<ResourceConnection> connections = connectionsGraph.toList();
+            response.getPayLoad().setConnections(connections);
+            response.getPayLoad().setConnectionsCount(connectionsGraph.size());
+            response.setSize(connectionsGraph.size());
+            response.setArangoStats(connectionsGraph.getStats());
             if (filter.getPayLoad().getComputeWeakLinks()) {
                 //
                 // Computação de Links Fracos Desabilitada
@@ -430,11 +459,11 @@ public class ResourceSession {
         return response;
     }
 
-    public ManagedResource findManagedResource(ManagedResource resource) throws ResourceNotFoundException, ArangoDaoException {
+    public ManagedResource findManagedResource(ManagedResource resource) throws ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
         return this.manager.findManagedResource(resource);
     }
 
-    public ResourceConnection findResourceConnection(ResourceConnection connection) throws ResourceNotFoundException, ArangoDaoException {
+    public ResourceConnection findResourceConnection(ResourceConnection connection) throws ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
         return this.resourceConnectionManager.findResourceConnection(connection);
     }
 

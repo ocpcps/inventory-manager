@@ -13,6 +13,35 @@
     <artifactId>inventory-manager</artifactId>
     <version>1.0.0-alpha</version>
     <packaging>jar</packaging>
+    
+    
+    <profiles>
+        <profile>
+            <id>dev</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+                <property>
+                    <name>spring.profiles.active</name>
+                    <value>dev</value>
+                </property>
+            </activation>
+            
+            <properties>
+                <spring.profiles.active>dev</spring.profiles.active>
+                <maven.test.skip>true</maven.test.skip>
+            </properties>
+            
+        </profile>
+        <profile>
+            <id>mvp</id>
+            <properties>
+                <spring.profiles.active>mvp</spring.profiles.active>
+            </properties>
+        </profile>
+    </profiles>
+
+    
+    
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>            

@@ -33,6 +33,10 @@ public class FindManagedResourceRequest extends BasicRequest<ManagedResource> {
         this.setRequestDomain(domainName);
     }
 
+    public FindManagedResourceRequest() {
+
+    }
+
     /**
      * @return the resourceId
      */

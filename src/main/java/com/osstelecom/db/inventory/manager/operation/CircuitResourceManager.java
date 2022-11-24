@@ -22,6 +22,7 @@ import com.osstelecom.db.inventory.manager.events.ManagedResourceUpdatedEvent;
 import com.osstelecom.db.inventory.manager.events.ResourceConnectionUpdatedEvent;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
+import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.SchemaNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.ScriptRuleException;
@@ -112,7 +113,7 @@ public class CircuitResourceManager extends Manager {
      * @throws ArangoDaoException
      */
     public CircuitResource findCircuitResource(CircuitResource circuit)
-            throws ResourceNotFoundException, ArangoDaoException {
+            throws ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
         String timerId = startTimer("findCircuitResource");
         try {
             lockManager.lock();
@@ -165,8 +166,8 @@ public class CircuitResourceManager extends Manager {
         return this.resourceConnectionDao.findCircuitPaths(circuit);
     }
 
-    public GraphList<CircuitResource> findCircuitsByFilter(FilterDTO filter, Domain domain) throws ArangoDaoException, ResourceNotFoundException {
-        return this.circuitResourceDao.findResourceByFilter(filter, filter.getBindings(), domain);
+    public GraphList<CircuitResource> findCircuitsByFilter(FilterDTO filter, Domain domain) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
+        return this.circuitResourceDao.findResourceByFilter(filter, domain);
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -180,7 +181,7 @@ public class CircuitResourceManager extends Manager {
      * @param updatedEvent
      */
     @Subscribe
-    public void onResourceConnectionUpdatedEvent(ResourceConnectionUpdatedEvent updatedEvent) {
+    public void onResourceConnectionUpdatedEvent(ResourceConnectionUpdatedEvent updatedEvent) throws InvalidRequestException {
         ResourceConnection newConnection = updatedEvent.getNewResource();
         ResourceConnection oldConnection = updatedEvent.getOldResource();
         if (newConnection.getCircuits() != null) {
@@ -215,7 +216,7 @@ public class CircuitResourceManager extends Manager {
      * @param updatedEvent
      */
     @Subscribe
-    public void onManagedResourceUpdatedEvent(ManagedResourceUpdatedEvent updatedEvent) throws ArangoDaoException, IOException {
+    public void onManagedResourceUpdatedEvent(ManagedResourceUpdatedEvent updatedEvent) throws ArangoDaoException, IOException, InvalidRequestException {
 
         //
         // Vamos filtrar se algum circuito usa  a gente
@@ -224,7 +225,7 @@ public class CircuitResourceManager extends Manager {
         Map<String, Object> bindVars = new HashMap<>();
         bindVars.put("resourceId", updatedEvent.getNewResource().getId());
         try {
-            this.circuitResourceDao.findResourceByFilter(new FilterDTO(filter,"sort doc.nodeAddress"), bindVars, updatedEvent.getNewResource().getDomain()).forEach(circuit -> {
+            this.circuitResourceDao.findResourceByFilter(new FilterDTO(filter, "sort doc.nodeAddress", bindVars), updatedEvent.getNewResource().getDomain()).forEach(circuit -> {
                 try {
                     if (circuit.getaPoint().getId().equals(updatedEvent.getNewResource().getId())) {
 

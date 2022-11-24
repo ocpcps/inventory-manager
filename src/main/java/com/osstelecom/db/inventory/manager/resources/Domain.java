@@ -39,10 +39,10 @@ public class Domain {
     private String serviceLayer;
     private String circuits;
     private String circuitsLayer;
-    private int resourceCount;
-    private int connectionCount;
-    private int circuitCount;
-    private int serviceCount;
+    private Long resourceCount;
+    private Long connectionCount;
+    private Long circuitCount;
+    private Long serviceCount;
     private Long atomicId;
     private Date lastStatsCalc;
   
@@ -197,56 +197,56 @@ public class Domain {
     /**
      * @return the resourceCount
      */
-    public int getResourceCount() {
+    public Long getResourceCount() {
         return resourceCount;
     }
 
     /**
      * @param resourceCount the resourceCount to set
      */
-    public void setResourceCount(int resourceCount) {
+    public void setResourceCount(Long resourceCount) {
         this.resourceCount = resourceCount;
     }
 
     /**
      * @return the connectionCount
      */
-    public int getConnectionCount() {
+    public Long getConnectionCount() {
         return connectionCount;
     }
 
     /**
      * @param connectionCount the connectionCount to set
      */
-    public void setConnectionCount(int connectionCount) {
+    public void setConnectionCount(Long connectionCount) {
         this.connectionCount = connectionCount;
     }
 
     /**
      * @return the circuitCount
      */
-    public int getCircuitCount() {
+    public Long getCircuitCount() {
         return circuitCount;
     }
 
     /**
      * @param circuitCount the circuitCount to set
      */
-    public void setCircuitCount(int circuitCount) {
+    public void setCircuitCount(Long circuitCount) {
         this.circuitCount = circuitCount;
     }
 
     /**
      * @return the serviceCount
      */
-    public int getServiceCount() {
+    public Long getServiceCount() {
         return serviceCount;
     }
 
     /**
      * @param serviceCount the serviceCount to set
      */
-    public void setServiceCount(int serviceCount) {
+    public void setServiceCount(Long serviceCount) {
         this.serviceCount = serviceCount;
     }
 
