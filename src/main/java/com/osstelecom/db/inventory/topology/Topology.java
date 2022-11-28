@@ -20,7 +20,6 @@ package com.osstelecom.db.inventory.topology;
 import com.osstelecom.db.inventory.topology.connection.DefaultNetworkConnection;
 import com.osstelecom.db.inventory.topology.connection.INetworkConnection;
 import com.osstelecom.db.inventory.topology.impact.DefaultImpactManagerImpl;
-import com.osstelecom.db.inventory.topology.impact.ImpactManagerAbs;
 import com.osstelecom.db.inventory.topology.listeners.DefaultTopologyListener;
 import com.osstelecom.db.inventory.topology.listeners.TopologyListener;
 import com.osstelecom.db.inventory.topology.node.INetworkNode;
@@ -133,7 +132,7 @@ public abstract class Topology implements ITopology {
         this.topologyListener = listener;
     }
     
-    public Topology(ImpactManagerAbs impactManager) {
+    public Topology(ImpactManagerIf impactManager) {
         this.setImpactManager(impactManager);
         this.setScaleFactor(100);
     }
@@ -263,6 +262,9 @@ public abstract class Topology implements ITopology {
     
     @Override
     public void setImpactManager(ImpactManagerIf impactManager) {
+        if (impactManager.getTopology()==null){
+            impactManager.setTopology(this);
+        }
         this.impactManager = impactManager;
     }
     
@@ -304,6 +306,7 @@ public abstract class Topology implements ITopology {
     /**
      * @return the scaleFactor
      */
+    @Override
     public Integer getScaleFactor() {
         return scaleFactor;
     }
@@ -311,10 +314,12 @@ public abstract class Topology implements ITopology {
     /**
      * @param scaleFactor the scaleFactor to set
      */
+    @Override
     public void setScaleFactor(Integer scaleFactor) {
         this.scaleFactor = scaleFactor;
     }
     
+    @Override
     public String getUuid() {
         return uuid;
     }

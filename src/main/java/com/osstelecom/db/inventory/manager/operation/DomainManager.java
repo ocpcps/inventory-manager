@@ -46,6 +46,7 @@ import com.osstelecom.db.inventory.manager.events.DomainCreatedEvent;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.DomainAlreadyExistsException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
+import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.listeners.EventManagerListener;
 import com.osstelecom.db.inventory.manager.resources.BasicResource;
@@ -55,6 +56,7 @@ import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import com.osstelecom.db.inventory.topology.DefaultTopology;
 import com.osstelecom.db.inventory.topology.ITopology;
+import com.osstelecom.db.inventory.topology.impact.WeakNodesImpactManager;
 import com.osstelecom.db.inventory.topology.node.DefaultNode;
 import com.osstelecom.db.inventory.topology.node.INetworkNode;
 import java.io.IOException;
@@ -213,6 +215,7 @@ public class DomainManager extends Manager {
     private void calcStats(Domain domain) {
         try {
             if (domain.getLastStatsCalc() == null) {
+                logger.debug("Fisrt Time Stats for domain: [{}]", domain.getDomainName());
                 domain.setResourceCount(managedResourceDao.getCount(domain));
                 domain.setConnectionCount(resourceConnectionDao.getCount(domain));
                 domain.setCircuitCount(circuitResourceDao.getCount(domain));
@@ -224,8 +227,11 @@ public class DomainManager extends Manager {
                 this.domainDao.updateDomain(domain);
             } else {
                 Calendar cal = Calendar.getInstance();
+                Date now= new Date();
+                cal.setTime(now);
                 cal.add(Calendar.MINUTE, -5);
-                if (domain.getLastStatsCalc().before(cal.getTime())) {
+                if (domain.getLastStatsCalc().after(cal.getTime())) {
+                    logger.debug("TTL Time Stats for domain: [{}]", domain.getDomainName());
                     domain.setResourceCount(managedResourceDao.getCount(domain));
                     domain.setConnectionCount(resourceConnectionDao.getCount(domain));
                     domain.setCircuitCount(circuitResourceDao.getCount(domain));
@@ -234,10 +240,16 @@ public class DomainManager extends Manager {
                     //
                     // Sync DB
                     //
+                    this.domains.replace(domain.getDomainName(), domain);
                     this.domainDao.updateDomain(domain);
                 }
             }
         } catch (IOException | ResourceNotFoundException ex) {
+            //
+            // Omite o Error
+            //
+        } catch (InvalidRequestException ex) {
+            logger.error("Failed to Get Count", ex);
         }
     }
 
@@ -312,7 +324,7 @@ public class DomainManager extends Manager {
             // @Todo:Testar memória...
             //
             Long startTime = System.currentTimeMillis();
-            DefaultTopology topology = new DefaultTopology();
+            DefaultTopology topology = new DefaultTopology(new WeakNodesImpactManager());
             AtomicLong localId = new AtomicLong(0L);
             INetworkNode target = createNode(aPoint.getId(), localId.incrementAndGet(), topology);
             //
@@ -333,7 +345,7 @@ public class DomainManager extends Manager {
                     to = createNode(connection.getTo().getId(), localId.incrementAndGet(), topology);
                 }
 
-                if (connection.getOperationalStatus().equals("UP")) {
+                if (connection.getOperationalStatus().equalsIgnoreCase("UP")) {
                     topology.addConnection(from, to, "Connection: " + connection.getId());
                 }
 
@@ -353,7 +365,7 @@ public class DomainManager extends Manager {
             List<INetworkNode> weak = topology.getImpactManager().getUnreacheableNodes();
             Long endTime = System.currentTimeMillis();
             Long tookTime = endTime - startTime;
-            logger.debug("Found {} Unrecheable Nodes IN: {} ms", weak.size(), tookTime);
+            logger.debug("Found [{}] Unrecheable Nodes IN: {} ms", weak.size(), tookTime);
 
             if (!weak.isEmpty()) {
                 weak.forEach(node -> {
@@ -399,7 +411,7 @@ public class DomainManager extends Manager {
                 //
                 // Ok temos algo para Trabalhar, montemos a topologia...
                 //
-                DefaultTopology topology = new DefaultTopology();
+                DefaultTopology topology = new DefaultTopology(new WeakNodesImpactManager());
 
                 targets.forEach(t -> {
                     //

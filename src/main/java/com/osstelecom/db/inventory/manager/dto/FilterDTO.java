@@ -17,11 +17,14 @@
  */
 package com.osstelecom.db.inventory.manager.dto;
 
+import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
+import com.osstelecom.db.inventory.manager.resources.ServiceResource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  *
@@ -33,16 +36,23 @@ public class FilterDTO {
     private List<String> classes;
     private List<String> objects = new ArrayList<>();
     private String aqlFilter;
-    private Map<String, Object> bindings;
+    private Map<String, Object> bindings = new ConcurrentHashMap<>();
     private String targetRegex;
     private boolean computeWeakLinks = false;
     private Integer computeThreads = 8;
     private Integer minCuts = 1;
     private List<ManagedResource> nodes;
     private List<ResourceConnection> connections;
-    private Integer nodeCount = 0;
-    private Integer connectionsCount = 0;
+    private List<CircuitResource> circuits;
+    private List<ServiceResource> services;
+    private Long nodeCount = 0L;
+    private Long connectionsCount = 0L;
+    private Long circuitCount = 0L;
+    private Long serviceCount = 0L;
     private String sortCondition = "";
+    private Long offSet = -1L;
+    private Long limit = -1L;
+    private Boolean paginated = false;
 
     public FilterDTO() {
     }
@@ -51,12 +61,22 @@ public class FilterDTO {
         this.aqlFilter = aqlFilter;
     }
 
-     public FilterDTO(String aqlFilter,String sortCondition) {
+    public FilterDTO(String aqlFilter, String sortCondition) {
         this.aqlFilter = aqlFilter;
         this.sortCondition = sortCondition;
     }
-    
-    
+
+    public FilterDTO(String aqlFilter, String sortCondition, Map<String, Object> bindings) {
+        this.aqlFilter = aqlFilter;
+        this.sortCondition = sortCondition;
+        this.bindings = bindings;
+    }
+
+    public FilterDTO(String aqlFilter, Map<String, Object> bindings) {
+        this.aqlFilter = aqlFilter;
+        this.bindings = bindings;
+    }
+
     public List<ManagedResource> getNodes() {
         return nodes;
     }
@@ -71,24 +91,24 @@ public class FilterDTO {
 
     public void setConnections(List<ResourceConnection> connections) {
         this.connections = connections;
-        if (this.connections != null) {
-            this.setConnectionsCount(this.connections.size());
-        }
+//        if (this.connections != null) {
+//            this.setConnectionsCount(this.connections.size());
+//        }
     }
 
-    public Integer getNodeCount() {
+    public Long getNodeCount() {
         return nodeCount;
     }
 
-    public void setNodeCount(Integer nodeCount) {
+    public void setNodeCount(Long nodeCount) {
         this.nodeCount = nodeCount;
     }
 
-    public Integer getConnectionsCount() {
+    public Long getConnectionsCount() {
         return connectionsCount;
     }
 
-    public void setConnectionsCount(Integer connectionsCount) {
+    public void setConnectionsCount(Long connectionsCount) {
         this.connectionsCount = connectionsCount;
     }
 
@@ -216,5 +236,96 @@ public class FilterDTO {
      */
     public void setSortCondition(String sortCondition) {
         this.sortCondition = sortCondition;
+    }
+
+    /**
+     * @return the circuits
+     */
+    public List<CircuitResource> getCircuits() {
+        return circuits;
+    }
+
+    /**
+     * @param circuits the circuits to set
+     */
+    public void setCircuits(List<CircuitResource> circuits) {
+        this.circuits = circuits;
+    }
+
+    /**
+     * @return the services
+     */
+    public List<ServiceResource> getServices() {
+        return services;
+    }
+
+    /**
+     * @param services the services to set
+     */
+    public void setServices(List<ServiceResource> services) {
+        this.services = services;
+    }
+
+    /**
+     * @return the circuitCount
+     */
+    public Long getCircuitCount() {
+        return circuitCount;
+    }
+
+    /**
+     * @param circuitCount the circuitCount to set
+     */
+    public void setCircuitCount(Long circuitCount) {
+        this.circuitCount = circuitCount;
+    }
+
+    /**
+     * @return the serviceCount
+     */
+    public Long getServiceCount() {
+        return serviceCount;
+    }
+
+    /**
+     * @param serviceCount the serviceCount to set
+     */
+    public void setServiceCount(Long serviceCount) {
+        this.serviceCount = serviceCount;
+    }
+
+    /**
+     * @return the offSet
+     */
+    public Long getOffSet() {
+        return offSet;
+    }
+
+    /**
+     * @param offSet the offSet to set
+     */
+    public void setOffSet(Long offSet) {
+        this.offSet = offSet;
+    }
+
+    /**
+     * @return the limit
+     */
+    public Long getLimit() {
+        return limit;
+    }
+
+    /**
+     * @param limit the limit to set
+     */
+    public void setLimit(Long limit) {
+        this.limit = limit;
+    }
+
+    /**
+     * @return the paginated
+     */
+    public Boolean getPaginated() {
+        return paginated;
     }
 }

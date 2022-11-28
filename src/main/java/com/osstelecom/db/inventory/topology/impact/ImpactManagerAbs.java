@@ -25,16 +25,25 @@ import com.osstelecom.db.inventory.topology.ITopology;
  */
 public abstract class ImpactManagerAbs implements ImpactManagerIf {
 
-    private final ITopology topology;
+    private ITopology topology;
 
     public ImpactManagerAbs(ITopology topology) {
         this.topology = topology;
         this.topology.setImpactManager(this);
     }
 
+    public ImpactManagerAbs() {
+
+    }
+
     @Override
     public ITopology getTopology() {
         return this.topology;
+    }
+
+    @Override
+    public void setTopology(ITopology topology) {
+        this.topology = topology;
     }
 
 }

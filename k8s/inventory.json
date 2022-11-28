@@ -1,0 +1,24 @@
+{
+  "mongoDbConfiguration": {
+    "collections": []
+  },
+  "graphDbConfiguration": {
+    "databaseName": "inventory",
+    "nodeSufix": "_nodes",
+    "serviceSufix": "_services",
+    "nodeConnectionSufix": "_connections",
+    "serviceConnectionSufix": "_srv_connections",
+    "connectionLayerSufix": "_connections_layer",
+    "serviceLayerSufix": "_services_layer",
+    "host": "netcompass-db.netcompass.svc.cluster.local",
+    "port": 8529,
+    "user": "netcompass-api-usr",
+    "password": "yQ*F8n07V^GW",
+    "domainsCollection": "domains"
+  },
+  "schemaDir": "/app/inventory-manager/schema/",
+  "rulesDir": "/app/inventory-manager/rules/",
+  "dateFormat": "dd-MM-yyyy",
+  "dateTimeFormat": "dd-MM-yyyy hh:MM:ss",
+  "trackTimers": true
+}

@@ -17,6 +17,8 @@
  */
 package com.osstelecom.db.inventory.manager.response;
 
+import com.arangodb.entity.CursorEntity.Stats;
+import com.osstelecom.db.inventory.manager.resources.GraphList;
 import java.util.List;
 import java.util.Map;
 
@@ -29,9 +31,9 @@ public abstract class BasicResponse<T> implements IResponse<T> {
 
     private int statusCode = 200;
     private T payLoad;
-    private int size;
+    private Long size;
     private String className;
-
+    private Stats arangoStats;
     public String getClassName() {
         if (this.className == null) {
             this.className = this.getClass().getName();
@@ -42,9 +44,11 @@ public abstract class BasicResponse<T> implements IResponse<T> {
     public BasicResponse(T obj) {
         this.setPayLoad(obj);
         if (this.payLoad instanceof List) {
-            this.size = ((List<?>) this.payLoad).size();
+            this.size = ((List<?>) this.payLoad).size() + 0L; // Implicit Type Cast...be carefull
         } else if (this.payLoad instanceof Map) {
-            this.size = ((Map<?, ?>) this.payLoad).size();
+            this.size = ((Map<?, ?>) this.payLoad).size() + 0L;
+        } else if (this.payLoad instanceof GraphList) {
+            this.size = ((GraphList<?>) this.payLoad).size();
         }
     }
 
@@ -71,15 +75,25 @@ public abstract class BasicResponse<T> implements IResponse<T> {
     /**
      * @return the size
      */
-    public int getSize() {
+    public Long getSize() {
         return size;
     }
 
     /**
      * @param size the size to set
      */
-    public void setSize(int size) {
+    public void setSize(Long size) {
         this.size = size;
     }
+
+    public Stats getArangoStats() {
+        return arangoStats;
+    }
+
+    public void setArangoStats(Stats arangoStats) {
+        this.arangoStats = arangoStats;
+    }
+    
+    
 
 }

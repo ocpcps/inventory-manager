@@ -33,15 +33,18 @@ import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.request.CreateServiceRequest;
 import com.osstelecom.db.inventory.manager.request.DeleteServiceRequest;
+import com.osstelecom.db.inventory.manager.request.FilterRequest;
 import com.osstelecom.db.inventory.manager.request.GetServiceRequest;
 import com.osstelecom.db.inventory.manager.request.PatchServiceRequest;
 import com.osstelecom.db.inventory.manager.resources.ServiceResource;
 import com.osstelecom.db.inventory.manager.response.CreateServiceResponse;
 import com.osstelecom.db.inventory.manager.response.DeleteServiceResponse;
+import com.osstelecom.db.inventory.manager.response.FilterResponse;
 import com.osstelecom.db.inventory.manager.response.GetServiceResponse;
 import com.osstelecom.db.inventory.manager.response.PatchServiceResponse;
 import com.osstelecom.db.inventory.manager.security.model.AuthenticatedCall;
 import com.osstelecom.db.inventory.manager.session.ServiceSession;
+import org.springframework.web.bind.annotation.PostMapping;
 
 /**
  *
@@ -98,5 +101,13 @@ public class ServiceApi extends BaseApi {
         this.setUserDetails(request);
         request.setRequestDomain(domainName);
         return serviceSession.updateService(request);
+    }
+
+    @AuthenticatedCall(role = {"user"})
+    @PostMapping(path = "/{domain}/service/filter", produces = "application/json", consumes = "application/json")
+    public FilterResponse findCircuitsByFilter(@RequestBody FilterRequest filter, @PathVariable("domain") String domain) throws ArangoDaoException, ResourceNotFoundException, DomainNotFoundException, InvalidRequestException {
+        this.setUserDetails(filter);
+        filter.setRequestDomain(domain);
+        return serviceSession.findServiceByFilter(filter);
     }
 }

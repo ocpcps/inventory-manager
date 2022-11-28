@@ -46,10 +46,12 @@ import com.osstelecom.db.inventory.manager.events.ServiceResourceUpdatedEvent;
 import com.osstelecom.db.inventory.manager.events.ServiceStateTransionedEvent;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
+import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.listeners.EventManagerListener;
 import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 import com.osstelecom.db.inventory.manager.resources.Domain;
+import com.osstelecom.db.inventory.manager.resources.GraphList;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import com.osstelecom.db.inventory.manager.resources.ServiceResource;
@@ -129,7 +131,7 @@ public class ServiceManager extends Manager {
             }
             Map<String, Object> binds = new HashMap<>();
             binds.put("id", service.getId());
-            service = this.serviceDao.findResourceByFilter(new FilterDTO("doc._id == @id"), binds, service.getDomain()).getOne();
+            service = this.serviceDao.findResourceByFilter(new FilterDTO("doc._id == @id", binds), service.getDomain()).getOne();
             return service;
         } finally {
             if (lockManager.isLocked()) {
@@ -240,7 +242,7 @@ public class ServiceManager extends Manager {
      * @param oldService
      * @throws ArangoDaoException
      */
-    private void resolveCircuitServiceLinks(ServiceResource newService, ServiceResource oldService) throws ArangoDaoException, ResourceNotFoundException {
+    private void resolveCircuitServiceLinks(ServiceResource newService, ServiceResource oldService) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
         //
         // Aqui temos certeza que o serviço foi criado, então vamos pegar e atualizar as dependencias do circuito
         //
@@ -307,7 +309,11 @@ public class ServiceManager extends Manager {
 
     }
 
-    public ServiceResource updateService(ServiceResource service) throws ArangoDaoException, ResourceNotFoundException {
+    public GraphList<ServiceResource> findServiceByFilter(FilterDTO filter, Domain domain) throws ArangoDaoException, ResourceNotFoundException {
+        return this.serviceDao.findResourceByFilter(filter, domain);
+    }
+
+    public ServiceResource updateService(ServiceResource service) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
         String timerId = startTimer("updateServiceResource");
         try {
             this.lockManager.lock();
@@ -343,7 +349,7 @@ public class ServiceManager extends Manager {
      * @throws ArangoDaoException
      */
     public ServiceResource resolveService(ServiceResource service)
-            throws ResourceNotFoundException, ArangoDaoException, DomainNotFoundException {
+            throws ResourceNotFoundException, ArangoDaoException, DomainNotFoundException, InvalidRequestException {
 
         List<ServiceResource> resolvedServices = new ArrayList<>();
         if (service.getDependencies() != null && !service.getDependencies().isEmpty()) {
@@ -470,7 +476,7 @@ public class ServiceManager extends Manager {
      * @throws ArangoDaoException
      * @throws DomainNotFoundException
      */
-    private void updateServiceManagedResourceReferenceUpdateEvent(ManagedResourceUpdatedEvent updateEvent) throws ResourceNotFoundException, ArangoDaoException, DomainNotFoundException {
+    private void updateServiceManagedResourceReferenceUpdateEvent(ManagedResourceUpdatedEvent updateEvent) throws ResourceNotFoundException, ArangoDaoException, DomainNotFoundException, InvalidRequestException {
         if (updateEvent.getOldResource() == null && updateEvent.getNewResource() != null) {
             ManagedResource resource = updateEvent.getNewResource();
             if (resource.getDependentService() != null) {
@@ -487,7 +493,7 @@ public class ServiceManager extends Manager {
                     service.getRelatedManagedResources().add(resource.getId());
                     this.evaluateServiceStateTransition(this.serviceDao.updateResource(service));
                 }
-            }else{
+            } else {
                 logger.debug("No Resource to Update");
             }
         } else if (updateEvent.getOldResource() != null && updateEvent.getNewResource() != null) {
@@ -567,7 +573,7 @@ public class ServiceManager extends Manager {
      * @throws ArangoDaoException
      * @throws DomainNotFoundException
      */
-    private void updateServiceResourceConnectionReferenceUpdateEvent(ResourceConnectionUpdatedEvent updateEvent) throws ResourceNotFoundException, ArangoDaoException, DomainNotFoundException {
+    private void updateServiceResourceConnectionReferenceUpdateEvent(ResourceConnectionUpdatedEvent updateEvent) throws ResourceNotFoundException, ArangoDaoException, DomainNotFoundException, InvalidRequestException {
         if (updateEvent.getOldResource() == null && updateEvent.getNewResource() != null) {
             ResourceConnection resource = updateEvent.getNewResource();
             if (resource.getDependentService() != null) {
@@ -1018,7 +1024,7 @@ public class ServiceManager extends Manager {
      * @param updateEvent
      */
     @Subscribe
-    public void onManagedResourceUpdatedEvent(ManagedResourceUpdatedEvent updateEvent) throws ResourceNotFoundException, ArangoDaoException, DomainNotFoundException {
+    public void onManagedResourceUpdatedEvent(ManagedResourceUpdatedEvent updateEvent) throws ResourceNotFoundException, ArangoDaoException, DomainNotFoundException, InvalidRequestException {
         logger.debug("Managed Resource [{}] Updated: ", updateEvent.getOldResource().getId());
         //
         // Um Recurso foi Atualizado,  tem algum serviço que ele depende aqui ? 
@@ -1064,7 +1070,7 @@ public class ServiceManager extends Manager {
      * @param resource
      */
     @Subscribe
-    public void onResourceConnectionUpdatedEvent(ResourceConnectionUpdatedEvent updateEvent) throws ResourceNotFoundException, ArangoDaoException, DomainNotFoundException {
+    public void onResourceConnectionUpdatedEvent(ResourceConnectionUpdatedEvent updateEvent) throws ResourceNotFoundException, ArangoDaoException, DomainNotFoundException, InvalidRequestException {
 
         this.updateServiceResourceConnectionReferenceUpdateEvent(updateEvent);
 

@@ -11,6 +11,7 @@ import com.osstelecom.db.inventory.manager.events.ResourceLocationCreatedEvent;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
+import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.SchemaNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.ScriptRuleException;
@@ -81,7 +82,7 @@ public class ResourceLocationManager extends Manager {
         }
     }
 
-    public ResourceLocation findResourceLocation(String name, String nodeAdrress, String className, String domainName) throws ResourceNotFoundException, DomainNotFoundException, ArangoDaoException {
+    public ResourceLocation findResourceLocation(String name, String nodeAdrress, String className, String domainName) throws ResourceNotFoundException, DomainNotFoundException, ArangoDaoException, InvalidRequestException {
         String timerId = startTimer("findResourceLocation");
         try {
             lockManager.lock();

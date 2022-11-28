@@ -37,11 +37,13 @@ import com.arangodb.model.AqlQueryOptions;
 import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.BasicException;
+import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.resources.BasicResource;
 import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.GraphList;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
+import java.util.UUID;
 
 /**
  *
@@ -56,25 +58,25 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
 
     protected Logger logger = LoggerFactory.getLogger(AbstractArangoDao.class);
 
-    public abstract T findResource(T resource) throws BasicException;
+    public abstract T findResource(T resource) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException;
 
-    public abstract DocumentCreateEntity<T> insertResource(T resource) throws BasicException;
+    public abstract DocumentCreateEntity<T> insertResource(T resource) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException;
 
-    public abstract DocumentCreateEntity<T> upsertResource(T resource) throws BasicException;
+    public abstract DocumentCreateEntity<T> upsertResource(T resource) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException;
 
-    public abstract DocumentUpdateEntity<T> updateResource(T resource) throws BasicException;
+    public abstract DocumentUpdateEntity<T> updateResource(T resource) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException;
 
     public abstract MultiDocumentEntity<DocumentUpdateEntity<T>> updateResources(List<T> resources, Domain domain)
             throws BasicException;
 
     public abstract DocumentDeleteEntity<T> deleteResource(T resource) throws BasicException;
 
-    public abstract GraphList<T> findResourcesBySchemaName(String schemaName, Domain domain) throws BasicException;
+    public abstract GraphList<T> findResourcesBySchemaName(String schemaName, Domain domain) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException;
 
-    public abstract GraphList<T> findResourcesByClassName(String className, Domain domain) throws BasicException;
+    public abstract GraphList<T> findResourcesByClassName(String className, Domain domain) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException;
 
-    public abstract GraphList<T> findResourceByFilter(FilterDTO filter, Map<String, Object> bindVars, Domain domain)
-            throws BasicException;
+    public abstract GraphList<T> findResourceByFilter(FilterDTO filter, Domain domain)
+            throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException;
 
     protected String buildAqlFromBindings(String aql, Map<String, Object> bindVars, boolean appendReturn) {
         StringBuilder buffer = new StringBuilder(aql);
@@ -99,6 +101,7 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
     /**
      * Queria deixar o Type como Generics....
      *
+     * @deprecated
      * @param aql
      * @param bindVars
      * @param type
@@ -109,7 +112,9 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
      */
     public GraphList<T> query(String aql, Map<String, Object> bindVars, Class<T> type, ArangoDatabase db)
             throws ResourceNotFoundException {
-        logger.info("(query) RUNNING: AQL:[{}]", aql);
+        Long start = System.currentTimeMillis();
+        String uid = UUID.randomUUID().toString();
+        logger.info("(query) - [{}] - RUNNING: AQL:[{}]", uid, aql);
         if (bindVars != null) {
             bindVars.forEach((k, v) -> {
                 logger.info("\t  [@{}]=[{}]", k, v);
@@ -127,6 +132,16 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
                 ex.addDetails("params", bindVars);
                 throw ex;
             }
+            Long end = System.currentTimeMillis();
+            Long took = end - start;
+            //
+            // Se for maior que 100ms, avaliar 
+            //
+            if (took > 100) {
+                logger.warn("(query) - [{}] - Took: [{}] ms", uid, took);
+            } else {
+                logger.info("(query) - [{}] - Took: [{}] ms", uid, took);
+            }
             return result;
         } else {
             GraphList<T> result = new GraphList<>(
@@ -136,7 +151,78 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
 
     }
 
-    public abstract int getCount(Domain domain) throws ResourceNotFoundException, IOException ;
+    /**
+     *
+     * @param filter
+     * @param type
+     * @param db
+     * @return
+     * @throws ResourceNotFoundException
+     */
+    public GraphList<T> query(FilterDTO filter, Class<T> type, ArangoDatabase db) throws ResourceNotFoundException, InvalidRequestException {
+        Long start = System.currentTimeMillis();
+        String uid = UUID.randomUUID().toString();
+
+        if (filter.getBindings() != null) {
+            filter.getBindings().forEach((k, v) -> {
+                logger.info("\t  [@{}]=[{}]", k, v);
+            });
+
+            if (filter.getAqlFilter().toLowerCase().contains("return")) {
+                throw new InvalidRequestException("Please remove Return statement from your filter.");
+            }
+
+            //
+            // Trata a paginação
+            //
+            if (filter.getOffSet() != null && filter.getLimit() != null) {
+                if (filter.getOffSet() >= 0L && filter.getLimit() >= 0L) {
+                    filter.setAqlFilter(filter.getAqlFilter() + " limit @offset,@limit");
+                    filter.getBindings().put("offset", filter.getOffSet());
+                    filter.getBindings().put("limit", filter.getLimit());
+                } else {
+                    //
+                    // Negative value means pagination is disabled
+                    //
+                }
+            }
+
+            filter.setAqlFilter(filter.getAqlFilter() + " return doc");
+            logger.info("(query) - [{}] - RUNNING: AQL:[{}]", uid, filter.getAqlFilter());
+            filter.getBindings().forEach((k, v) -> {
+                logger.info("\t  [@{}]=[{}]", k, v);
+            });
+            GraphList<T> result = new GraphList<>(
+                    db.query(filter.getAqlFilter(), filter.getBindings(), new AqlQueryOptions().fullCount(true).count(true), type));
+
+            if (result.isEmpty()) {
+                ResourceNotFoundException ex = new ResourceNotFoundException();
+                //
+                // Create a Detail map to the user
+                //
+                ex.addDetails("AQL", filter.getAqlFilter());
+                ex.addDetails("params", filter.getBindings());
+                throw ex;
+            }
+            Long end = System.currentTimeMillis();
+            Long took = end - start;
+            //
+            // Se for maior que 100ms, avaliar 
+            //
+            if (took > 100) {
+                logger.warn("(query) - [{}] - Took: [{}] ms", uid, took);
+            } else {
+                logger.info("(query) - [{}] - Took: [{}] ms", uid, took);
+            }
+            return result;
+        } else {
+            GraphList<T> result = new GraphList<>(
+                    db.query(filter.getAqlFilter(), new AqlQueryOptions().fullCount(true).count(true), type));
+            return result;
+        }
+    }
+
+    public abstract Long getCount(Domain domain) throws ResourceNotFoundException, IOException, InvalidRequestException;
 
     public ArangoDatabase getDb() {
         return this.arangoDatabase;

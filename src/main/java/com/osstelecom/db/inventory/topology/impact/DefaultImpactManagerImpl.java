@@ -54,6 +54,10 @@ public class DefaultImpactManagerImpl extends ImpactManagerAbs {
         super(topology);
     }
 
+    public DefaultImpactManagerImpl() {
+        super();
+    }
+    
     @Override
     public ArrayList<INetworkConnection> getUnreachableConnections() {
         Long start = System.currentTimeMillis();

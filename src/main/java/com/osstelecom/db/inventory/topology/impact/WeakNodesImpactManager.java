@@ -23,7 +23,9 @@ import com.osstelecom.db.inventory.topology.algorithm.WeakNodesAlgorithm;
 import com.osstelecom.db.inventory.topology.node.INetworkNode;
 import com.osstelecom.db.inventory.topology.node.SourceTargetWrapper;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -41,6 +43,10 @@ public class WeakNodesImpactManager extends DefaultImpactManagerImpl {
 
     public WeakNodesImpactManager(ITopology topology) {
         super(topology);
+    }
+
+    public WeakNodesImpactManager() {
+        super();
     }
 
     @Override
@@ -82,8 +88,13 @@ public class WeakNodesImpactManager extends DefaultImpactManagerImpl {
                 }
             }
         }
+
+        Map<String, Object> options = new HashMap<>();
+        options.put("USE_CACHE", useCache);
+//        this.algorithm.calculate(weakQueue, options, threadCount);
         logger.debug("Commiting Queue With :[{}] Jobs", weakQueue.size());
-        this.algorithm.calculate(weakQueue);
+//        this.algorithm.calculate(weakQueue); // <-- Works
+        this.algorithm.calculate(weakQueue,threadCount); // <-- NOT Working
 
         List<INetworkNode> result;
 
@@ -92,6 +103,8 @@ public class WeakNodesImpactManager extends DefaultImpactManagerImpl {
                 .parallelStream()
                 .filter(n -> n.getEndpointConnectionsCount() <= connLimit && !n.endPoint())
                 .collect(Collectors.toList());
+        
+        result.removeAll(alreadyWeak);
         return result;
     }
 

@@ -17,6 +17,7 @@
  */
 package com.osstelecom.db.inventory.topology;
 
+import com.osstelecom.db.inventory.topology.impact.ImpactManagerIf;
 import com.osstelecom.db.inventory.topology.listeners.DefaultTopologyListener;
 
 /**
@@ -24,13 +25,19 @@ import com.osstelecom.db.inventory.topology.listeners.DefaultTopologyListener;
  * @author Nishisan
  */
 public class DefaultTopology extends Topology {
-
+    
     public DefaultTopology() {
         super(new DefaultTopologyListener());
     }
-
+    
     public DefaultTopology(Integer scaleFactor) {
         super(scaleFactor);
     }
-
+    
+    public DefaultTopology(ImpactManagerIf impactManager) {
+        super(new DefaultTopologyListener());
+        this.setImpactManager(impactManager);
+        this.setScaleFactor(100);
+    }
+    
 }

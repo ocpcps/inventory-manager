@@ -37,15 +37,15 @@ import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.BasicException;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
+import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.GraphList;
-import com.osstelecom.db.inventory.manager.resources.ManagedResource;
-import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import com.osstelecom.db.inventory.manager.resources.ResourceLocation;
 import java.io.IOException;
 
 /**
+ * Needs To be created
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 03.09.2022
@@ -54,12 +54,12 @@ import java.io.IOException;
 public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
 
     @Override
-    public ResourceLocation findResource(ResourceLocation resource) throws BasicException {
+    public ResourceLocation findResource(ResourceLocation resource) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
         throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 
     @Override
-    public DocumentCreateEntity<ResourceLocation> insertResource(ResourceLocation resource) throws BasicException {
+    public DocumentCreateEntity<ResourceLocation> insertResource(ResourceLocation resource) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
 //        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
 
         //
@@ -77,7 +77,7 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
     }
 
     @Override
-    public DocumentCreateEntity<ResourceLocation> upsertResource(ResourceLocation resource) throws BasicException {
+    public DocumentCreateEntity<ResourceLocation> upsertResource(ResourceLocation resource) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
 //        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
         //
         // A complexidade de validação dos requistos do dado deve ter sido feita na dao antes de chegar aqui.
@@ -95,7 +95,7 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
     }
 
     @Override
-    public DocumentUpdateEntity<ResourceLocation> updateResource(ResourceLocation resource) throws BasicException {
+    public DocumentUpdateEntity<ResourceLocation> updateResource(ResourceLocation resource) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
 //        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
         //
         // A complexidade de validação dos requistos do dado deve ter sido feita na dao antes de chegar aqui.
@@ -137,39 +137,45 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
     }
 
     @Override
-    public GraphList<ResourceLocation> findResourcesBySchemaName(String attributeSchemaName, Domain domain) throws BasicException {
+    public GraphList<ResourceLocation> findResourcesBySchemaName(String attributeSchemaName, Domain domain) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
 //        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
         try {
-            String aql = "for doc in " + domain.getCircuits() + "filter doc.attributeSchemaName == @attributeSchemaName return doc";
+            String aql = "for doc in " + domain.getCircuits() + "filter doc.attributeSchemaName == @attributeSchemaName ";
             Map<String, Object> bindVars = new HashMap<>();
 
             bindVars.put("attributeSchemaName", attributeSchemaName);
-            return this.query(aql, bindVars, ResourceLocation.class, this.getDb());
+            FilterDTO filter = new FilterDTO(aql, bindVars);
+            return this.query(filter, ResourceLocation.class, this.getDb());
+        } catch (ResourceNotFoundException | InvalidRequestException ex) {
+            throw ex;
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         }
     }
 
     @Override
-    public GraphList<ResourceLocation> findResourcesByClassName(String className, Domain domain) throws BasicException {
+    public GraphList<ResourceLocation> findResourcesByClassName(String className, Domain domain) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
 //        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
         try {
-            String aql = "for doc in " + domain.getCircuits() + " filter doc.className == @className return doc";
+            String aql = "for doc in " + domain.getCircuits() + " filter doc.className == @className ";
             Map<String, Object> bindVars = new HashMap<>();
             bindVars.put("attributeSchemaName", className);
-            return this.query(aql, bindVars, ResourceLocation.class, this.getDb());
+            FilterDTO filter = new FilterDTO(aql, bindVars);
+            return this.query(filter, ResourceLocation.class, this.getDb());
+        } catch (ResourceNotFoundException | InvalidRequestException ex) {
+            throw ex;
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         }
     }
 
     @Override
-    public GraphList<ResourceLocation> findResourceByFilter(FilterDTO filter, Map<String, Object> bindVars, Domain domain) throws BasicException {
+    public GraphList<ResourceLocation> findResourceByFilter(FilterDTO filter, Domain domain) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
 //        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
         try {
             String aql = " for doc in   " + domain.getCircuits();
             aql += " filter doc.domainName == @domainName ";
-            bindVars.put("domainName", domain.getDomainName());
+            filter.getBindings().put("domainName", domain.getDomainName());
 
             if (filter.getAqlFilter() != null && !filter.getAqlFilter().trim().equals("")) {
                 aql += " and " + filter.getAqlFilter();
@@ -179,8 +185,10 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
                 aql += " " + filter.getSortCondition();
             }
 
-            aql += " return doc";
-            return this.query(aql, bindVars, ResourceLocation.class, this.getDb());
+//            aql += " return doc";
+            return this.query(filter, ResourceLocation.class, this.getDb());
+        } catch (ResourceNotFoundException | InvalidRequestException ex) {
+            throw ex;
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         }
@@ -213,7 +221,7 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
      * @return
      * @throws ResourceNotFoundException
      */
-    public ResourceLocation findResourceLocation(String name, String nodeAddress, String className, Domain domain) throws ResourceNotFoundException {
+    public ResourceLocation findResourceLocation(String name, String nodeAddress, String className, Domain domain) throws ResourceNotFoundException, InvalidRequestException {
         HashMap<String, Object> bindVars = new HashMap<>();
         if (name != null && !name.equals("null")) {
             bindVars.put("name", name);
@@ -240,7 +248,7 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
             aql += " and doc.domainName == @domainName ";
         }
 
-        aql += " RETURN doc ";
+//        aql += " RETURN doc ";
         logger.info("(findResourceLocation) RUNNING: AQL:[{}]", aql);
         logger.info("\tBindings:");
         bindVars.forEach((k, v) -> {
@@ -248,11 +256,12 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
 
         });
 
-        ArangoCursor<ResourceLocation> cursor = this.getDb().query(aql, bindVars, ResourceLocation.class);
-        List<ResourceLocation> locations = cursor.asListRemaining();
+        FilterDTO filter = new FilterDTO(aql, bindVars);
+        GraphList<ResourceLocation> locations = this.query(filter, ResourceLocation.class, this.getDb());
+//        List<ResourceLocation> locations = cursor.asListRemaining();
 
         if (!locations.isEmpty()) {
-            return locations.get(0);
+            return locations.getOne();
         }
 
         logger.warn("Resource with name:[{}] nodeAddress:[{}] className:[{}] was not found..", name, nodeAddress, className);
@@ -263,10 +272,11 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
     }
 
     @Override
-    public int getCount(Domain domain) throws ResourceNotFoundException, IOException {
-        String aql = "for doc in `" + domain.getConnections() + "` return doc";
-        GraphList<ResourceLocation> result = this.query(aql, null, ResourceLocation.class, this.getDb());
-        Integer longValue = result.size();
+    public Long getCount(Domain domain) throws ResourceNotFoundException, IOException, InvalidRequestException {
+        String aql = "for doc in `" + domain.getConnections() + "` ";
+        FilterDTO filter = new FilterDTO(aql);
+        GraphList<ResourceLocation> result = this.query(filter, ResourceLocation.class, this.getDb());
+        Long longValue = result.size();
         result.close();
         return longValue;
     }

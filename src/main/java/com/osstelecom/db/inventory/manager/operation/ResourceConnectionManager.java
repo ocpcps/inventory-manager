@@ -46,35 +46,35 @@ import org.springframework.context.event.EventListener;
 
 @Service
 public class ResourceConnectionManager extends Manager {
-
+    
     @Autowired
     private EventManagerListener eventManager;
-
+    
     @Autowired
     private LockManager lockManager;
-
+    
     @Autowired
     private SchemaSession schemaSession;
-
+    
     @Autowired
     private DomainManager domainManager;
-
+    
     @Autowired
     private ResourceConnectionDao resourceConnectionDao;
-
+    
     @Autowired
     private DynamicRuleSession dynamicRuleSession;
-
+    
     @Autowired
     private ServiceManager serviceManager;
-
+    
     private Logger logger = LoggerFactory.getLogger(ResourceConnectionManager.class);
-
+    
     @EventListener(ApplicationReadyEvent.class)
     private void onStartUp() {
         this.eventManager.registerListener(this);
     }
-
+    
     public ResourceConnection deleteResourceConnection(ResourceConnection connection) throws ArangoDaoException {
         DocumentDeleteEntity<ResourceConnection> result = this.resourceConnectionDao.deleteResource(connection);
         return result.getOld();
@@ -99,26 +99,26 @@ public class ResourceConnectionManager extends Manager {
                 lockManager.unlock();
             }
             endTimer(timerId);
-
+            
         }
     }
-
+    
     public ResourceConnection createResourceConnection(ResourceConnection connection) throws GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException, DomainNotFoundException {
         String timerId = startTimer("createResourceConnection");
         try {
             lockManager.lock();
-
+            
             Boolean useUpsert = false;
             if (connection.getKey() == null) {
                 connection.setKey(this.getUUID());
             } else {
                 useUpsert = true;
             }
-
+            
             if (connection.getDependentService() != null) {
                 connection.setDependentService(connection.getDependentService());
             }
-
+            
             if (connection.getDependentService() != null) {
                 //
                 // Valida se o serviço existe
@@ -140,9 +140,9 @@ public class ResourceConnectionManager extends Manager {
             connection.setSchemaModel(schemaModel);
             schemaSession.validateResourceSchema(connection);
             dynamicRuleSession.evalResource(connection, "I", this);
-
+            
             DocumentCreateEntity<ResourceConnection> result;
-
+            
             if (useUpsert) {
                 //
                 // Will Try to update or insert the connection
@@ -153,9 +153,9 @@ public class ResourceConnectionManager extends Manager {
                 // Creates the connection on DB
                 //
                 result = resourceConnectionDao.insertResource(connection);
-
+                
             }
-
+            
             connection.setKey(result.getId());
             connection.setRevisionId(result.getRev());
             //
@@ -182,7 +182,7 @@ public class ResourceConnectionManager extends Manager {
      * @return
      */
     public ResourceConnection createResourceConnection(BasicResource from, BasicResource to, Domain domain) throws ArangoDaoException {
-
+        
         String timerId = startTimer("createResourceConnection");
         try {
             lockManager.lock();
@@ -200,7 +200,7 @@ public class ResourceConnectionManager extends Manager {
             DocumentCreateEntity<ResourceConnection> result = resourceConnectionDao.insertResource(connection);
             connection.setKey(result.getId());
             connection.setRevisionId(result.getRev());
-
+            
             ResourceConnectionCreatedEvent event = new ResourceConnectionCreatedEvent(connection);
             this.eventManager.notifyResourceEvent(event);
             return connection;
@@ -220,16 +220,17 @@ public class ResourceConnectionManager extends Manager {
      * @throws ResourceNotFoundException
      * @throws ArangoDaoException
      */
-    public ResourceConnection findResourceConnection(ResourceConnection connection) throws ResourceNotFoundException, ArangoDaoException {
+    public ResourceConnection findResourceConnection(ResourceConnection connection) throws ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
         String timerId = startTimer("findResourceConnection");
         try {
             
-            if (!connection.getId().contains("/")) {
-                connection.setId(connection.getDomain().getConnections()+ "/" + connection.getId());
+            if (connection.getId() != null) {
+                if (!connection.getId().contains("/")) {
+                    connection.setId(connection.getDomain().getConnections() + "/" + connection.getId());
+                }
             }
-
             lockManager.lock();
-
+            
             return this.resourceConnectionDao.findResource(connection);
         } finally {
             if (lockManager.isLocked()) {
@@ -250,9 +251,9 @@ public class ResourceConnectionManager extends Manager {
         try {
             lockManager.lock();
             connection.setLastModifiedDate(new Date());
-
+            
             schemaSession.validateResourceSchema(connection);
-
+            
             DocumentUpdateEntity<ResourceConnection> result = this.resourceConnectionDao.updateResource(connection);
             ResourceConnectionUpdatedEvent updateEvent = new ResourceConnectionUpdatedEvent(result);
             this.eventManager.notifyResourceEvent(updateEvent);
@@ -294,20 +295,20 @@ public class ResourceConnectionManager extends Manager {
             endTimer(timerId);
         }
     }
-
+    
     public GraphList<ResourceConnection> getConnectionsByFilter(FilterDTO filter, String domainName) throws ArangoDaoException, DomainNotFoundException, InvalidRequestException, ResourceNotFoundException {
         Domain domain = domainManager.getDomain(domainName);
         if (filter.getObjects().contains("connections")) {
-            HashMap<String, Object> bindVars = new HashMap<>();
+//            HashMap<String, Object> bindVars = new HashMap<>();
 
             if (filter.getClasses() != null && !filter.getClasses().isEmpty()) {
-                bindVars.put("classes", filter.getClasses());
+                filter.getBindings().put("classes", filter.getClasses());
             }
-
+            
             if (filter.getBindings() != null && !filter.getBindings().isEmpty()) {
-                bindVars.putAll(filter.getBindings());
+                filter.getBindings().putAll(filter.getBindings());
             }
-            return this.resourceConnectionDao.findResourceByFilter(filter, bindVars, domain);
+            return this.resourceConnectionDao.findResourceByFilter(filter, domain);
         }
         throw new InvalidRequestException("getConnectionsByFilter() can only retrieve connections objects");
     }
@@ -336,8 +337,8 @@ public class ResourceConnectionManager extends Manager {
             // Procura as conexões relacionadas no mesmo dominio
             //
             try {
-                this.resourceConnectionDao.findResourceByFilter(new FilterDTO(filter), bindVars, updatedResource.getDomain()).forEach((connection) -> {
-
+                this.resourceConnectionDao.findResourceByFilter(new FilterDTO(filter, bindVars), updatedResource.getDomain()).forEach((connection) -> {
+                    
                     if (connection.getFrom().getKey().equals(updatedResource.getKey())) {
                         //
                         // Update from
@@ -353,7 +354,7 @@ public class ResourceConnectionManager extends Manager {
                         // Update to
                         //
                         connection.setTo(updatedResource);
-
+                        
                     }
 
                     //
@@ -362,7 +363,7 @@ public class ResourceConnectionManager extends Manager {
                     if (!connection.getOperationalStatus().equals(updatedResource.getOperationalStatus())) {
                         connection.setOperationalStatus(updatedResource.getOperationalStatus());
                     }
-
+                    
                     try {
                         //
                         // Atualiza a conexão
@@ -378,10 +379,10 @@ public class ResourceConnectionManager extends Manager {
                 // This is expected
                 //
             }
-
-        } catch (IOException | IllegalStateException | ArangoDaoException ex) {
+            
+        } catch (IOException | IllegalStateException | InvalidRequestException | ArangoDaoException ex) {
             logger.error("Failed to Update Resource Connection Relation", ex);
-
+            
         }
     }
 
@@ -392,9 +393,9 @@ public class ResourceConnectionManager extends Manager {
      */
     @Subscribe
     public void onServiceStateTransionedEvent(ServiceStateTransionedEvent serviceStateTransitionedEvent) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException {
-        if (serviceStateTransitionedEvent.getNewResource().getRelatedManagedResources() != null
-                && !serviceStateTransitionedEvent.getNewResource().getRelatedManagedResources().isEmpty()) {
-
+        if (serviceStateTransitionedEvent.getNewResource().getRelatedResourceConnections() != null
+                && !serviceStateTransitionedEvent.getNewResource().getRelatedResourceConnections().isEmpty()) {
+            
             for (String connectionId : serviceStateTransitionedEvent.getNewResource().getRelatedResourceConnections()) {
                 String domainName = this.domainManager.getDomainNameFromId(connectionId);
                 if (!domainName.equals(serviceStateTransitionedEvent.getNewResource().getDomainName())) {
@@ -408,6 +409,8 @@ public class ResourceConnectionManager extends Manager {
                     //
                     Domain domain = this.domainManager.getDomain(domainName);
                     ResourceConnection connection = new ResourceConnection(domain, connectionId);
+                    
+                    connection.setAttributeSchemaName(null);
 
                     //
                     // Obtem a referencia do DB

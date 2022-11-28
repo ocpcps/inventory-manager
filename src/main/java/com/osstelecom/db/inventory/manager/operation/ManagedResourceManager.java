@@ -93,7 +93,7 @@ public class ManagedResourceManager extends Manager {
      * @param resource
      * @return
      */
-    public ManagedResource get(ManagedResource resource) throws ResourceNotFoundException, ArangoDaoException {
+    public ManagedResource get(ManagedResource resource) throws ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
         return this.findManagedResource(resource);
     }
 
@@ -215,7 +215,7 @@ public class ManagedResourceManager extends Manager {
      * @throws ResourceNotFoundException
      * @throws ArangoDaoException
      */
-    public ManagedResource findManagedResource(ManagedResource resource) throws ResourceNotFoundException, ArangoDaoException {
+    public ManagedResource findManagedResource(ManagedResource resource) throws ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
         if (resource.getId() != null) {
             if (!resource.getId().contains("/")) {
                 resource.setId(resource.getDomain().getNodes() + "/" + resource.getId());
@@ -239,7 +239,7 @@ public class ManagedResourceManager extends Manager {
      * @throws ResourceNotFoundException
      * @throws ArangoDaoException
      */
-    public ManagedResource findManagedResourceById(ManagedResource resource) throws ResourceNotFoundException, ArangoDaoException {
+    public ManagedResource findManagedResourceById(ManagedResource resource) throws ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
         String timerId = startTimer("findManagedResourceById");
         try {
             lockManager.lock();
@@ -310,22 +310,20 @@ public class ManagedResourceManager extends Manager {
     public GraphList<ManagedResource> getNodesByFilter(FilterDTO filter, String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
         Domain domain = domainManager.getDomain(domainName);
         if (filter.getObjects().contains("nodes")) {
-            Map<String, Object> bindVars = new HashMap<>();
+//            Map<String, Object> bindVars = new HashMap<>();
 
             if (filter.getClasses() != null && !filter.getClasses().isEmpty()) {
-                bindVars.put("classes", filter.getClasses());
+                filter.getBindings().put("classes", filter.getClasses());
             }
 
             if (filter.getBindings() != null && !filter.getBindings().isEmpty()) {
-                bindVars.putAll(filter.getBindings());
+                filter.getBindings().putAll(filter.getBindings());
             }
-            return this.managedResourceDao.findResourceByFilter(filter, bindVars, domain);
+            return this.managedResourceDao.findResourceByFilter(filter, domain);
         }
         throw new InvalidRequestException("getNodesByFilter() can only retrieve nodes objects");
     }
 
-    
-    
     /**
      * Retrieve a Stream list ( GraphList) from a SchemaModelName
      *
@@ -335,7 +333,7 @@ public class ManagedResourceManager extends Manager {
      * @throws ResourceNotFoundException
      * @throws ArangoDaoException
      */
-    public GraphList<ManagedResource> findManagedResourcesBySchemaName(ResourceSchemaModel model, Domain domain) throws ResourceNotFoundException, ArangoDaoException {
+    public GraphList<ManagedResource> findManagedResourcesBySchemaName(ResourceSchemaModel model, Domain domain) throws ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
         return this.managedResourceDao.findResourcesBySchemaName(model.getSchemaName(), domain);
     }
 
@@ -399,7 +397,7 @@ public class ManagedResourceManager extends Manager {
                     }
 
                 });
-            } catch (IOException | IllegalStateException | GenericException | SchemaNotFoundException | ArangoDaoException ex) {
+            } catch (IOException | IllegalStateException | GenericException | SchemaNotFoundException | InvalidRequestException | ArangoDaoException ex) {
                 logger.error("Failed to update Resource Schema Model", ex);
             } catch (ResourceNotFoundException ex) {
                 logger.error("Domain Has No Resources on Schema:[{}]", update.getModel(), ex);

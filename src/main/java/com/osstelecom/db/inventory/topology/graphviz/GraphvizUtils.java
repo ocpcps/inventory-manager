@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Lucas Nishimura <lucas.nishimura@gmail.com>
+ * Copyright (C) 2022 Lucas Nishimura <lucas.nishimura@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -15,29 +15,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package com.osstelecom.db.inventory.topology.node;
 
-import com.osstelecom.db.inventory.topology.ITopology;
+package com.osstelecom.db.inventory.topology.graphviz;
 
 /**
  *
- * @author Nishisan
+ * @author  Lucas Nishimura <lucas.nishimura@gmail.com> 
+ * @created 05.11.2022
  */
-public class DefaultNode extends NetworkNode {
-
-    public DefaultNode(Integer id, ITopology topology) {
-        super(id, topology);
-    }
-
-    public DefaultNode(String name, Integer id, ITopology topology) {
-        super(name, id, topology);
-    }
-
-    public DefaultNode(String name, ITopology topology) {
-        super(name, topology.getNodes().size() + 1, topology);
-    }
-
-    public DefaultNode(ITopology topology) {
-        super(topology);
-    }
+public class GraphvizUtils {
+    
 }
