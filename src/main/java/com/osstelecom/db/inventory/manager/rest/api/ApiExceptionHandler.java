@@ -41,6 +41,7 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(BasicException.class)
     public ResponseEntity<Object> handleGenericException(
             BasicException ex) {
+                ex.printStackTrace();
         ApiErrorDTO apiError = new ApiErrorDTO();
         apiError.setMsg(ex.getMessage());
         apiError.setStatusCode(ex.getStatusCode());
