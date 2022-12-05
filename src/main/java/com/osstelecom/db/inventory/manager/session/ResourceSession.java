@@ -203,6 +203,12 @@ public class ResourceSession {
         connection.setDomain(domainManager.getDomain(request.getRequestDomain()));
         connection.setAttributes(request.getPayLoad().getAttributes());
         connection.setPropagateOperStatus(request.getPayLoad().getPropagateOperStatus());
+        connection.setName(request.getPayLoad().getConnectionName());
+        connection.setDescription(request.getPayLoad().getDescription());
+        connection.setOwner(request.getUserId());
+        connection.setAdminStatus(request.getPayLoad().getAdminStatus());
+        connection.setBusinessStatus(request.getPayLoad().getBusinessStatus());
+        connection.setCategory(request.getPayLoad().getCategory());
         CreateResourceConnectionResponse response = new CreateResourceConnectionResponse(connection);
         connection.setInsertedDate(new Date());
         
@@ -652,7 +658,7 @@ public class ResourceSession {
         //
         requestedPatch.setDomain(this.domainManager.getDomain(request.getRequestDomain()));
         requestedPatch.setDomainName(requestedPatch.getDomain().getDomainName());
-
+        
         ResourceConnection connection = new ResourceConnection(domainManager.getDomain(request.getRequestDomain()));
         connection.setId(requestedPatch.getId());        
         ResourceConnection fromDBResource = this.findResourceConnection(connection);

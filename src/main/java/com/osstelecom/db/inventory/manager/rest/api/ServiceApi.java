@@ -29,14 +29,18 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
+import com.osstelecom.db.inventory.manager.exception.GenericException;
 import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
+import com.osstelecom.db.inventory.manager.exception.SchemaNotFoundException;
+import com.osstelecom.db.inventory.manager.exception.ScriptRuleException;
 import com.osstelecom.db.inventory.manager.request.CreateServiceRequest;
 import com.osstelecom.db.inventory.manager.request.DeleteServiceRequest;
 import com.osstelecom.db.inventory.manager.request.FilterRequest;
 import com.osstelecom.db.inventory.manager.request.GetServiceRequest;
 import com.osstelecom.db.inventory.manager.request.PatchServiceRequest;
 import com.osstelecom.db.inventory.manager.resources.ServiceResource;
+import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstraintViolationException;
 import com.osstelecom.db.inventory.manager.response.CreateServiceResponse;
 import com.osstelecom.db.inventory.manager.response.DeleteServiceResponse;
 import com.osstelecom.db.inventory.manager.response.FilterResponse;
@@ -88,7 +92,7 @@ public class ServiceApi extends BaseApi {
 
     @AuthenticatedCall(role = {"user"})
     @PatchMapping(path = "/{domainName}/service/{serviceId}", produces = "application/json", consumes = "application/json")
-    public PatchServiceResponse patchManagedResource(@RequestBody PatchServiceRequest request, @PathVariable("domainName") String domainName, @PathVariable("serviceId") String serviceId) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
+    public PatchServiceResponse patchManagedResource(@RequestBody PatchServiceRequest request, @PathVariable("domainName") String domainName, @PathVariable("serviceId") String serviceId) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
         this.setUserDetails(request);
         request.setRequestDomain(domainName);
         request.getPayLoad().setId(serviceId);
@@ -97,7 +101,7 @@ public class ServiceApi extends BaseApi {
 
     @AuthenticatedCall(role = {"user"})
     @PatchMapping(path = "/{domainName}/service", produces = "application/json", consumes = "application/json")
-    public PatchServiceResponse patchManagedResource(@RequestBody PatchServiceRequest request, @PathVariable("domainName") String domainName) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
+    public PatchServiceResponse patchManagedResource(@RequestBody PatchServiceRequest request, @PathVariable("domainName") String domainName) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
         this.setUserDetails(request);
         request.setRequestDomain(domainName);
         return serviceSession.updateService(request);

@@ -19,8 +19,6 @@ package com.osstelecom.db.inventory.manager.operation;
 
 import java.io.IOException;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
@@ -29,11 +27,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.arangodb.entity.DocumentCreateEntity;
+import com.arangodb.entity.DocumentDeleteEntity;
 import com.arangodb.entity.DocumentUpdateEntity;
 import com.google.common.eventbus.Subscribe;
 import com.osstelecom.db.inventory.manager.dao.ManagedResourceDao;
 import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import com.osstelecom.db.inventory.manager.events.ManagedResourceCreatedEvent;
+import com.osstelecom.db.inventory.manager.events.ManagedResourceDeletedEvent;
 import com.osstelecom.db.inventory.manager.events.ManagedResourceUpdatedEvent;
 import com.osstelecom.db.inventory.manager.events.ResourceSchemaUpdatedEvent;
 import com.osstelecom.db.inventory.manager.events.ServiceStateTransionedEvent;
@@ -103,13 +103,21 @@ public class ManagedResourceManager extends Manager {
      * @param resource
      * @return
      */
-    public ManagedResource delete(ManagedResource resource) throws ArangoDaoException {
+    public ManagedResource delete(ManagedResource resource) throws ArangoDaoException, ResourceNotFoundException {
         //
         // Cuidar dessa lógica é triste...
         //
 //        throw new UnsupportedOperationException("Not supported yet.");
+        DocumentDeleteEntity<ManagedResource> deletedEntity = this.managedResourceDao.deleteResource(resource);
+        if (deletedEntity.getOld() != null) {
+            ManagedResource deletedResource = deletedEntity.getOld();
+            ManagedResourceDeletedEvent deletedEvent = new ManagedResourceDeletedEvent(deletedResource, null);
+            this.eventManager.notifyResourceEvent(deletedEvent);
+            return deletedResource;
+        } else {
+            throw new ResourceNotFoundException("Delete Request, didnt find the resource.");
+        }
 
-        return this.managedResourceDao.deleteResource(resource).getOld();
     }
 
     @EventListener(ApplicationReadyEvent.class)

@@ -132,11 +132,17 @@ public class CircuitResourceManager extends Manager {
      * @param resource
      * @return
      */
-    public CircuitResource updateCircuitResource(CircuitResource resource) throws ArangoDaoException {
+    public CircuitResource updateCircuitResource(CircuitResource resource) throws ArangoDaoException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
         String timerId = startTimer("updateCircuitResource");
         try {
             lockManager.lock();
             resource.setLastModifiedDate(new Date());
+
+            ResourceSchemaModel schemaModel = schemaSession.loadSchema(resource.getAttributeSchemaName());
+            resource.setSchemaModel(schemaModel);
+            schemaSession.validateResourceSchema(resource);
+            dynamicRuleSession.evalResource(resource, "U", this);
+
             DocumentUpdateEntity<CircuitResource> result = circuitResourceDao.updateResource(resource);
             CircuitResource newResource = result.getNew();
             CircuitResource oldResource = result.getOld();
@@ -181,7 +187,7 @@ public class CircuitResourceManager extends Manager {
      * @param updatedEvent
      */
     @Subscribe
-    public void onResourceConnectionUpdatedEvent(ResourceConnectionUpdatedEvent updatedEvent) throws InvalidRequestException {
+    public void onResourceConnectionUpdatedEvent(ResourceConnectionUpdatedEvent updatedEvent) throws InvalidRequestException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
         ResourceConnection newConnection = updatedEvent.getNewResource();
         ResourceConnection oldConnection = updatedEvent.getOldResource();
         if (newConnection.getCircuits() != null) {
@@ -240,7 +246,7 @@ public class CircuitResourceManager extends Manager {
 
                     }
                     this.updateCircuitResource(circuit);
-                } catch (ArangoDaoException ex) {
+                } catch (ArangoDaoException | AttributeConstraintViolationException | GenericException | SchemaNotFoundException | ScriptRuleException ex) {
                     logger.error("Failed to Update Resources on circuit", ex);
                 }
             });
@@ -259,7 +265,7 @@ public class CircuitResourceManager extends Manager {
      * @param connections
      * @param target
      */
-    private void computeCircuitIntegrity(CircuitResource circuit) throws ArangoDaoException {
+    private void computeCircuitIntegrity(CircuitResource circuit) throws ArangoDaoException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
         //
         // Forks with the logic of checking integrity
         //

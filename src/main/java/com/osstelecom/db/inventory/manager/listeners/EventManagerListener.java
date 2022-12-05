@@ -107,7 +107,6 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
                 if (event != null) {
                     String eventProcessindInstanceId = UUID.randomUUID().toString();
                     Long start = System.currentTimeMillis();
-//                    logger.debug("Start Processing Event: [{}] ID:[{}]", event.getClass().getCanonicalName(), eventProcessindInstanceId);
                     eventBus.post(event);
                     Long end = System.currentTimeMillis();
                     Long took = end - start;
