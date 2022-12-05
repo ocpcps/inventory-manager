@@ -44,7 +44,10 @@ public class ArangoDBStartup {
         ArangoDB graphDb = new ArangoDB.Builder()
                 .host(arangoDbConfiguration.getHost(), arangoDbConfiguration.getPort())
                 .user(arangoDbConfiguration.getUser())
-                .password(arangoDbConfiguration.getPassword()).build();
+                .password(arangoDbConfiguration.getPassword())
+                .maxConnections(25)
+                .keepAliveInterval(5 * 60) //5 minutes
+                .build();
         ArangoDatabase database = graphDb.db(DbName.of(arangoDbConfiguration.getDatabaseName()));
 
         if (!database.exists()) {

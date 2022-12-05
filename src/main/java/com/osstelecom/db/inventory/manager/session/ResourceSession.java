@@ -652,8 +652,10 @@ public class ResourceSession {
         //
         requestedPatch.setDomain(this.domainManager.getDomain(request.getRequestDomain()));
         requestedPatch.setDomainName(requestedPatch.getDomain().getDomainName());
-        
-        ResourceConnection fromDBResource = this.findResourceConnection(requestedPatch);
+
+        ResourceConnection connection = new ResourceConnection(domainManager.getDomain(request.getRequestDomain()));
+        connection.setId(requestedPatch.getId());        
+        ResourceConnection fromDBResource = this.findResourceConnection(connection);
 
         //
         // Se chegamos aqui, temos coisas para atualizar...
