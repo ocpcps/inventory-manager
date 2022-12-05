@@ -55,6 +55,12 @@ public interface DefaultNetworkObject {
 
     public void setWidth(Integer width);
 
+    /**
+     * Checks whatever this node was already visited by the current interaction
+     *
+     * @param uid
+     * @return
+     */
     public Boolean isVisited(String uid);
 
     public void setVisited(String uid);

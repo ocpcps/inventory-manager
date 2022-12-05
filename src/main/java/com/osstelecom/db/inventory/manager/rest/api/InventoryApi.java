@@ -26,37 +26,25 @@ import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.SchemaNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.ScriptRuleException;
 import com.osstelecom.db.inventory.manager.request.CreateConnectionRequest;
-import com.osstelecom.db.inventory.manager.request.CreateManagedResourceRequest;
 import com.osstelecom.db.inventory.manager.request.CreateResourceLocationRequest;
-import com.osstelecom.db.inventory.manager.request.DeleteManagedResourceRequest;
 import com.osstelecom.db.inventory.manager.request.DeleteResourceConnectionRequest;
-import com.osstelecom.db.inventory.manager.request.FilterRequest;
-import com.osstelecom.db.inventory.manager.request.FindManagedResourceRequest;
 import com.osstelecom.db.inventory.manager.request.FindResourceConnectionRequest;
-import com.osstelecom.db.inventory.manager.request.ListManagedResourceRequest;
 import com.osstelecom.db.inventory.manager.request.ListResourceConnectionRequest;
-import com.osstelecom.db.inventory.manager.request.PatchManagedResourceRequest;
 import com.osstelecom.db.inventory.manager.request.PatchResourceConnectionRequest;
 import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstraintViolationException;
 import com.osstelecom.db.inventory.manager.resources.exception.ConnectionAlreadyExistsException;
 import com.osstelecom.db.inventory.manager.resources.exception.MetricConstraintException;
 import com.osstelecom.db.inventory.manager.resources.exception.NoResourcesAvailableException;
-import com.osstelecom.db.inventory.manager.response.CreateManagedResourceResponse;
 import com.osstelecom.db.inventory.manager.response.CreateResourceConnectionResponse;
 import com.osstelecom.db.inventory.manager.response.CreateResourceLocationResponse;
-import com.osstelecom.db.inventory.manager.response.DeleteManagedResourceResponse;
 import com.osstelecom.db.inventory.manager.response.DeleteResourceConnectionResponse;
-import com.osstelecom.db.inventory.manager.response.FilterResponse;
-import com.osstelecom.db.inventory.manager.response.FindManagedResourceResponse;
 import com.osstelecom.db.inventory.manager.response.FindResourceConnectionResponse;
-import com.osstelecom.db.inventory.manager.response.PatchManagedResourceResponse;
 import com.osstelecom.db.inventory.manager.response.PatchResourceConnectionResponse;
 import com.osstelecom.db.inventory.manager.response.TypedListResponse;
 import com.osstelecom.db.inventory.manager.session.ResourceSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -133,72 +121,8 @@ public class InventoryApi extends BaseApi {
         }
     }
 
-    /**
-     * Cria um Managed Resource
-     *
-     * @param requestBody
-     * @param domain
-     * @return
-     * @throws GenericException
-     * @throws SchemaNotFoundException
-     * @throws AttributeConstraintViolationException
-     * @throws ScriptRuleException
-     * @throws InvalidRequestException
-     * @throws DomainNotFoundException
-     */
-    @AuthenticatedCall(role = {"user"})
-    @PutMapping(path = "/{domain}/resource", produces = "application/json", consumes = "application/json")
-    public CreateManagedResourceResponse createManagedResource(@RequestBody CreateManagedResourceRequest request, @PathVariable("domain") String domain) throws GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, InvalidRequestException, DomainNotFoundException, ArangoDaoException, ResourceNotFoundException {
-        try {
-            this.setUserDetails(request);
-            request.setRequestDomain(domain);
-            return resourceSession.createManagedResource(request);
-        } catch (ArangoDBException ex) {
-            GenericException exa = new GenericException(ex.getMessage());
-            exa.setStatusCode(ex.getResponseCode());
-            throw exa;
-        }
-    }
-
-    /**
-     * Find Managed Resource By ID
-     *
-     * @param domain
-     * @param resourceId
-     * @return
-     * @throws InvalidRequestException
-     * @throws DomainNotFoundException
-     * @throws ResourceNotFoundException
-     * @throws ArangoDaoException
-     */
-    @AuthenticatedCall(role = {"user"})
-    @GetMapping(path = "/{domain}/resource/{resourceId}", produces = "application/json")
-    public FindManagedResourceResponse findManagedResourceById(@PathVariable("domain") String domain, @PathVariable("resourceId") String resourceId) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
-        FindManagedResourceRequest findRequest = new FindManagedResourceRequest(resourceId, domain);
-        this.setUserDetails(findRequest);
-        return resourceSession.findManagedResourceById(findRequest);
-    }
-
-    @AuthenticatedCall(role = {"user"})
-    @DeleteMapping(path = "/{domain}/resource/{resourceId}", produces = "application/json")
-    public DeleteManagedResourceResponse deleteManagedResourceById(@PathVariable("domain") String domain, @PathVariable("resourceId") String resourceId) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
-        DeleteManagedResourceRequest deleteRequest = new DeleteManagedResourceRequest(resourceId, domain);
-        this.setUserDetails(deleteRequest);
-        return resourceSession.deleteManagedResource(deleteRequest);
-    }
-
-    @AuthenticatedCall(role = {"user"})
-    @GetMapping(path = "/{domain}/resource", produces = "application/json")
-    public TypedListResponse listManagedResource(@PathVariable("domain") String domain) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
-        //
-        // This is a Find ALL Query
-        //
-        ListManagedResourceRequest listRequest = new ListManagedResourceRequest(domain);
-        this.setUserDetails(listRequest);
-
-        return resourceSession.listManagedResources(listRequest);
-    }
-
+    
+    
     @AuthenticatedCall(role = {"user"})
     @GetMapping(path = "/{domain}/connection", produces = "application/json")
     public TypedListResponse listResourceConnections(@PathVariable("domain") String domain) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
@@ -211,57 +135,7 @@ public class InventoryApi extends BaseApi {
         return resourceSession.listResourceConnection(listRequest);
     }
 
-    /**
-     * Aplica um filtro
-     *
-     * @param filter
-     * @param domain
-     * @return
-     * @throws ResourceNotFoundException
-     * @throws GenericException
-     * @throws SchemaNotFoundException
-     * @throws AttributeConstraintViolationException
-     * @throws ScriptRuleException
-     * @throws AttributeConstraintViolationException
-     * @throws DomainNotFoundException
-     */
-    @AuthenticatedCall(role = {"user"})
-    @PostMapping(path = "/{domain}/filter", produces = "application/json", consumes = "application/json")
-    public FilterResponse findManagedResourceByFilter(@RequestBody FilterRequest filter, @PathVariable("domain") String domain) throws ArangoDaoException, ResourceNotFoundException, DomainNotFoundException, InvalidRequestException {
-        this.setUserDetails(filter);
-        filter.setRequestDomain(domain);
-        return resourceSession.findManagedResourceByFilter(filter);
-    }
-
-    /**
-     * Atualiza um managed resource
-     *
-     * @param strReq
-     * @param domainName
-     * @param resourceId
-     * @return
-     * @throws DomainNotFoundException
-     * @throws ResourceNotFoundException
-     * @throws ArangoDaoException
-     * @throws InvalidRequestException
-     */
-    @AuthenticatedCall(role = {"user"})
-    @PatchMapping(path = "/{domain}/resource/{resourceId}", produces = "application/json", consumes = "application/json")
-    public PatchManagedResourceResponse patchManagedResource(@RequestBody PatchManagedResourceRequest request, @PathVariable("domain") String domainName, @PathVariable("resourceId") String resourceId) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException, ScriptRuleException {
-        this.setUserDetails(request);
-        request.setRequestDomain(domainName);
-        request.getPayLoad().setId(resourceId);
-        return this.resourceSession.patchManagedResource(request);
-    }
-
-    @AuthenticatedCall(role = {"user"})
-    @PatchMapping(path = "/{domain}/resource", produces = "application/json", consumes = "application/json")
-    public PatchManagedResourceResponse patchManagedResource(@RequestBody PatchManagedResourceRequest request, @PathVariable("domain") String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException, ScriptRuleException {
-        this.setUserDetails(request);
-        request.setRequestDomain(domainName);
-        return this.resourceSession.patchManagedResource(request);
-    }
-
+    
     @AuthenticatedCall(role = {"user"})
     @GetMapping(path = "/{domain}/resource/category", produces = "application/json")
     public TypedListResponse getResourceCategories(@PathVariable("domain") String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException {

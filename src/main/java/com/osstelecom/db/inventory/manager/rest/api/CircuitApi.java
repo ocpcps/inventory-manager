@@ -28,14 +28,18 @@ import com.osstelecom.db.inventory.manager.request.CreateCircuitPathRequest;
 import com.osstelecom.db.inventory.manager.request.CreateCircuitRequest;
 import com.osstelecom.db.inventory.manager.request.FilterRequest;
 import com.osstelecom.db.inventory.manager.request.GetCircuitPathRequest;
+import com.osstelecom.db.inventory.manager.request.PatchCircuitResourceRequest;
 import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstraintViolationException;
 import com.osstelecom.db.inventory.manager.response.CreateCircuitPathResponse;
 import com.osstelecom.db.inventory.manager.response.CreateCircuitResponse;
 import com.osstelecom.db.inventory.manager.response.FilterResponse;
 import com.osstelecom.db.inventory.manager.response.GetCircuitPathResponse;
+import com.osstelecom.db.inventory.manager.response.PatchCircuitResourceResponse;
 import com.osstelecom.db.inventory.manager.security.model.AuthenticatedCall;
 import com.osstelecom.db.inventory.manager.session.CircuitSession;
+import java.io.IOException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -44,7 +48,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- *
+ * @changelog -------------------------------------------------- 25-11-2022:
+ * Lucas Nishimura <lucas.nishimura at telefonica.com> Revisado so métodos de
+ * insert update delete
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 08.08.2022
  */
@@ -75,6 +81,26 @@ public class CircuitApi extends BaseApi {
         request.setRequestDomain(domain);
         this.setUserDetails(request);
         return circuitSession.createCircuit(request);
+    }
+
+    /**
+     * Atualiza os dados do circuito
+     *
+     * @param request
+     * @param domain
+     * @return
+     * @throws DomainNotFoundException
+     * @throws ResourceNotFoundException
+     * @throws ArangoDaoException
+     * @throws IOException
+     * @throws InvalidRequestException
+     */
+    @AuthenticatedCall(role = {"user"})
+    @PatchMapping(path = "/{domain}/circuit", produces = "application/json", consumes = "application/json")
+    public PatchCircuitResourceResponse patchCircuit(@RequestBody PatchCircuitResourceRequest request, @PathVariable("domain") String domain) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, IOException, InvalidRequestException {
+        request.setRequestDomain(domain);
+        this.setUserDetails(request);
+        return circuitSession.patchCircuitResource(request);
     }
 
     /**

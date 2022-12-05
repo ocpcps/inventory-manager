@@ -34,7 +34,7 @@ import org.slf4j.LoggerFactory;
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 24.10.2022
  */
-public class WeakNodesAlgorithm implements ITopolocyAlgorithm {
+public class WeakNodesAlgorithm implements ITopologyAlgorithm {
 
     private AtomicLong counter = new AtomicLong(0L);
     private AtomicLong interationCounter = new AtomicLong(0L);
@@ -73,7 +73,9 @@ public class WeakNodesAlgorithm implements ITopolocyAlgorithm {
         this.start();
     }
 
-//    @Override
+    /**
+     * This is the actually representation where the algorith processes
+     */
     public void start() {
         Long start = System.currentTimeMillis();
         if (this.queue != null && !this.queue.isEmpty()) {
@@ -124,9 +126,11 @@ public class WeakNodesAlgorithm implements ITopolocyAlgorithm {
             INetworkNode source = job.getSource();
             INetworkNode target = job.getTarget();
             List<String> pathList = new ArrayList<>();
-//            List<Integer> level = new ArrayList<>();
             Integer level = 0;
             pathList.add(source.getUuid());
+            //
+            // Generate an unique UID for this Interaction
+            //
             String uid = source.getUuid();
 
             if (job.getUseCache()) {
@@ -152,6 +156,7 @@ public class WeakNodesAlgorithm implements ITopolocyAlgorithm {
             }
             source.setVisited(uid);
             for (INetworkConnection connection : source.getUnVisitedConnections(uid)) {
+                connection.setVisited(uid);
                 INetworkNode other = source.getOtherSide(connection);
 
                 if (!other.isVisited(uid)) {

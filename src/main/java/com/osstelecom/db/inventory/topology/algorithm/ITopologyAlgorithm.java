@@ -26,7 +26,7 @@ import java.util.Queue;
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 24.10.2022
  */
-public interface ITopolocyAlgorithm {
+public interface ITopologyAlgorithm {
 
     /**
      * Run Algorithm Calculation

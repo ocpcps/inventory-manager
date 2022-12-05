@@ -18,6 +18,7 @@
 package com.osstelecom.db.inventory.topology.session;
 
 import com.osstelecom.db.inventory.manager.dto.TransientTopologyDTO;
+import com.osstelecom.db.inventory.manager.operation.ServiceManager;
 import com.osstelecom.db.inventory.manager.request.ComputeTransientTopologyRequest;
 import com.osstelecom.db.inventory.manager.response.ComputeTransientTopologyResponse;
 import com.osstelecom.db.inventory.topology.DefaultTopology;
@@ -29,6 +30,8 @@ import guru.nidi.graphviz.model.MutableGraph;
 import guru.nidi.graphviz.parse.Parser;
 import java.io.IOException;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 /**
@@ -39,7 +42,11 @@ import org.springframework.stereotype.Service;
 @Service
 public class TransientTopologySession {
 
+    private Logger logger = LoggerFactory.getLogger(TransientTopologySession.class);
+
     public ComputeTransientTopologyResponse computeTransientTopologyRequest(ComputeTransientTopologyRequest request) throws IOException {
+
+        logger.debug("Computing Transient Topology Data");
         //
         // First Create the Transient Graph:
         //
@@ -47,7 +54,7 @@ public class TransientTopologySession {
         MutableGraph g = new Parser().read(transientData.getDotTopology());
         DefaultTopology topology = new DefaultTopology(new WeakNodesImpactManager());
         //
-        // Transfere o conehcimento do Graph para nosso modelo
+        // Transfere o conhecimento do Graph para nosso modelo
         //
         g.nodes().forEach(n -> {
             //
@@ -75,12 +82,14 @@ public class TransientTopologySession {
             }
 
         });
-        System.out.println("Topology Data, Nodes:" + topology.getNodes().size() + " Connections: " + topology.getConnections().size() + " Compute Weak Nodes:[" + transientData.getComputeWeakNodes() + "]");
+        logger.debug("Topology Data, Nodes:" + topology.getNodes().size() + " Connections: " + topology.getConnections().size() + " Compute Weak Nodes:[" + transientData.getComputeWeakNodes() + "]");
+
+//        System.out.println("Topology Data, Nodes:" + topology.getNodes().size() + " Connections: " + topology.getConnections().size() + " Compute Weak Nodes:[" + transientData.getComputeWeakNodes() + "]");
         //
         // Topologia está montada..
         //
         if (transientData.getComputeWeakNodes()) {
-            System.out.println("Weak Nodes Calculation");
+            logger.debug("Weak Nodes Calculation");
             List<INetworkNode> unreacheable = topology.getImpactManager().getUnreacheableNodes();
             if (unreacheable != null) {
                 unreacheable.forEach(u -> {
