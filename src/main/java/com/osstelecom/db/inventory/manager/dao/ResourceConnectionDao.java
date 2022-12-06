@@ -51,7 +51,7 @@ import java.io.IOException;
  */
 @Component
 public class ResourceConnectionDao extends AbstractArangoDao<ResourceConnection> {
-    
+
     @Override
     public ResourceConnection findResource(ResourceConnection resource)
             throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
@@ -66,33 +66,33 @@ public class ResourceConnectionDao extends AbstractArangoDao<ResourceConnection>
             if (resource.getDomain() == null) {
                 throw new ArangoDaoException("Missing Domain Information for Resource");
             }
-            
+
             String aql = " for doc in `" + resource.getDomain().getConnections() + "` filter ";
-            
+
             Map<String, Object> bindVars = new HashMap<>();
             aql += " doc.domainName == @domainName";
-            
+
             bindVars.put("domainName", resource.getDomain().getDomainName());
-            
+
             if (resource.getId() != null) {
                 bindVars.put("_id", resource.getId());
             }
             if (resource.getKey() != null) {
                 bindVars.put("_key", resource.getKey());
             }
-            
+
             if (resource.getName() != null) {
                 bindVars.put("name", resource.getName());
             }
-            
+
             if (resource.getNodeAddress() != null) {
                 bindVars.put("nodeAddress", resource.getNodeAddress());
             }
-            
+
             if (resource.getClassName() != null) {
                 bindVars.put("className", resource.getClassName());
             }
-            
+
             if (resource.getAttributeSchemaName() != null) {
                 //
                 // Ugly fix.
@@ -121,13 +121,13 @@ public class ResourceConnectionDao extends AbstractArangoDao<ResourceConnection>
                 aql += " and  doc.fromResource.nodeAddress == @fromNodeAddress ";
                 aql += " and  doc.fromResource.className   == @fromClassName ";
                 aql += " and  doc.fromResource.domainName  == @fromDomainName ";
-                
+
                 bindVars.put("fromNodeAddress", resource.getFrom().getNodeAddress());
                 bindVars.put("fromClassName", resource.getFrom().getClassName());
                 bindVars.put("fromDomainName", resource.getFrom().getDomainName());
-                
+
             }
-            
+
             if (resource.getTo() != null
                     && resource.getTo().getNodeAddress() != null
                     && resource.getTo().getClassName() != null
@@ -135,7 +135,7 @@ public class ResourceConnectionDao extends AbstractArangoDao<ResourceConnection>
                 aql += " and  doc.toResource.nodeAddress == @toNodeAddress ";
                 aql += " and  doc.toResource.className   == @toClassName ";
                 aql += " and  doc.toResource.domainName  == @toDomainName ";
-                
+
                 bindVars.put("toNodeAddress", resource.getTo().getNodeAddress());
                 bindVars.put("toClassName", resource.getTo().getClassName());
                 bindVars.put("toDomainName", resource.getTo().getDomainName());
@@ -144,7 +144,7 @@ public class ResourceConnectionDao extends AbstractArangoDao<ResourceConnection>
 //            aql += " return doc";
             FilterDTO filter = new FilterDTO(aql, bindVars);
             GraphList<ResourceConnection> result = this.query(filter, ResourceConnection.class, this.getDb());
-            
+
             return result.getOne();
         } catch (ResourceNotFoundException | InvalidRequestException ex) {
             throw ex;
@@ -156,7 +156,7 @@ public class ResourceConnectionDao extends AbstractArangoDao<ResourceConnection>
             //
         }
     }
-    
+
     @Override
     public DocumentCreateEntity<ResourceConnection> insertResource(ResourceConnection resource)
             throws ArangoDaoException {
@@ -175,7 +175,7 @@ public class ResourceConnectionDao extends AbstractArangoDao<ResourceConnection>
             //
         }
     }
-    
+
     @Override
     public DocumentCreateEntity<ResourceConnection> upsertResource(ResourceConnection resource)
             throws ArangoDaoException {
@@ -195,7 +195,7 @@ public class ResourceConnectionDao extends AbstractArangoDao<ResourceConnection>
             //
         }
     }
-    
+
     @Override
     public DocumentUpdateEntity<ResourceConnection> updateResource(ResourceConnection resource)
             throws ArangoDaoException {
@@ -216,7 +216,7 @@ public class ResourceConnectionDao extends AbstractArangoDao<ResourceConnection>
             //
         }
     }
-    
+
     @Override
     public DocumentDeleteEntity<ResourceConnection> deleteResource(ResourceConnection resource) throws ArangoDaoException {
         try {
@@ -230,7 +230,7 @@ public class ResourceConnectionDao extends AbstractArangoDao<ResourceConnection>
             //
         }
     }
-    
+
     @Override
     public GraphList<ResourceConnection> findResourcesBySchemaName(String attributeSchemaName, Domain domain)
             throws ArangoDaoException, InvalidRequestException, ResourceNotFoundException {
@@ -240,7 +240,7 @@ public class ResourceConnectionDao extends AbstractArangoDao<ResourceConnection>
             Map<String, Object> bindVars = new HashMap<>();
             bindVars.put("attributeSchemaName", attributeSchemaName);
             FilterDTO filter = new FilterDTO(aql, bindVars);
-            
+
             return this.query(filter, ResourceConnection.class, this.getDb());
         } catch (InvalidRequestException | ResourceNotFoundException ex) {
             throw ex;
@@ -248,7 +248,7 @@ public class ResourceConnectionDao extends AbstractArangoDao<ResourceConnection>
             throw new ArangoDaoException(ex);
         }
     }
-    
+
     @Override
     public GraphList<ResourceConnection> findResourcesByClassName(String className, Domain domain)
             throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
@@ -264,7 +264,7 @@ public class ResourceConnectionDao extends AbstractArangoDao<ResourceConnection>
             throw new ArangoDaoException(ex);
         }
     }
-    
+
     @Override
     public GraphList<ResourceConnection> findResourceByFilter(FilterDTO filter,
             Domain domain) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
@@ -272,11 +272,11 @@ public class ResourceConnectionDao extends AbstractArangoDao<ResourceConnection>
             String aql = " for doc in   `" + domain.getConnections() + "` ";
             aql += " filter doc.domainName == @domainName ";
             filter.getBindings().put("domainName", domain.getDomainName());
-            
+
             if (filter.getAqlFilter() != null && !filter.getAqlFilter().trim().equals("")) {
                 aql += " and " + filter.getAqlFilter();
             }
-            
+
             if (filter.getSortCondition() != null) {
                 aql += " " + filter.getSortCondition();
             }
@@ -290,7 +290,7 @@ public class ResourceConnectionDao extends AbstractArangoDao<ResourceConnection>
             throw new ArangoDaoException(ex);
         }
     }
-    
+
     @Override
     public MultiDocumentEntity<DocumentUpdateEntity<ResourceConnection>> updateResources(
             List<ResourceConnection> resources, Domain domain) throws ArangoDaoException {
@@ -325,7 +325,7 @@ public class ResourceConnectionDao extends AbstractArangoDao<ResourceConnection>
                 + "      filter @circuitId  in v.circuits[*] \n"
                 + "        \n"
                 + "       return v";
-        
+
         HashMap<String, Object> bindVars = new HashMap<>();
         bindVars.put("dLimit", circuit.getCircuitPath().size() + 1);
         bindVars.put("aPoint", circuit.getaPoint().getId());
@@ -334,20 +334,24 @@ public class ResourceConnectionDao extends AbstractArangoDao<ResourceConnection>
         logger.info("(query) RUNNING: AQL:[{}]", aql);
         bindVars.forEach((k, v) -> {
             logger.info("\t  [@{}]=[{}]", k, v);
-            
+
         });
         ArangoCursor<ResourceConnection> cursor = this.getDb().query(aql, bindVars,
                 new AqlQueryOptions().count(true).batchSize(5000), ResourceConnection.class);
         return new GraphList<>(cursor);
     }
-    
+
     @Override
-    public Long getCount(Domain domain) throws ResourceNotFoundException, IOException, InvalidRequestException {
+    public Long getCount(Domain domain) throws  IOException, InvalidRequestException {
         String aql = "for doc in `" + domain.getConnections() + "` ";
         FilterDTO filter = new FilterDTO(aql);
-        GraphList<ResourceConnection> result = this.query(filter, ResourceConnection.class, this.getDb());
-        Long longValue = result.size();
-        result.close();
-        return longValue;
+        try {
+            GraphList<ResourceConnection> result = this.query(filter, ResourceConnection.class, this.getDb());
+            Long longValue = result.size();
+            result.close();
+            return longValue;
+        } catch (ResourceNotFoundException ex) {
+            return 0L;
+        }
     }
 }

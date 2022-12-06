@@ -24,4 +24,39 @@ package com.osstelecom.db.inventory.manager.request;
  */
 public class GetCircuitPathRequest extends CreateCircuitPathRequest {
 
+    private String circuitId;
+    private String domainName;
+
+    public GetCircuitPathRequest(String circuitId, String domainName) {
+        this.circuitId = circuitId;
+        this.domainName = domainName;
+    }
+
+    /**
+     * @return the circuitId
+     */
+    public String getCircuitId() {
+        return circuitId;
+    }
+
+    /**
+     * @param circuitId the circuitId to set
+     */
+    public void setCircuitId(String circuitId) {
+        this.circuitId = circuitId;
+    }
+
+    /**
+     * @return the domainName
+     */
+    public String getDomainName() {
+        return domainName;
+    }
+
+    /**
+     * @param domainName the domainName to set
+     */
+    public void setDomainName(String domainName) {
+        this.domainName = domainName;
+    }
 }

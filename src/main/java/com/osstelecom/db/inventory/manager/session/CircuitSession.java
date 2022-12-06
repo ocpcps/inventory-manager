@@ -53,6 +53,7 @@ import com.osstelecom.db.inventory.manager.response.CreateCircuitPathResponse;
 import com.osstelecom.db.inventory.manager.response.CreateCircuitResponse;
 import com.osstelecom.db.inventory.manager.response.FilterResponse;
 import com.osstelecom.db.inventory.manager.response.GetCircuitPathResponse;
+import com.osstelecom.db.inventory.manager.response.GetCircuitResponse;
 import com.osstelecom.db.inventory.manager.response.PatchCircuitResourceResponse;
 import java.io.IOException;
 
@@ -83,7 +84,7 @@ public class CircuitSession {
      *
      * @param request
      */
-    public PatchCircuitResourceResponse patchCircuitResource(PatchCircuitResourceRequest request) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, IOException, InvalidRequestException {
+    public PatchCircuitResourceResponse patchCircuitResource(PatchCircuitResourceRequest request) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, IOException, InvalidRequestException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
 
         if (request == null && request.getPayLoad() == null) {
             throw new InvalidRequestException("Please provide data in the request and payLoad");
@@ -328,7 +329,7 @@ public class CircuitSession {
      * @throws ArangoDaoException
      */
     public CreateCircuitPathResponse createCircuitPath(CreateCircuitPathRequest request)
-            throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
+            throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
         CreateCircuitPathResponse r = new CreateCircuitPathResponse(request.getPayLoad());
         //
         // Valida se temos paths...na request
@@ -430,4 +431,11 @@ public class CircuitSession {
         return response;
     }
 
+    public GetCircuitResponse findCircuitById(GetCircuitPathRequest req) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
+        Domain domain = this.domainManager.getDomain(req.getDomainName());
+        CircuitResource circuit = new CircuitResource(domain);
+        circuit.setKey(req.getCircuitId());
+        circuit = this.circuitResourceManager.findCircuitResource(circuit);
+        return new GetCircuitResponse(circuit);
+    }
 }

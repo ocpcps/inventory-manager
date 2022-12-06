@@ -248,7 +248,7 @@ public class ServiceManager extends Manager {
      * @param oldService
      * @throws ArangoDaoException
      */
-    private void resolveCircuitServiceLinks(ServiceResource newService, ServiceResource oldService) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
+    private void resolveCircuitServiceLinks(ServiceResource newService, ServiceResource oldService) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
         //
         // Aqui temos certeza que o serviço foi criado, então vamos pegar e atualizar as dependencias do circuito
         //

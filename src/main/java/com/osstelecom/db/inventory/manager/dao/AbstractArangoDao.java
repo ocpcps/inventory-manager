@@ -222,7 +222,7 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
         }
     }
 
-    public abstract Long getCount(Domain domain) throws ResourceNotFoundException, IOException, InvalidRequestException;
+    public abstract Long getCount(Domain domain) throws IOException, InvalidRequestException;
 
     public ArangoDatabase getDb() {
         return this.arangoDatabase;

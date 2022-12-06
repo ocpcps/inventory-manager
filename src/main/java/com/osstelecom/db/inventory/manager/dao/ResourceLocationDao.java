@@ -272,12 +272,16 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
     }
 
     @Override
-    public Long getCount(Domain domain) throws ResourceNotFoundException, IOException, InvalidRequestException {
+    public Long getCount(Domain domain) throws  IOException, InvalidRequestException {
         String aql = "for doc in `" + domain.getConnections() + "` ";
         FilterDTO filter = new FilterDTO(aql);
-        GraphList<ResourceLocation> result = this.query(filter, ResourceLocation.class, this.getDb());
-        Long longValue = result.size();
-        result.close();
-        return longValue;
+        try {
+            GraphList<ResourceLocation> result = this.query(filter, ResourceLocation.class, this.getDb());
+            Long longValue = result.size();
+            result.close();
+            return longValue;
+        } catch (ResourceNotFoundException ex) {
+            return 0L;
+        }
     }
 }

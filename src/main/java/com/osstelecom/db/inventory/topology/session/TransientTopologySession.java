@@ -18,7 +18,6 @@
 package com.osstelecom.db.inventory.topology.session;
 
 import com.osstelecom.db.inventory.manager.dto.TransientTopologyDTO;
-import com.osstelecom.db.inventory.manager.operation.ServiceManager;
 import com.osstelecom.db.inventory.manager.request.ComputeTransientTopologyRequest;
 import com.osstelecom.db.inventory.manager.response.ComputeTransientTopologyResponse;
 import com.osstelecom.db.inventory.topology.DefaultTopology;

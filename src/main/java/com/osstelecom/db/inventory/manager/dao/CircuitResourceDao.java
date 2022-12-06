@@ -395,12 +395,16 @@ public class CircuitResourceDao extends AbstractArangoDao<CircuitResource> {
     // Found in Domain:" + domain.getDomainName());
     // }
     @Override
-    public Long getCount(Domain domain) throws ResourceNotFoundException, IOException, InvalidRequestException {
+    public Long getCount(Domain domain) throws IOException, InvalidRequestException {
         String aql = "for doc in `" + domain.getCircuits() + "` ";
         FilterDTO filter = new FilterDTO(aql);
-        GraphList<CircuitResource> result = this.query(filter, CircuitResource.class, this.getDb());
-        Long longValue = result.size();
-        result.close();
-        return longValue;
+        try {
+            GraphList<CircuitResource> result = this.query(filter, CircuitResource.class, this.getDb());
+            Long longValue = result.size();
+            result.close();
+            return longValue;
+        } catch (ResourceNotFoundException ex) {
+            return 0L;
+        }
     }
 }

@@ -287,12 +287,16 @@ public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
     }
 
     @Override
-    public Long getCount(Domain domain) throws ResourceNotFoundException, IOException, InvalidRequestException {
+    public Long getCount(Domain domain) throws IOException, InvalidRequestException {
         String aql = "for doc in `" + domain.getServices() + "` ";
         FilterDTO filter = new FilterDTO(aql);
-        GraphList<ServiceResource> result = this.query(filter, ServiceResource.class, this.getDb());
-        Long longValue = result.size();
-        result.close();
-        return longValue;
+        try {
+            GraphList<ServiceResource> result = this.query(filter, ServiceResource.class, this.getDb());
+            Long longValue = result.size();
+            result.close();
+            return longValue;
+        } catch (ResourceNotFoundException ex) {
+            return 0L;
+        }
     }
 }

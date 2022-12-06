@@ -227,11 +227,11 @@ public class DomainManager extends Manager {
                 this.domainDao.updateDomain(domain);
             } else {
                 Calendar cal = Calendar.getInstance();
-                Date now= new Date();
+                Date now = new Date();
                 cal.setTime(now);
                 cal.add(Calendar.MINUTE, -5);
-                if (domain.getLastStatsCalc().after(cal.getTime())) {
-                    logger.debug("TTL Time Stats for domain: [{}]", domain.getDomainName());
+                if (domain.getLastStatsCalc().before(cal.getTime())) {
+                    logger.debug("TTL Time Stats for domain: [{}] Last Date: [{}]", domain.getDomainName(),domain.getLastStatsCalc());
                     domain.setResourceCount(managedResourceDao.getCount(domain));
                     domain.setConnectionCount(resourceConnectionDao.getCount(domain));
                     domain.setCircuitCount(circuitResourceDao.getCount(domain));
@@ -244,10 +244,11 @@ public class DomainManager extends Manager {
                     this.domainDao.updateDomain(domain);
                 }
             }
-        } catch (IOException | ResourceNotFoundException ex) {
+        } catch (IOException ex) {
             //
             // Omite o Error
             //
+            logger.error("Generic Error Updating Domain Stats", ex);
         } catch (InvalidRequestException ex) {
             logger.error("Failed to Get Count", ex);
         }
