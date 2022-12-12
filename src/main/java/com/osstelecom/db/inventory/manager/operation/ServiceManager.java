@@ -189,7 +189,7 @@ public class ServiceManager extends Manager {
             //
             String toPersistId = service.getDomain().getServices() + "/" + service.getKey();
             if (service.getOperationalStatus() == null || service.getOperationalStatus().isEmpty()) {
-                service.setOperationalStatus("UP");
+                service.setOperationalStatus("Up");
             }
             
             service.setAtomId(service.getDomain().addAndGetId());
@@ -803,7 +803,7 @@ public class ServiceManager extends Manager {
                     if (workingCircuits.isEmpty()) {
                         if (!service.getBroken()) {
                             service.setBroken(true);
-                            service.setOperationalStatus("DOWN");
+                            service.setOperationalStatus("Down");
                         }
                     } else {
                         /**
@@ -813,7 +813,7 @@ public class ServiceManager extends Manager {
                          */
                         if (service.getBroken()) {
                             service.setBroken(false);
-                            service.setOperationalStatus("UP");
+                            service.setOperationalStatus("Up");
                             if (!brokenCircuits.isEmpty()) {
                                 service.setDegrated(true);
                             } else {
@@ -831,7 +831,7 @@ public class ServiceManager extends Manager {
                     if (!service.getBroken()) {
                         service.setBroken(true);
                         service.setDegrated(true);
-                        service.setOperationalStatus("DOWN");
+                        service.setOperationalStatus("Down");
                     }
                     
                 }
@@ -839,9 +839,9 @@ public class ServiceManager extends Manager {
             
             if (service.getBroken()) {
                 service.setDegrated(true);
-                service.setOperationalStatus("DOWN");
+                service.setOperationalStatus("Down");
             } else {
-                service.setOperationalStatus("UP");
+                service.setOperationalStatus("Up");
             }
         } else if (service.getDependencies() != null && !service.getDependencies().isEmpty()) {
             //
@@ -871,13 +871,13 @@ public class ServiceManager extends Manager {
                     if (workingServices.isEmpty()) {
                         if (!service.getBroken()) {
                             service.setBroken(true);
-                            service.setOperationalStatus("DOWN");
+                            service.setOperationalStatus("Down");
                         }
                     } else {
                         
                         if (service.getBroken()) {
                             service.setBroken(false);
-                            service.setOperationalStatus("UP");
+                            service.setOperationalStatus("Up");
                             if (!brokenServices.isEmpty()) {
                                 service.setDegrated(true);
                             } else {
@@ -894,7 +894,7 @@ public class ServiceManager extends Manager {
                     if (!service.getBroken()) {
                         service.setBroken(true);
                         service.setDegrated(true);
-                        service.setOperationalStatus("DOWN");
+                        service.setOperationalStatus("Down");
                     }
                     
                 }

@@ -11,6 +11,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import com.arangodb.entity.DocumentCreateEntity;
+import com.arangodb.entity.DocumentDeleteEntity;
 import com.arangodb.entity.DocumentUpdateEntity;
 import com.google.common.eventbus.Subscribe;
 import com.osstelecom.db.inventory.manager.dao.CircuitResourceDao;
@@ -64,6 +65,11 @@ public class CircuitResourceManager extends Manager {
     private DomainManager domainManager;
 
     private Logger logger = LoggerFactory.getLogger(CircuitResourceManager.class);
+
+    public CircuitResource deleteCircuitResource(CircuitResource circuitResource) throws ArangoDaoException {
+        DocumentDeleteEntity<CircuitResource> result = this.circuitResourceDao.deleteResource(circuitResource);
+        return result.getOld();
+    }
 
     /**
      * Creates a Circuit Resource
@@ -282,6 +288,7 @@ public class CircuitResourceManager extends Manager {
                 //
                 // Transitou de normal para degradado
                 //
+                connection.setOperationalStatus("Up");
                 degratedFlag = true;
             }
 
@@ -347,10 +354,10 @@ public class CircuitResourceManager extends Manager {
         }
 
         if (circuit.getBroken()) {
-            circuit.setOperationalStatus("DOWN");
+            circuit.setOperationalStatus("Down");
             circuit.setDegrated(true);
         } else {
-            circuit.setOperationalStatus("UP");
+            circuit.setOperationalStatus("Up");
         }
         if (circuit.getBrokenResources() != null) {
             if (!circuit.getBroken() && !circuit.getBrokenResources().isEmpty()) {

@@ -347,6 +347,7 @@ public class DomainManager extends Manager {
                 }
 
                 if (connection.getOperationalStatus().equalsIgnoreCase("UP")) {
+                    connection.setOperationalStatus("Up");
                     topology.addConnection(from, to, "Connection: " + connection.getId());
                 }
 

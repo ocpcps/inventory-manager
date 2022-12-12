@@ -45,8 +45,8 @@ public class ArangoDBStartup {
                 .host(arangoDbConfiguration.getHost(), arangoDbConfiguration.getPort())
                 .user(arangoDbConfiguration.getUser())
                 .password(arangoDbConfiguration.getPassword())
-                .maxConnections(25)
-                .keepAliveInterval(5 * 60) //5 minutes //<-- Está causando ConcurrentException
+//                .maxConnections(25)
+//                .keepAliveInterval(5 * 60) //5 minutes //<-- Está causando ConcurrentException
                 .build();
         ArangoDatabase database = graphDb.db(DbName.of(arangoDbConfiguration.getDatabaseName()));
 

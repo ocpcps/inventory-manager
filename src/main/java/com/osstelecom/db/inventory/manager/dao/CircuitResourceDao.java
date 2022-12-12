@@ -193,7 +193,7 @@ public class CircuitResourceDao extends AbstractArangoDao<CircuitResource> {
     @Override
     public DocumentDeleteEntity<CircuitResource> deleteResource(CircuitResource resource) throws ArangoDaoException {
         try {
-            return this.getDb().collection(resource.getDomain().getCircuits()).deleteDocument(resource.getId(), CircuitResource.class, new DocumentDeleteOptions().returnOld(true));
+            return this.getDb().collection(resource.getDomain().getCircuits()).deleteDocument(resource.getKey(), CircuitResource.class, new DocumentDeleteOptions().returnOld(true));
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         } finally {

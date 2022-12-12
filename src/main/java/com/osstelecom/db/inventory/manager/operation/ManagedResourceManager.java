@@ -53,6 +53,8 @@ import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstrai
 import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
 import com.osstelecom.db.inventory.manager.session.DynamicRuleSession;
 import com.osstelecom.db.inventory.manager.session.SchemaSession;
+import java.util.ArrayList;
+import java.util.List;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 
@@ -279,7 +281,7 @@ public class ManagedResourceManager extends Manager {
             //
             // Mover isso para session...
             //
-            if (!resource.getOperationalStatus().equalsIgnoreCase("UP") && !resource.getOperationalStatus().equalsIgnoreCase("DOWN")) {
+            if (!resource.getOperationalStatus().equals("Up") && !resource.getOperationalStatus().equals("Down")) {
                 throw new InvalidRequestException("Invalid OperationalStatus:[" + resource.getOperationalStatus() + "]");
             }
 
@@ -369,9 +371,15 @@ public class ManagedResourceManager extends Manager {
 
             try {
                 GraphList<ManagedResource> nodesToUpdate = this.findManagedResourcesBySchemaName(update.getModel(), domain);
-                logger.debug("Found {} Elements to Update", nodesToUpdate.size());
+                logger.debug("Found {} Elements to Update On Domain:[{}]", nodesToUpdate.size(), domain.getDomainName());
 
-                ResourceSchemaModel model = this.schemaSession.loadSchema(update.getModel().getSchemaName());
+                ResourceSchemaModel model = this.schemaSession.loadSchema(update.getModel().getSchemaName(), false);
+
+                logger.debug("Schema:[{}] New Model Fields:", update.getModel().getSchemaName());
+                model.getAttributes().forEach((k, v) -> {
+                    logger.debug("  Field: [{}] Type: [{}]", k, v.getVariableType());
+                });
+
                 AtomicLong totalProcessed = new AtomicLong(0L);
 
                 //
@@ -382,6 +390,10 @@ public class ManagedResourceManager extends Manager {
                     try {
 
                         resource.setSchemaModel(model);
+
+                        //
+                        //
+                        //
                         schemaSession.validateResourceSchema(resource);
 
                     } catch (AttributeConstraintViolationException ex) {
@@ -401,7 +413,7 @@ public class ManagedResourceManager extends Manager {
                         logger.error("Failed to Update resource:[{}]", resource.getKey(), ex);
                     }
                     if (totalProcessed.incrementAndGet() % 1000 == 0) {
-                        logger.debug("Updated {} Records", totalProcessed.get());
+                        logger.debug("Updated {} Records of / {}", totalProcessed.get(), nodesToUpdate.size());
                     }
 
                 });
