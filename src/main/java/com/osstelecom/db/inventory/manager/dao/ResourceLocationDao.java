@@ -101,7 +101,7 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
         // A complexidade de validação dos requistos do dado deve ter sido feita na dao antes de chegar aqui.
         //
         try {
-            return this.getDb().collection(resource.getDomain().getCircuits()).updateDocument(resource.getKey(), resource, new DocumentUpdateOptions().returnNew(true).returnOld(true).keepNull(false).waitForSync(false), ResourceLocation.class);
+            return this.getDb().collection(resource.getDomain().getCircuits()).updateDocument(resource.getKey(), resource, new DocumentUpdateOptions().returnNew(true).returnOld(true).mergeObjects(false).keepNull(false).waitForSync(false), ResourceLocation.class);
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         } finally {
@@ -140,7 +140,7 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
     public GraphList<ResourceLocation> findResourcesBySchemaName(String attributeSchemaName, Domain domain) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
 //        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
         try {
-            String aql = "for doc in " + domain.getCircuits() + "filter doc.attributeSchemaName == @attributeSchemaName ";
+            String aql = "for doc in `" + domain.getCircuits() + "` filter doc.attributeSchemaName == @attributeSchemaName ";
             Map<String, Object> bindVars = new HashMap<>();
 
             bindVars.put("attributeSchemaName", attributeSchemaName);
@@ -157,7 +157,7 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
     public GraphList<ResourceLocation> findResourcesByClassName(String className, Domain domain) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
 //        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
         try {
-            String aql = "for doc in " + domain.getCircuits() + " filter doc.className == @className ";
+            String aql = "for doc in `" + domain.getCircuits() + "` filter doc.className == @className ";
             Map<String, Object> bindVars = new HashMap<>();
             bindVars.put("attributeSchemaName", className);
             FilterDTO filter = new FilterDTO(aql, bindVars);
@@ -173,7 +173,7 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
     public GraphList<ResourceLocation> findResourceByFilter(FilterDTO filter, Domain domain) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
 //        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
         try {
-            String aql = " for doc in   " + domain.getCircuits();
+            String aql = " for doc in   `" + domain.getCircuits() + "`";
             aql += " filter doc.domainName == @domainName ";
             filter.getBindings().put("domainName", domain.getDomainName());
 
@@ -272,7 +272,7 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
     }
 
     @Override
-    public Long getCount(Domain domain) throws  IOException, InvalidRequestException {
+    public Long getCount(Domain domain) throws IOException, InvalidRequestException {
         String aql = "for doc in `" + domain.getConnections() + "` ";
         FilterDTO filter = new FilterDTO(aql);
         try {

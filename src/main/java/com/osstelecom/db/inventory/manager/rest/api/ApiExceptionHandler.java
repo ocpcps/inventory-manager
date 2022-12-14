@@ -19,11 +19,13 @@ package com.osstelecom.db.inventory.manager.rest.api;
 
 import com.osstelecom.db.inventory.manager.dto.ApiErrorDTO;
 import com.osstelecom.db.inventory.manager.exception.BasicException;
+import com.osstelecom.db.inventory.manager.session.CircuitSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
@@ -37,11 +39,17 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @ControllerAdvice
 public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
-
+    
+    //
+    // @since 12/12/2022
+    // @uthor: Lucas Nishimura
+    //
+    private Logger logger = LoggerFactory.getLogger(ApiExceptionHandler.class);
+    
     @ExceptionHandler(BasicException.class)
     public ResponseEntity<Object> handleGenericException(
             BasicException ex) {
-                ex.printStackTrace();
+        ex.printStackTrace();
         ApiErrorDTO apiError = new ApiErrorDTO();
         apiError.setMsg(ex.getMessage());
         apiError.setStatusCode(ex.getStatusCode());
@@ -54,6 +62,7 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
             //
             apiError.setDetails("NONE");
         }
-        return new ResponseEntity(apiError, HttpStatus.INTERNAL_SERVER_ERROR);
+        logger.error("Excpetion Occurreed: MSG:[{}] ClassName: [{}]", ex.getMessage(), apiError.getClassName());
+        return new ResponseEntity(apiError, HttpStatus.valueOf(apiError.getStatusCode()));
     }
 }

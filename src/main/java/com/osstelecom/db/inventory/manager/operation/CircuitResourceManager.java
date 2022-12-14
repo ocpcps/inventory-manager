@@ -288,7 +288,8 @@ public class CircuitResourceManager extends Manager {
                 //
                 // Transitou de normal para degradado
                 //
-                connection.setOperationalStatus("Up");
+                
+               
                 degratedFlag = true;
             }
 
@@ -368,8 +369,13 @@ public class CircuitResourceManager extends Manager {
 
         Long end = System.currentTimeMillis();
         Long took = end - start;
-        logger.debug("Check Circuit Integrity for [{}] Took: {} ms State Changed: {} Broken Count:[{}] Total Connections:[{}]",
-                circuit.getId(), took, stateChanged, circuit.getBrokenResources().size(), connections.size());
+        if (circuit.getBrokenResources() != null) {
+            logger.debug("Check Circuit Integrity for [{}] Took: {} ms State Changed: {} Broken Count:[{}] Total Connections:[{}]",
+                    circuit.getId(), took, stateChanged, circuit.getBrokenResources().size(), connections.size());
+        } else {
+            logger.debug("Check Circuit Integrity for [{}] Took: {} ms State Changed: {}  Total Connections:[{}]",
+                    circuit.getId(), took, stateChanged, connections.size());
+        }
         if (stateChanged) {
             this.updateCircuitResource(circuit);
         }

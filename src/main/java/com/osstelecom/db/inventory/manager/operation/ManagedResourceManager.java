@@ -17,9 +17,7 @@
  */
 package com.osstelecom.db.inventory.manager.operation;
 
-import java.io.IOException;
 import java.util.Date;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,8 +51,6 @@ import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstrai
 import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
 import com.osstelecom.db.inventory.manager.session.DynamicRuleSession;
 import com.osstelecom.db.inventory.manager.session.SchemaSession;
-import java.util.ArrayList;
-import java.util.List;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 
@@ -357,73 +353,73 @@ public class ManagedResourceManager extends Manager {
      * @param update
      */
     public void processSchemaUpdatedEvent(ResourceSchemaUpdatedEvent update) {
-        /**
-         * Here we need to find all resources that are using the schema, update
-         * ip, check validations and save it back to the database. Schemas are
-         * shared between all domains so we need to check all Domains..
-         */
-
-        for (Domain domain : domainManager.getAllDomains()) {
-            //
-            // Update the schema on each domain
-            //
-            logger.debug("Updating Schema[{}] On Domain:[{}]", update.getModel().getSchemaName(), domain.getDomainName());
-
-            try {
-                GraphList<ManagedResource> nodesToUpdate = this.findManagedResourcesBySchemaName(update.getModel(), domain);
-                logger.debug("Found {} Elements to Update On Domain:[{}]", nodesToUpdate.size(), domain.getDomainName());
-
-                ResourceSchemaModel model = this.schemaSession.loadSchema(update.getModel().getSchemaName(), false);
-
-                logger.debug("Schema:[{}] New Model Fields:", update.getModel().getSchemaName());
-                model.getAttributes().forEach((k, v) -> {
-                    logger.debug("  Field: [{}] Type: [{}]", k, v.getVariableType());
-                });
-
-                AtomicLong totalProcessed = new AtomicLong(0L);
-
-                //
-                // We need to make this processing multithread.
-                //
-                nodesToUpdate.forEachParallel(resource -> {
-
-                    try {
-
-                        resource.setSchemaModel(model);
-
-                        //
-                        //
-                        //
-                        schemaSession.validateResourceSchema(resource);
-
-                    } catch (AttributeConstraintViolationException ex) {
-                        //
-                        // resource is invalid model.
-                        //
-
-                        logger.error("Failed to Validate Attributes", ex);
-                        //
-                        // Mark the resource schema model as invalid
-                        //      
-                        resource.getSchemaModel().setIsValid(false);
-                    }
-                    try {
-                        this.managedResourceDao.updateResource(resource);
-                    } catch (ArangoDaoException ex) {
-                        logger.error("Failed to Update resource:[{}]", resource.getKey(), ex);
-                    }
-                    if (totalProcessed.incrementAndGet() % 1000 == 0) {
-                        logger.debug("Updated {} Records of / {}", totalProcessed.get(), nodesToUpdate.size());
-                    }
-
-                });
-            } catch (IOException | IllegalStateException | GenericException | SchemaNotFoundException | InvalidRequestException | ArangoDaoException ex) {
-                logger.error("Failed to update Resource Schema Model", ex);
-            } catch (ResourceNotFoundException ex) {
-                logger.error("Domain Has No Resources on Schema:[{}]", update.getModel(), ex);
-            }
-            logger.debug("Updating Schema[{}] On Domain:[{}] DONE", update.getModel().getSchemaName(), domain.getDomainName());
-        }
+//        /**
+//         * Here we need to find all resources that are using the schema, update
+//         * ip, check validations and save it back to the database. Schemas are
+//         * shared between all domains so we need to check all Domains..
+//         */
+//
+//        for (Domain domain : domainManager.getAllDomains()) {
+//            //
+//            // Update the schema on each domain
+//            //
+//            logger.debug("Updating Schema[{}] On Domain:[{}]", update.getModel().getSchemaName(), domain.getDomainName());
+//
+//            try {
+//                GraphList<ManagedResource> nodesToUpdate = this.findManagedResourcesBySchemaName(update.getModel(), domain);
+//                logger.debug("Found {} Elements to Update On Domain:[{}]", nodesToUpdate.size(), domain.getDomainName());
+//
+//                ResourceSchemaModel model = this.schemaSession.loadSchema(update.getModel().getSchemaName(), false);
+//
+//                logger.debug("Schema:[{}] New Model Fields:", update.getModel().getSchemaName());
+//                model.getAttributes().forEach((k, v) -> {
+//                    logger.debug("  Field: [{}] Type: [{}]", k, v.getVariableType());
+//                });
+//
+//                AtomicLong totalProcessed = new AtomicLong(0L);
+//
+//                //
+//                // We need to make this processing multithread.
+//                //
+//                nodesToUpdate.forEachParallel(resource -> {
+//
+//                    try {
+//
+//                        resource.setSchemaModel(model);
+//
+//                        //
+//                        //
+//                        //
+//                        schemaSession.validateResourceSchema(resource);
+//
+//                    } catch (AttributeConstraintViolationException ex) {
+//                        //
+//                        // resource is invalid model.
+//                        //
+//
+//                        logger.error("Failed to Validate Attributes", ex);
+//                        //
+//                        // Mark the resource schema model as invalid
+//                        //      
+//                        resource.getSchemaModel().setIsValid(false);
+//                    }
+//                    try {
+//                        this.managedResourceDao.updateResource(resource);
+//                    } catch (ArangoDaoException ex) {
+//                        logger.error("Failed to Update resource:[{}]", resource.getKey(), ex);
+//                    }
+//                    if (totalProcessed.incrementAndGet() % 1000 == 0) {
+//                        logger.debug("Updated {} Records of / {}", totalProcessed.get(), nodesToUpdate.size());
+//                    }
+//
+//                });
+//            } catch (IOException | IllegalStateException | GenericException | SchemaNotFoundException | InvalidRequestException | ArangoDaoException ex) {
+//                logger.error("Failed to update Resource Schema Model", ex);
+//            } catch (ResourceNotFoundException ex) {
+//                logger.error("Domain Has No Resources on Schema:[{}]", update.getModel(), ex);
+//            }
+//            logger.debug("Updating Schema[{}] On Domain:[{}] DONE", update.getModel().getSchemaName(), domain.getDomainName());
+//        }
     }
 
     /**

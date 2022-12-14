@@ -85,7 +85,7 @@ public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
                 throw new ArangoDaoException("Missing Domain Information for Resource");
             }
 
-            String aql = " for doc in " + resource.getDomain().getServices() + " filter ";
+            String aql = " for doc in `" + resource.getDomain().getServices() + "` filter ";
 
             Map<String, Object> bindVars = new HashMap<>();
             aql += " doc.domainName == @domainName";
@@ -188,7 +188,7 @@ public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
         // A complexidade de validação dos requistos do dado deve ter sido feita na dao antes de chegar aqui.
         //
         try {
-            return this.getDb().collection(resource.getDomain().getServices()).updateDocument(resource.getKey(), resource, new DocumentUpdateOptions().returnNew(true).returnOld(true).keepNull(false).waitForSync(false), ServiceResource.class);
+            return this.getDb().collection(resource.getDomain().getServices()).updateDocument(resource.getKey(), resource, new DocumentUpdateOptions().returnNew(true).mergeObjects(false).returnOld(true).keepNull(false).waitForSync(false), ServiceResource.class);
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         } finally {
@@ -220,7 +220,7 @@ public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
     @Override
     public GraphList<ServiceResource> findResourcesBySchemaName(String attributeSchemaName, Domain domain) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
         try {
-            String aql = "for doc in " + domain.getServices() + "filter doc.attributeSchemaName == @attributeSchemaName ";
+            String aql = "for doc in `" + domain.getServices() + "` filter doc.attributeSchemaName == @attributeSchemaName ";
             Map<String, Object> bindVars = new HashMap<>();
 
             bindVars.put("attributeSchemaName", attributeSchemaName);
@@ -239,7 +239,7 @@ public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
     @Override
     public GraphList<ServiceResource> findResourcesByClassName(String className, Domain domain) throws ArangoDaoException, InvalidRequestException, ResourceNotFoundException {
         try {
-            String aql = "for doc in " + domain.getServices() + " filter doc.className == @className";
+            String aql = "for doc in `" + domain.getServices() + "` filter doc.className == @className";
             Map<String, Object> bindVars = new HashMap<>();
             bindVars.put("attributeSchemaName", className);
             FilterDTO filter = new FilterDTO(aql, bindVars);
@@ -258,7 +258,7 @@ public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
     public GraphList<ServiceResource> findResourceByFilter(FilterDTO filter, Domain domain) throws ArangoDaoException, ResourceNotFoundException {
         String aql = "";
         try {
-            aql += " for doc in   " + domain.getServices();
+            aql += " for doc in   `" + domain.getServices() + "`";
             aql += " filter doc.domainName == @domainName ";
             filter.getBindings().put("domainName", domain.getDomainName());
 

@@ -27,18 +27,23 @@ import com.osstelecom.db.inventory.manager.request.IRequest;
 public class ResourceNotFoundException extends BasicException {
 
     public ResourceNotFoundException() {
+        super();
+        this.statusCode = 204;
     }
 
     public ResourceNotFoundException(String msg) {
         super(msg);
+        this.statusCode = 204;
     }
 
     public ResourceNotFoundException(IRequest<?> request) {
         super(request);
+        this.statusCode = 204;
     }
 
     public ResourceNotFoundException(IRequest<?> request, String message) {
         super(request, message);
+        this.statusCode = 204;
     }
 
     public ResourceNotFoundException(IRequest<?> request, String message, Throwable cause) {
@@ -47,10 +52,12 @@ public class ResourceNotFoundException extends BasicException {
 
     public ResourceNotFoundException(IRequest<?> request, Throwable cause) {
         super(request, cause);
+        this.statusCode = 204;
     }
 
     public ResourceNotFoundException(IRequest<?> request, String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(request, message, cause, enableSuppression, writableStackTrace);
+        this.statusCode = 204;
     }
 
 }

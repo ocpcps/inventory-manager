@@ -231,7 +231,7 @@ public class DomainManager extends Manager {
                 cal.setTime(now);
                 cal.add(Calendar.MINUTE, -5);
                 if (domain.getLastStatsCalc().before(cal.getTime())) {
-                    logger.debug("TTL Time Stats for domain: [{}] Last Date: [{}]", domain.getDomainName(),domain.getLastStatsCalc());
+                    logger.debug("TTL Time Stats for domain: [{}] Last Date: [{}]", domain.getDomainName(), domain.getLastStatsCalc());
                     domain.setResourceCount(managedResourceDao.getCount(domain));
                     domain.setConnectionCount(resourceConnectionDao.getCount(domain));
                     domain.setCircuitCount(circuitResourceDao.getCount(domain));
@@ -349,6 +349,10 @@ public class DomainManager extends Manager {
                 if (connection.getOperationalStatus().equalsIgnoreCase("UP")) {
                     connection.setOperationalStatus("Up");
                     topology.addConnection(from, to, "Connection: " + connection.getId());
+                    logger.debug("Connection from:[{}] To:[{}] is Up", connection.getFrom().getNodeAddress(), connection.getTo().getNodeAddress());
+
+                } else if (connection.getOperationalStatus().equalsIgnoreCase("DOWN")) {
+                    logger.debug("Connection from:[{}] To:[{}] is Down", connection.getFrom().getNodeAddress(), connection.getTo().getNodeAddress());
                 }
 
                 // topology.addConnection(to, from, connection.getId() + ".A");

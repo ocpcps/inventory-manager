@@ -170,7 +170,7 @@ public class CircuitResourceDao extends AbstractArangoDao<CircuitResource> {
         // A complexidade de validação dos requistos do dado deve ter sido feita na dao antes de chegar aqui.
         //
         try {
-            return this.getDb().collection(resource.getDomain().getCircuits()).updateDocument(resource.getKey(), resource, new DocumentUpdateOptions().returnNew(true).returnOld(true).keepNull(false).waitForSync(false), CircuitResource.class);
+            return this.getDb().collection(resource.getDomain().getCircuits()).updateDocument(resource.getKey(), resource, new DocumentUpdateOptions().returnNew(true).returnOld(true).mergeObjects(false).keepNull(false).waitForSync(false), CircuitResource.class);
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         } finally {

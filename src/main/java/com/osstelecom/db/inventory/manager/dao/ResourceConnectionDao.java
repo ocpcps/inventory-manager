@@ -206,7 +206,7 @@ public class ResourceConnectionDao extends AbstractArangoDao<ResourceConnection>
         try {
             return this.getDb().collection(resource.getDomain().getConnections()).updateDocument(resource.getKey(),
                     resource,
-                    new DocumentUpdateOptions().returnNew(true).returnOld(true).keepNull(false).waitForSync(false),
+                    new DocumentUpdateOptions().returnNew(true).mergeObjects(true).returnOld(true).keepNull(false).waitForSync(false),
                     ResourceConnection.class);
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
