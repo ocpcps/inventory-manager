@@ -325,7 +325,7 @@ public class ResourceConnectionManager extends Manager {
         // Update the related dependencies
         //
         try {
-            List<String> relatedCircuits = new ArrayList<>();
+//            List<String> relatedCircuits = new ArrayList<>();
             //
             // Transcrever para um filtro, que busca os recursos relacionados
             // Eventualmente irá se tornar um método no CircuitManager

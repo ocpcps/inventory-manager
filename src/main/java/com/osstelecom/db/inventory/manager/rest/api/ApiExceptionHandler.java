@@ -19,7 +19,6 @@ package com.osstelecom.db.inventory.manager.rest.api;
 
 import com.osstelecom.db.inventory.manager.dto.ApiErrorDTO;
 import com.osstelecom.db.inventory.manager.exception.BasicException;
-import com.osstelecom.db.inventory.manager.session.CircuitSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.Ordered;
@@ -39,13 +38,13 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @Order(Ordered.HIGHEST_PRECEDENCE)
 @ControllerAdvice
 public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
-    
+
     //
     // @since 12/12/2022
     // @uthor: Lucas Nishimura
     //
     private Logger logger = LoggerFactory.getLogger(ApiExceptionHandler.class);
-    
+
     @ExceptionHandler(BasicException.class)
     public ResponseEntity<Object> handleGenericException(
             BasicException ex) {

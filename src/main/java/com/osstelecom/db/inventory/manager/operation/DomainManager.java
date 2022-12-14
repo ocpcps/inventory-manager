@@ -100,6 +100,8 @@ public class DomainManager extends Manager {
     @Autowired
     private CircuitResourceDao circuitResourceDao;
 
+    private ConcurrentHashMap<String, Domain> updatingDomains = new ConcurrentHashMap<>();
+
     private Logger logger = LoggerFactory.getLogger(DomainManager.class);
 
     /**
@@ -232,16 +234,44 @@ public class DomainManager extends Manager {
                 cal.add(Calendar.MINUTE, -5);
                 if (domain.getLastStatsCalc().before(cal.getTime())) {
                     logger.debug("TTL Time Stats for domain: [{}] Last Date: [{}]", domain.getDomainName(), domain.getLastStatsCalc());
-                    domain.setResourceCount(managedResourceDao.getCount(domain));
-                    domain.setConnectionCount(resourceConnectionDao.getCount(domain));
-                    domain.setCircuitCount(circuitResourceDao.getCount(domain));
-                    domain.setServiceCount(serviceResourceDao.getCount(domain));
-                    domain.setLastStatsCalc(new Date());
                     //
-                    // Sync DB
+                    // Estava levando um tempo e travando o front, vamos deixar multithread e assincrono
                     //
-                    this.domains.replace(domain.getDomainName(), domain);
-                    this.domainDao.updateDomain(domain);
+                    if (!this.updatingDomains.containsKey(domain.getDomainName())) {
+                        this.updatingDomains.put(domain.getDomainName(), domain);
+
+                        Thread t = new Thread(() -> {
+                            Long start = System.currentTimeMillis();
+
+                            try {
+                                logger.debug("Starting Stats Calculation for Domain:[{}]", domain.getDomainName());
+                                domain.setResourceCount(managedResourceDao.getCount(domain));
+                                domain.setConnectionCount(resourceConnectionDao.getCount(domain));
+                                domain.setCircuitCount(circuitResourceDao.getCount(domain));
+                                domain.setServiceCount(serviceResourceDao.getCount(domain));
+                                domain.setLastStatsCalc(new Date());
+                                //
+                                // Sync DB
+                                //
+                                domains.replace(domain.getDomainName(), domain);
+                                domainDao.updateDomain(domain);
+
+                            } catch (IOException | InvalidRequestException ex) {
+                                logger.error("Generic Error Updating Domain Stats", ex);
+                            } finally {
+                                this.updatingDomains.remove(domain.getDomainName());
+                                Long end = System.currentTimeMillis();
+                                Long took = end - start;
+                                logger.debug("Stats for domain: [{}] Last Date: [{}] Has Just Updated and Took: [{}] ms", domain.getDomainName(), domain.getLastStatsCalc(), took);
+
+                            }
+                        });
+                        t.setName(domain.getDomainName() + "-stats-thread");
+                        t.start();
+                    } else {
+                        logger.warn("Already Processing Stats for Domain:[{}]", domain.getDomainName());
+                    }
+
                 }
             }
         } catch (IOException ex) {
