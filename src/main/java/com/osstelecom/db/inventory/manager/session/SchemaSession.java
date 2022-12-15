@@ -56,6 +56,7 @@ import com.osstelecom.db.inventory.manager.response.CreateResourceSchemaModelRes
 import com.osstelecom.db.inventory.manager.response.GetSchemasResponse;
 import com.osstelecom.db.inventory.manager.response.PatchResourceSchemaModelResponse;
 import com.osstelecom.db.inventory.manager.response.ResourceSchemaResponse;
+import java.util.logging.Level;
 import org.apache.tools.ant.DirectoryScanner;
 
 /**
@@ -94,6 +95,15 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                         .loadConfiguration()
                         .getSchemaCacheTTL(), TimeUnit.SECONDS)
                 .build();
+
+        try {
+            /**
+             * Vamos carregar todos os schemas
+             */
+            this.loadSchemas();
+        } catch (SchemaNotFoundException | GenericException ex) {
+            logger.error("Failed to Load schemas", ex);
+        }
     }
 
     public ResourceSchemaModel loadSchema(String schemaName, Boolean cached) throws SchemaNotFoundException, GenericException {
@@ -214,11 +224,24 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                 FileReader jsonReader = new FileReader(f);
                 ResourceSchemaModel resourceModel = utilSession.getGson().fromJson(jsonReader,
                         ResourceSchemaModel.class);
+                jsonReader.close();
+
                 if (result == null) {
                     result = resourceModel;
+                } else {
+                    //
+                    // Eu tenho um filho
+                    //
+                    if (!resourceModel.getChildrenSchemas().contains(result.getSchemaName())) {
+                        resourceModel.getChildrenSchemas().add(result.getSchemaName());
+                        try {
+                            this.writeModelToDisk(resourceModel, true);
+                        } catch (InvalidRequestException ex) {
+                            logger.error("Failed to Syncronize Data with DISK");
+                        }
+                    }
                 }
                 logger.debug("Loaded  SchemaName: [" + resourceModel.getSchemaName() + "]");
-                jsonReader.close();
 
                 this.mergeSchemaModelSession(result, resourceModel);
 
@@ -945,15 +968,42 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
 
             this.writeModelToDisk(original, true);
             this.clearSchemaCache();
+
             //
             // Notifica o Message Bus da Atualização, ele vai varrer a base procurando
             // utilizações...
             //
-            eventManager.notifyGenericEvent(new ResourceSchemaUpdatedEvent(original));
+            this.notifyUpdateEvent(original);
         }
         return new PatchResourceSchemaModelResponse(this.loadSchema(original.getSchemaName()));
     }
 
+    /**
+     * Notifica Recursivamente o Bus da atualização
+     *
+     * @param model
+     */
+    private void notifyUpdateEvent(ResourceSchemaModel model) {
+        logger.debug("Notifying Schema Update:[{}] With [{}] Children", model.getSchemaName(), model.getChildrenSchemas().size());
+        eventManager.notifyGenericEvent(new ResourceSchemaUpdatedEvent(model));
+        if (!model.getChildrenSchemas().isEmpty()) {
+            model.getChildrenSchemas().forEach(childSchemaName -> {
+                logger.debug("Notifying Child Schema Update:[{}]", childSchemaName);
+                try {
+                    ResourceSchemaModel childModel = this.loadSchema(childSchemaName);
+                    this.notifyUpdateEvent(childModel);
+                } catch (SchemaNotFoundException | GenericException ex) {
+                    logger.error("Error Processing Child Model on Update event", ex);
+                }
+            });
+        }
+    }
+
+    /**
+     * Check the allowed types of attributes
+     *
+     * @return
+     */
     public List<String> validAttributesType() {
         List<String> validTypes = new ArrayList<>();
         validTypes.add("Number");

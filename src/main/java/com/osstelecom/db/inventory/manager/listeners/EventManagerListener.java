@@ -110,7 +110,7 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
                     eventBus.post(event);
                     Long end = System.currentTimeMillis();
                     Long took = end - start;
-                    logger.debug("End Processing Event: [{}] Done ID:[{}] Took:[{}]ms", event.getClass().getCanonicalName(), eventProcessindInstanceId, took);
+                    logger.debug("End Processing Event: [{}] Done ID:[{}] Took:[{}]ms Queue Size:[{}]", event.getClass().getCanonicalName(), eventProcessindInstanceId, took, eventQueue.size());
                 }
             } catch (InterruptedException ex) {
                 logger.error("Error on Processing Event: [{}]", ex.getMessage());
