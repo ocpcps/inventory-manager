@@ -50,7 +50,7 @@ public class BasicResource {
     /**
      * Mandatory
      */
-    @Schema(description = "The name of the Domain", example = "network")
+    @Schema(description = "The name of the Domain", example = "network",required = true)
     private String domainName;
 
     @Schema(description = "The date representation of the installed date")
@@ -81,12 +81,14 @@ public class BasicResource {
     /**
      * Mandatory
      */
+    @Schema(description = "The Name of the Resource", required = true)
     private String name;
     private String description;
 
     /**
      * Mandatory
      */
+    @Schema(description = "The Node Address of The Resource", required = true)
     private String nodeAddress;
     private String vendor;
     private String version;

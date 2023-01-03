@@ -390,24 +390,39 @@ public class CircuitSession {
             List<ResourceConnection> resolved = new ArrayList<>();
             logger.debug("Paths Size: {}", request.getPayLoad().getPaths().size());
             for (ResourceConnection requestedPath : request.getPayLoad().getPaths()) {
-                logger.debug("Path In Domain : {}", requestedPath.getDomainName());
+
                 if (requestedPath.getDomainName() == null) {
                     requestedPath.setDomain(domain);
+                    requestedPath.setDomainName(domain.getDomainName());
                 } else {
                     requestedPath.setDomain(domainManager.getDomain(requestedPath.getDomainName()));
                 }
+                logger.debug("Path In Domain : {}", requestedPath.getDomainName());
                 //
                 // Valida se dá para continuar
                 //
                 if (requestedPath.getNodeAddress() == null
                         && (requestedPath.getFrom() == null || requestedPath.getTo() == null)) {
                     //
-                    // No Node Address
+                    // No Node Addres
                     //
                     InvalidRequestException ex = new InvalidRequestException(
                             "Please give at least,nodeAddress or from and to");
                     ex.addDetails("connection", requestedPath);
                     throw ex;
+                } else {
+                    //
+                    // Arruma os domains dos recursos abaixo
+                    // 
+
+                    if (requestedPath.getFromResource() != null && requestedPath.getFromResource().getDomainName() == null) {
+                        requestedPath.getFromResource().setDomainName(domain.getDomainName());
+                    }
+
+                    if (requestedPath.getToResource() != null && requestedPath.getToResource().getDomainName() == null) {
+                        requestedPath.getToResource().setDomainName(domain.getDomainName());
+                    }
+
                 }
 
                 ResourceConnection b = resourceConnectionManager.findResourceConnection(requestedPath);
@@ -502,8 +517,6 @@ public class CircuitSession {
         if (circuit.getKey() != null && circuit.getId() == null) {
             circuit.setId(domain.getCircuits() + "/" + circuit.getKey());
         }
-
-       
 
         //
         // Vamos validar se tem algum serviço usando este circuito, pois se houver, não podemos deletar..

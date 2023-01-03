@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: netcompass-db-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: netcompass-db-deployment
+  template:
+    metadata:
+      labels:
+        app: netcompass-db-deployment
+    spec:
+      containers:
+        - name: inventory-manager-db
+          image: quay.apps.mgmt.telcostack.br.telefonica.com/netcompass/netcompass-server/arangodb:latest
+          resources:
+            requests:
+              memory: "32768Mi"
+              cpu: "24"
+            limits:
+              memory: "65536Mi"
+              cpu: "32"
+          ports:
+            - name: arango-port
+              containerPort: 8529
+              protocol: TCP
+          volumeMounts:
+            - mountPath: "/var/lib/arangodb3"
+              name: netcompass-db-volume
+          env:
+            - name: ARANGO_ROOT_PASSWORD
+              value: prod@inventory15
+      volumes:
+        - name: netcompass-db-volume
+          persistentVolumeClaim:
+            claimName: netcompass-db-volume-claim

@@ -2,6 +2,8 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: inventory-manager-api
+  labels:
+    app: netcompass-api
 spec:
   volumes:
     - name: netcompass-app-volume
@@ -33,6 +35,8 @@ spec:
         - name: JAR_PATH
           value: /app/inventory-manager
         - name: JAR_ARGS
-          value: -Xmx4G
+          value: -Xmx4G -Dspring.profiles.active=mvp
         - name: JAR_NAME
-          value: inventory-manager-1.0.0-alpha-security.jar
+          value: inventory-manager-1.0.0-alpha.jar
+        - name: SPRING_PROFILES_DEFAULT
+          value: mvp

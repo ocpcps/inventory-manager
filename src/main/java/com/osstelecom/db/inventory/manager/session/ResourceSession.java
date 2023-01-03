@@ -411,6 +411,8 @@ public class ResourceSession {
 
         if (resource.getAttributeSchemaName() == null) {
             resource.setAttributeSchemaName("resource.default");
+        } else if (!resource.getAttributeSchemaName().startsWith("resource")) {
+            throw new InvalidRequestException("Schema Name Has to Start with resource.");
         }
 
         if (resource.getClassName() == null) {

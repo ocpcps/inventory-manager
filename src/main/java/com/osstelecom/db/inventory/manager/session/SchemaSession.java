@@ -181,6 +181,12 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
         return new ResourceSchemaResponse(this.loadSchema(schemaName));
     }
 
+    public GetSchemasResponse getSchemaByFilter(String filter) throws SchemaNotFoundException, GenericException {
+        GetSchemasResponse r = this.loadSchemas();
+        r.getPayLoad().removeIf(a -> !a.startsWith(filter));
+        return r;
+    }
+
     /**
      * Merge a schema name, the result model is the output
      *
@@ -449,6 +455,10 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                         entry.setValidate(false);
                     }
                     if (entry.getRequired()) {
+                        if (resource.getAttributes() == null) {
+                            throw new AttributeConstraintViolationException(
+                                    "Missing Required Attribute Named:[" + entry.getName() + "]");
+                        }
                         if (!resource.getAttributes().containsKey(entry.getName())) {
                             if (entry.getDefaultValue() != null) {
                                 Object value = this.getAttributeValue(entry, entry.getDefaultValue());
@@ -493,28 +503,32 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                             resource.getAttributes().put(entry.getName(), value);
                         }
                     } else {
-                        if (!resource.getAttributes().containsKey(entry.getName())) {
-                            if (entry.getDefaultValue() != null) {
-                                Object value = getAttributeValue(entry, entry.getDefaultValue());
-                                resource.getAttributes().put(entry.getName(),
-                                        value);
-                            } else {
-                                //
-                                // Isso pode gerar inconsistencia
-                                //
-                            }
-                        } else {
-                            Object value = this.getAttributeValue(entry, resource.getAttributes().get(entry.getName()));
-                            if (value != null) {
-                                String stringValue = value.toString();
-                                if (entry.getValidationRegex() != null && !entry.getValidationRegex().trim().equals("") && entry.getValidate()) {
-                                    if (!stringValue.matches(entry.getValidationRegex())) {
-                                        resource.getSchemaModel().setIsValid(false);
-                                        throw new AttributeConstraintViolationException("Value: [" + stringValue + "] does not matches validation regex:[" + entry.getValidationRegex() + "]");
+                        if (resource.getAttributes() != null) {
+                            if (!resource.getAttributes().containsKey(entry.getName())) {
+                                if (entry.getDefaultValue() != null) {
+                                    Object value = getAttributeValue(entry, entry.getDefaultValue());
+                                    if (value != null) {
+                                        resource.getAttributes().put(entry.getName(),
+                                                value);
                                     }
+                                } else {
+                                    //
+                                    // Isso pode gerar inconsistencia
+                                    //
                                 }
-                                resource.getAttributes().put(entry.getName(),
-                                        value);
+                            } else {
+                                Object value = this.getAttributeValue(entry, resource.getAttributes().get(entry.getName()));
+                                if (value != null) {
+                                    String stringValue = value.toString();
+                                    if (entry.getValidationRegex() != null && !entry.getValidationRegex().trim().equals("") && entry.getValidate()) {
+                                        if (!stringValue.matches(entry.getValidationRegex())) {
+                                            resource.getSchemaModel().setIsValid(false);
+                                            throw new AttributeConstraintViolationException("Value: [" + stringValue + "] does not matches validation regex:[" + entry.getValidationRegex() + "]");
+                                        }
+                                    }
+                                    resource.getAttributes().put(entry.getName(),
+                                            value);
+                                }
                             }
                         }
                     }
@@ -649,10 +663,22 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                     List<String> list = (List) value;
                     return list;
                 } else {
-                    if (value instanceof String) {
-                        return value;
+                    if (value != null) {
+
+                        if (value instanceof String) {
+                            if (value.toString().equals("")) {
+                                //
+                                // Trata como null;
+                                //
+                                return null;
+                            } else {
+                                return value;
+                            }
+                        } else {
+                            throw new AttributeConstraintViolationException("Attribute [" + model.getName() + "] of type:" + model.getVariableType() + " Does not accpect value: [" + value + "] of type:" + value.getClass().getCanonicalName());
+                        }
                     } else {
-                        throw new AttributeConstraintViolationException("Attribute [" + model.getName() + "] of type:" + model.getVariableType() + " Does not accpect value: [" + value + "] of type:" + value.getClass().getCanonicalName());
+                        return null;
                     }
                 }
             } else if (model.getVariableType().equalsIgnoreCase("Number")) {

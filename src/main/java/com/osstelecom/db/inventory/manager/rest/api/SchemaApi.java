@@ -75,9 +75,22 @@ public class SchemaApi extends BaseApi {
      */
     @AuthenticatedCall(role = {"user"})
     @GetMapping(path = "/{schema}", produces = "application/json")
-    public ResourceSchemaResponse getSchameDefinition(@PathVariable("schema") String schema)
+    public ResourceSchemaResponse getSchemaDefinition(@PathVariable("schema") String schema)
             throws GenericException, SchemaNotFoundException {
         return schemaSession.loadSchemaByName(schema);
+    }
+
+    /**
+     * Retrieves the schema representation
+     *
+     * @param schema
+     * @return
+     */
+    @AuthenticatedCall(role = {"user"})
+    @GetMapping(path = "/filter/{filter}", produces = "application/json")
+    public GetSchemasResponse getSchemaByFilter(@PathVariable("filter") String filter)
+            throws GenericException, SchemaNotFoundException {
+        return schemaSession.getSchemaByFilter(filter);
     }
 
     @AuthenticatedCall(role = {"user"})
