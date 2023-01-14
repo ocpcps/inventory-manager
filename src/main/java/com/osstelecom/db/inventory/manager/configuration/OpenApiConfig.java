@@ -19,6 +19,8 @@ package com.osstelecom.db.inventory.manager.configuration;
 
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType;
+import io.swagger.v3.oas.annotations.info.Contact;
+import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.annotations.security.OAuthFlow;
 import io.swagger.v3.oas.annotations.security.OAuthFlows;
 import io.swagger.v3.oas.annotations.security.OAuthScope;
@@ -38,10 +40,15 @@ import org.springframework.context.annotation.Configuration;
                 tokenUrl = "${springdoc.oAuthFlow.tokenUrl}", scopes = {
                     @OAuthScope(name = "read", description = "IdentityPortal.API")}),
                 password = @OAuthFlow(
-                        authorizationUrl = "${springdoc.oAuthFlow.authorizationUrl}",
+//                        authorizationUrl = "${springdoc.oAuthFlow.authorizationUrl}",
                         tokenUrl = "${springdoc.oAuthFlow.tokenUrl}", scopes = {
-                            @OAuthScope(name = "read", description = "IdentityPortal.API")})))
-@OpenAPIDefinition(servers = {
-    @Server(url = "${inventory-manager.api-server}")})
+                            @OAuthScope(name = "read", description = "default.scope")})))
+@OpenAPIDefinition( info = @Info(
+                                title = "Netcompass OpenAPI", 
+                                description = "Netcompass Open API",
+                                version = "0.0.2", 
+                                contact = @Contact(name = "Lucas Nishimura", email = "lucas.nishimura@telefonica.com")), 
+                    servers = {
+                                 @Server(url = "${inventory-manager.api-server}")})
 public class OpenApiConfig {
 }

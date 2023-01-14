@@ -25,6 +25,7 @@ import com.osstelecom.db.inventory.manager.resources.exception.ConnectionNotFoun
 import com.osstelecom.db.inventory.manager.resources.exception.MetricConstraintException;
 import com.osstelecom.db.inventory.manager.resources.exception.NoResourcesAvailableException;
 import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Map;
@@ -49,6 +50,7 @@ public class BasicResource {
     /**
      * Mandatory
      */
+    @Schema(example = "network")
     private String domainName;
 
     private Date installationDate;
