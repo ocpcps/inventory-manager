@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Lucas Nishimura <lucas.nishimura@gmail.com>
+ * Copyright (C) 2023 Lucas Nishimura <lucas.nishimura@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -15,22 +15,29 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package com.osstelecom.db.inventory.manager.request;
-
-import com.osstelecom.db.inventory.manager.dto.FilterDTO;
+package com.osstelecom.db.inventory.visualization.dto;
 
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
- * @created 26.01.2022
+ * @created 12.01.2023
  */
-public class FilterRequest extends BasicRequest<FilterDTO> {
+public class ThreeJSLinkDTO {
 
-    public FilterRequest() {
+    private final String source;
+    private final String target;
+
+    public ThreeJSLinkDTO(String source, String target) {
+        this.source = source;
+        this.target = target;
     }
 
-    public FilterRequest(FilterDTO filter) {
-        this.setPayLoad(filter);
+    public String getSource() {
+        return source;
+    }
+
+    public String getTarget() {
+        return target;
     }
 
 }

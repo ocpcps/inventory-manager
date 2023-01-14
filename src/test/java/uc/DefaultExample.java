@@ -25,6 +25,16 @@ public class DefaultExample {
         Long start = System.currentTimeMillis();
         DefaultTopology topology = new DefaultTopology();
 
+        List<String> nomes = new ArrayList<>();
+        nomes.add("Nishimura");
+        nomes.add("Lucas");
+        nomes.add("Debora");
+
+        for (String nome:nomes){
+            nome = "la";
+            System.out.println(nome);
+        }
+        
         //
         // Elementos da Topologia
         //

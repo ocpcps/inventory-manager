@@ -172,6 +172,16 @@ public class ServiceSession {
     }
 
     public FilterResponse findServiceByFilter(FilterRequest filter) throws InvalidRequestException, ArangoDaoException, DomainNotFoundException, ResourceNotFoundException {
+        //
+        // Validação para evitar abusos de uso da API
+        //
+        if (filter.getPayLoad() != null) {
+            if (filter.getPayLoad().getLimit() != null) {
+                if (filter.getPayLoad().getLimit() > 1000) {
+                    throw new InvalidRequestException("Result Set Limit cannot be over 1000, please descrease limit value to a range between 0 and 1000");
+                }
+            }
+        }
         FilterResponse response = new FilterResponse(filter.getPayLoad());
         if (filter.getPayLoad().getObjects().contains("service") || filter.getPayLoad().getObjects().contains("services")) {
             Domain domain = domainManager.getDomain(filter.getRequestDomain());

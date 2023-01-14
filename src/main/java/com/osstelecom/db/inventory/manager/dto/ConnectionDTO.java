@@ -51,6 +51,15 @@ public class ConnectionDTO {
     private String businessStatus = "Up";
     private Map<String, Object> attributes = new ConcurrentHashMap<>();
     private ServiceResource dependentService;
+    private String key;
+
+    public String getKey() {
+        return key;
+    }
+
+    public void setKey(String key) {
+        this.key = key;
+    }
 
     /**
      * @return the attributes
@@ -342,5 +351,4 @@ public class ConnectionDTO {
     }
 
     
-
 }

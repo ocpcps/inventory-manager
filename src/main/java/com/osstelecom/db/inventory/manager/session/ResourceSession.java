@@ -213,10 +213,18 @@ public class ResourceSession {
         connection.setAdminStatus(request.getPayLoad().getAdminStatus());
         connection.setBusinessStatus(request.getPayLoad().getBusinessStatus());
         connection.setCategory(request.getPayLoad().getCategory());
-        CreateResourceConnectionResponse response = new CreateResourceConnectionResponse(connection);
-        connection.setInsertedDate(new Date());
 
-        resourceConnectionManager.createResourceConnection(connection);
+        if (request.getPayLoad().getKey() != null) {
+            //
+            // Manda um upsert
+            //
+            connection.setKey(request.getPayLoad().getKey());
+        } else {
+            connection.setInsertedDate(new Date());
+        }
+
+        connection = resourceConnectionManager.createResourceConnection(connection);
+        CreateResourceConnectionResponse response = new CreateResourceConnectionResponse(connection);
         return response;
     }
 
@@ -458,6 +466,18 @@ public class ResourceSession {
     public FilterResponse findManagedResourceByFilter(FilterRequest filter) throws InvalidRequestException, ArangoDaoException, DomainNotFoundException, ResourceNotFoundException {
 
         FilterResponse response = new FilterResponse(filter.getPayLoad());
+
+        //
+        // Validação para evitar abusos de uso da API
+        //
+        if (filter.getPayLoad() != null) {
+            if (filter.getPayLoad().getLimit() != null) {
+                if (filter.getPayLoad().getLimit() > 10000) {
+                    throw new InvalidRequestException("Result Set Limit cannot be over 1000, please descrease limit value to a range between 0 and 1000");
+                }
+            }
+        }
+
         if (filter.getPayLoad().getObjects().contains("nodes") || filter.getPayLoad().getObjects().contains("node")) {
             GraphList<ManagedResource> nodesGraph = managedResourceManager.getNodesByFilter(filter.getPayLoad(), filter.getRequestDomain());
             List<ManagedResource> nodes = nodesGraph.toList();
@@ -465,7 +485,8 @@ public class ResourceSession {
             response.getPayLoad().setNodeCount(nodesGraph.size());
             response.setSize(nodesGraph.size());
             response.setArangoStats(nodesGraph.getStats());
-        } else if (filter.getPayLoad().getObjects().contains("connections") || filter.getPayLoad().getObjects().contains("connection")) {
+        }
+        if (filter.getPayLoad().getObjects().contains("connections") || filter.getPayLoad().getObjects().contains("connection")) {
 //            response.getPayLoad().setConnections(resourceConnectionManager.getConnectionsByFilter(filter.getPayLoad(), filter.getRequestDomain()).toList());
 
             GraphList<ResourceConnection> connectionsGraph = resourceConnectionManager.getConnectionsByFilter(filter.getPayLoad(), filter.getRequestDomain());

@@ -21,6 +21,7 @@ import com.osstelecom.db.inventory.manager.request.ComputeTransientTopologyReque
 import com.osstelecom.db.inventory.manager.response.ComputeTransientTopologyResponse;
 import com.osstelecom.db.inventory.manager.security.model.AuthenticatedCall;
 import com.osstelecom.db.inventory.topology.session.TransientTopologySession;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import java.io.IOException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -35,6 +36,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("topology/v1")
+@SecurityRequirement(name = "SecuredAPI")
 public class TransientTopologyApi {
 
     @Autowired

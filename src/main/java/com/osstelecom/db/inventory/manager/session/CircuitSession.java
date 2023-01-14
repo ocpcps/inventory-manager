@@ -472,6 +472,17 @@ public class CircuitSession {
 
     public FilterResponse findCircuitByFilter(FilterRequest filter) throws InvalidRequestException, ArangoDaoException, DomainNotFoundException, ResourceNotFoundException {
         FilterResponse response = new FilterResponse(filter.getPayLoad());
+        //
+        // Validação para evitar abusos de uso da API
+        //
+        if (filter.getPayLoad() != null) {
+            if (filter.getPayLoad().getLimit() != null) {
+                if (filter.getPayLoad().getLimit() > 1000) {
+                    throw new InvalidRequestException("Result Set Limit cannot be over 1000, please descrease limit value to a range between 0 and 1000");
+                }
+            }
+        }
+
         if (filter.getPayLoad().getObjects().contains("circuit") || filter.getPayLoad().getObjects().contains("circuits")) {
             Domain domain = domainManager.getDomain(filter.getRequestDomain());
             GraphList<CircuitResource> graphList = circuitResourceManager.findCircuitsByFilter(filter.getPayLoad(), domain);

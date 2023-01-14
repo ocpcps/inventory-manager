@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Lucas Nishimura <lucas.nishimura@gmail.com>
+ * Copyright (C) 2023 Lucas Nishimura <lucas.nishimura@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -15,22 +15,41 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package com.osstelecom.db.inventory.manager.request;
-
-import com.osstelecom.db.inventory.manager.dto.FilterDTO;
+package com.osstelecom.db.inventory.visualization.dto;
 
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
- * @created 26.01.2022
+ * @created 12.01.2023
  */
-public class FilterRequest extends BasicRequest<FilterDTO> {
+public class ThreeJsNodeDTO {
 
-    public FilterRequest() {
+    private final String id;
+    private final String name;
+    private final String group;
+
+    public ThreeJsNodeDTO(String id, String name, String group, String domain) {
+        this.id = id;
+        this.name = name;
+        this.group = group;
+        this.domain = domain;
+    }
+    private final String domain;
+
+    public String getId() {
+        return id;
     }
 
-    public FilterRequest(FilterDTO filter) {
-        this.setPayLoad(filter);
+    public String getName() {
+        return name;
+    }
+
+    public String getGroup() {
+        return group;
+    }
+
+    public String getDomain() {
+        return domain;
     }
 
 }
