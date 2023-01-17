@@ -17,6 +17,8 @@
  */
 package com.osstelecom.db.inventory.visualization.dto;
 
+import java.util.Objects;
+
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
@@ -26,6 +28,32 @@ public class ThreeJSLinkDTO {
 
     private final String source;
     private final String target;
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 71 * hash + Objects.hashCode(this.source);
+        hash = 71 * hash + Objects.hashCode(this.target);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final ThreeJSLinkDTO other = (ThreeJSLinkDTO) obj;
+        if (!Objects.equals(this.source, other.source)) {
+            return false;
+        }
+        return Objects.equals(this.target, other.target);
+    }
 
     public ThreeJSLinkDTO(String source, String target) {
         this.source = source;

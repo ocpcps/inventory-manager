@@ -506,6 +506,30 @@ public class ResourceSession {
         return response;
     }
 
+    public GraphList<ManagedResource> findManagedResourceByFilter(FilterDTO filter) throws InvalidRequestException, ArangoDaoException, DomainNotFoundException, ResourceNotFoundException {
+
+        if (filter.getObjects().contains("nodes") || filter.getObjects().contains("node")) {
+            GraphList<ManagedResource> nodesGraph = this.managedResourceManager.getNodesByFilter(filter, filter.getDomainName());
+            return nodesGraph;
+        } else {
+            throw new ResourceNotFoundException("No Resource Found for filter")
+                    .addDetails("filter", filter);
+        }
+
+    }
+
+    public GraphList<ResourceConnection> findResourceConnectionByFilter(FilterDTO filter) throws InvalidRequestException, ArangoDaoException, DomainNotFoundException, ResourceNotFoundException {
+
+        if (filter.getObjects().contains("connections") || filter.getObjects().contains("connection")) {
+            GraphList<ResourceConnection> nodesGraph = this.resourceConnectionManager.getConnectionsByFilter(filter, filter.getDomainName());
+            return nodesGraph;
+        } else {
+            throw new ResourceNotFoundException("No Resource Connection Found for filter")
+                    .addDetails("filter", filter);
+        }
+
+    }
+
     public ManagedResource findManagedResource(ManagedResource resource) throws ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
         return this.manager.findManagedResource(resource);
     }

@@ -17,6 +17,7 @@
  */
 package com.osstelecom.db.inventory.manager.exception;
 
+import com.osstelecom.db.inventory.manager.request.BasicRequest;
 import com.osstelecom.db.inventory.manager.request.IRequest;
 import java.io.Serializable;
 import java.util.Map;
@@ -27,9 +28,9 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 15.12.2021
  */
-public abstract class BasicException extends Exception implements Serializable {
+public abstract class BasicException extends Exception implements Serializable, IBasicException {
 
-    protected IRequest<?> request;
+    protected IRequest<? extends BasicRequest> request;
     protected Integer statusCode = 500;
     private Map<String, Object> details;
 
@@ -45,7 +46,7 @@ public abstract class BasicException extends Exception implements Serializable {
         }
     }
 
-    public void addDetails(String key, Object obj) {
+    protected void addDetailMap(String key, Object obj) {
         if (this.details == null) {
             this.details = new ConcurrentHashMap<>();
         }
@@ -59,11 +60,11 @@ public abstract class BasicException extends Exception implements Serializable {
         super(msg);
     }
 
-    protected BasicException(IRequest<?> request) {
+    protected BasicException(IRequest<? extends BasicRequest> request) {
         this.request = request;
     }
 
-    protected BasicException(IRequest<?> request, String message) {
+    protected BasicException(IRequest<? extends BasicRequest> request, String message) {
         super(message);
         this.request = request;
     }
@@ -73,20 +74,20 @@ public abstract class BasicException extends Exception implements Serializable {
         this.handleDetails(cause);
     }
 
-    protected BasicException(IRequest<?> request, String message, Throwable cause) {
+    protected BasicException(IRequest<? extends BasicRequest> request, String message, Throwable cause) {
         super(message, cause);
         this.request = request;
         this.handleDetails(cause);
     }
 
-    protected BasicException(IRequest<?> request, Throwable cause) {
+    protected BasicException(IRequest<? extends BasicRequest> request, Throwable cause) {
         super(cause);
         this.request = request;
         this.handleDetails(cause);
 
     }
 
-    protected BasicException(IRequest<?> request, String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    protected BasicException(IRequest<? extends BasicRequest> request, String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
         this.request = request;
         this.handleDetails(cause);
@@ -95,14 +96,14 @@ public abstract class BasicException extends Exception implements Serializable {
     /**
      * @return the request
      */
-    public IRequest<?> getRequest() {
+    public IRequest<? extends BasicRequest> getRequest() {
         return request;
     }
 
     /**
      * @param request the request to set
      */
-    public void setRequest(IRequest<?> request) {
+    public void setRequest(IRequest<? extends BasicRequest> request) {
         this.request = request;
     }
 

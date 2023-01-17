@@ -17,7 +17,10 @@
  */
 package com.osstelecom.db.inventory.visualization.dto;
 
+import com.osstelecom.db.inventory.manager.resources.GraphList;
+import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import com.osstelecom.db.inventory.manager.response.FilterResponse;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,6 +33,9 @@ public class ThreeJSViewDTO {
 
     private List<ThreeJsNodeDTO> nodes = new ArrayList<>();
     private List<ThreeJSLinkDTO> links = new ArrayList<>();
+
+    public ThreeJSViewDTO() {
+    }
 
     public ThreeJSViewDTO(FilterResponse filter) {
 
@@ -54,6 +60,31 @@ public class ThreeJSViewDTO {
 
                 links.add(new ThreeJSLinkDTO(connection.getFromResource().getKey(), connection.getToResource().getKey()));
             });
+        }
+    }
+
+    public ThreeJSViewDTO(GraphList<ResourceConnection> connections) {
+        //
+        // Popula os nós
+        //
+
+        if (!connections.isEmpty()) {
+            try {
+                connections.forEach(connection -> {
+                    nodes.add(new ThreeJsNodeDTO(connection.getFromResource().getKey(),
+                            connection.getFromResource().getName(),
+                            connection.getFromResource().getAttributeSchemaName(),
+                            connection.getFromResource().getDomainName()));
+
+                    nodes.add(new ThreeJsNodeDTO(connection.getToResource().getKey(),
+                            connection.getToResource().getName(),
+                            connection.getToResource().getAttributeSchemaName(),
+                            connection.getToResource().getDomainName()));
+
+                    links.add(new ThreeJSLinkDTO(connection.getFromResource().getKey(), connection.getToResource().getKey()));
+                });
+            } catch (IOException ex) {
+            }
         }
     }
 

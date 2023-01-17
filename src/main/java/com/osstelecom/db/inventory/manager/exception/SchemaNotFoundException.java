@@ -17,6 +17,7 @@
  */
 package com.osstelecom.db.inventory.manager.exception;
 
+import com.osstelecom.db.inventory.manager.request.BasicRequest;
 import com.osstelecom.db.inventory.manager.request.IRequest;
 
 /**
@@ -33,24 +34,29 @@ public class SchemaNotFoundException extends BasicException {
         super(msg);
     }
 
-    public SchemaNotFoundException(IRequest<?> request) {
+    public SchemaNotFoundException(IRequest<? extends BasicRequest> request) {
         super(request);
     }
 
-    public SchemaNotFoundException(IRequest<?> request, String message) {
+    public SchemaNotFoundException(IRequest<? extends BasicRequest> request, String message) {
         super(request, message);
     }
 
-    public SchemaNotFoundException(IRequest<?> request, String message, Throwable cause) {
+    public SchemaNotFoundException(IRequest<? extends BasicRequest> request, String message, Throwable cause) {
         super(request, message, cause);
     }
 
-    public SchemaNotFoundException(IRequest<?> request, Throwable cause) {
+    public SchemaNotFoundException(IRequest<? extends BasicRequest> request, Throwable cause) {
         super(request, cause);
     }
 
-    public SchemaNotFoundException(IRequest<?> request, String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public SchemaNotFoundException(IRequest<? extends BasicRequest> request, String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(request, message, cause, enableSuppression, writableStackTrace);
     }
 
+    @Override
+    public SchemaNotFoundException addDetails(String key, Object value) {
+        this.addDetailMap(key, value);
+        return this;
+    }
 }

@@ -17,6 +17,8 @@
  */
 package com.osstelecom.db.inventory.visualization.dto;
 
+import java.util.Objects;
+
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
@@ -27,6 +29,40 @@ public class ThreeJsNodeDTO {
     private final String id;
     private final String name;
     private final String group;
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 89 * hash + Objects.hashCode(this.id);
+        hash = 89 * hash + Objects.hashCode(this.name);
+        hash = 89 * hash + Objects.hashCode(this.group);
+        hash = 89 * hash + Objects.hashCode(this.domain);
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final ThreeJsNodeDTO other = (ThreeJsNodeDTO) obj;
+        if (!Objects.equals(this.id, other.id)) {
+            return false;
+        }
+        if (!Objects.equals(this.name, other.name)) {
+            return false;
+        }
+        if (!Objects.equals(this.group, other.group)) {
+            return false;
+        }
+        return Objects.equals(this.domain, other.domain);
+    }
 
     public ThreeJsNodeDTO(String id, String name, String group, String domain) {
         this.id = id;

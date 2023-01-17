@@ -52,6 +52,7 @@ public class FilterDTO {
     private String sortCondition = "";
     private Long offSet = -1L;
     private Long limit = -1L;
+    private String domainName;
     private Boolean paginated = false;
 
     public FilterDTO() {
@@ -75,6 +76,12 @@ public class FilterDTO {
     public FilterDTO(String aqlFilter, Map<String, Object> bindings) {
         this.aqlFilter = aqlFilter;
         this.bindings = bindings;
+    }
+
+    public FilterDTO(String aqlFilter, Map<String, Object> bindings, String domainName) {
+        this.aqlFilter = aqlFilter;
+        this.bindings = bindings;
+        this.domainName = domainName;
     }
 
     public List<ManagedResource> getNodes() {
@@ -327,5 +334,19 @@ public class FilterDTO {
      */
     public Boolean getPaginated() {
         return paginated;
+    }
+
+    /**
+     * @return the domainName
+     */
+    public String getDomainName() {
+        return domainName;
+    }
+
+    /**
+     * @param domainName the domainName to set
+     */
+    public void setDomainName(String domainName) {
+        this.domainName = domainName;
     }
 }

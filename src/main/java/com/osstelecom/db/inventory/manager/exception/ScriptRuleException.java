@@ -17,6 +17,7 @@
  */
 package com.osstelecom.db.inventory.manager.exception;
 
+import com.osstelecom.db.inventory.manager.request.BasicRequest;
 import com.osstelecom.db.inventory.manager.request.IRequest;
 
 /**
@@ -33,11 +34,11 @@ public class ScriptRuleException extends BasicException {
         super(msg);
     }
 
-    public ScriptRuleException(IRequest<?> request) {
+    public ScriptRuleException(IRequest<? extends BasicRequest> request) {
         super(request);
     }
 
-    public ScriptRuleException(IRequest<?> request, String message) {
+    public ScriptRuleException(IRequest<? extends BasicRequest> request, String message) {
         super(request, message);
     }
 
@@ -45,16 +46,21 @@ public class ScriptRuleException extends BasicException {
         super(msg, cause);
     }
 
-    public ScriptRuleException(IRequest<?> request, String message, Throwable cause) {
+    public ScriptRuleException(IRequest<? extends BasicRequest> request, String message, Throwable cause) {
         super(request, message, cause);
     }
 
-    public ScriptRuleException(IRequest<?> request, Throwable cause) {
+    public ScriptRuleException(IRequest<? extends BasicRequest> request, Throwable cause) {
         super(request, cause);
     }
 
-    public ScriptRuleException(IRequest<?> request, String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public ScriptRuleException(IRequest<? extends BasicRequest> request, String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(request, message, cause, enableSuppression, writableStackTrace);
     }
 
+    @Override
+    public ScriptRuleException addDetails(String key, Object value) {
+        this.addDetailMap(key, value);
+        return this;
+    }
 }

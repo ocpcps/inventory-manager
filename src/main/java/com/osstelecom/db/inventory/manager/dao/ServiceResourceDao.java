@@ -128,8 +128,8 @@ public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
             // Creates AQL
             //
             aql = this.buildAqlFromBindings(aql, bindVars, true);
-
-            GraphList<ServiceResource> result = this.query(aql, bindVars, ServiceResource.class, this.getDb());
+            FilterDTO filter = new FilterDTO(aql, bindVars);
+            GraphList<ServiceResource> result = this.query(filter, ServiceResource.class, this.getDb());
             if (result.isEmpty()) {
                 ResourceNotFoundException ex = new ResourceNotFoundException("Resource Not Found");
                 //
