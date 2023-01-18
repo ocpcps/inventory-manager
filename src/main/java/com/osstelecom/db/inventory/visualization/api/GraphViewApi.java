@@ -40,14 +40,13 @@ import org.springframework.web.bind.annotation.RestController;
  * @created 12.01.2023
  */
 @RestController
-@RequestMapping("inventory/v1/view")
-
-public class ViewApi extends BaseApi {
+@RequestMapping("inventory/v1/graph-view")
+public class GraphViewApi extends BaseApi {
 
     @Autowired
     private FilterViewSession viewSession;
 
-    private Logger logger = LoggerFactory.getLogger(ViewApi.class);
+    private Logger logger = LoggerFactory.getLogger(GraphViewApi.class);
 
     @GetMapping(path = "/sample/{limit}", produces = "application/json")
     public ThreeJsViewResponse getSampleView(@PathVariable("limit") Long limit) throws DomainNotFoundException, ArangoDaoException, InvalidRequestException, ResourceNotFoundException {

@@ -1,6 +1,5 @@
 package com.osstelecom.db.inventory.manager.operation;
 
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -54,19 +53,31 @@ public class ResourceLocationManager extends Manager {
      * @throws AttributeConstraintViolationException
      * @throws ScriptRuleException
      */
-    public ResourceLocation createResourceLocation(ResourceLocation resource) throws GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException {
+    public ResourceLocation createResourceLocation(ResourceLocation resource) throws GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, ArangoDaoException {
         String timerId = startTimer("createResourceLocation");
         try {
             lockManager.lock();
-            resource.setKey(this.getUUID());
+            Boolean useUpsert = false;
+            if (resource.getKey() == null) {
+                resource.setKey(this.getUUID());
+            } else {
+                useUpsert = true;
+            }
             resource.setAtomId(resource.getDomain().addAndGetId());
 
             ResourceSchemaModel schemaModel = schemaSession.loadSchema(resource.getAttributeSchemaName());
             resource.setSchemaModel(schemaModel);
             schemaSession.validateResourceSchema(resource);
             dynamicRuleSession.evalResource(resource, "I", this);
-            DocumentCreateEntity<ResourceLocation> result = resourceLocationDao.createResourceLocation(resource);
-            resource.setKey(result.getId());
+
+            DocumentCreateEntity<ResourceLocation> result;
+            if (useUpsert) {
+                result = this.resourceLocationDao.upsertResource(resource);
+            } else {
+                result = this.resourceLocationDao.insertResource(resource);
+            }
+
+            resource.setKey(result.getKey());
             resource.setRevisionId(result.getRev());
             //
             // Aqui de Fato Criou o ResourceLocation

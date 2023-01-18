@@ -59,7 +59,7 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
     }
 
     @Override
-    public DocumentCreateEntity<ResourceLocation> insertResource(ResourceLocation resource) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
+    public DocumentCreateEntity<ResourceLocation> insertResource(ResourceLocation resource) throws ArangoDaoException {
 //        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
 
         //
@@ -77,7 +77,7 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
     }
 
     @Override
-    public DocumentCreateEntity<ResourceLocation> upsertResource(ResourceLocation resource) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
+    public DocumentCreateEntity<ResourceLocation> upsertResource(ResourceLocation resource) throws ArangoDaoException {
 //        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
         //
         // A complexidade de validação dos requistos do dado deve ter sido feita na dao antes de chegar aqui.

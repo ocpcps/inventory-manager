@@ -107,6 +107,8 @@ public class FilterViewSession {
 
             parentKey = parent.getKey();
 
+        } else {
+            viewData.getNodes().add(new ThreeJsNodeDTO(resource.getKey(), resource.getName(), resource.getClassName(), resource.getDomainName()));
         }
 
         String childNodeAqlFilter = " doc.structureId == @structureId";
