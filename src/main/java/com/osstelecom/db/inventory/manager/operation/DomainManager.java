@@ -100,7 +100,7 @@ public class DomainManager extends Manager {
     @Autowired
     private CircuitResourceDao circuitResourceDao;
 
-    private ConcurrentHashMap<String, Domain> updatingDomains = new ConcurrentHashMap<>();
+    private Map<String, Domain> updatingDomains = new ConcurrentHashMap<>();
 
     private Logger logger = LoggerFactory.getLogger(DomainManager.class);
 

@@ -44,6 +44,7 @@ public class Domain {
     private String serviceLayer;
     private String circuits;
     private String circuitsLayer;
+    private String domainDescription;
     @Schema(example = "0")
     private Long resourceCount;
     @Schema(example = "0")
@@ -272,6 +273,10 @@ public class Domain {
      */
     public void setLastStatsCalc(Date lastStatsCalc) {
         this.lastStatsCalc = lastStatsCalc;
+    }
+
+    public String getDomainDescription() {
+        return domainDescription;
     }
 
 }

@@ -19,8 +19,10 @@ package com.osstelecom.db.inventory.manager.rest.api;
 
 import com.osstelecom.db.inventory.manager.dto.ApiErrorDTO;
 import com.osstelecom.db.inventory.manager.exception.BasicException;
+import com.osstelecom.db.inventory.manager.session.UtilSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
@@ -39,6 +41,8 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @ControllerAdvice
 public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 
+    @Autowired
+    private UtilSession utils;
     //
     // @since 12/12/2022
     // @uthor: Lucas Nishimura
@@ -62,6 +66,7 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
             apiError.setDetails("NONE");
         }
         logger.error("Excpetion Occurreed: MSG:[{}] ClassName: [{}]", ex.getMessage(), apiError.getClassName());
+//        logger.error(utils.toJson(ex));
         return new ResponseEntity(apiError, HttpStatus.valueOf(apiError.getStatusCode()));
     }
 }

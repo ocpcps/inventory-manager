@@ -29,7 +29,82 @@ public class DBJobInstance {
 
     private String jobId;
     private Date jobStarted = new Date();
+    private Date jobEnded;
     private DbJobStage currentJobStage;
     private List<DbJobStage> jobStages;
-            
+
+    public DBJobInstance(String jobId) {
+        this.jobId = jobId;
+    }
+
+    /**
+     * @return the jobId
+     */
+    public String getJobId() {
+        return jobId;
+    }
+
+    /**
+     * @param jobId the jobId to set
+     */
+    public void setJobId(String jobId) {
+        this.jobId = jobId;
+    }
+
+    /**
+     * @return the jobStarted
+     */
+    public Date getJobStarted() {
+        return jobStarted;
+    }
+
+    /**
+     * @param jobStarted the jobStarted to set
+     */
+    public void setJobStarted(Date jobStarted) {
+        this.jobStarted = jobStarted;
+    }
+
+    /**
+     * @return the currentJobStage
+     */
+    public DbJobStage getCurrentJobStage() {
+        return currentJobStage;
+    }
+
+    /**
+     * @param currentJobStage the currentJobStage to set
+     */
+    public void setCurrentJobStage(DbJobStage currentJobStage) {
+        this.currentJobStage = currentJobStage;
+    }
+
+    /**
+     * @return the jobStages
+     */
+    public List<DbJobStage> getJobStages() {
+        return jobStages;
+    }
+
+    /**
+     * @param jobStages the jobStages to set
+     */
+    public void setJobStages(List<DbJobStage> jobStages) {
+        this.jobStages = jobStages;
+    }
+
+    /**
+     * @return the jobEnded
+     */
+    public Date getJobEnded() {
+        return jobEnded;
+    }
+
+    /**
+     * @param jobEnded the jobEnded to set
+     */
+    public void setJobEnded(Date jobEnded) {
+        this.jobEnded = jobEnded;
+    }
+
 }

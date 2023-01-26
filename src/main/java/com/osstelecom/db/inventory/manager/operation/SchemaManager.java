@@ -57,7 +57,7 @@ import org.springframework.stereotype.Service;
  * @created 13.12.2022
  */
 @Service
-public class SchemaManager {
+public class SchemaManager extends Manager {
 
     @Autowired
     private SchemaSession schemaSession;

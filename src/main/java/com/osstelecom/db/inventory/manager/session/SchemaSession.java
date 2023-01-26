@@ -656,54 +656,61 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                 //
                 // String will get the String representation as it is..
                 //
-                if (model.getIsList() && value instanceof List) {
-                    //
-                    // lista de string
-                    //
-                    List<String> list = (List) value;
-                    return list;
-                } else {
-                    if (value != null) {
-
-                        if (value instanceof String) {
-                            if (value.toString().equals("")) {
-                                //
-                                // Trata como null;
-                                //
-                                return null;
+                if (value != null && !value.toString().equals("")) {
+                    if (model.getIsList() && value instanceof List) {
+                        //
+                        // lista de string
+                        //
+                        List<String> list = (List) value;
+                        return list;
+                    } else {
+                        if (value != null && !value.toString().equals("")) {
+                            if (value instanceof String) {
+                                if (value.toString().equals("")) {
+                                    //
+                                    // Trata como null;
+                                    //
+                                    return null;
+                                } else {
+                                    return value;
+                                }
                             } else {
-                                return value;
+                                throw new AttributeConstraintViolationException("Attribute [" + model.getName() + "] of type:" + model.getVariableType() + " Does not accpect value: [" + value + "] of type:" + value.getClass().getCanonicalName());
                             }
                         } else {
-                            throw new AttributeConstraintViolationException("Attribute [" + model.getName() + "] of type:" + model.getVariableType() + " Does not accpect value: [" + value + "] of type:" + value.getClass().getCanonicalName());
-                        }
-                    } else {
-                        return null;
-                    }
-                }
-            } else if (model.getVariableType().equalsIgnoreCase("Number")) {
-                if (model.getIsList() && value instanceof List) {
-                    //
-                    // lista de string
-                    //
-                    List<Long> list = (List) value;
-                    return list;
-                } else {
-                    if (value != null) {
-                        if (value.toString().equals("")) {
                             return null;
                         }
-                        if (value instanceof Long) {
-                            return value;
-                        }
-                        if (value.toString().contains(".")) {
-                            Double d = Double.parseDouble(value.toString());
-                            return d.longValue();
-                        }
-                        return Long.parseLong(value.toString());
-                    } else {
-                        return null;
                     }
+                } else {
+                    return null;
+                }
+            } else if (model.getVariableType().equalsIgnoreCase("Number")) {
+                if (value != null && !value.toString().equals("")) {
+                    if (model.getIsList() && value instanceof List) {
+                        //
+                        // lista de string
+                        //
+                        List<Long> list = (List) value;
+                        return list;
+                    } else {
+                        if (value != null) {
+                            if (value.toString().equals("")) {
+                                return null;
+                            }
+                            if (value instanceof Long) {
+                                return value;
+                            }
+                            if (value.toString().contains(".")) {
+                                Double d = Double.parseDouble(value.toString());
+                                return d.longValue();
+                            }
+                            return Long.parseLong(value.toString());
+                        } else {
+                            return null;
+                        }
+                    }
+                } else {
+                    return null;
                 }
             } else if (model.getVariableType().equalsIgnoreCase("Boolean")) {
                 if (model.getIsList() && value instanceof List) {
@@ -713,72 +720,93 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                     List<Boolean> list = (List) value;
                     return list;
                 } else {
-                    if (value instanceof Boolean) {
-                        return value;
-                    }
-                    if (value.toString().equalsIgnoreCase("true") || value.toString().equalsIgnoreCase("false")) {
-                        return value.toString().equalsIgnoreCase("true");
+                    if (value != null && !value.toString().equals("")) {
+                        if (value instanceof Boolean) {
+                            return value;
+                        }
+                        if (value.toString().equalsIgnoreCase("true") || value.toString().equalsIgnoreCase("false")) {
+                            return value.toString().equalsIgnoreCase("true");
+                        } else if (value.toString().equals("")) {
+                            return false;
+                        } else {
+                            throw new AttributeConstraintViolationException("Attribute [" + model.getName() + "] of type:"
+                                    + model.getVariableType() + " Does not accpect value: [" + value + "]");
+                        }
                     } else {
-                        throw new AttributeConstraintViolationException("Attribute [" + model.getName() + "] of type:"
-                                + model.getVariableType() + " Does not accpect value: [" + value + "]");
+                        return false;
                     }
                 }
             } else if (model.getVariableType().equalsIgnoreCase("Float")) {
-                if (model.getIsList() && value instanceof List) {
-                    //
-                    // lista de string
-                    //
-                    List<Float> list = (List) value;
-                    return list;
-                } else {
-                    if (value instanceof Float) {
-                        return value;
+                if (value != null && !value.toString().equals("")) {
+                    if (model.getIsList() && value instanceof List) {
+                        //
+                        // lista de string
+                        //
+                        List<Float> list = (List) value;
+                        return list;
+                    } else {
+                        if (value instanceof Float) {
+                            return value;
+                        }
+                        return Float.parseFloat(value.toString());
                     }
-                    return Float.parseFloat(value.toString());
+                } else {
+                    return null;
                 }
             } else if (model.getVariableType().equalsIgnoreCase("Date")) {
 
-                SimpleDateFormat sdf = new SimpleDateFormat(configurationManager.loadConfiguration().getDateFormat());
-                sdf.setLenient(false);
-                if (model.getIsList() && value instanceof List) {
-                    //
-                    // lista de string
-                    //
-                    List list = (List) value;
-                    return list;
-                } else {
-                    try {
-                        return sdf.parse(value.toString());
-                    } catch (ParseException ex) {
-                        throw new AttributeConstraintViolationException("Attribute [" + model.getName() + "] of type:"
-                                + model.getVariableType() + " Cannot Parse Date Value : [" + value + "] With Mask: ["
-                                + configurationManager.loadConfiguration().getDateFormat() + "]", ex);
+                if (value != null && !value.toString().equals("")) {
+                    SimpleDateFormat sdf = new SimpleDateFormat(configurationManager.loadConfiguration().getDateFormat());
+                    sdf.setLenient(false);
+                    if (model.getIsList() && value instanceof List) {
+                        //
+                        // lista de string
+                        //
+                        List list = (List) value;
+                        return list;
+                    } else {
+                        try {
+                            return sdf.parse(value.toString());
+                        } catch (ParseException ex) {
+                            throw new AttributeConstraintViolationException("Attribute [" + model.getName() + "] of type:"
+                                    + model.getVariableType() + " Cannot Parse Date Value : [" + value + "] With Mask: ["
+                                    + configurationManager.loadConfiguration().getDateFormat() + "]", ex);
+                        }
                     }
+                } else {
+                    return null;
                 }
-
             } else if (model.getVariableType().equalsIgnoreCase("DateTime")) {
-                SimpleDateFormat sdf = new SimpleDateFormat(
-                        configurationManager.loadConfiguration().getDateTimeFormat());
-                sdf.setLenient(false);
-                if (model.getIsList() && value instanceof List) {
-                    //
-                    // lista de string
-                    //
-                    List list = (List) value;
-                    return list;
-                } else {
-                    try {
-                        return sdf.parse(value.toString());
-                    } catch (ParseException ex) {
-                        throw new AttributeConstraintViolationException("Attribute [" + model.getName() + "] of type:"
-                                + model.getVariableType() + " Cannot Parse Date Time Value : [" + value + "] With Mask: ["
-                                + configurationManager.loadConfiguration().getDateTimeFormat() + "]", ex);
+                if (value != null && !value.toString().equals("")) {
+                    SimpleDateFormat sdf = new SimpleDateFormat(
+                            configurationManager.loadConfiguration().getDateTimeFormat());
+                    sdf.setLenient(false);
+                    if (model.getIsList() && value instanceof List) {
+                        //
+                        // lista de string
+                        //
+                        List list = (List) value;
+                        return list;
+                    } else {
+                        try {
+                            return sdf.parse(value.toString());
+                        } catch (ParseException ex) {
+                            throw new AttributeConstraintViolationException("Attribute [" + model.getName() + "] of type:"
+                                    + model.getVariableType() + " Cannot Parse Date Time Value : [" + value + "] With Mask: ["
+                                    + configurationManager.loadConfiguration().getDateTimeFormat() + "]", ex);
 
+                        }
                     }
+                } else {
+                    return null;
                 }
             } else if (model.getVariableType().equalsIgnoreCase("GeoLine")) {
-                List<Float> data = (List<Float>) value;
-                return data;
+                if (value != null && !value.toString().equals("")) {
+                    List<Float> data = (List<Float>) value;
+                    return data;
+                } else {
+                    return null;
+                }
             } else {
                 throw new AttributeConstraintViolationException(
                         "Attribute [" + model.getName() + "] of type:" + model.getVariableType() + " Cannot be parsed");

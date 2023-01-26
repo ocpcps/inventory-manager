@@ -43,6 +43,14 @@ spec:
             value: inventory-adapter-1.0-SNAPSHOT.jar
           - name: SPRING_PROFILES_DEFAULT
             value: dev
+          - name: http.proxyHost
+            value: 10.215.39.5
+          - name: http.proxyPort
+            value: "8080"
+          - name: https.proxyHost
+            value: 10.215.39.5
+          - name: https.proxyPort
+            value: "8080"
       volumes:
         - name: netcompass-api-adapter-volume
           persistentVolumeClaim:

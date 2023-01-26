@@ -103,6 +103,9 @@ public class ResourceSession {
     @Autowired
     private ServiceManager serviceManager;
 
+    @Autowired
+    private UtilSession utils;
+
     private Logger logger = LoggerFactory.getLogger(CircuitSession.class);
 
     /**
@@ -370,6 +373,8 @@ public class ResourceSession {
         filter.setAqlFilter(" ");
         filter.setSortCondition("sort doc.nodeAddress asc");
         filter.getObjects().add("nodes");
+        filter.setLimit(10L);
+        filter.setOffSet(0L);
         TypedListResponse response
                 = new TypedListResponse(this.managedResourceManager
                         .getNodesByFilter(filter, request.getRequestDomain()).toList());
@@ -381,6 +386,8 @@ public class ResourceSession {
         filter.setAqlFilter(" ");
         filter.setSortCondition("sort doc.nodeAddress asc");
         filter.getObjects().add("connections");
+        filter.setLimit(10L);
+        filter.setOffSet(0L);
         TypedListResponse response
                 = new TypedListResponse(this.resourceConnectionManager
                         .getConnectionsByFilter(filter, request.getRequestDomain()).toList());
@@ -402,8 +409,13 @@ public class ResourceSession {
         if (request == null) {
             throw new InvalidRequestException("Request is NULL!");
         }
-        ManagedResource resource = request.getPayLoad();
 
+        if (request.getPayLoad() == null) {
+            logger.warn("Invalid Request Received:[{}]", this.utils.toJson(request));
+            throw new InvalidRequestException("Please Provide a Resrouce !");
+        }
+
+        ManagedResource resource = request.getPayLoad();
         resource.setDomain(domainManager.getDomain(request.getRequestDomain()));
 
         if (resource.getDomain() == null) {
@@ -485,8 +497,7 @@ public class ResourceSession {
             response.getPayLoad().setNodeCount(nodesGraph.size());
             response.setSize(nodesGraph.size());
             response.setArangoStats(nodesGraph.getStats());
-        }
-        if (filter.getPayLoad().getObjects().contains("connections") || filter.getPayLoad().getObjects().contains("connection")) {
+        } else if (filter.getPayLoad().getObjects().contains("connections") || filter.getPayLoad().getObjects().contains("connection")) {
 //            response.getPayLoad().setConnections(resourceConnectionManager.getConnectionsByFilter(filter.getPayLoad(), filter.getRequestDomain()).toList());
 
             GraphList<ResourceConnection> connectionsGraph = resourceConnectionManager.getConnectionsByFilter(filter.getPayLoad(), filter.getRequestDomain());

@@ -122,7 +122,15 @@ public class InventoryApi extends BaseApi {
     }
 
     
-    
+    /**
+     * @deprecated 
+     * @param domain
+     * @return
+     * @throws InvalidRequestException
+     * @throws DomainNotFoundException
+     * @throws ResourceNotFoundException
+     * @throws ArangoDaoException 
+     */
     @AuthenticatedCall(role = {"user"})
     @GetMapping(path = "/{domain}/connection", produces = "application/json")
     public TypedListResponse listResourceConnections(@PathVariable("domain") String domain) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {

@@ -18,17 +18,20 @@
 package com.osstelecom.db.inventory.manager.listeners;
 
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.SubscriberExceptionContext;
 import com.google.common.eventbus.SubscriberExceptionHandler;
 import com.osstelecom.db.inventory.manager.events.BasicResourceEvent;
+import com.osstelecom.db.inventory.manager.jobs.DBJobInstance;
+import com.osstelecom.db.inventory.manager.operation.DbJobManager;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Gerencia os eventos do sistema
@@ -45,6 +48,9 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
 
     private LinkedBlockingQueue<Object> eventQueue = new LinkedBlockingQueue<>(1000);
 
+    @Autowired
+    private DbJobManager jobManager;
+
     private boolean running = false;
 
     public EventManagerListener() {
@@ -57,8 +63,9 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
         this.eventBus.register(this);
     }
 
-    public void registerListener(Object session) {
-        this.eventBus.register(session);
+    public void registerListener(Object listener) {
+        this.eventBus.register(listener);
+
     }
 
     /**
@@ -67,6 +74,7 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
      * @param event
      */
     public synchronized boolean notifyResourceEvent(BasicResourceEvent event) {
+
         //
         // the queue is limited to 1000 Events, after that will be blocking...
         //
@@ -105,12 +113,18 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
             try {
                 Object event = eventQueue.poll(5, TimeUnit.SECONDS);
                 if (event != null) {
+                    //
+                    // Precisa Notificar o Job Manager que uma Job de Atualização está em curso
+                    //
+                    DBJobInstance job = jobManager.createJobInstance();
+                    jobManager.notifyJobStart(job);
                     String eventProcessindInstanceId = UUID.randomUUID().toString();
                     Long start = System.currentTimeMillis();
                     eventBus.post(event);
                     Long end = System.currentTimeMillis();
                     Long took = end - start;
                     logger.debug("End Processing Event: [{}] Done ID:[{}] Took:[{}]ms Queue Size:[{}]", event.getClass().getCanonicalName(), eventProcessindInstanceId, took, eventQueue.size());
+                    jobManager.notifyJobEnd(job);
                 }
             } catch (InterruptedException ex) {
                 logger.error("Error on Processing Event: [{}]", ex.getMessage());
