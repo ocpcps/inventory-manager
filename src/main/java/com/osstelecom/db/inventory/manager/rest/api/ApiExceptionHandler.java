@@ -20,6 +20,8 @@ package com.osstelecom.db.inventory.manager.rest.api;
 import com.osstelecom.db.inventory.manager.dto.ApiErrorDTO;
 import com.osstelecom.db.inventory.manager.exception.BasicException;
 import com.osstelecom.db.inventory.manager.session.UtilSession;
+import groovy.json.JsonSlurper;
+import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,14 +51,17 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     //
     private Logger logger = LoggerFactory.getLogger(ApiExceptionHandler.class);
 
+    private JsonSlurper parser = new JsonSlurper();
+
     @ExceptionHandler(BasicException.class)
     public ResponseEntity<Object> handleGenericException(
-            BasicException ex) {
+            BasicException ex, HttpServletRequest request) {
         ex.printStackTrace();
         ApiErrorDTO apiError = new ApiErrorDTO();
         apiError.setMsg(ex.getMessage());
         apiError.setStatusCode(ex.getStatusCode());
         apiError.setClassName(ex.getClass().getSimpleName());
+
         if (ex.getDetails() != null) {
             apiError.setDetails(ex.getDetails());
         } else {
@@ -66,7 +71,15 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
             apiError.setDetails("NONE");
         }
         logger.error("Excpetion Occurreed: MSG:[{}] ClassName: [{}]", ex.getMessage(), apiError.getClassName());
-//        logger.error(utils.toJson(ex));
-        return new ResponseEntity(apiError, HttpStatus.valueOf(apiError.getStatusCode()));
+        if (request.getHeader("x-show-errors") != null) {
+//            logger.warn("x-show-errors is set");
+            if (request.getAttribute("request") != null) {
+                Object requestBody = request.getAttribute("request");
+                apiError.setRequest(requestBody);
+            }
+            return new ResponseEntity(apiError, HttpStatus.valueOf(500));
+        } else {
+            return new ResponseEntity(apiError, HttpStatus.valueOf(apiError.getStatusCode()));
+        }
     }
 }

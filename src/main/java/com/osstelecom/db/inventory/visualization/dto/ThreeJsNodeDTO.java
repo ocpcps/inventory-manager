@@ -24,7 +24,7 @@ import java.util.Objects;
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 12.01.2023
  */
-public class ThreeJsNodeDTO {
+public class ThreeJsNodeDTO extends BaseGraphDTO {
 
     private final String id;
     private final String name;
@@ -69,6 +69,14 @@ public class ThreeJsNodeDTO {
         this.name = name;
         this.group = group;
         this.domain = domain;
+    }
+
+    public ThreeJsNodeDTO(String id, String name, String group, String domain, String operStatus) {
+        this.id = id;
+        this.name = name;
+        this.group = group;
+        this.domain = domain;
+        this.operStatus = operStatus;
     }
     private final String domain;
 

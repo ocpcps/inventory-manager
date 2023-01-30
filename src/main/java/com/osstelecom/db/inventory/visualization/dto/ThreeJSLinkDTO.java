@@ -24,7 +24,7 @@ import java.util.Objects;
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 12.01.2023
  */
-public class ThreeJSLinkDTO {
+public class ThreeJSLinkDTO extends BaseGraphDTO {
 
     private final String source;
     private final String target;
@@ -58,6 +58,12 @@ public class ThreeJSLinkDTO {
     public ThreeJSLinkDTO(String source, String target) {
         this.source = source;
         this.target = target;
+    }
+
+    public ThreeJSLinkDTO(String source, String target, String operStatus) {
+        this.source = source;
+        this.target = target;
+        this.operStatus = operStatus;
     }
 
     public String getSource() {

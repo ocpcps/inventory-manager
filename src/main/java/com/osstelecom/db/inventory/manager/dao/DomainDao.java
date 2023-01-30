@@ -33,6 +33,7 @@ import com.arangodb.ArangoCursor;
 import com.arangodb.ArangoDatabase;
 import com.arangodb.entity.CollectionEntity;
 import com.arangodb.entity.CollectionType;
+import com.arangodb.entity.DocumentUpdateEntity;
 import com.arangodb.entity.EdgeDefinition;
 import com.arangodb.entity.GraphEntity;
 import com.arangodb.model.CollectionCreateOptions;
@@ -172,9 +173,8 @@ public class DomainDao {
                     .createCollection(domainName
                             + arangoDbConfiguration.getServiceSufix(),
                             new CollectionCreateOptions().type(CollectionType.DOCUMENT));
-            
-            
-             arangoDatabase.collection(services.getName()).ensurePersistentIndex(
+
+            arangoDatabase.collection(services.getName()).ensurePersistentIndex(
                     Arrays.asList("name", "nodeAddress", "className", "domain._key"),
                     new PersistentIndexOptions().unique(true).name("ServiceUNIQIDX"));
 
@@ -235,9 +235,10 @@ public class DomainDao {
      *
      * @param domain
      */
-    public void updateDomain(Domain domain) {
+    public DocumentUpdateEntity<Domain> updateDomain(Domain domain) {
         logger.debug("Persinting Domain info...:{}", domain.getDomainName());
-        this.domainsCollection.updateDocument(domain.getDomainName(), domain);
+        DocumentUpdateEntity<Domain> result = this.domainsCollection.updateDocument(domain.getDomainName(), domain);
+        return result;
     }
 
     /**

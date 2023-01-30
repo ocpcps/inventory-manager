@@ -25,6 +25,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * Payload de Grafo do Netcompass, a principio o payload original dos recursos
+ * são muito . Então criamos este wrapper para encapsular os dados relevantes
+ * para o grafo.
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 12.01.2023
@@ -51,12 +54,12 @@ public class ThreeJSViewDTO {
                 nodes.add(new ThreeJsNodeDTO(connection.getFromResource().getKey(),
                         connection.getFromResource().getName(),
                         connection.getFromResource().getAttributeSchemaName(),
-                        connection.getFromResource().getDomainName()));
+                        connection.getFromResource().getDomainName(), connection.getFromResource().getOperationalStatus()));
 
                 nodes.add(new ThreeJsNodeDTO(connection.getToResource().getKey(),
                         connection.getToResource().getName(),
                         connection.getToResource().getAttributeSchemaName(),
-                        connection.getToResource().getDomainName()));
+                        connection.getToResource().getDomainName(), connection.getToResource().getOperationalStatus()));
 
                 links.add(new ThreeJSLinkDTO(connection.getFromResource().getKey(), connection.getToResource().getKey()));
             });
@@ -74,12 +77,12 @@ public class ThreeJSViewDTO {
                     nodes.add(new ThreeJsNodeDTO(connection.getFromResource().getKey(),
                             connection.getFromResource().getName(),
                             connection.getFromResource().getAttributeSchemaName(),
-                            connection.getFromResource().getDomainName()));
+                            connection.getFromResource().getDomainName(), connection.getFromResource().getOperationalStatus()));
 
                     nodes.add(new ThreeJsNodeDTO(connection.getToResource().getKey(),
                             connection.getToResource().getName(),
                             connection.getToResource().getAttributeSchemaName(),
-                            connection.getToResource().getDomainName()));
+                            connection.getToResource().getDomainName(), connection.getToResource().getOperationalStatus()));
 
                     links.add(new ThreeJSLinkDTO(connection.getFromResource().getKey(), connection.getToResource().getKey()));
                 });

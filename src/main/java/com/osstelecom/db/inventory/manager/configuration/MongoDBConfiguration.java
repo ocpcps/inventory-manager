@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- *
+ * @deprecated 
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 14.12.2021
  */

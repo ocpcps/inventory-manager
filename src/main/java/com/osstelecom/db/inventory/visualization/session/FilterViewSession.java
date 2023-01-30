@@ -103,12 +103,12 @@ public class FilterViewSession {
             // Encontrou o Pai agora vamos procurar os filhos
             //
             logger.debug("Parent Found, searching for children");
-            viewData.getNodes().add(new ThreeJsNodeDTO(parent.getKey(), parent.getName(), parent.getClassName(), parent.getDomainName()));
+            viewData.getNodes().add(new ThreeJsNodeDTO(parent.getKey(), parent.getName(), parent.getClassName(), parent.getDomainName(), parent.getOperationalStatus()));
 
             parentKey = parent.getKey();
 
         } else {
-            viewData.getNodes().add(new ThreeJsNodeDTO(resource.getKey(), resource.getName(), resource.getClassName(), resource.getDomainName()));
+            viewData.getNodes().add(new ThreeJsNodeDTO(resource.getKey(), resource.getName(), resource.getClassName(), resource.getDomainName(), resource.getOperationalStatus()));
         }
 
         String childNodeAqlFilter = " doc.structureId == @structureId";
@@ -126,7 +126,7 @@ public class FilterViewSession {
         try {
             nodes.forEach(node -> {
                 nodeIds.add(node.getKey());
-                viewData.getNodes().add(new ThreeJsNodeDTO(node.getKey(), node.getName(), node.getClassName(), node.getDomainName()));
+                viewData.getNodes().add(new ThreeJsNodeDTO(node.getKey(), node.getName(), node.getClassName(), node.getDomainName(), node.getOperationalStatus()));
             });
         } catch (IOException | IllegalStateException ex) {
             logger.error("Failed to Fetch Nodes from Stream", ex);
@@ -146,7 +146,7 @@ public class FilterViewSession {
         GraphList<ResourceConnection> connections = this.resourceSession.findResourceConnectionByFilter(filterChildConnections);
         try {
             connections.forEach(connection -> {
-                ThreeJSLinkDTO link = new ThreeJSLinkDTO(connection.getFromResource().getKey(), connection.getToResource().getKey());
+                ThreeJSLinkDTO link = new ThreeJSLinkDTO(connection.getFromResource().getKey(), connection.getToResource().getKey(), connection.getOperationalStatus());
                 if (!viewData.getLinks().contains(link)) {
                     viewData.getLinks().add(link);
                 }

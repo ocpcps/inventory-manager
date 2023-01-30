@@ -279,4 +279,11 @@ public class Domain {
         return domainDescription;
     }
 
+    /**
+     * @param domainDescription the domainDescription to set
+     */
+    public void setDomainDescription(String domainDescription) {
+        this.domainDescription = domainDescription;
+    }
+
 }

@@ -33,6 +33,7 @@ import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import com.osstelecom.db.inventory.manager.events.ManagedResourceCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.ManagedResourceDeletedEvent;
 import com.osstelecom.db.inventory.manager.events.ManagedResourceUpdatedEvent;
+import com.osstelecom.db.inventory.manager.events.ResourceConnectionCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.ResourceSchemaUpdatedEvent;
 import com.osstelecom.db.inventory.manager.events.ServiceStateTransionedEvent;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
@@ -457,6 +458,21 @@ public class ManagedResourceManager extends Manager {
     public void onManagedResourceUpdatedEvent(ManagedResourceUpdatedEvent updateEvent) {
         logger.debug("Managed Resource [{}] Updated: ", updateEvent.getOldResource().getId());
 
+    }
+
+    /**
+     * Recebe a notificação de que uma conexão foi criada,
+     *
+     * @param connectionCreatedEvent
+     */
+    @Subscribe
+    public void onResourceConnectionCreatedEvent(ResourceConnectionCreatedEvent connectionCreatedEvent) {
+        /**
+         * Como este método é chamado após a criação de uma conexão, é
+         * necessário avaliar se temos atributos dinamicaos setados, o problema
+         * é que ainda não sei como fazer com o atributo interdominio . Para
+         * obter um atributo do mesmo dominio --> $(resource.olt.shelf.mgmtIp)
+         */
     }
 
     /**

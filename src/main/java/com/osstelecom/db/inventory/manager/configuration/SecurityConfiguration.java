@@ -23,6 +23,10 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 
+/**
+ * Configuração da Autenticação da API
+ * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ */
 @Configuration
 public class SecurityConfiguration {
 

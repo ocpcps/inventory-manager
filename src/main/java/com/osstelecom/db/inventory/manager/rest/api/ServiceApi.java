@@ -48,6 +48,7 @@ import com.osstelecom.db.inventory.manager.response.GetServiceResponse;
 import com.osstelecom.db.inventory.manager.response.PatchServiceResponse;
 import com.osstelecom.db.inventory.manager.security.model.AuthenticatedCall;
 import com.osstelecom.db.inventory.manager.session.ServiceSession;
+import javax.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.PostMapping;
 
 /**
@@ -65,53 +66,60 @@ public class ServiceApi extends BaseApi {
     @AuthenticatedCall(role = {"user"})
     @GetMapping(path = "/{domainName}/service/{serviceId}", produces = "application/json")
     public GetServiceResponse getServiceById(@PathVariable("domainName") String domainName,
-            @PathVariable("serviceId") String serviceId) throws InvalidRequestException, ResourceNotFoundException, DomainNotFoundException, ArangoDaoException {
+            @PathVariable("serviceId") String serviceId, HttpServletRequest httpRequest) throws InvalidRequestException, ResourceNotFoundException, DomainNotFoundException, ArangoDaoException {
         GetServiceRequest request = new GetServiceRequest();
         this.setUserDetails(request);
         request.setRequestDomain(domainName);
         request.setPayLoad(new ServiceResource(serviceId));
+
+        httpRequest.setAttribute("request", request);
         return serviceSession.getServiceById(request);
     }
 
     @AuthenticatedCall(role = {"user"})
     @DeleteMapping(path = "/{domainName}/service/{serviceId}", produces = "application/json")
-    public DeleteServiceResponse deleteService(@PathVariable("serviceId") String serviceId, @PathVariable("domainName") String domainName) throws DomainNotFoundException, ArangoDaoException {
+    public DeleteServiceResponse deleteService(@PathVariable("serviceId") String serviceId, @PathVariable("domainName") String domainName, HttpServletRequest httpRequest) throws DomainNotFoundException, ArangoDaoException {
         DeleteServiceRequest request = new DeleteServiceRequest(serviceId);
         this.setUserDetails(request);
         request.setRequestDomain(domainName);
+        httpRequest.setAttribute("request", request);
         return serviceSession.deleteService(request);
     }
 
     @AuthenticatedCall(role = {"user"})
     @PutMapping(path = "/{domainName}/service", produces = "application/json", consumes = "application/json")
-    public CreateServiceResponse createService(@RequestBody CreateServiceRequest request, @PathVariable("domainName") String domainName) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
+    public CreateServiceResponse createService(@RequestBody CreateServiceRequest request, @PathVariable("domainName") String domainName, HttpServletRequest httpRequest) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
         this.setUserDetails(request);
         request.setRequestDomain(domainName);
+        httpRequest.setAttribute("request", request);
         return serviceSession.createService(request);
     }
 
     @AuthenticatedCall(role = {"user"})
     @PatchMapping(path = "/{domainName}/service/{serviceId}", produces = "application/json", consumes = "application/json")
-    public PatchServiceResponse patchManagedResource(@RequestBody PatchServiceRequest request, @PathVariable("domainName") String domainName, @PathVariable("serviceId") String serviceId) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
+    public PatchServiceResponse patchManagedResource(@RequestBody PatchServiceRequest request, @PathVariable("domainName") String domainName, @PathVariable("serviceId") String serviceId, HttpServletRequest httpRequest) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
         this.setUserDetails(request);
         request.setRequestDomain(domainName);
         request.getPayLoad().setId(serviceId);
+        httpRequest.setAttribute("request", request);
         return serviceSession.updateService(request);
     }
 
     @AuthenticatedCall(role = {"user"})
     @PatchMapping(path = "/{domainName}/service", produces = "application/json", consumes = "application/json")
-    public PatchServiceResponse patchManagedResource(@RequestBody PatchServiceRequest request, @PathVariable("domainName") String domainName) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
+    public PatchServiceResponse patchManagedResource(@RequestBody PatchServiceRequest request, @PathVariable("domainName") String domainName, HttpServletRequest httpRequest) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
         this.setUserDetails(request);
         request.setRequestDomain(domainName);
+        httpRequest.setAttribute("request", request);
         return serviceSession.updateService(request);
     }
 
     @AuthenticatedCall(role = {"user"})
     @PostMapping(path = "/{domain}/service/filter", produces = "application/json", consumes = "application/json")
-    public FilterResponse findCircuitsByFilter(@RequestBody FilterRequest filter, @PathVariable("domain") String domain) throws ArangoDaoException, ResourceNotFoundException, DomainNotFoundException, InvalidRequestException {
+    public FilterResponse findCircuitsByFilter(@RequestBody FilterRequest filter, @PathVariable("domain") String domain, HttpServletRequest httpRequest) throws ArangoDaoException, ResourceNotFoundException, DomainNotFoundException, InvalidRequestException {
         this.setUserDetails(filter);
         filter.setRequestDomain(domain);
+        httpRequest.setAttribute("request", filter);
         return serviceSession.findServiceByFilter(filter);
     }
 }

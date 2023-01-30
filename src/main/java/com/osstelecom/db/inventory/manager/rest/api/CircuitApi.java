@@ -42,6 +42,7 @@ import com.osstelecom.db.inventory.manager.response.PatchCircuitResourceResponse
 import com.osstelecom.db.inventory.manager.security.model.AuthenticatedCall;
 import com.osstelecom.db.inventory.manager.session.CircuitSession;
 import java.io.IOException;
+import javax.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -83,9 +84,11 @@ public class CircuitApi extends BaseApi {
      */
     @AuthenticatedCall(role = {"user"})
     @PutMapping(path = "/{domain}/circuit", produces = "application/json", consumes = "application/json")
-    public CreateCircuitResponse createCircuit(@RequestBody CreateCircuitRequest request, @PathVariable("domain") String domain) throws ArangoDaoException, ResourceNotFoundException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, AttributeConstraintViolationException, DomainNotFoundException, InvalidRequestException {
+    public CreateCircuitResponse createCircuit(@RequestBody CreateCircuitRequest request,
+            @PathVariable("domain") String domain, HttpServletRequest httpRequest) throws ArangoDaoException, ResourceNotFoundException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, AttributeConstraintViolationException, DomainNotFoundException, InvalidRequestException {
         request.setRequestDomain(domain);
         this.setUserDetails(request);
+        httpRequest.setAttribute("request", request);
         return circuitSession.createCircuit(request);
     }
 
@@ -103,18 +106,22 @@ public class CircuitApi extends BaseApi {
      */
     @AuthenticatedCall(role = {"user"})
     @PatchMapping(path = "/{domain}/circuit", produces = "application/json", consumes = "application/json")
-    public PatchCircuitResourceResponse patchCircuit(@RequestBody PatchCircuitResourceRequest request, @PathVariable("domain") String domain) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, IOException, InvalidRequestException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
+    public PatchCircuitResourceResponse patchCircuit(@RequestBody PatchCircuitResourceRequest request,
+            @PathVariable("domain") String domain, HttpServletRequest httpRequest) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, IOException, InvalidRequestException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
         request.setRequestDomain(domain);
         this.setUserDetails(request);
+        httpRequest.setAttribute("request", request);
         return circuitSession.patchCircuitResource(request);
     }
 
     @AuthenticatedCall(role = {"user"})
     @PatchMapping(path = "/{domain}/circuit/{circuitId}", produces = "application/json", consumes = "application/json")
-    public PatchCircuitResourceResponse patchCircuit(@RequestBody PatchCircuitResourceRequest request, @PathVariable("domain") String domain, @PathVariable("circuitId") String circuitId) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, IOException, InvalidRequestException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
+    public PatchCircuitResourceResponse patchCircuit(@RequestBody PatchCircuitResourceRequest request,
+            @PathVariable("domain") String domain, @PathVariable("circuitId") String circuitId, HttpServletRequest httpRequest) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, IOException, InvalidRequestException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
         request.setRequestDomain(domain);
         request.getPayLoad().setKey(circuitId);
         this.setUserDetails(request);
+        httpRequest.setAttribute("request", request);
         return circuitSession.patchCircuitResource(request);
     }
 
@@ -133,9 +140,11 @@ public class CircuitApi extends BaseApi {
      */
     @AuthenticatedCall(role = {"user"})
     @PutMapping(path = "/{domain}/circuit/path", produces = "application/json", consumes = "application/json")
-    public CreateCircuitPathResponse createCircuitPath(@RequestBody CreateCircuitPathRequest request, @PathVariable("domain") String domain) throws ArangoDaoException, ResourceNotFoundException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, AttributeConstraintViolationException, DomainNotFoundException, InvalidRequestException {
+    public CreateCircuitPathResponse createCircuitPath(@RequestBody CreateCircuitPathRequest request,
+            @PathVariable("domain") String domain, HttpServletRequest httpRequest) throws ArangoDaoException, ResourceNotFoundException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, AttributeConstraintViolationException, DomainNotFoundException, InvalidRequestException {
         request.setRequestDomain(domain);
         this.setUserDetails(request);
+        httpRequest.setAttribute("request", request);
         return circuitSession.createCircuitPath(request);
     }
 
@@ -155,37 +164,45 @@ public class CircuitApi extends BaseApi {
      */
     @AuthenticatedCall(role = {"user"})
     @PostMapping(path = "/{domain}/circuit/path", produces = "application/json", consumes = "application/json")
-    public GetCircuitPathResponse getCircuitPath(@RequestBody GetCircuitPathRequest request, @PathVariable("domain") String domain) throws ArangoDaoException, ResourceNotFoundException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, AttributeConstraintViolationException, DomainNotFoundException, InvalidRequestException {
+    public GetCircuitPathResponse getCircuitPath(@RequestBody GetCircuitPathRequest request,
+            @PathVariable("domain") String domain, HttpServletRequest httpRequest) throws ArangoDaoException, ResourceNotFoundException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, AttributeConstraintViolationException, DomainNotFoundException, InvalidRequestException {
 //        GetCircuitPathRequest request = gson.fromJson(strReq, GetCircuitPathRequest.class);
         request.setRequestDomain(domain);
         this.setUserDetails(request);
+        httpRequest.setAttribute("request", request);
         return circuitSession.findCircuitPath(request);
     }
 
     @AuthenticatedCall(role = {"user"})
     @PostMapping(path = "/{domain}/circuit/filter", produces = "application/json", consumes = "application/json")
-    public FilterResponse findCircuitsByFilter(@RequestBody FilterRequest filter, @PathVariable("domain") String domain) throws ArangoDaoException, ResourceNotFoundException, DomainNotFoundException, InvalidRequestException {
+    public FilterResponse findCircuitsByFilter(@RequestBody FilterRequest filter,
+            @PathVariable("domain") String domain, HttpServletRequest httpRequest) throws ArangoDaoException, ResourceNotFoundException, DomainNotFoundException, InvalidRequestException {
         this.setUserDetails(filter);
         filter.setRequestDomain(domain);
+        httpRequest.setAttribute("request", filter);
         return circuitSession.findCircuitByFilter(filter);
     }
 
     @AuthenticatedCall(role = {"user"})
     @GetMapping(path = "/{domain}/circuit/{id}", produces = "application/json")
-    public GetCircuitResponse getCircuitById(@PathVariable("domain") String domain, @PathVariable("id") String circuitId) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
+    public GetCircuitResponse getCircuitById(@PathVariable("domain") String domain,
+            @PathVariable("id") String circuitId, HttpServletRequest httpRequest) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
         GetCircuitPathRequest request = new GetCircuitPathRequest(circuitId, domain);
         this.setUserDetails(request);
+        httpRequest.setAttribute("request", request);
         return this.circuitSession.findCircuitById(request);
     }
 
     @AuthenticatedCall(role = {"user"})
     @DeleteMapping(path = "/{domain}/circuit/{id}", produces = "application/json")
-    public DeleteCircuitResponse deleteCircuitById(@PathVariable("domain") String domain, @PathVariable("id") String circuitId) throws DomainNotFoundException, ArangoDaoException, InvalidRequestException {
+    public DeleteCircuitResponse deleteCircuitById(@PathVariable("domain") String domain,
+            @PathVariable("id") String circuitId, HttpServletRequest httpRequest) throws DomainNotFoundException, ArangoDaoException, InvalidRequestException {
         DeleteCircuitRequest request = new DeleteCircuitRequest();
         request.setPayLoad(new CircuitResource());
         request.getPayLoad().setKey(circuitId);
         request.setRequestDomain(domain);
         this.setUserDetails(request);
+        httpRequest.setAttribute("request", request);
         return this.circuitSession.deleteCircuitById(request);
 
     }

@@ -103,6 +103,20 @@ public class ResourceConnectionManager extends Manager {
         }
     }
 
+    /**
+     * Creates a connection between two resources
+     *
+     * @param connection
+     * @return
+     * @throws GenericException
+     * @throws SchemaNotFoundException
+     * @throws AttributeConstraintViolationException
+     * @throws ScriptRuleException
+     * @throws ArangoDaoException
+     * @throws ResourceNotFoundException
+     * @throws InvalidRequestException
+     * @throws DomainNotFoundException
+     */
     public ResourceConnection createResourceConnection(ResourceConnection connection) throws GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException, DomainNotFoundException {
         String timerId = startTimer("createResourceConnection");
         try {
@@ -148,11 +162,23 @@ public class ResourceConnectionManager extends Manager {
                 // Will Try to update or insert the connection
                 //
                 result = this.resourceConnectionDao.upsertResource(connection);
+                if (result.getOld() != null) {
+                    //
+                    // O Uperset virou um update
+                    // 
+                    ResourceConnectionUpdatedEvent event = new ResourceConnectionUpdatedEvent(result);
+                    eventManager.notifyResourceEvent(event);
+                } else {
+                    ResourceConnectionCreatedEvent event = new ResourceConnectionCreatedEvent(result);
+                    eventManager.notifyResourceEvent(event);
+                }
             } else {
                 //
                 // Creates the connection on DB
                 //
                 result = resourceConnectionDao.insertResource(connection);
+                ResourceConnectionCreatedEvent event = new ResourceConnectionCreatedEvent(result);
+                eventManager.notifyResourceEvent(event);
 
             }
 
@@ -162,8 +188,6 @@ public class ResourceConnectionManager extends Manager {
             // Update Edges
             //
 
-            ResourceConnectionCreatedEvent event = new ResourceConnectionCreatedEvent(result);
-            eventManager.notifyResourceEvent(event);
             return connection;
         } finally {
             if (lockManager.isLocked()) {

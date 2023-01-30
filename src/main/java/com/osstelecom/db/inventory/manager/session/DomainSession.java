@@ -27,10 +27,13 @@ import com.osstelecom.db.inventory.manager.operation.DomainManager;
 
 import com.osstelecom.db.inventory.manager.request.CreateDomainRequest;
 import com.osstelecom.db.inventory.manager.request.DeleteDomainRequest;
+import com.osstelecom.db.inventory.manager.request.UpdateDomainRequest;
+import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.response.CreateDomainResponse;
 import com.osstelecom.db.inventory.manager.response.DeleteDomainResponse;
 import com.osstelecom.db.inventory.manager.response.DomainResponse;
 import com.osstelecom.db.inventory.manager.response.GetDomainsResponse;
+import com.osstelecom.db.inventory.manager.response.UpdateDomainResponse;
 import java.io.IOException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -46,10 +49,28 @@ public class DomainSession {
     @Autowired
     private DomainManager domainManager;
 
+    /**
+     * Deleta um domain, cuidado pois deleta tudo que está dentro do domain
+     *
+     * @param request
+     * @return
+     * @throws DomainNotFoundException
+     * @throws ArangoDaoException
+     * @throws ResourceNotFoundException
+     * @throws IOException
+     */
     public DeleteDomainResponse deleteDomain(DeleteDomainRequest request) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, IOException {
         return new DeleteDomainResponse(domainManager.deleteDomain(request.getPayLoad()));
     }
 
+    /**
+     * Cria um novo dominio
+     *
+     * @param domainRequest
+     * @return
+     * @throws DomainAlreadyExistsException
+     * @throws GenericException
+     */
     public CreateDomainResponse createDomain(CreateDomainRequest domainRequest) throws DomainAlreadyExistsException, GenericException {
         try {
             return new CreateDomainResponse(this.domainManager.createDomain(domainRequest.getPayLoad()));
@@ -60,10 +81,26 @@ public class DomainSession {
         }
     }
 
+    /**
+     * Recupera a lista dos dominios existentes
+     *
+     * @return
+     */
     public GetDomainsResponse getAllDomains() {
         return new GetDomainsResponse(this.domainManager.getAllDomains());
     }
 
+    /**
+     * Recupera um domain a partir do nome
+     *
+     * @param domainName
+     * @return
+     * @throws DomainNotFoundException
+     * @throws InvalidRequestException
+     * @throws ArangoDaoException
+     * @throws ResourceNotFoundException
+     * @throws IOException
+     */
     public DomainResponse getDomain(String domainName) throws DomainNotFoundException, InvalidRequestException, ArangoDaoException, ResourceNotFoundException, IOException {
         if (domainName == null) {
             throw new InvalidRequestException("domainName cannot be null");
@@ -71,4 +108,21 @@ public class DomainSession {
         return new DomainResponse(domainManager.getDomain(domainName));
     }
 
+    /**
+     * Atualiza um domain
+     *
+     * @param domainRequest
+     * @return
+     * @throws DomainNotFoundException
+     * @throws ArangoDaoException
+     */
+    public UpdateDomainResponse updateDomain(UpdateDomainRequest domainRequest) throws DomainNotFoundException, ArangoDaoException {
+        Domain currentDomain = domainManager.getDomain(domainRequest.getRequestDomain());
+        if (currentDomain.getDomainDescription() != domainRequest.getPayLoad().getDomainDescription()) {
+            currentDomain.setDomainDescription(domainRequest.getPayLoad().getDomainDescription());
+            UpdateDomainResponse response = new UpdateDomainResponse(this.domainManager.updateDomain(currentDomain));
+            return response;
+        }
+        return new UpdateDomainResponse(domainRequest.getPayLoad());
+    }
 }

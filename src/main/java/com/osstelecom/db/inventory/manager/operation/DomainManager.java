@@ -16,6 +16,7 @@
  */
 package com.osstelecom.db.inventory.manager.operation;
 
+import com.arangodb.entity.DocumentUpdateEntity;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -325,6 +326,12 @@ public class DomainManager extends Manager {
             endTimer(timerId);
         }
 
+    }
+
+    public Domain updateDomain(Domain domain) {
+        DocumentUpdateEntity<Domain> result = this.domainDao.updateDomain(domain);
+        this.domains.replace(domain.getDomainName(), domain);
+        return result.getNew();
     }
 
     /**

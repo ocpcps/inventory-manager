@@ -56,11 +56,13 @@ import com.osstelecom.db.inventory.manager.response.CreateResourceSchemaModelRes
 import com.osstelecom.db.inventory.manager.response.GetSchemasResponse;
 import com.osstelecom.db.inventory.manager.response.PatchResourceSchemaModelResponse;
 import com.osstelecom.db.inventory.manager.response.ResourceSchemaResponse;
-import java.util.logging.Level;
 import org.apache.tools.ant.DirectoryScanner;
 
 /**
+ * Classe que lida com os atributos do schema
  *
+ * @Todo:Avaliar a refatoração desta classe para remover a complexidade da
+ * mesma.
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 14.12.2021
  */
@@ -85,6 +87,11 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
      */
     private Cache<String, ResourceSchemaModel> schemaCache;
 
+    /**
+     * Cuida pro processo de incialização e cria um cache com capacidade de
+     * armazenamento de 5mil registros, a configuração do cache é ajustavel e
+     * parametrizada no arquivo de configuração
+     */
     @EventListener(ApplicationReadyEvent.class)
     private void initSchemaSession() {
         this.schemaCache = CacheBuilder
@@ -106,6 +113,15 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
         }
     }
 
+    /**
+     * Carrega um schema
+     *
+     * @param schemaName nome do schema a ser carregado
+     * @param cached - se true, usará o cache, se false irá ignorar o cache
+     * @return
+     * @throws SchemaNotFoundException
+     * @throws GenericException
+     */
     public ResourceSchemaModel loadSchema(String schemaName, Boolean cached) throws SchemaNotFoundException, GenericException {
         if (!cached) {
             this.clearSchemaCache();

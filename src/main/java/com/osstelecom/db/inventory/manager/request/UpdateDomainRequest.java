@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Lucas Nishimura <lucas.nishimura@gmail.com>
+ * Copyright (C) 2021 Lucas Nishimura <lucas.nishimura@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -15,25 +15,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package com.osstelecom.db.inventory.manager.events;
+package com.osstelecom.db.inventory.manager.request;
 
-import com.arangodb.entity.DocumentCreateEntity;
-import com.arangodb.entity.DocumentUpdateEntity;
-import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
+import com.osstelecom.db.inventory.manager.resources.Domain;
 
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
- * @created 10.04.2022
+ * @created 15.12.2021
  */
-public class ResourceConnectionUpdatedEvent extends BasicResourceEvent<ResourceConnection> {
-
-    public ResourceConnectionUpdatedEvent(DocumentUpdateEntity<ResourceConnection> entity) {
-        super(entity);
-    }
-
-    public ResourceConnectionUpdatedEvent(DocumentCreateEntity<ResourceConnection> entity) {
-        super(entity);
-    }
+public class UpdateDomainRequest extends BasicRequest<Domain> {
 
 }

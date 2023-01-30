@@ -64,6 +64,7 @@ public class BasicResource {
     private Boolean isLeaf;
     private Boolean isConsumable;
     private Boolean isConsumer = false; //revisar
+    
     private ConsumableMetric consumableMetric;
     private ConsumableMetric consumerMetric;
 

@@ -22,9 +22,17 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+/**
+ * Cfiguração de CORS das API's
+ * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ */
 @Configuration
 public class CorsConfig {
 
+    /**
+     * Configuração de CORS das APIS
+     * @return 
+     */
     @Bean
     public WebMvcConfigurer corsConfigurer() {
         return new WebMvcConfigurer() {

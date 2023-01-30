@@ -26,6 +26,7 @@ import com.osstelecom.db.inventory.manager.rest.api.BaseApi;
 import com.osstelecom.db.inventory.visualization.request.GetStructureDependencyRequest;
 import com.osstelecom.db.inventory.visualization.response.ThreeJsViewResponse;
 import com.osstelecom.db.inventory.visualization.session.FilterViewSession;
+import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,13 +49,34 @@ public class GraphViewApi extends BaseApi {
 
     private Logger logger = LoggerFactory.getLogger(GraphViewApi.class);
 
+    /**
+     * Obtem um sample dataset
+     * @param limit
+     * @param httpRequest
+     * @return
+     * @throws DomainNotFoundException
+     * @throws ArangoDaoException
+     * @throws InvalidRequestException
+     * @throws ResourceNotFoundException 
+     */
     @GetMapping(path = "/sample/{limit}", produces = "application/json")
-    public ThreeJsViewResponse getSampleView(@PathVariable("limit") Long limit) throws DomainNotFoundException, ArangoDaoException, InvalidRequestException, ResourceNotFoundException {
+    public ThreeJsViewResponse getSampleView(@PathVariable("limit") Long limit, HttpServletRequest httpRequest) throws DomainNotFoundException, ArangoDaoException, InvalidRequestException, ResourceNotFoundException {
         return viewSession.getSampleResult(limit);
     }
 
+    /**
+     * Obtem a topologia da estrutura
+     * @param domain
+     * @param resourceKey
+     * @param httpRequest
+     * @return
+     * @throws DomainNotFoundException
+     * @throws ArangoDaoException
+     * @throws ResourceNotFoundException
+     * @throws InvalidRequestException 
+     */
     @GetMapping(path = "{domain}/resource/{resourceKey}", produces = "application/json")
-    public ThreeJsViewResponse getResourceStrucureDependency(@PathVariable("domain") String domain, @PathVariable("resourceKey") String resourceKey) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
+    public ThreeJsViewResponse getResourceStrucureDependency(@PathVariable("domain") String domain, @PathVariable("resourceKey") String resourceKey, HttpServletRequest httpRequest) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
         GetStructureDependencyRequest request = new GetStructureDependencyRequest();
         request.setPayLoad(new ManagedResource());
         request.getPayLoad().setKey(resourceKey);
