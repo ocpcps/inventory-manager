@@ -23,6 +23,10 @@ import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.rest.api.BaseApi;
+import com.osstelecom.db.inventory.visualization.dto.ExpandNodeDTO;
+import com.osstelecom.db.inventory.visualization.exception.InvalidGraphException;
+import com.osstelecom.db.inventory.visualization.request.ExpandNodeRequest;
+import com.osstelecom.db.inventory.visualization.request.GetDomainTopologyRequest;
 import com.osstelecom.db.inventory.visualization.request.GetStructureDependencyRequest;
 import com.osstelecom.db.inventory.visualization.response.ThreeJsViewResponse;
 import com.osstelecom.db.inventory.visualization.session.FilterViewSession;
@@ -32,6 +36,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -51,13 +57,14 @@ public class GraphViewApi extends BaseApi {
 
     /**
      * Obtem um sample dataset
+     *
      * @param limit
      * @param httpRequest
      * @return
      * @throws DomainNotFoundException
      * @throws ArangoDaoException
      * @throws InvalidRequestException
-     * @throws ResourceNotFoundException 
+     * @throws ResourceNotFoundException
      */
     @GetMapping(path = "/sample/{limit}", produces = "application/json")
     public ThreeJsViewResponse getSampleView(@PathVariable("limit") Long limit, HttpServletRequest httpRequest) throws DomainNotFoundException, ArangoDaoException, InvalidRequestException, ResourceNotFoundException {
@@ -66,6 +73,7 @@ public class GraphViewApi extends BaseApi {
 
     /**
      * Obtem a topologia da estrutura
+     *
      * @param domain
      * @param resourceKey
      * @param httpRequest
@@ -73,7 +81,7 @@ public class GraphViewApi extends BaseApi {
      * @throws DomainNotFoundException
      * @throws ArangoDaoException
      * @throws ResourceNotFoundException
-     * @throws InvalidRequestException 
+     * @throws InvalidRequestException
      */
     @GetMapping(path = "{domain}/resource/{resourceKey}", produces = "application/json")
     public ThreeJsViewResponse getResourceStrucureDependency(@PathVariable("domain") String domain, @PathVariable("resourceKey") String resourceKey, HttpServletRequest httpRequest) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
@@ -82,7 +90,45 @@ public class GraphViewApi extends BaseApi {
         request.getPayLoad().setKey(resourceKey);
         request.setRequestDomain(domain);
         this.setUserDetails(request);
+        httpRequest.setAttribute("request", request);
         return this.viewSession.getResourceStrucureDependency(request);
+    }
+
+    @GetMapping(path = "{domain}/resource/{resourceKey}/expand/{direction}/{depth}", produces = "application/json")
+    public ThreeJsViewResponse expandNodeById(@PathVariable("domain") String domain,
+            @PathVariable("resourceKey") String resourceKey,
+            @PathVariable("direction") String direction, @PathVariable("depth") Integer depth,
+            HttpServletRequest httpRequest) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException, InvalidGraphException {
+        ExpandNodeRequest request = new ExpandNodeRequest();
+        request.setPayLoad(new ExpandNodeDTO(resourceKey, domain, direction, depth));
+        request.setRequestDomain(domain);
+        this.setUserDetails(request);
+        httpRequest.setAttribute("request", request);
+        return this.viewSession.expandNodeById(request);
+    }
+
+    /**
+     * Obtém através de um filtro dados da topologia
+     *
+     * @param domain
+     * @param request
+     * @param httpRequest
+     * @return
+     * @throws DomainNotFoundException
+     * @throws ArangoDaoException
+     * @throws ResourceNotFoundException
+     * @throws InvalidRequestException
+     * @throws InvalidGraphException
+     */
+    @PostMapping(path = "{domain}/topology/filter", produces = "application/json", consumes = "application/json")
+    public ThreeJsViewResponse getDomainTopologyByFilter(@PathVariable("domain") String domain,
+            @RequestBody GetDomainTopologyRequest request, HttpServletRequest httpRequest)
+            throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException,
+            InvalidRequestException, InvalidGraphException {
+        request.setRequestDomain(domain);
+        this.setUserDetails(request);
+        httpRequest.setAttribute("request", request);
+        return this.viewSession.getDomainTopologyByFilter(request);
     }
 
 }

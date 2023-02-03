@@ -16,11 +16,13 @@
  */
 package com.osstelecom.db.inventory.manager.resources.exception;
 
+import com.osstelecom.db.inventory.manager.exception.BasicException;
+
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  */
-public class ConnectionAlreadyExistsException extends Exception {
+public class ConnectionAlreadyExistsException extends BasicException {
 
     public ConnectionAlreadyExistsException(String string) {
         super(string);
@@ -32,6 +34,12 @@ public class ConnectionAlreadyExistsException extends Exception {
 
     public ConnectionAlreadyExistsException(Throwable thrwbl) {
         super(thrwbl);
+    }
+
+    @Override
+    public ConnectionAlreadyExistsException addDetails(String key, Object value) {
+        this.addDetailMap(key, value);
+        return this;
     }
 
 }

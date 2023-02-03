@@ -18,7 +18,10 @@
 package com.osstelecom.db.inventory.manager.response;
 
 import com.arangodb.entity.CursorEntity.Stats;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.osstelecom.db.inventory.manager.resources.GraphList;
+import com.osstelecom.db.inventory.visualization.dto.ThreeJSViewDTO;
 import java.util.List;
 import java.util.Map;
 
@@ -27,6 +30,7 @@ import java.util.Map;
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 15.12.2021
  */
+@JsonInclude(Include.NON_NULL)
 public abstract class BasicResponse<T> implements IResponse<T> {
 
     private int statusCode = 200;
@@ -34,6 +38,7 @@ public abstract class BasicResponse<T> implements IResponse<T> {
     private Long size;
     private String className;
     private Stats arangoStats;
+
     public String getClassName() {
         if (this.className == null) {
             this.className = this.getClass().getName();
@@ -49,6 +54,9 @@ public abstract class BasicResponse<T> implements IResponse<T> {
             this.size = ((Map<?, ?>) this.payLoad).size() + 0L;
         } else if (this.payLoad instanceof GraphList) {
             this.size = ((GraphList<?>) this.payLoad).size();
+        } else if (this.payLoad instanceof ThreeJSViewDTO) {
+            ThreeJSViewDTO view = (ThreeJSViewDTO) this.payLoad;
+            this.size = view.getLinkCount() + view.getNodeCount();
         }
     }
 
@@ -93,7 +101,5 @@ public abstract class BasicResponse<T> implements IResponse<T> {
     public void setArangoStats(Stats arangoStats) {
         this.arangoStats = arangoStats;
     }
-    
-    
 
 }

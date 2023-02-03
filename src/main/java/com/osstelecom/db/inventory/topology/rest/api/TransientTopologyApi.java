@@ -23,6 +23,7 @@ import com.osstelecom.db.inventory.manager.security.model.AuthenticatedCall;
 import com.osstelecom.db.inventory.topology.session.TransientTopologySession;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import java.io.IOException;
+import javax.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -44,7 +45,8 @@ public class TransientTopologyApi {
 
     @AuthenticatedCall(role = {"user", "operator"})
     @PostMapping(path = "/transient", produces = "application/json", consumes = "application/json")
-    public ComputeTransientTopologyResponse createSchema(@RequestBody ComputeTransientTopologyRequest request) throws IOException {
+    public ComputeTransientTopologyResponse computeTopology(@RequestBody ComputeTransientTopologyRequest request, HttpServletRequest httpRequest) throws IOException {
+        httpRequest.setAttribute("request", request);
         return transientTopologySession.computeTransientTopologyRequest(request);
     }
 

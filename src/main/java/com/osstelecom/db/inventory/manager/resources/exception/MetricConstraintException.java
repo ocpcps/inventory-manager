@@ -16,11 +16,14 @@
  */
 package com.osstelecom.db.inventory.manager.resources.exception;
 
+import com.osstelecom.db.inventory.manager.exception.BasicException;
+import com.osstelecom.db.inventory.manager.exception.IBasicException;
+
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  */
-public class MetricConstraintException extends Exception {
+public class MetricConstraintException extends BasicException {
 
     public MetricConstraintException() {
     }
@@ -35,6 +38,12 @@ public class MetricConstraintException extends Exception {
 
     public MetricConstraintException(Throwable thrwbl) {
         super(thrwbl);
+    }
+
+    @Override
+    public MetricConstraintException addDetails(String key, Object value) {
+        this.addDetailMap(key, value);
+        return this;
     }
 
 }

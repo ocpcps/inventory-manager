@@ -72,7 +72,6 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
         }
         logger.error("Excpetion Occurreed: MSG:[{}] ClassName: [{}]", ex.getMessage(), apiError.getClassName());
         if (request.getHeader("x-show-errors") != null) {
-//            logger.warn("x-show-errors is set");
             if (request.getAttribute("request") != null) {
                 Object requestBody = request.getAttribute("request");
                 apiError.setRequest(requestBody);

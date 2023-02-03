@@ -17,6 +17,7 @@
  */
 package com.osstelecom.db.inventory.visualization.dto;
 
+import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import java.util.Objects;
 
 /**
@@ -28,6 +29,7 @@ public class ThreeJSLinkDTO extends BaseGraphDTO {
 
     private final String source;
     private final String target;
+    private final String id;
 
     @Override
     public int hashCode() {
@@ -55,15 +57,10 @@ public class ThreeJSLinkDTO extends BaseGraphDTO {
         return Objects.equals(this.target, other.target);
     }
 
-    public ThreeJSLinkDTO(String source, String target) {
-        this.source = source;
-        this.target = target;
-    }
-
-    public ThreeJSLinkDTO(String source, String target, String operStatus) {
-        this.source = source;
-        this.target = target;
-        this.operStatus = operStatus;
+    public ThreeJSLinkDTO(ResourceConnection con) {
+        this.source = con.getFromResource().getKey();
+        this.target = con.getToResource().getKey();
+        this.id = con.getKey();
     }
 
     public String getSource() {
@@ -72,6 +69,13 @@ public class ThreeJSLinkDTO extends BaseGraphDTO {
 
     public String getTarget() {
         return target;
+    }
+
+    /**
+     * @return the id
+     */
+    public String getId() {
+        return id;
     }
 
 }

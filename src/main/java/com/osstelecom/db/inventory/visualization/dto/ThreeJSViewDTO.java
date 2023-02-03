@@ -17,12 +17,16 @@
  */
 package com.osstelecom.db.inventory.visualization.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.osstelecom.db.inventory.manager.resources.GraphList;
+import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import com.osstelecom.db.inventory.manager.response.FilterResponse;
+import com.osstelecom.db.inventory.visualization.exception.InvalidGraphException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Payload de Grafo do Netcompass, a principio o payload original dos recursos
@@ -36,6 +40,8 @@ public class ThreeJSViewDTO {
 
     private List<ThreeJsNodeDTO> nodes = new ArrayList<>();
     private List<ThreeJSLinkDTO> links = new ArrayList<>();
+    private Long nodeCount = 0L;
+    private Long linkCount = 0L;
 
     public ThreeJSViewDTO() {
     }
@@ -51,17 +57,10 @@ public class ThreeJSViewDTO {
         if (filter.getPayLoad().getConnections() != null) {
             filter.getPayLoad().getConnections().forEach(connection -> {
 
-                nodes.add(new ThreeJsNodeDTO(connection.getFromResource().getKey(),
-                        connection.getFromResource().getName(),
-                        connection.getFromResource().getAttributeSchemaName(),
-                        connection.getFromResource().getDomainName(), connection.getFromResource().getOperationalStatus()));
+                nodes.add(new ThreeJsNodeDTO(connection.getFromResource()));
+                nodes.add(new ThreeJsNodeDTO(connection.getToResource()));
 
-                nodes.add(new ThreeJsNodeDTO(connection.getToResource().getKey(),
-                        connection.getToResource().getName(),
-                        connection.getToResource().getAttributeSchemaName(),
-                        connection.getToResource().getDomainName(), connection.getToResource().getOperationalStatus()));
-
-                links.add(new ThreeJSLinkDTO(connection.getFromResource().getKey(), connection.getToResource().getKey()));
+                links.add(new ThreeJSLinkDTO(connection));
             });
         }
     }
@@ -74,17 +73,10 @@ public class ThreeJSViewDTO {
         if (!connections.isEmpty()) {
             try {
                 connections.forEach(connection -> {
-                    nodes.add(new ThreeJsNodeDTO(connection.getFromResource().getKey(),
-                            connection.getFromResource().getName(),
-                            connection.getFromResource().getAttributeSchemaName(),
-                            connection.getFromResource().getDomainName(), connection.getFromResource().getOperationalStatus()));
+                    nodes.add(new ThreeJsNodeDTO(connection.getFromResource()));
+                    nodes.add(new ThreeJsNodeDTO(connection.getToResource()));
 
-                    nodes.add(new ThreeJsNodeDTO(connection.getToResource().getKey(),
-                            connection.getToResource().getName(),
-                            connection.getToResource().getAttributeSchemaName(),
-                            connection.getToResource().getDomainName(), connection.getToResource().getOperationalStatus()));
-
-                    links.add(new ThreeJSLinkDTO(connection.getFromResource().getKey(), connection.getToResource().getKey()));
+                    links.add(new ThreeJSLinkDTO(connection));
                 });
             } catch (IOException ex) {
             }
@@ -99,6 +91,34 @@ public class ThreeJSViewDTO {
         this.nodes = nodes;
     }
 
+    public void setNodesByGraph(GraphList<ManagedResource> resources) {
+        nodes.clear();
+        try {
+            resources.forEach(resource -> {
+                nodes.add(new ThreeJsNodeDTO(resource));
+            });
+        } catch (IOException | IllegalStateException ex) {
+
+        }
+
+    }
+
+    public void setLinksByGraph(GraphList<ResourceConnection> connections) {
+        this.links.clear();
+        try {
+            connections.forEach(connection -> {
+                links.add(new ThreeJSLinkDTO(connection));
+            });
+        } catch (IOException | IllegalStateException ex) {
+
+        }
+    }
+
+    @JsonIgnore
+    public List<String> getNodeIds() {
+        return this.nodes.stream().map(ThreeJsNodeDTO::getId).collect(Collectors.toList());
+    }
+
     public List<ThreeJSLinkDTO> getLinks() {
         return links;
     }
@@ -107,4 +127,60 @@ public class ThreeJSViewDTO {
         this.links = links;
     }
 
+    /**
+     * Check if Graph is complete
+     */
+    public ThreeJSViewDTO validate() throws InvalidGraphException {
+        if (!this.links.isEmpty()) {
+            for (ThreeJSLinkDTO link : this.links) {
+                if (this.nodes.stream().filter(n -> n.getId().equals(link.getSource()) || n.getId().equals(link.getTarget())).count() > 0) {
+                } else {
+
+                    if (this.nodes.stream().filter(n -> n.getId().equals(link.getTarget())).count() > 0) {
+                    } else {
+                        throw new InvalidGraphException("Connection Node(target) not found: ConnectionID:[" + link.getId() + "] Node: [" + link.getTarget() + "]").addDetails("nodes", nodes);
+                    }
+
+                    if (this.nodes.stream().filter(n -> n.getId().equals(link.getSource())).count() > 0) {
+                    } else {
+                        throw new InvalidGraphException("Connection Node(source) not found: ConnectionID:[" + link.getId() + "] Node: [" + link.getTarget() + "]").addDetails("nodes", nodes);
+                    }
+                }
+
+            }
+
+        }
+
+        this.linkCount = Long.valueOf(this.links.size());
+        this.nodeCount = Long.valueOf(this.nodes.size());
+        return this;
+    }
+
+    /**
+     * @return the nodeCount
+     */
+    public Long getNodeCount() {
+        return nodeCount;
+    }
+
+    /**
+     * @param nodeCount the nodeCount to set
+     */
+    public void setNodeCount(Long nodeCount) {
+        this.nodeCount = nodeCount;
+    }
+
+    /**
+     * @return the linkCount
+     */
+    public Long getLinkCount() {
+        return linkCount;
+    }
+
+    /**
+     * @param linkCount the linkCount to set
+     */
+    public void setLinkCount(Long linkCount) {
+        this.linkCount = linkCount;
+    }
 }

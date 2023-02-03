@@ -17,6 +17,8 @@
  */
 package com.osstelecom.db.inventory.visualization.dto;
 
+import com.osstelecom.db.inventory.manager.resources.BasicResource;
+import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import java.util.Objects;
 
 /**
@@ -29,6 +31,7 @@ public class ThreeJsNodeDTO extends BaseGraphDTO {
     private final String id;
     private final String name;
     private final String group;
+    private final Boolean isLeaf;
 
     @Override
     public int hashCode() {
@@ -64,19 +67,15 @@ public class ThreeJsNodeDTO extends BaseGraphDTO {
         return Objects.equals(this.domain, other.domain);
     }
 
-    public ThreeJsNodeDTO(String id, String name, String group, String domain) {
-        this.id = id;
-        this.name = name;
-        this.group = group;
-        this.domain = domain;
-    }
+    
 
-    public ThreeJsNodeDTO(String id, String name, String group, String domain, String operStatus) {
-        this.id = id;
-        this.name = name;
-        this.group = group;
-        this.domain = domain;
-        this.operStatus = operStatus;
+    public ThreeJsNodeDTO(BasicResource res) {
+        this.id = res.getKey();
+        this.name = res.getName();
+        this.group = res.getAttributeSchemaName();
+        this.domain = res.getDomainName();
+        this.operStatus = res.getOperationalStatus();
+        this.isLeaf = res.getIsLeaf();
     }
     private final String domain;
 

@@ -75,6 +75,10 @@ public class UtilSession {
      * @return
      */
     public Boolean isValidStringValue(String value) {
+//        if (value!=null)
+//        if (value.startsWith(" ") || value.endsWith(" ")){
+//            return false;
+//        }
         return this.isValidStringValue(value, "^[a-zA-Z0-9\\-\\.\\_]+$");
     }
 

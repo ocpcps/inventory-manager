@@ -41,8 +41,10 @@ import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.GraphList;
+import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import java.io.IOException;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  *
@@ -303,46 +305,12 @@ public class ResourceConnectionDao extends AbstractArangoDao<ResourceConnection>
         }
     }
 
-    /**
-     * Obtem os vertices relacionados ao circuito Muito especifica para
-     * generalizar
-     *
-     * @param circuit
-     * @return
-     */
-    public GraphList<ResourceConnection> findCircuitPaths(CircuitResource circuit) {
-        // String aql = "FOR v, e, p IN 1..@dLimit ANY @aPoint " +
-        // circuit.getDomain().getConnections() + "\n"
-        // + " FILTER v._id == @zPoint "
-        // + " AND @circuitId in e.circuits[*] "
-        // + " AND e.operationalStatus ==@operStatus "
-        // + " for a in p.edges[*] return distinct a";
-        String aql = "FOR path\n"
-                + "  IN 1..@dLimit ANY k_paths\n"
-                + "  @aPoint TO @zPoint\n"
-                + "  GRAPH '" + circuit.getDomain().getConnectionLayer() + "'\n"
-                + "    for v in  path.edges\n"
-                + "      filter @circuitId  in v.circuits[*] \n"
-                + "        \n"
-                + "       return v";
+    
 
-        HashMap<String, Object> bindVars = new HashMap<>();
-        bindVars.put("dLimit", circuit.getCircuitPath().size() + 1);
-        bindVars.put("aPoint", circuit.getaPoint().getId());
-        bindVars.put("zPoint", circuit.getzPoint().getId());
-        bindVars.put("circuitId", circuit.getId());
-        logger.info("(query) RUNNING: AQL:[{}]", aql);
-        bindVars.forEach((k, v) -> {
-            logger.info("\t  [@{}]=[{}]", k, v);
-
-        });
-        ArangoCursor<ResourceConnection> cursor = this.getDb().query(aql, bindVars,
-                new AqlQueryOptions().count(true).batchSize(5000), ResourceConnection.class);
-        return new GraphList<>(cursor);
-    }
+    
 
     @Override
-    public Long getCount(Domain domain) throws  IOException, InvalidRequestException {
+    public Long getCount(Domain domain) throws IOException, InvalidRequestException {
         String aql = "for doc in `" + domain.getConnections() + "` ";
         FilterDTO filter = new FilterDTO(aql);
         try {

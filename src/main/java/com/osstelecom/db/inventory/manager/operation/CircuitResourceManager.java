@@ -15,6 +15,7 @@ import com.arangodb.entity.DocumentDeleteEntity;
 import com.arangodb.entity.DocumentUpdateEntity;
 import com.google.common.eventbus.Subscribe;
 import com.osstelecom.db.inventory.manager.dao.CircuitResourceDao;
+import com.osstelecom.db.inventory.manager.dao.GraphDao;
 import com.osstelecom.db.inventory.manager.dao.ResourceConnectionDao;
 import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import com.osstelecom.db.inventory.manager.events.CircuitResourceCreatedEvent;
@@ -63,6 +64,9 @@ public class CircuitResourceManager extends Manager {
 
     @Autowired
     private DomainManager domainManager;
+    
+    @Autowired
+    private GraphDao graphDao;
 
     private Logger logger = LoggerFactory.getLogger(CircuitResourceManager.class);
 
@@ -175,7 +179,7 @@ public class CircuitResourceManager extends Manager {
      * @throws ArangoDaoException
      */
     public GraphList<ResourceConnection> findCircuitPaths(CircuitResource circuit) {
-        return this.resourceConnectionDao.findCircuitPaths(circuit);
+        return this.graphDao.findCircuitPaths(circuit);
     }
 
     public GraphList<CircuitResource> findCircuitsByFilter(FilterDTO filter, Domain domain) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {

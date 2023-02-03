@@ -486,7 +486,13 @@ public class ResourceSession {
             if (filter.getPayLoad().getLimit() != null) {
                 if (filter.getPayLoad().getLimit() > 10000) {
                     throw new InvalidRequestException("Result Set Limit cannot be over 1000, please descrease limit value to a range between 0 and 1000");
+                } else {
+                    if (filter.getPayLoad().getLimit() < 0L) {
+                        filter.getPayLoad().setLimit(10000L);
+                    }
                 }
+            } else {
+                filter.getPayLoad().setLimit(10000L);
             }
         }
 
@@ -518,12 +524,16 @@ public class ResourceSession {
     }
 
     public GraphList<ManagedResource> findManagedResourceByFilter(FilterDTO filter) throws InvalidRequestException, ArangoDaoException, DomainNotFoundException, ResourceNotFoundException {
-
-        if (filter.getObjects().contains("nodes") || filter.getObjects().contains("node")) {
-            GraphList<ManagedResource> nodesGraph = this.managedResourceManager.getNodesByFilter(filter, filter.getDomainName());
-            return nodesGraph;
+        if (filter.getObjects() != null) {
+            if (filter.getObjects().contains("nodes") || filter.getObjects().contains("node")) {
+                GraphList<ManagedResource> nodesGraph = this.managedResourceManager.getNodesByFilter(filter, filter.getDomainName());
+                return nodesGraph;
+            } else {
+                throw new InvalidRequestException("Filter Object is now known")
+                        .addDetails("filter", filter);
+            }
         } else {
-            throw new ResourceNotFoundException("No Resource Found for filter")
+            throw new InvalidRequestException("No Object Found for filter")
                     .addDetails("filter", filter);
         }
 
@@ -535,7 +545,7 @@ public class ResourceSession {
             GraphList<ResourceConnection> nodesGraph = this.resourceConnectionManager.getConnectionsByFilter(filter, filter.getDomainName());
             return nodesGraph;
         } else {
-            throw new ResourceNotFoundException("No Resource Connection Found for filter")
+            throw new ResourceNotFoundException("Invalida Object Type:["+ String.join(",", filter.getObjects())+"]")
                     .addDetails("filter", filter);
         }
 

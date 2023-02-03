@@ -34,13 +34,13 @@ import com.arangodb.model.DocumentUpdateOptions;
 import com.arangodb.model.OverwriteMode;
 import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
-import com.osstelecom.db.inventory.manager.exception.BasicException;
 import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.GraphList;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import java.io.IOException;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  *
@@ -254,7 +254,7 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
     }
 
     @Override
-    public Long getCount(Domain domain) throws  IOException, InvalidRequestException {
+    public Long getCount(Domain domain) throws IOException, InvalidRequestException {
         String aql = "for doc in `" + domain.getNodes() + "` ";
         FilterDTO filter = new FilterDTO(aql);
         try {
@@ -266,4 +266,6 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
             return 0L;
         }
     }
+
+    
 }

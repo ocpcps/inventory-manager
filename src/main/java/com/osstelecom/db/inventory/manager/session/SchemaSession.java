@@ -369,10 +369,15 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
         //
         model.getAttributes().forEach((k, v) -> {
 
-            if (!utilSession.isValidStringValue(k)) {
+            //
+            // Valida se o atributo começa ou termina com espaço
+            // Se começar ou terminar com espaço será marcado como inválido
+            //
+            if (k.startsWith(" ") || k.endsWith(" ")) {
+                invalidAttributes.add(k);
+            } else if (!utilSession.isValidStringValue(k)) {
                 invalidAttributes.add(k);
             } else {
-
                 if (v.getId() != null && !v.getId().equals("")) {
                     removeAttributes.add(k);
                 }

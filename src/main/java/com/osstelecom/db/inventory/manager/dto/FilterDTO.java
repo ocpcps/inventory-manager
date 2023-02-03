@@ -32,7 +32,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @created 26.01.2022
  */
 public class FilterDTO {
-
+    
     private List<String> classes;
     private List<String> objects = new ArrayList<>();
     private String aqlFilter;
@@ -54,67 +54,75 @@ public class FilterDTO {
     private Long limit = -1L;
     private String domainName;
     private Boolean paginated = false;
-
+    
+    public void addBinding(String name, Object value) {
+        this.bindings.put(name, value);
+    }
+    
+    public void addObject(String object) {
+        this.objects.add(object);
+    }
+    
     public FilterDTO() {
     }
-
+    
     public FilterDTO(String aqlFilter) {
         this.aqlFilter = aqlFilter;
     }
-
+    
     public FilterDTO(String aqlFilter, String sortCondition) {
         this.aqlFilter = aqlFilter;
         this.sortCondition = sortCondition;
     }
-
+    
     public FilterDTO(String aqlFilter, String sortCondition, Map<String, Object> bindings) {
         this.aqlFilter = aqlFilter;
         this.sortCondition = sortCondition;
         this.bindings = bindings;
     }
-
+    
     public FilterDTO(String aqlFilter, Map<String, Object> bindings) {
         this.aqlFilter = aqlFilter;
         this.bindings = bindings;
     }
-
+    
     public FilterDTO(String aqlFilter, Map<String, Object> bindings, String domainName) {
         this.aqlFilter = aqlFilter;
         this.bindings = bindings;
         this.domainName = domainName;
     }
-
+    
     public List<ManagedResource> getNodes() {
         return nodes;
     }
-
+    
     public void setNodes(List<ManagedResource> nodes) {
         this.nodes = nodes;
     }
-
+    
     public List<ResourceConnection> getConnections() {
         return connections;
     }
-
+    
     public void setConnections(List<ResourceConnection> connections) {
         this.connections = connections;
 //        if (this.connections != null) {
 //            this.setConnectionsCount(this.connections.size());
 //        }
     }
-
+    
     public Long getNodeCount() {
         return nodeCount;
     }
-
+    
     public void setNodeCount(Long nodeCount) {
         this.nodeCount = nodeCount;
     }
-
+    
     public Long getConnectionsCount() {
         return connectionsCount;
     }
-
+    
     public void setConnectionsCount(Long connectionsCount) {
         this.connectionsCount = connectionsCount;
     }

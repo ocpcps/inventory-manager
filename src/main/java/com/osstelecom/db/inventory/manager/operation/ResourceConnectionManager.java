@@ -80,6 +80,8 @@ public class ResourceConnectionManager extends Manager {
         return result.getOld();
     }
 
+     
+    
     /**
      * Cria uma nova Conexão entre dois elementos, Note que a ordem é importante
      * para garantir o Dê -> Para
@@ -322,7 +324,20 @@ public class ResourceConnectionManager extends Manager {
 
     public GraphList<ResourceConnection> getConnectionsByFilter(FilterDTO filter, String domainName) throws ArangoDaoException, DomainNotFoundException, InvalidRequestException, ResourceNotFoundException {
         Domain domain = domainManager.getDomain(domainName);
-        if (filter.getObjects().contains("connections")) {
+
+        if (filter.getLimit() != null) {
+            if (filter.getLimit() > 10000) {
+                throw new InvalidRequestException("Result Set Limit cannot be over 1000, please descrease limit value to a range between 0 and 1000");
+            } else {
+                if (filter.getLimit() < 0L) {
+                    filter.setLimit(10000L);
+                }
+            }
+        } else {
+            filter.setLimit(10000L);
+        }
+
+        if (filter.getObjects().contains("connections")||filter.getObjects().contains("connection")) {
 //            HashMap<String, Object> bindVars = new HashMap<>();
 
             if (filter.getClasses() != null && !filter.getClasses().isEmpty()) {
