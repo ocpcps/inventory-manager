@@ -111,6 +111,7 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
     public void run() {
         while (running) {
             try {
+                
                 Object event = eventQueue.poll(5, TimeUnit.SECONDS);
                 if (event != null) {
                     //

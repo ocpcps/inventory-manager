@@ -84,7 +84,7 @@ public class GraphViewApi extends BaseApi {
      * @throws InvalidRequestException
      */
     @GetMapping(path = "{domain}/resource/{resourceKey}", produces = "application/json")
-    public ThreeJsViewResponse getResourceStrucureDependency(@PathVariable("domain") String domain, @PathVariable("resourceKey") String resourceKey, HttpServletRequest httpRequest) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
+    public ThreeJsViewResponse getResourceStrucureDependency(@PathVariable("domain") String domain, @PathVariable("resourceKey") String resourceKey, HttpServletRequest httpRequest) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException, InvalidGraphException {
         GetStructureDependencyRequest request = new GetStructureDependencyRequest();
         request.setPayLoad(new ManagedResource());
         request.getPayLoad().setKey(resourceKey);

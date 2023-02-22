@@ -57,6 +57,8 @@ public class Domain {
     private Long atomicId;
     @Schema(example = "2023-04-18T23:20:00.000Z")
     private Date lastStatsCalc;
+    @Schema(example = "2023-04-18T23:20:00.000Z")
+    private Date lastUpdate;
 
     /**
      * @return the domainName
@@ -284,6 +286,20 @@ public class Domain {
      */
     public void setDomainDescription(String domainDescription) {
         this.domainDescription = domainDescription;
+    }
+
+    /**
+     * @return the lastUpdate
+     */
+    public Date getLastUpdate() {
+        return lastUpdate;
+    }
+
+    /**
+     * @param lastUpdate the lastUpdate to set
+     */
+    public void setLastUpdate(Date lastUpdate) {
+        this.lastUpdate = lastUpdate;
     }
 
 }

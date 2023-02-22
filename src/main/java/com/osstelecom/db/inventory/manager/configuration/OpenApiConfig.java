@@ -48,7 +48,6 @@ import org.springframework.web.method.HandlerMethod;
                 tokenUrl = "${springdoc.oAuthFlow.tokenUrl}", scopes = {
                     @OAuthScope(name = "read", description = "IdentityPortal.API")}),
                 password = @OAuthFlow(
-                        //                        authorizationUrl = "${springdoc.oAuthFlow.authorizationUrl}",
                         tokenUrl = "${springdoc.oAuthFlow.tokenUrl}", scopes = {
                             @OAuthScope(name = "read", description = "default.scope")})))
 @OpenAPIDefinition(info = @Info(
@@ -62,7 +61,8 @@ public class OpenApiConfig {
 
     /**
      * Adciona o Header Opcional para mostrar informações uteis para debug
-     * @return 
+     *
+     * @return
      */
     @Bean
     public OperationCustomizer customGlobalHeaders() {

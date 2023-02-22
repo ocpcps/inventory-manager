@@ -26,6 +26,8 @@ import com.osstelecom.db.inventory.visualization.exception.InvalidGraphException
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
@@ -38,8 +40,24 @@ import java.util.stream.Collectors;
  */
 public class ThreeJSViewDTO {
 
+    /**
+     * @return the nodeMap
+     */
+    public Map<String, ThreeJsNodeDTO> getNodeMap() {
+        if (nodeMap.isEmpty()
+                && !this.nodes.isEmpty()) {
+            this.nodes.forEach(n -> {
+
+                nodeMap.put(n.getId(), n);
+            });
+
+        }
+        return nodeMap;
+    }
+
     private List<ThreeJsNodeDTO> nodes = new ArrayList<>();
     private List<ThreeJSLinkDTO> links = new ArrayList<>();
+    private Map<String, ThreeJsNodeDTO> nodeMap = new ConcurrentHashMap<>();
     private Long nodeCount = 0L;
     private Long linkCount = 0L;
 
@@ -57,9 +75,12 @@ public class ThreeJSViewDTO {
         if (filter.getPayLoad().getConnections() != null) {
             filter.getPayLoad().getConnections().forEach(connection -> {
 
-                nodes.add(new ThreeJsNodeDTO(connection.getFromResource()));
-                nodes.add(new ThreeJsNodeDTO(connection.getToResource()));
-
+                ThreeJsNodeDTO fromNode = new ThreeJsNodeDTO(connection.getFromResource());
+                ThreeJsNodeDTO toNode = new ThreeJsNodeDTO(connection.getToResource());
+                nodes.add(fromNode);
+                this.nodeMap.put(fromNode.getId(), fromNode);
+                nodes.add(toNode);
+                this.nodeMap.put(toNode.getId(), toNode);
                 links.add(new ThreeJSLinkDTO(connection));
             });
         }
@@ -73,9 +94,16 @@ public class ThreeJSViewDTO {
         if (!connections.isEmpty()) {
             try {
                 connections.forEach(connection -> {
-                    nodes.add(new ThreeJsNodeDTO(connection.getFromResource()));
-                    nodes.add(new ThreeJsNodeDTO(connection.getToResource()));
-
+                    ThreeJsNodeDTO fromNode = new ThreeJsNodeDTO(connection.getFromResource());
+                    ThreeJsNodeDTO toNode = new ThreeJsNodeDTO(connection.getToResource());
+                    if (!nodes.contains(fromNode)) {
+                        nodes.add(fromNode);
+                        this.nodeMap.put(fromNode.getId(), fromNode);
+                    }
+                    if (!this.nodes.contains(toNode)) {
+                        nodes.add(toNode);
+                        this.nodeMap.put(toNode.getId(), toNode);
+                    }
                     links.add(new ThreeJSLinkDTO(connection));
                 });
             } catch (IOException ex) {
@@ -93,9 +121,14 @@ public class ThreeJSViewDTO {
 
     public void setNodesByGraph(GraphList<ManagedResource> resources) {
         nodes.clear();
+        this.nodeMap.clear();
         try {
             resources.forEach(resource -> {
-                nodes.add(new ThreeJsNodeDTO(resource));
+                ThreeJsNodeDTO node = new ThreeJsNodeDTO(resource);
+                if (!this.nodes.contains(node)) {
+                    this.nodeMap.put(node.getId(), node);
+                    nodes.add(node);
+                }
             });
         } catch (IOException | IllegalStateException ex) {
 
@@ -107,10 +140,15 @@ public class ThreeJSViewDTO {
         this.links.clear();
         try {
             connections.forEach(connection -> {
-                links.add(new ThreeJSLinkDTO(connection));
+
+                if (this.nodeMap.containsKey(connection.getFromResource().getKey())
+                        && this.nodeMap.containsKey(connection.getToResource().getKey())) {
+                    links.add(new ThreeJSLinkDTO(connection));
+                }
+
             });
         } catch (IOException | IllegalStateException ex) {
-
+            ex.printStackTrace();
         }
     }
 
@@ -127,28 +165,47 @@ public class ThreeJSViewDTO {
         this.links = links;
     }
 
+    public ThreeJSViewDTO validate() throws InvalidGraphException {
+        return this.validate(false);
+    }
+
     /**
      * Check if Graph is complete
      */
-    public ThreeJSViewDTO validate() throws InvalidGraphException {
+    public ThreeJSViewDTO validate(boolean fixGraph) throws InvalidGraphException {
+        List<String> connectionsToRemove = new ArrayList<>();
         if (!this.links.isEmpty()) {
             for (ThreeJSLinkDTO link : this.links) {
                 if (this.nodes.stream().filter(n -> n.getId().equals(link.getSource()) || n.getId().equals(link.getTarget())).count() > 0) {
                 } else {
-
                     if (this.nodes.stream().filter(n -> n.getId().equals(link.getTarget())).count() > 0) {
                     } else {
-                        throw new InvalidGraphException("Connection Node(target) not found: ConnectionID:[" + link.getId() + "] Node: [" + link.getTarget() + "]").addDetails("nodes", nodes);
+                        if (fixGraph) {
+                            connectionsToRemove.add(link.getId());
+                        } else {
+                            throw new InvalidGraphException("Connection Node(target) not found: ConnectionID:[" + link.getId() + "] Node: [" + link.getTarget() + "]").addDetails("nodes", nodes);
+                        }
                     }
 
                     if (this.nodes.stream().filter(n -> n.getId().equals(link.getSource())).count() > 0) {
                     } else {
-                        throw new InvalidGraphException("Connection Node(source) not found: ConnectionID:[" + link.getId() + "] Node: [" + link.getTarget() + "]").addDetails("nodes", nodes);
+                        if (fixGraph) {
+                            connectionsToRemove.add(link.getId());
+                        } else {
+                            throw new InvalidGraphException("Connection Node(source) not found: ConnectionID:[" + link.getId() + "] Node: [" + link.getTarget() + "]").addDetails("nodes", nodes);
+                        }
                     }
                 }
 
             }
 
+            if (fixGraph) {
+                if (!connectionsToRemove.isEmpty()) {
+                    connectionsToRemove.forEach(id -> {
+                        this.links.remove(id);
+                    });
+                }
+            }
         }
 
         this.linkCount = Long.valueOf(this.links.size());

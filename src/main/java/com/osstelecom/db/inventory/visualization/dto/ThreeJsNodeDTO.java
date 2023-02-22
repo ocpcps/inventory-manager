@@ -18,7 +18,6 @@
 package com.osstelecom.db.inventory.visualization.dto;
 
 import com.osstelecom.db.inventory.manager.resources.BasicResource;
-import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import java.util.Objects;
 
 /**

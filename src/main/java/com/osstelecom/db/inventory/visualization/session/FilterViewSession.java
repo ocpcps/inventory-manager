@@ -56,21 +56,29 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class FilterViewSession {
-
+    
     @Autowired
     private ResourceSession resourceSession;
-
+    
     @Autowired
     private GraphSession graphSession;
-
+    
     @Autowired
     private UtilSession utils;
-
+    
     @Autowired
     private DomainManager domainManager;
-
+    
     private org.slf4j.Logger logger = LoggerFactory.getLogger(FilterViewSession.class);
 
+    /**
+     * @deprecated @param limitSize
+     * @return
+     * @throws DomainNotFoundException
+     * @throws ArangoDaoException
+     * @throws InvalidRequestException
+     * @throws ResourceNotFoundException
+     */
     public ThreeJsViewResponse getSampleResult(Long limitSize) throws DomainNotFoundException, ArangoDaoException, InvalidRequestException, ResourceNotFoundException {
         Domain domain = domainManager.getDomain("co");
         FilterRequest request = new FilterRequest(new FilterDTO());
@@ -94,14 +102,14 @@ public class FilterViewSession {
      * @throws ResourceNotFoundException
      * @throws InvalidRequestException
      */
-    public ThreeJsViewResponse getResourceStrucureDependency(GetStructureDependencyRequest request) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
+    public ThreeJsViewResponse getResourceStrucureDependency(GetStructureDependencyRequest request) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException, InvalidGraphException {
         Domain domain = domainManager.getDomain(request.getRequestDomain());
         ThreeJSViewDTO viewData = new ThreeJSViewDTO();
         /**
          * Vamos arrumar o Recurso que veio
          */
         ManagedResource resource = (ManagedResource) request.getPayLoad();
-
+        
         resource.setDomain(domain);
         logger.debug("Searching Resource: [{}/{}]", resource.getKey(), resource.getDomainName());
         resource = this.resourceSession.findManagedResource(resource);
@@ -124,15 +132,15 @@ public class FilterViewSession {
             //
             logger.debug("Parent Found, searching for children");
             viewData.getNodes().add(new ThreeJsNodeDTO(parent));
-
+            
             parentKey = parent.getKey();
-
+            
         } else {
             viewData.getNodes().add(new ThreeJsNodeDTO(resource));
         }
-
+        
         String childNodeAqlFilter = " doc.structureId == @structureId";
-
+        
         Map<String, Object> bindings = new HashMap<>();
         bindings.put("structureId", parentKey);
         FilterDTO filterChildResource = new FilterDTO(childNodeAqlFilter, bindings, domain.getDomainName());
@@ -158,7 +166,7 @@ public class FilterViewSession {
         String childConnectionsAqlFilter = " doc.fromResource._key "
                 + " in @nodeIds "
                 + "or  doc.toResource._key  in @nodeIds ";
-
+        
         bindings.clear();
         bindings.put("nodeIds", nodeIds);
         FilterDTO filterChildConnections = new FilterDTO(childConnectionsAqlFilter, bindings, domain.getDomainName());
@@ -168,13 +176,17 @@ public class FilterViewSession {
             connections.forEach(connection -> {
                 ThreeJSLinkDTO link = new ThreeJSLinkDTO(connection);
                 if (!viewData.getLinks().contains(link)) {
-                    viewData.getLinks().add(link);
+                    if (viewData.getNodeMap().containsKey(link.getSource())
+                            && viewData.getNodeMap().containsKey(link.getTarget())) {
+                        viewData.getLinks().add(link);
+                    }
                 }
             });
         } catch (IOException | IllegalStateException ex) {
             logger.error("Failed to Fetch Connections from Stream", ex);
         }
-
+        
+        viewData.validate(true);
         ThreeJsViewResponse response = new ThreeJsViewResponse(viewData);
         return response;
     }
@@ -186,7 +198,7 @@ public class FilterViewSession {
      */
     public ThreeJsViewResponse getDomainTopologyByFilter(GetDomainTopologyRequest request) throws InvalidRequestException,
             ArangoDaoException, DomainNotFoundException, ResourceNotFoundException, InvalidGraphException {
-
+        
         logger.debug("Received:");
         logger.debug(utils.toJson(request));
         //
@@ -195,33 +207,39 @@ public class FilterViewSession {
         this.domainManager.getDomain(request.getRequestDomain());
         request.getPayLoad().setDomainName(request.getRequestDomain());
         GraphList<ManagedResource> nodes = this.resourceSession.findManagedResourceByFilter(request.getPayLoad());
-
+        
         ThreeJSViewDTO view = new ThreeJSViewDTO();
 
+        //
+        // Set Nodes
+        //
         view.setNodesByGraph(nodes);
-
+        
         FilterDTO connectionsFilter = new FilterDTO();
         connectionsFilter.setDomainName(request.getRequestDomain());
         String connectionsAQLFilter = " doc.fromResource._key "
                 + " in @nodeIds "
                 + "or  doc.toResource._key  in @nodeIds ";
-
+        
         connectionsFilter.addObject("connection");
         connectionsFilter.setAqlFilter(connectionsAQLFilter);
         connectionsFilter.addBinding("nodeIds", view.getNodeIds());
-
+        
         GraphList<ResourceConnection> connections = this.resourceSession.findResourceConnectionByFilter(connectionsFilter);
 
+        //
+        // Set link of the visible nodes
+        //
         view.setLinksByGraph(connections);
 
         //
         // Check if the Graph is consistent
         //
-        view.validate();
-
+        view.validate(true);
+        
         return new ThreeJsViewResponse(view);
     }
-
+    
     public ThreeJsViewResponse expandNodeById(ExpandNodeRequest request) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException, InvalidGraphException {
         Domain domain = this.domainManager.getDomain(request.getRequestDomain());
         ManagedResource resource = new ManagedResource(domain, request.getPayLoad().getNodeId());
@@ -229,10 +247,10 @@ public class FilterViewSession {
         // Recupera a referencia do resource do DB
         //
         resource = this.resourceSession.findManagedResource(resource);
-
+        
         GraphList<ResourceConnection> result = this.graphSession.expandNode(resource, request.getPayLoad().getDirection(), request.getPayLoad().getDepth());
         
         return new ThreeJsViewResponse(new ThreeJSViewDTO(result).validate());
     }
-
+    
 }

@@ -317,15 +317,15 @@ public class ManagedResourceManager extends Manager {
     public GraphList<ManagedResource> getNodesByFilter(FilterDTO filter, String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
         Domain domain = domainManager.getDomain(domainName);
         if (filter.getLimit() != null) {
-            if (filter.getLimit() > 10000) {
+            if (filter.getLimit() > 1000) {
                 throw new InvalidRequestException("Result Set Limit cannot be over 1000, please descrease limit value to a range between 0 and 1000");
             } else {
                 if (filter.getLimit() < 0L) {
-                    filter.setLimit(10000L);
+                    filter.setLimit(1000L);
                 }
             }
         } else {
-            filter.setLimit(10000L);
+            filter.setLimit(1000L);
         }
         if (filter.getObjects().contains("nodes")) {
 

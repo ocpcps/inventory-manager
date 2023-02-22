@@ -64,7 +64,7 @@ public class CircuitResourceManager extends Manager {
 
     @Autowired
     private DomainManager domainManager;
-    
+
     @Autowired
     private GraphDao graphDao;
 
@@ -88,16 +88,34 @@ public class CircuitResourceManager extends Manager {
     public CircuitResource createCircuitResource(CircuitResource circuit) throws GenericException,
             SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, ArangoDaoException {
         String timerId = startTimer("createCircuitResource");
+        Boolean useUpsert = false;
         try {
             lockManager.lock();
             Domain domain = circuit.getDomain();
-            circuit.setKey(this.getUUID());
+            //
+            // START - Subir as validações para session
+            //
+            if (circuit.getKey() == null) {
+                circuit.setKey(getUUID());
+            } else {
+                //
+                // Teve um ID declarado pelo usuário ou solicitante, podemos converter isso para um upsert
+                //
+                useUpsert = true;
+            }
+
             circuit.setAtomId(domain.addAndGetId());
             ResourceSchemaModel schemaModel = schemaSession.loadSchema(circuit.getAttributeSchemaName());
             circuit.setSchemaModel(schemaModel);
             schemaSession.validateResourceSchema(circuit);
             dynamicRuleSession.evalResource(circuit, "I", this);
-            DocumentCreateEntity<CircuitResource> result = this.circuitResourceDao.insertResource(circuit);
+            DocumentCreateEntity<CircuitResource> result;
+            if (useUpsert) {
+                result = this.circuitResourceDao.upsertResource(circuit);
+            } else {
+                result = this.circuitResourceDao.insertResource(circuit);
+
+            }
             circuit.setKey(result.getId());
             circuit.setRevisionId(result.getRev());
             //
@@ -292,8 +310,7 @@ public class CircuitResourceManager extends Manager {
                 //
                 // Transitou de normal para degradado
                 //
-                
-               
+
                 degratedFlag = true;
             }
 
