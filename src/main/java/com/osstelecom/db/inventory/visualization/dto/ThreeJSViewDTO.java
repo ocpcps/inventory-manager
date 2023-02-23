@@ -18,6 +18,7 @@
 package com.osstelecom.db.inventory.visualization.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 import com.osstelecom.db.inventory.manager.resources.GraphList;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
@@ -41,6 +42,30 @@ import java.util.stream.Collectors;
 public class ThreeJSViewDTO {
 
     /**
+     * @return the circuits
+     */
+    public List<ThreeJSCircuitDTO> getCircuits() {
+        return circuits;
+    }
+
+    private List<ThreeJsNodeDTO> nodes = new ArrayList<>();
+    private List<ThreeJSLinkDTO> links = new ArrayList<>();
+    private List<ThreeJSCircuitDTO> circuits = new ArrayList<>();
+    @JsonIgnore
+    private Map<String, ThreeJsNodeDTO> nodeMap = new ConcurrentHashMap<>();
+
+    private Long nodeCount = 0L;
+    private Long linkCount = 0L;
+    private Long circuitCount = 0L;
+
+    public void setCircuits(List<CircuitResource> circuits) {
+        this.circuits.clear();
+        circuits.forEach(c -> {
+            this.circuits.add(new ThreeJSCircuitDTO(c));
+        });
+    }
+
+    /**
      * @return the nodeMap
      */
     public Map<String, ThreeJsNodeDTO> getNodeMap() {
@@ -54,12 +79,6 @@ public class ThreeJSViewDTO {
         }
         return nodeMap;
     }
-
-    private List<ThreeJsNodeDTO> nodes = new ArrayList<>();
-    private List<ThreeJSLinkDTO> links = new ArrayList<>();
-    private Map<String, ThreeJsNodeDTO> nodeMap = new ConcurrentHashMap<>();
-    private Long nodeCount = 0L;
-    private Long linkCount = 0L;
 
     public ThreeJSViewDTO() {
     }
@@ -210,6 +229,7 @@ public class ThreeJSViewDTO {
 
         this.linkCount = Long.valueOf(this.links.size());
         this.nodeCount = Long.valueOf(this.nodes.size());
+        this.circuitCount = Long.valueOf(this.circuits.size());
         return this;
     }
 

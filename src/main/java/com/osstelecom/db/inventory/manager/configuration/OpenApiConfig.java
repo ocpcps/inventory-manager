@@ -56,7 +56,9 @@ import org.springframework.web.method.HandlerMethod;
         version = "0.0.2",
         contact = @Contact(name = "Lucas Nishimura", email = "lucas.nishimura@telefonica.com")),
         servers = {
-            @Server(url = "${inventory-manager.api-server}")})
+            @Server(url = "${inventory-manager.api-server}"),
+            @Server(url = "https://localhost:9000"),
+        })
 public class OpenApiConfig {
 
     /**

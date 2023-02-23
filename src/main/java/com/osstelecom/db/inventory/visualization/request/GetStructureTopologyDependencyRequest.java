@@ -25,9 +25,9 @@ import com.osstelecom.db.inventory.manager.resources.BasicResource;
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 16.01.2023
  */
-public class GetStructureDependencyRequest extends BasicRequest<BasicResource> {
+public class GetStructureTopologyDependencyRequest extends BasicRequest<BasicResource> {
     
-    public GetStructureDependencyRequest() {
+    public GetStructureTopologyDependencyRequest() {
     }
     
 }

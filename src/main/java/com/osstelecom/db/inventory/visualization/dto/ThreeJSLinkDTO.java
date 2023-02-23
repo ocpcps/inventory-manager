@@ -18,6 +18,8 @@
 package com.osstelecom.db.inventory.visualization.dto;
 
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -30,6 +32,7 @@ public class ThreeJSLinkDTO extends BaseGraphDTO {
     private final String source;
     private final String target;
     private final String id;
+    private List<String> circuits;
 
     @Override
     public int hashCode() {
@@ -61,6 +64,22 @@ public class ThreeJSLinkDTO extends BaseGraphDTO {
         this.source = con.getFromResource().getKey();
         this.target = con.getToResource().getKey();
         this.id = con.getKey();
+        if (con.getCircuits() != null) {
+            if (!con.getCircuits().isEmpty()) {
+                if (this.circuits == null) {
+                    this.circuits = new ArrayList<>();
+                }
+                con.getCircuits().forEach(id -> {
+                    //
+                    // Pega somente a KEY
+                    //
+                    if (id.contains("/")) {
+                        this.circuits.add(id.split("/")[1]);
+                    }
+                });
+
+            }
+        }
     }
 
     public String getSource() {
@@ -76,6 +95,13 @@ public class ThreeJSLinkDTO extends BaseGraphDTO {
      */
     public String getId() {
         return id;
+    }
+
+    /**
+     * @return the circuits
+     */
+    public List<String> getCircuits() {
+        return circuits;
     }
 
 }

@@ -224,6 +224,7 @@ public class DomainManager extends Manager {
                 domain.setCircuitCount(circuitResourceDao.getCount(domain));
                 domain.setServiceCount(serviceResourceDao.getCount(domain));
                 domain.setLastStatsCalc(new Date());
+                
                 //
                 // Sync DB
                 //

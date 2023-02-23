@@ -24,11 +24,13 @@ import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.operation.DomainManager;
 import com.osstelecom.db.inventory.manager.request.FilterRequest;
+import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.GraphList;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import com.osstelecom.db.inventory.manager.response.FilterResponse;
+import com.osstelecom.db.inventory.manager.session.CircuitSession;
 import com.osstelecom.db.inventory.manager.session.GraphSession;
 import com.osstelecom.db.inventory.manager.session.ResourceSession;
 import com.osstelecom.db.inventory.manager.session.UtilSession;
@@ -37,8 +39,9 @@ import com.osstelecom.db.inventory.visualization.dto.ThreeJSViewDTO;
 import com.osstelecom.db.inventory.visualization.dto.ThreeJsNodeDTO;
 import com.osstelecom.db.inventory.visualization.exception.InvalidGraphException;
 import com.osstelecom.db.inventory.visualization.request.ExpandNodeRequest;
+import com.osstelecom.db.inventory.visualization.request.GetCircuitByConnectionTopologyRequest;
 import com.osstelecom.db.inventory.visualization.request.GetDomainTopologyRequest;
-import com.osstelecom.db.inventory.visualization.request.GetStructureDependencyRequest;
+import com.osstelecom.db.inventory.visualization.request.GetStructureTopologyDependencyRequest;
 import com.osstelecom.db.inventory.visualization.response.ThreeJsViewResponse;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -59,6 +62,9 @@ public class FilterViewSession {
     
     @Autowired
     private ResourceSession resourceSession;
+    
+    @Autowired
+    private CircuitSession circuitSession;
     
     @Autowired
     private GraphSession graphSession;
@@ -102,7 +108,7 @@ public class FilterViewSession {
      * @throws ResourceNotFoundException
      * @throws InvalidRequestException
      */
-    public ThreeJsViewResponse getResourceStrucureDependency(GetStructureDependencyRequest request) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException, InvalidGraphException {
+    public ThreeJsViewResponse getResourceStrucureDependency(GetStructureTopologyDependencyRequest request) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException, InvalidGraphException {
         Domain domain = domainManager.getDomain(request.getRequestDomain());
         ThreeJSViewDTO viewData = new ThreeJSViewDTO();
         /**
@@ -251,6 +257,40 @@ public class FilterViewSession {
         GraphList<ResourceConnection> result = this.graphSession.expandNode(resource, request.getPayLoad().getDirection(), request.getPayLoad().getDepth());
         
         return new ThreeJsViewResponse(new ThreeJSViewDTO(result).validate());
+    }
+    
+    public ThreeJsViewResponse getCircuitsByConnectionId(GetCircuitByConnectionTopologyRequest request) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException, InvalidGraphException {
+        ThreeJSViewDTO view = new ThreeJSViewDTO();
+        Domain domain = domainManager.getDomain(request.getRequestDomain());
+        ResourceConnection connection = request.getPayLoad();
+        connection.setDomain(domain);
+        connection = this.resourceSession.findResourceConnection(connection);
+        //
+        // OK A conexão Existe, agora vamos procurar os Circuitos...
+        //
+
+        if (!connection.getCircuits().isEmpty()) {
+            logger.debug("Found:[{}] Circuits for Connection ID:[{}]", connection.getCircuits().size(), connection.getKey());
+            FilterDTO filter = new FilterDTO();
+            FilterRequest circuitsFilter = new FilterRequest(filter);
+            circuitsFilter.setRequestDomain(domain.getDomainName());
+            filter.setDomainName(domain.getDomainName());
+            filter.addBinding("circuitIds", connection.getCircuits());
+            filter.setAqlFilter("doc._id in @circuitIds");
+            filter.addObject("circuit");
+            
+            FilterResponse circuitsFound = this.circuitSession.findCircuitByFilter(circuitsFilter);
+            
+            if (circuitsFound.getPayLoad().getCircuitCount() > 0L) {
+                view.setCircuits(circuitsFound.getPayLoad().getCircuits());
+            }
+        }
+        //
+        //
+        //
+
+        view.validate();
+        return new ThreeJsViewResponse(view);
     }
     
 }

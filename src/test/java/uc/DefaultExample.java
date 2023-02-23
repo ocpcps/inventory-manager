@@ -15,11 +15,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import com.osstelecom.db.inventory.topology.impact.ImpactManagerIf;
 
+
 /**
  *
  * @author Nishisan
  */
 public class DefaultExample {
+
+    
 
     public DefaultExample() throws GraphNotEnabledException {
         Long start = System.currentTimeMillis();

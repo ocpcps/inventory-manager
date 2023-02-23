@@ -15,25 +15,16 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package com.osstelecom.db.inventory.visualization.dto;
+package com.osstelecom.db.inventory.visualization.request;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
+import com.osstelecom.db.inventory.manager.request.BasicRequest;
+import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
- * @created 30.01.2023
+ * @created 23.02.2023
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public class BaseGraphDTO {
+public class GetCircuitByConnectionTopologyRequest extends BasicRequest<ResourceConnection> {
 
-    protected String operStatus = "UP";
-
-    public String getOperStatus() {
-        return operStatus;
-    }
-
-    public void setOperStatus(String operStatus) {
-        this.operStatus = operStatus;
-    }
 }

@@ -17,29 +17,6 @@
  */
 package com.osstelecom.db.inventory.manager.tests;
 
-import com.osstelecom.db.inventory.manager.exception.DomainAlreadyExistsException;
-import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
-import com.osstelecom.db.inventory.manager.request.CreateDomainRequest;
-import com.osstelecom.db.inventory.manager.request.CreateManagedResourceRequest;
-import com.osstelecom.db.inventory.manager.request.DeleteDomainRequest;
-import com.osstelecom.db.inventory.manager.resources.Domain;
-import com.osstelecom.db.inventory.manager.resources.ManagedResource;
-import com.osstelecom.db.inventory.manager.response.CreateDomainResponse;
-import com.osstelecom.db.inventory.manager.response.CreateManagedResourceResponse;
-import com.osstelecom.db.inventory.manager.response.DeleteDomainResponse;
-import com.osstelecom.db.inventory.manager.session.DomainSession;
-import com.osstelecom.db.inventory.manager.session.ResourceSession;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.ClassOrderer;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.MethodOrderer;
-import org.junit.jupiter.api.Order;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestClassOrder;
-import org.junit.jupiter.api.TestMethodOrder;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>

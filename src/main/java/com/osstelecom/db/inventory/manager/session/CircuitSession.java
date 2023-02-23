@@ -427,17 +427,19 @@ public class CircuitSession {
 
                 ResourceConnection b = resourceConnectionManager.findResourceConnection(requestedPath);
                 if (!b.getCircuits().contains(circuit.getId())) {
+                    //
+                    // Garante que a Conexão vai ter uma referencia ao circuito
+                    //
                     b.getCircuits().add(circuit.getId());
-                    //
-                    // This needs updates
-                    //
-                    if (!circuit.getCircuitPath().contains(b.getId())) {
-                        circuit.getCircuitPath().add(b.getId());
-
-                    }
-
                 } else {
-                    logger.warn("Connection: [{}] Already Has Circuit: {}", b.getId(), circuit.getId());
+//                    logger.warn("Connection: [{}] Already Has Circuit: {}", b.getId(), circuit.getId());
+                }
+
+                //
+                // Se o Circuito não tem a conexão adciona a conexão no circuito
+                //
+                if (!circuit.getCircuitPath().contains(b.getId())) {
+                    circuit.getCircuitPath().add(b.getId());
                 }
                 resolved.add(b);
 

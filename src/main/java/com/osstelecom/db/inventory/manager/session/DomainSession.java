@@ -35,6 +35,7 @@ import com.osstelecom.db.inventory.manager.response.DomainResponse;
 import com.osstelecom.db.inventory.manager.response.GetDomainsResponse;
 import com.osstelecom.db.inventory.manager.response.UpdateDomainResponse;
 import java.io.IOException;
+import java.util.Date;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -45,7 +46,7 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class DomainSession {
-
+    
     @Autowired
     private DomainManager domainManager;
 
@@ -119,6 +120,7 @@ public class DomainSession {
     public UpdateDomainResponse updateDomain(UpdateDomainRequest domainRequest) throws DomainNotFoundException, ArangoDaoException {
         Domain currentDomain = domainManager.getDomain(domainRequest.getRequestDomain());
         if (currentDomain.getDomainDescription() != domainRequest.getPayLoad().getDomainDescription()) {
+            currentDomain.setLastUpdate(new Date());
             currentDomain.setDomainDescription(domainRequest.getPayLoad().getDomainDescription());
             UpdateDomainResponse response = new UpdateDomainResponse(this.domainManager.updateDomain(currentDomain));
             return response;

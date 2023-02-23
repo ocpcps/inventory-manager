@@ -293,7 +293,7 @@ public class ResourceConnectionManager extends Manager {
     }
 
     /**
-     * Update a Resource Connection
+     * Update a List of Resource Connection
      *
      * @param connection
      * @return
