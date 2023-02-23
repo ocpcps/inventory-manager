@@ -23,6 +23,7 @@ import com.osstelecom.db.inventory.manager.events.CircuitResourceUpdatedEvent;
 import com.osstelecom.db.inventory.manager.events.ManagedResourceUpdatedEvent;
 import com.osstelecom.db.inventory.manager.events.ResourceConnectionUpdatedEvent;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
+import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
 import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
@@ -201,6 +202,11 @@ public class CircuitResourceManager extends Manager {
     }
 
     public GraphList<CircuitResource> findCircuitsByFilter(FilterDTO filter, Domain domain) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
+        return this.circuitResourceDao.findResourceByFilter(filter, domain);
+    }
+
+    public GraphList<CircuitResource> findCircuitsByFilter(FilterDTO filter, String domainName) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException, DomainNotFoundException {
+        Domain domain = this.domainManager.getDomain(domainName);
         return this.circuitResourceDao.findResourceByFilter(filter, domain);
     }
 

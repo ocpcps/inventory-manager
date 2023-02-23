@@ -498,6 +498,16 @@ public class CircuitSession {
         return response;
     }
 
+    public GraphList<CircuitResource> findCircuitResourceByFilter(FilterDTO filter) throws ResourceNotFoundException, ArangoDaoException, InvalidRequestException, DomainNotFoundException {
+        if (filter.getObjects().contains("circuit") || filter.getObjects().contains("circuits")) {
+            GraphList<CircuitResource> circuitGraph = this.circuitResourceManager.findCircuitsByFilter(filter, filter.getDomainName());
+            return circuitGraph;
+        } else {
+            throw new InvalidRequestException("Invalida Object Type:[" + String.join(",", filter.getObjects()) + "]")
+                    .addDetails("filter", filter);
+        }
+    }
+
     public GetCircuitResponse findCircuitById(GetCircuitPathRequest req) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
         Domain domain = this.domainManager.getDomain(req.getDomainName());
         CircuitResource circuit = new CircuitResource(domain);

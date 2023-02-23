@@ -65,6 +65,16 @@ public class ThreeJSViewDTO {
         });
     }
 
+    public void setCircuits(GraphList<CircuitResource> circuits) {
+        this.circuits.clear();
+        try {
+            circuits.forEach(c -> {
+                this.circuits.add(new ThreeJSCircuitDTO(c));
+            });
+        } catch (IOException ex) {
+        }
+    }
+
     /**
      * @return the nodeMap
      */

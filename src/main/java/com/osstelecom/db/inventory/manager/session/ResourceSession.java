@@ -545,7 +545,7 @@ public class ResourceSession {
             GraphList<ResourceConnection> nodesGraph = this.resourceConnectionManager.getConnectionsByFilter(filter, filter.getDomainName());
             return nodesGraph;
         } else {
-            throw new ResourceNotFoundException("Invalida Object Type:["+ String.join(",", filter.getObjects())+"]")
+            throw new InvalidRequestException("Invalida Object Type:["+ String.join(",", filter.getObjects())+"]")
                     .addDetails("filter", filter);
         }
 

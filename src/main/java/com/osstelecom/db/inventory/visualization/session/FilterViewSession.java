@@ -246,6 +246,16 @@ public class FilterViewSession {
         return new ThreeJsViewResponse(view);
     }
     
+    /**
+     * Expand um nó no mapa
+     * @param request
+     * @return
+     * @throws DomainNotFoundException
+     * @throws ArangoDaoException
+     * @throws ResourceNotFoundException
+     * @throws InvalidRequestException
+     * @throws InvalidGraphException 
+     */
     public ThreeJsViewResponse expandNodeById(ExpandNodeRequest request) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException, InvalidGraphException {
         Domain domain = this.domainManager.getDomain(request.getRequestDomain());
         ManagedResource resource = new ManagedResource(domain, request.getPayLoad().getNodeId());
@@ -272,17 +282,17 @@ public class FilterViewSession {
         if (!connection.getCircuits().isEmpty()) {
             logger.debug("Found:[{}] Circuits for Connection ID:[{}]", connection.getCircuits().size(), connection.getKey());
             FilterDTO filter = new FilterDTO();
-            FilterRequest circuitsFilter = new FilterRequest(filter);
-            circuitsFilter.setRequestDomain(domain.getDomainName());
+         
+       
             filter.setDomainName(domain.getDomainName());
             filter.addBinding("circuitIds", connection.getCircuits());
             filter.setAqlFilter("doc._id in @circuitIds");
             filter.addObject("circuit");
             
-            FilterResponse circuitsFound = this.circuitSession.findCircuitByFilter(circuitsFilter);
+            GraphList<CircuitResource> circuitsFound = this.circuitSession.findCircuitResourceByFilter(filter);
             
-            if (circuitsFound.getPayLoad().getCircuitCount() > 0L) {
-                view.setCircuits(circuitsFound.getPayLoad().getCircuits());
+            if (!circuitsFound.isEmpty()) {
+                view.setCircuits(circuitsFound);
             }
         }
         //
