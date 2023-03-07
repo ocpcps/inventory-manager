@@ -57,7 +57,15 @@ public class FilterDTO {
     private Long limit = -1L;
     private String domainName;
     private Boolean paginated = false;
-
+    
+    public void addBinding(String name, Object value) {
+        this.bindings.put(name, value);
+    }
+    
+    public void addObject(String object) {
+        this.objects.add(object);
+    }
+    
     public FilterDTO() {
     }
 
