@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Lucas Nishimura <lucas.nishimura@gmail.com>
+ * Copyright (C) 2022 Lucas Nishimura <lucas.nishimura@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -15,25 +15,20 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package com.osstelecom.db.inventory.manager.request;
+package com.osstelecom.db.inventory.manager.events;
+
+import com.arangodb.entity.DocumentDeleteEntity;
+import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @created 10.04.2022
  */
-public interface IRequest<T> {
+public class ResourceConnectionDeletedEvent extends BasicResourceEvent<ResourceConnection> {
 
-    public String getRequestToken();
+    public ResourceConnectionDeletedEvent(DocumentDeleteEntity<ResourceConnection> entity) {
+        super(entity);
+    }
 
-    public String getRequestTarget();
-
-    public T getPayLoad();
-
-    public void setPayLoad(T payLoad);
-
-    public String getRequestDomain();
-
-    public void setRequestDomain(String domain);
-
-    public String getClassName();
 }

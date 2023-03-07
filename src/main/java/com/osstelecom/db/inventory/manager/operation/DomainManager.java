@@ -48,10 +48,8 @@ import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.DomainAlreadyExistsException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
-import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.listeners.EventManagerListener;
 import com.osstelecom.db.inventory.manager.resources.BasicResource;
-import com.osstelecom.db.inventory.manager.resources.ConsumableMetric;
 import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
@@ -163,7 +161,7 @@ public class DomainManager extends Manager {
         return domain;
     }
 
-    public Domain deleteDomain(Domain domain) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, IOException {
+    public Domain deleteDomain(Domain domain) throws DomainNotFoundException, ArangoDaoException {
         try {
             lockManager.lock();
             domain = this.getDomain(domain.getDomainName());
@@ -224,7 +222,6 @@ public class DomainManager extends Manager {
                 domain.setCircuitCount(circuitResourceDao.getCount(domain));
                 domain.setServiceCount(serviceResourceDao.getCount(domain));
                 domain.setLastStatsCalc(new Date());
-                
                 //
                 // Sync DB
                 //
@@ -301,33 +298,7 @@ public class DomainManager extends Manager {
         return result;
     }
 
-    /**
-     * Creates a consumable metric
-     *
-     * @param name
-     * @return
-     */
-    public ConsumableMetric createConsumableMetric(String name) {
-        String timerId = startTimer("createConsumableMetric");
-        try {
-            lockManager.lock();
-            ConsumableMetric metric = new ConsumableMetric(this);
-            metric.setMetricName(name);
-            endTimer(timerId);
-            //
-            // Notifica o event Manager da Metrica criada
-            //
-            ConsumableMetricCreatedEvent event = new ConsumableMetricCreatedEvent(metric);
-            eventManager.notifyGenericEvent(event);
-            return metric;
-        } finally {
-            if (lockManager.isLocked()) {
-                lockManager.unlock();
-            }
-            endTimer(timerId);
-        }
-
-    }
+   
 
     public Domain updateDomain(Domain domain) {
         DocumentUpdateEntity<Domain> result = this.domainDao.updateDomain(domain);

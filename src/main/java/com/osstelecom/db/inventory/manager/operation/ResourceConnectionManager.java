@@ -18,6 +18,7 @@ import com.osstelecom.db.inventory.manager.dao.ResourceConnectionDao;
 import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import com.osstelecom.db.inventory.manager.events.ManagedResourceUpdatedEvent;
 import com.osstelecom.db.inventory.manager.events.ResourceConnectionCreatedEvent;
+import com.osstelecom.db.inventory.manager.events.ResourceConnectionDeletedEvent;
 import com.osstelecom.db.inventory.manager.events.ResourceConnectionUpdatedEvent;
 import com.osstelecom.db.inventory.manager.events.ServiceStateTransionedEvent;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
@@ -82,6 +83,9 @@ public class ResourceConnectionManager extends Manager {
 
     public ResourceConnection deleteResourceConnection(ResourceConnection connection) throws ArangoDaoException {
         DocumentDeleteEntity<ResourceConnection> result = this.resourceConnectionDao.deleteResource(connection);
+        ResourceConnectionDeletedEvent event = new ResourceConnectionDeletedEvent(result);
+        eventManager.notifyResourceEvent(event);
+        
         return result.getOld();
     }
 
@@ -392,7 +396,7 @@ public class ResourceConnectionManager extends Manager {
     }
 
     /**
-     * Update a List of Resource Connection
+     * Update a Resource Connection
      *
      * @param connection
      * @return
@@ -423,20 +427,7 @@ public class ResourceConnectionManager extends Manager {
 
     public GraphList<ResourceConnection> getConnectionsByFilter(FilterDTO filter, String domainName) throws ArangoDaoException, DomainNotFoundException, InvalidRequestException, ResourceNotFoundException {
         Domain domain = domainManager.getDomain(domainName);
-
-        if (filter.getLimit() != null) {
-            if (filter.getLimit() > 1000) {
-                throw new InvalidRequestException("Result Set Limit cannot be over 1000, please descrease limit value to a range between 0 and 1000");
-            } else {
-                if (filter.getLimit() < 0L) {
-                    filter.setLimit(1000L);
-                }
-            }
-        } else {
-            filter.setLimit(1000L);
-        }
-
-        if (filter.getObjects().contains("connections")||filter.getObjects().contains("connection")) {
+        if (filter.getObjects().contains("connections")) {
 //            HashMap<String, Object> bindVars = new HashMap<>();
 
             if (filter.getClasses() != null && !filter.getClasses().isEmpty()) {

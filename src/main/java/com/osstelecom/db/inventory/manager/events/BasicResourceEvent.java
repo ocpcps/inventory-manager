@@ -18,6 +18,7 @@
 package com.osstelecom.db.inventory.manager.events;
 
 import com.arangodb.entity.DocumentCreateEntity;
+import com.arangodb.entity.DocumentDeleteEntity;
 import com.arangodb.entity.DocumentUpdateEntity;
 import com.osstelecom.db.inventory.manager.resources.BasicResource;
 import java.util.Date;
@@ -53,6 +54,11 @@ public abstract class BasicResourceEvent<T extends BasicResource> {
     public BasicResourceEvent(DocumentCreateEntity<T> entity) {
         this.oldResource = entity.getOld();
         this.newResource = entity.getNew();
+        this.eventDate = new Date();
+    }
+
+    public BasicResourceEvent(DocumentDeleteEntity<T> entity) {
+        this.oldResource = entity.getOld();
         this.eventDate = new Date();
     }
 

@@ -23,7 +23,6 @@ import com.osstelecom.db.inventory.manager.dao.CircuitResourceDao;
 import com.osstelecom.db.inventory.manager.dao.ManagedResourceDao;
 import com.osstelecom.db.inventory.manager.dao.ResourceConnectionDao;
 import com.osstelecom.db.inventory.manager.dao.ServiceResourceDao;
-import com.osstelecom.db.inventory.manager.events.ResourceConnectionCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.ResourceSchemaUpdatedEvent;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
@@ -88,12 +87,6 @@ public class SchemaManager extends Manager {
         logger.debug("Schema Manager Registered");
     }
 
-    @Subscribe
-    public void onResrouceConnectionCreatedEvent(ResourceConnectionCreatedEvent event){
-            event.getNewResource().getFromResource();
-            event.getNewResource().getToResource();
-    }
-    
     /**
      * An resource Schema update just Happened...we neeed to update and check
      * all resources...

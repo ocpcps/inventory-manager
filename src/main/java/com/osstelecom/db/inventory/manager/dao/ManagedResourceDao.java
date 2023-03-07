@@ -17,6 +17,7 @@
  */
 package com.osstelecom.db.inventory.manager.dao;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,8 +40,6 @@ import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.GraphList;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
-import java.io.IOException;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  *
@@ -51,7 +50,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
 
     @Override
-    public ManagedResource findResource(ManagedResource resource) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
+    public ManagedResource findResource(ManagedResource resource)
+            throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
         try {
             //
             // Pensar no Lock Manager aqui, ou subir para o manager
@@ -118,7 +118,7 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
             throw new ArangoDaoException(ex);
         } finally {
             //
-            // Liberar o Lock manager Aqui,  ou subir para o manager
+            // Liberar o Lock manager Aqui, ou subir para o manager
             //
         }
 
@@ -127,10 +127,12 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
     @Override
     public DocumentCreateEntity<ManagedResource> insertResource(ManagedResource resource) throws ArangoDaoException {
         //
-        // A complexidade de validação dos requistos do dado deve ter sido feita na dao antes de chegar aqui.
+        // A complexidade de validação dos requistos do dado deve ter sido feita na dao
+        // antes de chegar aqui.
         //
         try {
-            return this.getDb().collection(resource.getDomain().getNodes()).insertDocument(resource, new DocumentCreateOptions().returnNew(true).returnOld(true));
+            return this.getDb().collection(resource.getDomain().getNodes()).insertDocument(resource,
+                    new DocumentCreateOptions().returnNew(true).returnOld(true));
         } catch (Exception ex) {
             throw new ArangoDaoException(ex.getMessage(), ex);
         } finally {
@@ -143,10 +145,14 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
     @Override
     public DocumentUpdateEntity<ManagedResource> updateResource(ManagedResource resource) throws ArangoDaoException {
         //
-        // A complexidade de validação dos requistos do dado deve ter sido feita na dao antes de chegar aqui.
+        // A complexidade de validação dos requistos do dado deve ter sido feita na dao
+        // antes de chegar aqui.
         //
         try {
-            return this.getDb().collection(resource.getDomain().getNodes()).updateDocument(resource.getKey(), resource, new DocumentUpdateOptions().returnNew(true).returnOld(true).mergeObjects(false).keepNull(false).waitForSync(false), ManagedResource.class);
+            return this.getDb().collection(resource.getDomain().getNodes())
+                    .updateDocument(resource.getKey(), resource, new DocumentUpdateOptions().returnNew(true)
+                            .returnOld(true).mergeObjects(false).keepNull(false).waitForSync(false),
+                            ManagedResource.class);
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         } finally {
@@ -159,11 +165,14 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
     @Override
     public DocumentCreateEntity<ManagedResource> upsertResource(ManagedResource resource) throws ArangoDaoException {
         //
-        // A complexidade de validação dos requistos do dado deve ter sido feita na dao antes de chegar aqui.
+        // A complexidade de validação dos requistos do dado deve ter sido feita na dao
+        // antes de chegar aqui.
         //
 
         try {
-            return this.getDb().collection(resource.getDomain().getNodes()).insertDocument(resource, new DocumentCreateOptions().overwriteMode(OverwriteMode.update).mergeObjects(true).returnNew(true).returnOld(true));
+            return this.getDb().collection(resource.getDomain().getNodes()).insertDocument(resource,
+                    new DocumentCreateOptions().overwriteMode(OverwriteMode.update).mergeObjects(true).returnNew(true)
+                            .returnOld(true));
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         } finally {
@@ -176,7 +185,8 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
     @Override
     public DocumentDeleteEntity<ManagedResource> deleteResource(ManagedResource resource) throws ArangoDaoException {
         try {
-            return this.getDb().collection(resource.getDomain().getNodes()).deleteDocument(resource.getKey(), ManagedResource.class, new DocumentDeleteOptions().returnOld(true));
+            return this.getDb().collection(resource.getDomain().getNodes()).deleteDocument(resource.getKey(),
+                    ManagedResource.class, new DocumentDeleteOptions().returnOld(true));
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         } finally {
@@ -187,9 +197,11 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
     }
 
     @Override
-    public GraphList<ManagedResource> findResourcesBySchemaName(String attributeSchemaName, Domain domain) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
+    public GraphList<ManagedResource> findResourcesBySchemaName(String attributeSchemaName, Domain domain)
+            throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
         try {
-            String aql = "for doc in `" + domain.getNodes() + "` filter doc.attributeSchemaName == @attributeSchemaName ";
+            String aql = "for doc in `" + domain.getNodes()
+                    + "` filter doc.attributeSchemaName == @attributeSchemaName ";
             Map<String, Object> bindVars = new HashMap<>();
 
             bindVars.put("attributeSchemaName", attributeSchemaName);
@@ -203,7 +215,8 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
     }
 
     @Override
-    public GraphList<ManagedResource> findResourcesByClassName(String className, Domain domain) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
+    public GraphList<ManagedResource> findResourcesByClassName(String className, Domain domain)
+            throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
         try {
             String aql = "for doc in `" + domain.getNodes() + "` filter doc.className == @className ";
             Map<String, Object> bindVars = new HashMap<>();
@@ -218,7 +231,8 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
     }
 
     @Override
-    public GraphList<ManagedResource> findResourceByFilter(FilterDTO filter, Domain domain) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
+    public GraphList<ManagedResource> findResourceByFilter(FilterDTO filter, Domain domain)
+            throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
         try {
             String aql = " for doc in   `" + domain.getNodes() + "`";
             aql += " filter doc.domainName == @domainName ";
@@ -232,7 +246,7 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
                 aql += " " + filter.getSortCondition();
             }
 
-//            aql += " return doc";
+            // aql += " return doc";
             filter.setAqlFilter(aql);
             return this.query(filter, ManagedResource.class, this.getDb());
         } catch (InvalidRequestException | ResourceNotFoundException ex) {
@@ -244,10 +258,13 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
     }
 
     @Override
-    public MultiDocumentEntity<DocumentUpdateEntity<ManagedResource>> updateResources(List<ManagedResource> resources, Domain domain) throws ArangoDaoException {
+    public MultiDocumentEntity<DocumentUpdateEntity<ManagedResource>> updateResources(List<ManagedResource> resources,
+            Domain domain) throws ArangoDaoException {
         try {
             ArangoCollection connectionCollection = this.getDb().collection(domain.getNodes());
-            return connectionCollection.updateDocuments(resources, new DocumentUpdateOptions().returnNew(true).returnOld(true).keepNull(false).mergeObjects(false), ManagedResource.class);
+            return connectionCollection.updateDocuments(resources,
+                    new DocumentUpdateOptions().returnNew(true).returnOld(true).keepNull(false).mergeObjects(false),
+                    ManagedResource.class);
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         }
@@ -266,6 +283,4 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
             return 0L;
         }
     }
-
-    
 }
