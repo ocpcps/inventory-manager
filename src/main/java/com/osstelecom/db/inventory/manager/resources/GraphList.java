@@ -62,18 +62,18 @@ public class GraphList<T> implements AutoCloseable {
 
     public boolean isEmpty() {
         if (this.cursor != null) {
-            if (!this.closedCursor) {
+        if (!this.closedCursor) {
                 if (this.cursor.getCount() != null) {
-                    return this.cursor.getCount() <= 0;
-                } else {
+            return this.cursor.getCount() <= 0;
+        } else {
                     return true;
                 }
             } else {
-                //
-                // Could lead to bad behavior...
-                //
-                return false;
-            }
+            //
+            // Could lead to bad behavior...
+            //
+            return false;
+        }
         } else {
             return true;
         }

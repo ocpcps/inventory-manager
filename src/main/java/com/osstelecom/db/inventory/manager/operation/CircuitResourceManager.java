@@ -310,7 +310,7 @@ public class CircuitResourceManager extends Manager {
                 //
                 // Transitou de normal para degradado
                 //
-
+                
                 degratedFlag = true;
             }
 

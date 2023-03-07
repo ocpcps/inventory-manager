@@ -45,6 +45,7 @@ public class Domain {
     private String circuits;
     private String circuitsLayer;
     private String domainDescription;
+    private String metrics;
     @Schema(example = "0")
     private Long resourceCount;
     @Schema(example = "0")
@@ -86,6 +87,20 @@ public class Domain {
      */
     public void setConnections(String connections) {
         this.connections = connections;
+    }
+
+     /**
+     * @return the metrics
+     */
+    public String getMetrics() {
+        return metrics;
+    }
+
+    /**
+     * @param metrics the metrics to set
+     */
+    public void setMetrics(String metrics) {
+        this.metrics = metrics;
     }
 
     /**

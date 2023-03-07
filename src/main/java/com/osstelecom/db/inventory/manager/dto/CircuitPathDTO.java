@@ -19,7 +19,6 @@ package com.osstelecom.db.inventory.manager.dto;
 
 import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,10 +27,11 @@ import java.util.List;
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 04.01.2022
  */
-public class CircuitPathDTO implements Serializable {
+public class CircuitPathDTO {
 
     private CircuitResource circuit;
     private List<ResourceConnection> paths = new ArrayList<>();
+
 
     /**
      * @return the circuit

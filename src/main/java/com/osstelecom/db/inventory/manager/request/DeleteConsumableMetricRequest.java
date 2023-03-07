@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Lucas Nishimura <lucas.nishimura@gmail.com>
+ * Copyright (C) 2022 Lucas Nishimura <lucas.nishimura@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,23 +17,16 @@
  */
 package com.osstelecom.db.inventory.manager.request;
 
+import com.osstelecom.db.inventory.manager.resources.ConsumableMetric;
+
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @created 09.12.2022
  */
-public interface IRequest<T> {
-
-    public String getRequestToken();
-
-    public String getRequestTarget();
-
-    public T getPayLoad();
-
-    public void setPayLoad(T payLoad);
-
-    public String getRequestDomain();
-
-    public void setRequestDomain(String domain);
-
-    public String getClassName();
+public class DeleteConsumableMetricRequest extends BasicRequest<ConsumableMetric> {
+    
+    public DeleteConsumableMetricRequest() {
+    }
+    
 }

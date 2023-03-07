@@ -16,7 +16,9 @@
  */
 package com.osstelecom.db.inventory.manager.resources;
 
-import com.osstelecom.db.inventory.manager.operation.DomainManager;
+import com.arangodb.entity.DocumentField;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.osstelecom.db.inventory.manager.resources.exception.MetricConstraintException;
 
 /**
@@ -24,9 +26,17 @@ import com.osstelecom.db.inventory.manager.resources.exception.MetricConstraintE
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  */
+@JsonInclude(Include.NON_NULL)
 public class ConsumableMetric {
 
-    private final DomainManager domain;
+    @DocumentField(DocumentField.Type.ID)
+    private String id;
+    @DocumentField(DocumentField.Type.KEY)
+    private String key;
+
+    private Domain domain;    
+    private String domainName;
+
     private String metricName;
     private String metricShort;
     private String metricDescription;
@@ -36,8 +46,63 @@ public class ConsumableMetric {
     private Double unitValue;
     private String category;
 
-    public ConsumableMetric(DomainManager domain) {
+    /**
+     * @return the _id
+     */
+    public String getId() {
+        return id;
+    }
+
+    /**
+     * @param id the _id to set
+     */
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    /**
+     * @param _key the _id to set
+     */
+    public void setKey(String key) {
+        this.key = key;
+    }
+
+    /**
+     * @return the _key
+     */
+    public String getKey() {
+        return this.key;
+    }
+
+    /**
+     * @param domain the domain to set
+     */
+    public void setDomain(Domain domain) {
         this.domain = domain;
+        if(domain != null){
+            domainName = domain.getDomainName();
+        }
+    }
+
+    /**
+     * @return the domain
+     */
+    public Domain getDomain() {
+        return domain;
+    }
+
+    /**
+     * @return the domainName
+     */
+    public String getDomainName() {
+        return domainName;
+    }
+
+    /**
+     * @param domainName the domainName to set
+     */
+    public void setDomainName(String domainName) {
+        this.domainName = domainName;
     }
 
     /**

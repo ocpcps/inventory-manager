@@ -17,7 +17,6 @@
  */
 package com.osstelecom.db.inventory.manager.resources.exception;
 
-import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.BasicException;
 import com.osstelecom.db.inventory.manager.request.BasicRequest;
 import com.osstelecom.db.inventory.manager.request.IRequest;

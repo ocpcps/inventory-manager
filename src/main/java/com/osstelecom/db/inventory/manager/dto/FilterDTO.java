@@ -18,6 +18,7 @@
 package com.osstelecom.db.inventory.manager.dto;
 
 import com.osstelecom.db.inventory.manager.resources.CircuitResource;
+import com.osstelecom.db.inventory.manager.resources.ConsumableMetric;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import com.osstelecom.db.inventory.manager.resources.ServiceResource;
@@ -32,7 +33,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @created 26.01.2022
  */
 public class FilterDTO {
-    
+
     private List<String> classes;
     private List<String> objects = new ArrayList<>();
     private String aqlFilter;
@@ -45,84 +46,78 @@ public class FilterDTO {
     private List<ResourceConnection> connections;
     private List<CircuitResource> circuits;
     private List<ServiceResource> services;
+    private List<ConsumableMetric> metrics;
     private Long nodeCount = 0L;
     private Long connectionsCount = 0L;
     private Long circuitCount = 0L;
     private Long serviceCount = 0L;
+    private Long metricCount = 0L;
     private String sortCondition = "";
     private Long offSet = -1L;
     private Long limit = -1L;
     private String domainName;
     private Boolean paginated = false;
-    
-    public void addBinding(String name, Object value) {
-        this.bindings.put(name, value);
-    }
-    
-    public void addObject(String object) {
-        this.objects.add(object);
-    }
-    
+
     public FilterDTO() {
     }
-    
+
     public FilterDTO(String aqlFilter) {
         this.aqlFilter = aqlFilter;
     }
-    
+
     public FilterDTO(String aqlFilter, String sortCondition) {
         this.aqlFilter = aqlFilter;
         this.sortCondition = sortCondition;
     }
-    
+
     public FilterDTO(String aqlFilter, String sortCondition, Map<String, Object> bindings) {
         this.aqlFilter = aqlFilter;
         this.sortCondition = sortCondition;
         this.bindings = bindings;
     }
-    
+
     public FilterDTO(String aqlFilter, Map<String, Object> bindings) {
         this.aqlFilter = aqlFilter;
         this.bindings = bindings;
     }
-    
+
     public FilterDTO(String aqlFilter, Map<String, Object> bindings, String domainName) {
         this.aqlFilter = aqlFilter;
         this.bindings = bindings;
         this.domainName = domainName;
     }
-    
+
     public List<ManagedResource> getNodes() {
         return nodes;
     }
-    
+
     public void setNodes(List<ManagedResource> nodes) {
         this.nodes = nodes;
     }
-    
+
     public List<ResourceConnection> getConnections() {
         return connections;
     }
-    
+
     public void setConnections(List<ResourceConnection> connections) {
         this.connections = connections;
 //        if (this.connections != null) {
 //            this.setConnectionsCount(this.connections.size());
 //        }
     }
-    
+
     public Long getNodeCount() {
         return nodeCount;
     }
-    
+
     public void setNodeCount(Long nodeCount) {
         this.nodeCount = nodeCount;
     }
-    
+
     public Long getConnectionsCount() {
         return connectionsCount;
     }
-    
+
     public void setConnectionsCount(Long connectionsCount) {
         this.connectionsCount = connectionsCount;
     }
@@ -273,12 +268,26 @@ public class FilterDTO {
     public List<ServiceResource> getServices() {
         return services;
     }
-
+    
     /**
      * @param services the services to set
      */
     public void setServices(List<ServiceResource> services) {
         this.services = services;
+    }
+
+    /**
+     * @return the metrics
+     */
+    public List<ConsumableMetric> getMetrics() {
+        return metrics;
+    }
+
+    /**
+     * @param metrics the metrics to set
+     */
+    public void setMetrics(List<ConsumableMetric> metrics) {
+        this.metrics = metrics;
     }
 
     /**
@@ -307,6 +316,20 @@ public class FilterDTO {
      */
     public void setServiceCount(Long serviceCount) {
         this.serviceCount = serviceCount;
+    }
+
+    /**
+     * @return the metricCount
+     */
+    public Long getMetricCount() {
+        return metricCount;
+    }
+
+    /**
+     * @param metricCount the metricCount to set
+     */
+    public void setMetricCount(Long metricCount) {
+        this.metricCount = metricCount;
     }
 
     /**

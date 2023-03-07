@@ -194,6 +194,15 @@ public class DomainDao {
                     Arrays.asList("nodeAddress", "className", "domainName"),
                     new PersistentIndexOptions().unique(false).name("searchIDX1"));
 
+                CollectionEntity metrics = arangoDatabase
+                    .createCollection(domainName
+                            + arangoDbConfiguration.getMetricSufix(),
+                            new CollectionCreateOptions().type(CollectionType.DOCUMENT));
+
+            arangoDatabase.collection(metrics.getName()).ensurePersistentIndex(
+                    Arrays.asList("metricName", "domain._key"),
+                    new PersistentIndexOptions().unique(true).name("MetricUNIQIDX"));
+
             GraphEntity connectionLayer = createGraph(
                     domainName + arangoDbConfiguration.getConnectionLayerSufix(),
                     connections.getName(), nodes.getName(), services.getName(), circuits.getName());
@@ -203,6 +212,7 @@ public class DomainDao {
             domainRequestDTO.setConnections(connections.getName());
             domainRequestDTO.setNodes(nodes.getName());
             domainRequestDTO.setCircuits(circuits.getName());
+            domainRequestDTO.setMetrics(metrics.getName());
             domainRequestDTO.setDomainName(domainName);
 
             this.domainsCollection.insertDocument(domainRequestDTO);
