@@ -65,7 +65,7 @@ public class ThreeJSViewDTO {
         });
     }
 
-    public void setCircuits(GraphList<CircuitResource> circuits) {
+    public void setCircuitGraph(GraphList<CircuitResource> circuits) {
         this.circuits.clear();
         try {
             circuits.forEach(c -> {

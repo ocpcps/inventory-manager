@@ -51,6 +51,7 @@ import com.osstelecom.db.inventory.manager.request.PatchResourceConnectionReques
 import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.GraphList;
+import com.osstelecom.db.inventory.manager.resources.LocationConnection;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import com.osstelecom.db.inventory.manager.resources.ServiceResource;
@@ -123,14 +124,13 @@ public class ResourceSession {
      */
     public CreateResourceConnectionResponse createResourceConnection(CreateConnectionRequest request) throws ResourceNotFoundException, ConnectionAlreadyExistsException, MetricConstraintException, NoResourcesAvailableException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, InvalidRequestException, DomainNotFoundException, ArangoDaoException {
 
-        ResourceConnection connection = new ResourceConnection(domainManager.getDomain(request.getRequestDomain()));
-        connection.setName(request.getPayLoad().getConnectionName());
-        connection.setClassName(request.getPayLoad().getConnectionClass());
-
         //
         // @since 08-08-2022: Prioriza os iDS aos Nomes
         //
         if (request.getPayLoad().getFromId() != null && request.getPayLoad().getToId() != null) {
+            ResourceConnection connection = new ResourceConnection(domainManager.getDomain(request.getRequestDomain()));
+            connection.setName(request.getPayLoad().getConnectionName());
+            connection.setClassName(request.getPayLoad().getConnectionClass());
             //
             // Temos dois IDs podemos proesseguir com a validação por aqui
             //
@@ -147,9 +147,40 @@ public class ResourceSession {
 
             connection.setFrom(fromResource);
             connection.setTo(toResource);
+            if (request.getPayLoad().getNodeAddress() != null) {
+                connection.setNodeAddress(request.getPayLoad().getNodeAddress());
+            } else {
+                connection.setNodeAddress(request.getPayLoad().getFromNodeAddress() + "." + request.getPayLoad().getToNodeAddress());
+            }
+            connection.setOperationalStatus(request.getPayLoad().getOperationalStatus());
+            connection.setAttributeSchemaName(request.getPayLoad().getAttributeSchemaName());
+            connection.setDomain(domainManager.getDomain(request.getRequestDomain()));
+            connection.setAttributes(request.getPayLoad().getAttributes());
+            connection.setPropagateOperStatus(request.getPayLoad().getPropagateOperStatus());
+            connection.setName(request.getPayLoad().getConnectionName());
+            connection.setDescription(request.getPayLoad().getDescription());
+            connection.setOwner(request.getUserId());
+            connection.setAdminStatus(request.getPayLoad().getAdminStatus());
+            connection.setBusinessStatus(request.getPayLoad().getBusinessStatus());
+            connection.setCategory(request.getPayLoad().getCategory());
+
+            if (request.getPayLoad().getKey() != null) {
+                //
+                // Manda um upsert
+                //
+                connection.setKey(request.getPayLoad().getKey());
+            } else {
+                connection.setInsertedDate(new Date());
+            }
+
+            connection = resourceConnectionManager.createResourceConnection(connection);
+            CreateResourceConnectionResponse response = new CreateResourceConnectionResponse(connection);
+            return response;
 
         } else if (request.getPayLoad().getFromKey() != null && request.getPayLoad().getToKey() != null) {
-
+            ResourceConnection connection = new ResourceConnection(domainManager.getDomain(request.getRequestDomain()));
+            connection.setName(request.getPayLoad().getConnectionName());
+            connection.setClassName(request.getPayLoad().getConnectionClass());
             //
             // Temos dois IDs podemos proesseguir com a validação por aqui
             //
@@ -172,63 +203,94 @@ public class ResourceSession {
 
             connection.setFrom(fromResource);
             connection.setTo(toResource);
-
-        } else {
-            //
-            // Valida se é uma conexão entre location e Resource por nodeAddress
-            //
-            Domain requestDomain = this.domainManager.getDomain(request.getRequestDomain());
-            if (request.getPayLoad().getFromClassName().contains("location")) {
-                connection.setFrom(resourceLocationManager.findResourceLocation(request.getPayLoad().getFromName(), request.getPayLoad().getFromNodeAddress(), request.getPayLoad().getFromClassName(), request.getRequestDomain()));
-            } else if (request.getPayLoad().getFromClassName().contains("resource")) {
-                connection.setFrom(manager.findManagedResource(new ManagedResource(requestDomain, request.getPayLoad().getFromName(), request.getPayLoad().getFromNodeAddress(), request.getPayLoad().getFromClassName())));
+            if (request.getPayLoad().getNodeAddress() != null) {
+                connection.setNodeAddress(request.getPayLoad().getNodeAddress());
             } else {
-                throw new InvalidRequestException("Invalid From Class");
+                connection.setNodeAddress(request.getPayLoad().getFromNodeAddress() + "." + request.getPayLoad().getToNodeAddress());
+            }
+            connection.setOperationalStatus(request.getPayLoad().getOperationalStatus());
+            connection.setAttributeSchemaName(request.getPayLoad().getAttributeSchemaName());
+            connection.setDomain(domainManager.getDomain(request.getRequestDomain()));
+            connection.setAttributes(request.getPayLoad().getAttributes());
+            connection.setPropagateOperStatus(request.getPayLoad().getPropagateOperStatus());
+            connection.setName(request.getPayLoad().getConnectionName());
+            connection.setDescription(request.getPayLoad().getDescription());
+            connection.setOwner(request.getUserId());
+            connection.setAdminStatus(request.getPayLoad().getAdminStatus());
+            connection.setBusinessStatus(request.getPayLoad().getBusinessStatus());
+            connection.setCategory(request.getPayLoad().getCategory());
+
+            if (request.getPayLoad().getKey() != null) {
+                //
+                // Manda um upsert
+                //
+                connection.setKey(request.getPayLoad().getKey());
+            } else {
+                connection.setInsertedDate(new Date());
             }
 
-            //
-            // Valida se é uma conexão entre Location ou Resource
-            //
-            if (request.getPayLoad().getToClassName().contains("location")) {
-                connection.setTo(resourceLocationManager.findResourceLocation(request.getPayLoad().getToName(), request.getPayLoad().getToNodeAddress(), request.getPayLoad().getToClassName(), request.getRequestDomain()));
-            } else if (request.getPayLoad().getToClassName().contains("resource")) {
-                //connection.setTo(domainManager.findManagedResource(request.getPayLoad().getToName(), request.getPayLoad().getToNodeAddress(), request.getPayLoad().getToClassName(), request.getRequestDomain()));
-                connection.setTo(manager.findManagedResource(new ManagedResource(requestDomain, request.getPayLoad().getToName(), request.getPayLoad().getToNodeAddress(), request.getPayLoad().getToClassName())));
+            connection = resourceConnectionManager.createResourceConnection(connection);
+            CreateResourceConnectionResponse response = new CreateResourceConnectionResponse(connection);
+            return response;
 
+        } else if (request.getPayLoad().getFromNodeAddress() != null && request.getPayLoad().getToNodeAddress() != null) {
+            //
+            // Vou fazer de forma preguiçosa, eu tô resfriado e doente essa semana, não me julguem
+            //
+            ResourceConnection connection = new ResourceConnection(domainManager.getDomain(request.getRequestDomain()));
+            connection.setName(request.getPayLoad().getConnectionName());
+            connection.setClassName(request.getPayLoad().getConnectionClass());
+            //
+            // Temos dois IDs podemos proesseguir com a validação por aqui
+            //
+            Domain domain = this.domainManager.getDomain(request.getRequestDomain());
+            ManagedResource fromResource = new ManagedResource(domain);
+            fromResource.setNodeAddress(request.getPayLoad().getFromNodeAddress());
+            fromResource.setClassName(request.getPayLoad().getFromClassName());
+            fromResource.setAttributeSchemaName(null);
+            fromResource = this.manager.findManagedResource(fromResource);
+
+            ManagedResource toResource = new ManagedResource(domain);
+            toResource.setNodeAddress(request.getPayLoad().getToNodeAddress());
+            toResource.setClassName(request.getPayLoad().getToClassName());
+
+            toResource.setAttributeSchemaName(null);
+            toResource = manager.findManagedResource(toResource);
+            connection.setFrom(fromResource);
+            connection.setTo(toResource);
+            if (request.getPayLoad().getNodeAddress() != null) {
+                connection.setNodeAddress(request.getPayLoad().getNodeAddress());
             } else {
-                throw new InvalidRequestException("Invalid TO Class");
+                connection.setNodeAddress(request.getPayLoad().getFromNodeAddress() + "." + request.getPayLoad().getToNodeAddress());
             }
-        }
+            connection.setOperationalStatus(request.getPayLoad().getOperationalStatus());
+            connection.setAttributeSchemaName(request.getPayLoad().getAttributeSchemaName());
+            connection.setDomain(domainManager.getDomain(request.getRequestDomain()));
+            connection.setAttributes(request.getPayLoad().getAttributes());
+            connection.setPropagateOperStatus(request.getPayLoad().getPropagateOperStatus());
+            connection.setName(request.getPayLoad().getConnectionName());
+            connection.setDescription(request.getPayLoad().getDescription());
+            connection.setOwner(request.getUserId());
+            connection.setAdminStatus(request.getPayLoad().getAdminStatus());
+            connection.setBusinessStatus(request.getPayLoad().getBusinessStatus());
+            connection.setCategory(request.getPayLoad().getCategory());
 
-        if (request.getPayLoad().getNodeAddress() != null) {
-            connection.setNodeAddress(request.getPayLoad().getNodeAddress());
+            if (request.getPayLoad().getKey() != null) {
+                //
+                // Manda um upsert
+                //
+                connection.setKey(request.getPayLoad().getKey());
+            } else {
+                connection.setInsertedDate(new Date());
+            }
+
+            connection = resourceConnectionManager.createResourceConnection(connection);
+            CreateResourceConnectionResponse response = new CreateResourceConnectionResponse(connection);
+            return response;
+
         } else {
-            connection.setNodeAddress(request.getPayLoad().getFromNodeAddress() + "." + request.getPayLoad().getToNodeAddress());
+            throw new InvalidRequestException("Cannot Create Connection");
         }
-        connection.setOperationalStatus(request.getPayLoad().getOperationalStatus());
-        connection.setAttributeSchemaName(request.getPayLoad().getAttributeSchemaName());
-        connection.setDomain(domainManager.getDomain(request.getRequestDomain()));
-        connection.setAttributes(request.getPayLoad().getAttributes());
-        connection.setPropagateOperStatus(request.getPayLoad().getPropagateOperStatus());
-        connection.setName(request.getPayLoad().getConnectionName());
-        connection.setDescription(request.getPayLoad().getDescription());
-        connection.setOwner(request.getUserId());
-        connection.setAdminStatus(request.getPayLoad().getAdminStatus());
-        connection.setBusinessStatus(request.getPayLoad().getBusinessStatus());
-        connection.setCategory(request.getPayLoad().getCategory());
-
-        if (request.getPayLoad().getKey() != null) {
-            //
-            // Manda um upsert
-            //
-            connection.setKey(request.getPayLoad().getKey());
-        } else {
-            connection.setInsertedDate(new Date());
-        }
-
-        connection = resourceConnectionManager.createResourceConnection(connection);
-        CreateResourceConnectionResponse response = new CreateResourceConnectionResponse(connection);
-        return response;
     }
 
     public DeleteResourceConnectionResponse deleteResourceConnection(DeleteResourceConnectionRequest request) throws InvalidRequestException, DomainNotFoundException, ArangoDaoException, ResourceNotFoundException {
@@ -488,11 +550,11 @@ public class ResourceSession {
                     throw new InvalidRequestException("Result Set Limit cannot be over 1000, please descrease limit value to a range between 0 and 1000");
                 } else {
                     if (filter.getPayLoad().getLimit() < 0L) {
-                        filter.getPayLoad().setLimit(10000L);
+                        filter.getPayLoad().setLimit(1000L);
                     }
                 }
             } else {
-                filter.getPayLoad().setLimit(10000L);
+                filter.getPayLoad().setLimit(1000L);
             }
         }
 
@@ -545,7 +607,7 @@ public class ResourceSession {
             GraphList<ResourceConnection> nodesGraph = this.resourceConnectionManager.getConnectionsByFilter(filter, filter.getDomainName());
             return nodesGraph;
         } else {
-            throw new InvalidRequestException("Invalida Object Type:["+ String.join(",", filter.getObjects())+"]")
+            throw new InvalidRequestException("Invalida Object Type:[" + String.join(",", filter.getObjects()) + "]")
                     .addDetails("filter", filter);
         }
 

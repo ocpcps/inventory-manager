@@ -35,6 +35,7 @@ import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstrai
 import com.osstelecom.db.inventory.manager.resources.exception.ConnectionAlreadyExistsException;
 import com.osstelecom.db.inventory.manager.resources.exception.MetricConstraintException;
 import com.osstelecom.db.inventory.manager.resources.exception.NoResourcesAvailableException;
+import com.osstelecom.db.inventory.manager.response.CreateLocationConnectionResponse;
 import com.osstelecom.db.inventory.manager.response.CreateResourceConnectionResponse;
 import com.osstelecom.db.inventory.manager.response.CreateResourceLocationResponse;
 import com.osstelecom.db.inventory.manager.response.DeleteResourceConnectionResponse;
@@ -110,7 +111,7 @@ public class InventoryApi extends BaseApi {
      */
     @AuthenticatedCall(role = {"user"})
     @PutMapping(path = "/{domain}/location/connection", produces = "application/json", consumes = "application/json")
-    public CreateResourceConnectionResponse createResourceLocationConnection(@RequestBody CreateConnectionRequest request, @PathVariable("domain") String domain, HttpServletRequest httpRequest) throws ArangoDaoException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, ResourceNotFoundException, DomainNotFoundException, InvalidRequestException {
+    public CreateLocationConnectionResponse createResourceLocationConnection(@RequestBody CreateConnectionRequest request, @PathVariable("domain") String domain, HttpServletRequest httpRequest) throws ArangoDaoException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, ResourceNotFoundException, DomainNotFoundException, InvalidRequestException {
         try {
             this.setUserDetails(request);
             request.setRequestDomain(domain);

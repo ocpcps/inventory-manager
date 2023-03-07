@@ -282,8 +282,6 @@ public class FilterViewSession {
         if (!connection.getCircuits().isEmpty()) {
             logger.debug("Found:[{}] Circuits for Connection ID:[{}]", connection.getCircuits().size(), connection.getKey());
             FilterDTO filter = new FilterDTO();
-         
-       
             filter.setDomainName(domain.getDomainName());
             filter.addBinding("circuitIds", connection.getCircuits());
             filter.setAqlFilter("doc._id in @circuitIds");
@@ -292,11 +290,11 @@ public class FilterViewSession {
             GraphList<CircuitResource> circuitsFound = this.circuitSession.findCircuitResourceByFilter(filter);
             
             if (!circuitsFound.isEmpty()) {
-                view.setCircuits(circuitsFound);
+                view.setCircuitGraph(circuitsFound);
             }
         }
         //
-        //
+        // Valida se o Grafo enviado é válido
         //
 
         view.validate();
