@@ -1,3 +1,5 @@
+image: registry.fedoraproject.org/fedora:latest
+
 stages:
   - test
   - build
@@ -12,7 +14,10 @@ test-java-project:
 build-java-project:
   stage: build
   script:
-    mvn package
+    - mvn package
+    - buildah bud -t ankh/netcompass:latest .
+  tags:
+    - buildah
   artifacts:
     paths:
       - "**/target"
