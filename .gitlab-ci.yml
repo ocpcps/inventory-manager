@@ -32,7 +32,7 @@ build-java-project:
 build-container-image:
   stage: create-container-image
   script:
-     - buildah --userns=keep-id bud --annotation "org.opencontainers.image.created=$CREATED_AT" --annotation "org.opencontainers.image.authors=Lucas Nishimura <lucas.nishimura at telefonica.com>" --annotation "org.opencontainers.image.title=Netcompass API" --annotation "org.opencontainers.image.description=Microserviço do Netcompass Backend Java Spring" --annotation "org.opencontainers.image.version=$CURRENT_VERSION" -t netcompass-api:$CURRENT_VERSION .
+     - buildah --userns=keep-id bud --annotation "org.opencontainers.image.created=\"$CREATED_AT\"" --annotation "org.opencontainers.image.authors=Lucas Nishimura <lucas.nishimura at telefonica.com>" --annotation "org.opencontainers.image.title=Netcompass API" --annotation "org.opencontainers.image.description=Microserviço do Netcompass Backend Java Spring" --annotation "org.opencontainers.image.version=$CURRENT_VERSION" -t netcompass-api:$CURRENT_VERSION .
   tags:
      - buildah
 
