@@ -1,8 +1,16 @@
 image: registry.fedoraproject.org/fedora:latest
 
+
+variables:
+  CURRENT_VERSION: "$(mvn validate | grep Build | awk '{print $4}')"
+
+
+
 stages:
   - test
   - build
+  - create-container-image
+  
 test-java-project:
   stage: test
   script:
@@ -15,9 +23,15 @@ build-java-project:
   stage: build
   script:
     - mvn package
-    - buildah --userns=keep-id bud -t ankh/netcompass:latest .
-  tags:
-    - buildah
   artifacts:
     paths:
       - "**/target"
+
+container-image:
+  stage: create-container-image
+  script:
+     - buildah --userns=keep-id bud --annotation-file metadata.txt -t ankh/netcompass:latest .
+  tags:
+     - buildah
+
+  

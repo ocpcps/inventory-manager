@@ -15,13 +15,13 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 FROM debian:latest
 
-# Instala o java
+# Atualiza e instala o Java
 RUN apt update -y
+RUN apt upgrade -y
 RUN apt install openjdk-17-jdk -y
 RUN mkdir -p /app/inventory-manager
 
 WORKDIR /app/inventory-manager
-
 COPY target/*.jar .
 
 
