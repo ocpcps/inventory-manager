@@ -16,7 +16,8 @@
 FROM debian:latest
 
 # Instala o java
-RUN apt search openjdk
+RUN apt update -y
+RUN apt install openjdk-17-jdk -y
 RUN mkdir -p /app/inventory-manager
 
 WORKDIR /app/inventory-manager
