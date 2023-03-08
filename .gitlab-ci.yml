@@ -10,6 +10,7 @@ stages:
   - test
   - build
   - create-container-image
+  - publish-container-image
   
 test-java-project:
   stage: test
@@ -27,11 +28,24 @@ build-java-project:
     paths:
       - "**/target"
 
-container-image:
+build-container-image:
   stage: create-container-image
   script:
-     - buildah --userns=keep-id bud --annotation "org.opencontainers.image.created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" --annotation "org.opencontainers.image.authors=Lucas Nishimura <lucas.nishimura at telefonica.com>" --annotation "org.opencontainers.image.title=Netcompass API" --annotation "org.opencontainers.image.description=Microserviço do Netcompass Backend Java Spring" --annotation "org.opencontainers.image.version=$CURRENT_DATE" -t ankh/netcompass:latest .
+     - buildah --userns=keep-id bud --annotation "org.opencontainers.image.created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
+        --annotation "org.opencontainers.image.authors=Lucas Nishimura <lucas.nishimura at telefonica.com>" \
+        --annotation "org.opencontainers.image.title=Netcompass API" \
+        --annotation "org.opencontainers.image.description=Microserviço do Netcompass Backend Java Spring" \
+        --annotation "org.opencontainers.image.version=$CURRENT_VERSION" \
+        -t netcompass-api:CURRENT_VERSION .
   tags:
      - buildah
 
+
+publish-container-image:
+  stage: publish-container-image
+  script:
+     - buildah push --tls-verify=false --creds lucas_nishimura:77Y71MZEXYVZTZ5OBZ3HK557A8WTBSCH \
+       localhost/netcompass-api quay.apps.mgmt.telcostack.br.telefonica.com/netcompass/netcompass-server/netcompass-api
+  tags:
+     - buildah
   
