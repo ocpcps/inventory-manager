@@ -30,7 +30,7 @@ build-java-project:
 container-image:
   stage: create-container-image
   script:
-     - buildah --userns=keep-id bud --annotation-file metadata.txt -t ankh/netcompass:latest .
+     - buildah --userns=keep-id bud --anotation "org.opencontainers.image.created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" --annotation "org.opencontainers.image.authors=Lucas Nishimura <lucas.nishimura at telefonica.com>" --annotation "org.opencontainers.image.title=Netcompass API" --annotation "org.opencontainers.image.description=Microserviço do Netcompass Backend Java Spring" --annotation "org.opencontainers.image.version=$CURRENT_DATE" -t ankh/netcompass:latest .
   tags:
      - buildah
 
