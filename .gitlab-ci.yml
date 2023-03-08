@@ -15,7 +15,7 @@ build-java-project:
   stage: build
   script:
     - mvn package
-    - buildah bud -t ankh/netcompass:latest .
+    - buildah --userns=keep-id bud -t ankh/netcompass:latest .
   tags:
     - buildah
   artifacts:
