@@ -20,7 +20,7 @@ RUN mkdir -p /app/inventory-manager
 
 WORKDIR /app/inventory-manager
 
-COPY *.jar .
+COPY target/*.jar .
 
 
 CMD ["java", "-jar","${JAR_NAME:-inventory-manager-1.0.0-alpha.jar}"]
