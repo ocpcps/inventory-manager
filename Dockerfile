@@ -16,7 +16,7 @@
 FROM debian:latest
 
 # Instala o java
-RUN mkdir /app/inventory-manager
+RUN mkdir -p /app/inventory-manager
 
 WORKDIR /app/inventory-manager
 
