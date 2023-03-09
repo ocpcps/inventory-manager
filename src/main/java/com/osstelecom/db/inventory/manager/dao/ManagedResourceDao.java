@@ -17,6 +17,7 @@
  */
 package com.osstelecom.db.inventory.manager.dao;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,19 +29,19 @@ import com.arangodb.entity.DocumentCreateEntity;
 import com.arangodb.entity.DocumentDeleteEntity;
 import com.arangodb.entity.DocumentUpdateEntity;
 import com.arangodb.entity.MultiDocumentEntity;
+import com.arangodb.model.AqlQueryOptions;
 import com.arangodb.model.DocumentCreateOptions;
 import com.arangodb.model.DocumentDeleteOptions;
 import com.arangodb.model.DocumentUpdateOptions;
 import com.arangodb.model.OverwriteMode;
 import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
-import com.osstelecom.db.inventory.manager.exception.BasicException;
 import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
+import com.osstelecom.db.inventory.manager.resources.BasicResource;
 import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.GraphList;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
-import java.io.IOException;
 
 /**
  *
@@ -262,4 +263,13 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
         result.close();
         return longValue;
     }
+
+    public GraphList<BasicResource> findParentsByAttributeSchemaName(String from, String domain, String attributeSchemaName) {
+        String aql = "FOR v, e, p IN 1..16 OUTBOUND '"+from+"' GRAPH '"+domain + "_connections_layer' ";
+        aql += "FILTER v.attributeSchemaName == "+attributeSchemaName+" ";
+        aql += "RETURN distinct v ";
+        return new GraphList<>(
+                getDb().query(aql, new HashMap<>(), new AqlQueryOptions().fullCount(true).count(true), BasicResource.class));
+    }
+
 }
