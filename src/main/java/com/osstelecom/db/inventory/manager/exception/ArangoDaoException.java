@@ -17,6 +17,7 @@
  */
 package com.osstelecom.db.inventory.manager.exception;
 
+import com.osstelecom.db.inventory.manager.request.BasicRequest;
 import com.osstelecom.db.inventory.manager.request.IRequest;
 
 /**
@@ -37,11 +38,11 @@ public class ArangoDaoException extends BasicException {
         super(thrwbl);
     }
 
-    public ArangoDaoException(IRequest<?> request) {
+    public ArangoDaoException(IRequest<? extends BasicRequest> request) {
         super(request);
     }
 
-    public ArangoDaoException(IRequest<?> request, String message) {
+    public ArangoDaoException(IRequest<? extends BasicRequest> request, String message) {
         super(request, message);
     }
 
@@ -49,16 +50,21 @@ public class ArangoDaoException extends BasicException {
         super(msg, cause);
     }
 
-    public ArangoDaoException(IRequest<?> request, String message, Throwable cause) {
+    public ArangoDaoException(IRequest<? extends BasicRequest> request, String message, Throwable cause) {
         super(request, message, cause);
     }
 
-    public ArangoDaoException(IRequest<?> request, Throwable cause) {
+    public ArangoDaoException(IRequest<? extends BasicRequest> request, Throwable cause) {
         super(request, cause);
     }
 
-    public ArangoDaoException(IRequest<?> request, String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public ArangoDaoException(IRequest<? extends BasicRequest> request, String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(request, message, cause, enableSuppression, writableStackTrace);
     }
 
+    @Override
+    public ArangoDaoException addDetails(String key, Object value) {
+        this.addDetailMap(key, value);
+        return this;
+    }
 }

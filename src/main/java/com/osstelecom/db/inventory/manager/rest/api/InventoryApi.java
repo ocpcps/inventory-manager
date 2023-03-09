@@ -26,37 +26,26 @@ import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.SchemaNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.ScriptRuleException;
 import com.osstelecom.db.inventory.manager.request.CreateConnectionRequest;
-import com.osstelecom.db.inventory.manager.request.CreateManagedResourceRequest;
 import com.osstelecom.db.inventory.manager.request.CreateResourceLocationRequest;
-import com.osstelecom.db.inventory.manager.request.DeleteManagedResourceRequest;
 import com.osstelecom.db.inventory.manager.request.DeleteResourceConnectionRequest;
-import com.osstelecom.db.inventory.manager.request.FilterRequest;
-import com.osstelecom.db.inventory.manager.request.FindManagedResourceRequest;
 import com.osstelecom.db.inventory.manager.request.FindResourceConnectionRequest;
-import com.osstelecom.db.inventory.manager.request.ListManagedResourceRequest;
 import com.osstelecom.db.inventory.manager.request.ListResourceConnectionRequest;
-import com.osstelecom.db.inventory.manager.request.PatchManagedResourceRequest;
 import com.osstelecom.db.inventory.manager.request.PatchResourceConnectionRequest;
 import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstraintViolationException;
 import com.osstelecom.db.inventory.manager.resources.exception.ConnectionAlreadyExistsException;
 import com.osstelecom.db.inventory.manager.resources.exception.MetricConstraintException;
 import com.osstelecom.db.inventory.manager.resources.exception.NoResourcesAvailableException;
-import com.osstelecom.db.inventory.manager.response.CreateManagedResourceResponse;
+import com.osstelecom.db.inventory.manager.response.CreateLocationConnectionResponse;
 import com.osstelecom.db.inventory.manager.response.CreateResourceConnectionResponse;
 import com.osstelecom.db.inventory.manager.response.CreateResourceLocationResponse;
-import com.osstelecom.db.inventory.manager.response.DeleteManagedResourceResponse;
 import com.osstelecom.db.inventory.manager.response.DeleteResourceConnectionResponse;
-import com.osstelecom.db.inventory.manager.response.FilterResponse;
-import com.osstelecom.db.inventory.manager.response.FindManagedResourceResponse;
 import com.osstelecom.db.inventory.manager.response.FindResourceConnectionResponse;
-import com.osstelecom.db.inventory.manager.response.PatchManagedResourceResponse;
 import com.osstelecom.db.inventory.manager.response.PatchResourceConnectionResponse;
 import com.osstelecom.db.inventory.manager.response.TypedListResponse;
 import com.osstelecom.db.inventory.manager.session.ResourceSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -65,6 +54,7 @@ import com.osstelecom.db.inventory.manager.security.model.AuthenticatedCall;
 import com.osstelecom.db.inventory.manager.session.ResourceLocationSession;
 import java.util.ArrayList;
 import java.util.List;
+import javax.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 
@@ -94,13 +84,14 @@ public class InventoryApi extends BaseApi {
      */
     @AuthenticatedCall(role = {"user"})
     @PutMapping(path = "/{domain}/location", produces = "application/json", consumes = "application/json")
-    public CreateResourceLocationResponse createLocation(@RequestBody CreateResourceLocationRequest request, @PathVariable("domain") String domain) throws GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, InvalidRequestException, DomainNotFoundException, ArangoDaoException {
+    public CreateResourceLocationResponse createLocation(@RequestBody CreateResourceLocationRequest request, @PathVariable("domain") String domain, HttpServletRequest httpRequest) throws GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, InvalidRequestException, DomainNotFoundException, ArangoDaoException {
         try {
             //
             // Prevalesce o domain da URL.... será que deixo assim ?
             //
             request.setRequestDomain(domain);
             this.setUserDetails(request);
+            httpRequest.setAttribute("request", request);
             return resourceLocationSession.createResourceLocation(request);
         } catch (ArangoDBException ex) {
             GenericException exa = new GenericException(ex.getMessage());
@@ -120,10 +111,11 @@ public class InventoryApi extends BaseApi {
      */
     @AuthenticatedCall(role = {"user"})
     @PutMapping(path = "/{domain}/location/connection", produces = "application/json", consumes = "application/json")
-    public CreateResourceConnectionResponse createResourceLocationConnection(@RequestBody CreateConnectionRequest request, @PathVariable("domain") String domain) throws ArangoDaoException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, ResourceNotFoundException, DomainNotFoundException, InvalidRequestException {
+    public CreateLocationConnectionResponse createResourceLocationConnection(@RequestBody CreateConnectionRequest request, @PathVariable("domain") String domain, HttpServletRequest httpRequest) throws ArangoDaoException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, ResourceNotFoundException, DomainNotFoundException, InvalidRequestException {
         try {
             this.setUserDetails(request);
             request.setRequestDomain(domain);
+            httpRequest.setAttribute("request", request);
             return resourceLocationSession.createResourceLocationConnection(request);
         } catch (ArangoDBException ex) {
             ex.printStackTrace();
@@ -134,37 +126,7 @@ public class InventoryApi extends BaseApi {
     }
 
     /**
-     * Cria um Managed Resource
-     *
-     * @param requestBody
-     * @param domain
-     * @return
-     * @throws GenericException
-     * @throws SchemaNotFoundException
-     * @throws AttributeConstraintViolationException
-     * @throws ScriptRuleException
-     * @throws InvalidRequestException
-     * @throws DomainNotFoundException
-     */
-    @AuthenticatedCall(role = {"user"})
-    @PutMapping(path = "/{domain}/resource", produces = "application/json", consumes = "application/json")
-    public CreateManagedResourceResponse createManagedResource(@RequestBody CreateManagedResourceRequest request, @PathVariable("domain") String domain) throws GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, InvalidRequestException, DomainNotFoundException, ArangoDaoException, ResourceNotFoundException {
-        try {
-            this.setUserDetails(request);
-            request.setRequestDomain(domain);
-            return resourceSession.createManagedResource(request);
-        } catch (ArangoDBException ex) {
-            GenericException exa = new GenericException(ex.getMessage());
-            exa.setStatusCode(ex.getResponseCode());
-            throw exa;
-        }
-    }
-
-    /**
-     * Find Managed Resource By ID
-     *
-     * @param domain
-     * @param resourceId
+     * @deprecated @param domain
      * @return
      * @throws InvalidRequestException
      * @throws DomainNotFoundException
@@ -172,99 +134,21 @@ public class InventoryApi extends BaseApi {
      * @throws ArangoDaoException
      */
     @AuthenticatedCall(role = {"user"})
-    @GetMapping(path = "/{domain}/resource/{resourceId}", produces = "application/json")
-    public FindManagedResourceResponse findManagedResourceById(@PathVariable("domain") String domain, @PathVariable("resourceId") String resourceId) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
-        FindManagedResourceRequest findRequest = new FindManagedResourceRequest(resourceId, domain);
-        this.setUserDetails(findRequest);
-        return resourceSession.findManagedResourceById(findRequest);
-    }
-
-    @AuthenticatedCall(role = {"user"})
-    @DeleteMapping(path = "/{domain}/resource/{resourceId}", produces = "application/json")
-    public DeleteManagedResourceResponse deleteManagedResourceById(@PathVariable("domain") String domain, @PathVariable("resourceId") String resourceId) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
-        DeleteManagedResourceRequest deleteRequest = new DeleteManagedResourceRequest(resourceId, domain);
-        this.setUserDetails(deleteRequest);
-        return resourceSession.deleteManagedResource(deleteRequest);
-    }
-
-    @AuthenticatedCall(role = {"user"})
-    @GetMapping(path = "/{domain}/resource", produces = "application/json")
-    public TypedListResponse listManagedResource(@PathVariable("domain") String domain) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
-        //
-        // This is a Find ALL Query
-        //
-        ListManagedResourceRequest listRequest = new ListManagedResourceRequest(domain);
-        this.setUserDetails(listRequest);
-
-        return resourceSession.listManagedResources(listRequest);
-    }
-
-    @AuthenticatedCall(role = {"user"})
     @GetMapping(path = "/{domain}/connection", produces = "application/json")
-    public TypedListResponse listResourceConnections(@PathVariable("domain") String domain) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
+    public TypedListResponse listResourceConnections(@PathVariable("domain") String domain, HttpServletRequest httpRequest) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
         //
         // This is a Find ALL Query
         //
         ListResourceConnectionRequest listRequest = new ListResourceConnectionRequest(domain);
         this.setUserDetails(listRequest);
 
+        httpRequest.setAttribute("request", listRequest);
         return resourceSession.listResourceConnection(listRequest);
-    }
-
-    /**
-     * Aplica um filtro
-     *
-     * @param filter
-     * @param domain
-     * @return
-     * @throws ResourceNotFoundException
-     * @throws GenericException
-     * @throws SchemaNotFoundException
-     * @throws AttributeConstraintViolationException
-     * @throws ScriptRuleException
-     * @throws AttributeConstraintViolationException
-     * @throws DomainNotFoundException
-     */
-    @AuthenticatedCall(role = {"user"})
-    @PostMapping(path = "/{domain}/filter", produces = "application/json", consumes = "application/json")
-    public FilterResponse findManagedResourceByFilter(@RequestBody FilterRequest filter, @PathVariable("domain") String domain) throws ArangoDaoException, ResourceNotFoundException, DomainNotFoundException, InvalidRequestException {
-        this.setUserDetails(filter);
-        filter.setRequestDomain(domain);
-        return resourceSession.findManagedResourceByFilter(filter);
-    }
-
-    /**
-     * Atualiza um managed resource
-     *
-     * @param strReq
-     * @param domainName
-     * @param resourceId
-     * @return
-     * @throws DomainNotFoundException
-     * @throws ResourceNotFoundException
-     * @throws ArangoDaoException
-     * @throws InvalidRequestException
-     */
-    @AuthenticatedCall(role = {"user"})
-    @PatchMapping(path = "/{domain}/resource/{resourceId}", produces = "application/json", consumes = "application/json")
-    public PatchManagedResourceResponse patchManagedResource(@RequestBody PatchManagedResourceRequest request, @PathVariable("domain") String domainName, @PathVariable("resourceId") String resourceId) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException, ScriptRuleException {
-        this.setUserDetails(request);
-        request.setRequestDomain(domainName);
-        request.getPayLoad().setId(resourceId);
-        return this.resourceSession.patchManagedResource(request);
-    }
-
-    @AuthenticatedCall(role = {"user"})
-    @PatchMapping(path = "/{domain}/resource", produces = "application/json", consumes = "application/json")
-    public PatchManagedResourceResponse patchManagedResource(@RequestBody PatchManagedResourceRequest request, @PathVariable("domain") String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException, ScriptRuleException {
-        this.setUserDetails(request);
-        request.setRequestDomain(domainName);
-        return this.resourceSession.patchManagedResource(request);
     }
 
     @AuthenticatedCall(role = {"user"})
     @GetMapping(path = "/{domain}/resource/category", produces = "application/json")
-    public TypedListResponse getResourceCategories(@PathVariable("domain") String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException {
+    public TypedListResponse getResourceCategories(@PathVariable("domain") String domainName, HttpServletRequest httpRequest) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException {
         List<String> mockList = new ArrayList<>();
         mockList.add("default");
         TypedListResponse response = new TypedListResponse(mockList);
@@ -273,7 +157,7 @@ public class InventoryApi extends BaseApi {
 
     @AuthenticatedCall(role = {"user"})
     @GetMapping(path = "/{domain}/resource/businessStatus", produces = "application/json")
-    public TypedListResponse getBusinessStatus(@PathVariable("domain") String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException {
+    public TypedListResponse getBusinessStatus(@PathVariable("domain") String domainName, HttpServletRequest httpRequest) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException {
         List<String> mockList = new ArrayList<>();
         mockList.add("Planned");
         mockList.add("Pending Connection");
@@ -286,7 +170,7 @@ public class InventoryApi extends BaseApi {
 
     @AuthenticatedCall(role = {"user"})
     @GetMapping(path = "/{domain}/resource/operStatus", produces = "application/json")
-    public TypedListResponse getOperStatus(@PathVariable("domain") String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException {
+    public TypedListResponse getOperStatus(@PathVariable("domain") String domainName, HttpServletRequest httpRequest) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException {
         List<String> mockList = new ArrayList<>();
         mockList.add("Up");
         mockList.add("Down");
@@ -296,7 +180,7 @@ public class InventoryApi extends BaseApi {
 
     @AuthenticatedCall(role = {"user"})
     @GetMapping(path = "/{domain}/resource/adminStatus", produces = "application/json")
-    public TypedListResponse getAdminStatus(@PathVariable("domain") String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException {
+    public TypedListResponse getAdminStatus(@PathVariable("domain") String domainName, HttpServletRequest httpRequest) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException {
         List<String> mockList = new ArrayList<>();
         mockList.add("Up");
         mockList.add("Down");
@@ -314,10 +198,11 @@ public class InventoryApi extends BaseApi {
      */
     @AuthenticatedCall(role = {"user"})
     @PutMapping(path = "/{domain}/resource/connection", produces = "application/json", consumes = "application/json")
-    public CreateResourceConnectionResponse createResourceConnection(@RequestBody CreateConnectionRequest request, @PathVariable("domain") String domain) throws GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, InvalidRequestException, ResourceNotFoundException, ConnectionAlreadyExistsException, MetricConstraintException, NoResourcesAvailableException, DomainNotFoundException, ArangoDaoException {
+    public CreateResourceConnectionResponse createResourceConnection(@RequestBody CreateConnectionRequest request, @PathVariable("domain") String domain, HttpServletRequest httpRequest) throws GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, InvalidRequestException, ResourceNotFoundException, ConnectionAlreadyExistsException, MetricConstraintException, NoResourcesAvailableException, DomainNotFoundException, ArangoDaoException {
         try {
             this.setUserDetails(request);
             request.setRequestDomain(domain);
+            httpRequest.setAttribute("request", request);
             return resourceSession.createResourceConnection(request);
         } catch (ArangoDBException ex) {
             ex.printStackTrace();
@@ -329,34 +214,38 @@ public class InventoryApi extends BaseApi {
 
     @AuthenticatedCall(role = {"user"})
     @PatchMapping(path = "/{domain}/resource/connection", produces = "application/json", consumes = "application/json")
-    public PatchResourceConnectionResponse patchResourceConnection(@RequestBody PatchResourceConnectionRequest request, @PathVariable("domain") String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException {
+    public PatchResourceConnectionResponse patchResourceConnection(@RequestBody PatchResourceConnectionRequest request, @PathVariable("domain") String domainName, HttpServletRequest httpRequest) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException {
         this.setUserDetails(request);
         request.setRequestDomain(domainName);
+        httpRequest.setAttribute("request", request);
         return this.resourceSession.patchResourceConnection(request);
     }
 
     @AuthenticatedCall(role = {"user"})
     @PatchMapping(path = "/{domain}/resource/connection/{resourceId}", produces = "application/json", consumes = "application/json")
-    public PatchResourceConnectionResponse patchResourceConnection(@RequestBody PatchResourceConnectionRequest request, @PathVariable("domain") String domainName, @PathVariable("resourceId") String resourceId) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException {
+    public PatchResourceConnectionResponse patchResourceConnection(@RequestBody PatchResourceConnectionRequest request, @PathVariable("domain") String domainName, @PathVariable("resourceId") String resourceId, HttpServletRequest httpRequest) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException {
         this.setUserDetails(request);
         request.setRequestDomain(domainName);
         request.getPayLoad().setId(resourceId);
+        httpRequest.setAttribute("request", request);
         return this.resourceSession.patchResourceConnection(request);
     }
 
     @AuthenticatedCall(role = {"user"})
     @DeleteMapping(path = "/{domain}/resource/connection/{resourceId}", produces = "application/json")
-    public DeleteResourceConnectionResponse deleteResourceConnectionById(@PathVariable("domain") String domain, @PathVariable("resourceId") String resourceId) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
+    public DeleteResourceConnectionResponse deleteResourceConnectionById(@PathVariable("domain") String domain, @PathVariable("resourceId") String resourceId, HttpServletRequest httpRequest) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
         DeleteResourceConnectionRequest deleteRequest = new DeleteResourceConnectionRequest(resourceId, domain);
         this.setUserDetails(deleteRequest);
+        httpRequest.setAttribute("request", deleteRequest);
         return resourceSession.deleteResourceConnection(deleteRequest);
     }
 
     @AuthenticatedCall(role = {"user"})
     @GetMapping(path = "/{domain}/resource/connection/{resourceId}", produces = "application/json")
-    public FindResourceConnectionResponse findResourceConnectionById(@PathVariable("domain") String domain, @PathVariable("resourceId") String resourceId) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
+    public FindResourceConnectionResponse findResourceConnectionById(@PathVariable("domain") String domain, @PathVariable("resourceId") String resourceId, HttpServletRequest httpRequest) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
         FindResourceConnectionRequest findRequest = new FindResourceConnectionRequest(resourceId, domain);
         this.setUserDetails(findRequest);
+        httpRequest.setAttribute("request", findRequest);
         return resourceSession.findResourceConnectionById(findRequest);
     }
 

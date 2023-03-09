@@ -33,6 +33,7 @@ import com.arangodb.ArangoCursor;
 import com.arangodb.ArangoDatabase;
 import com.arangodb.entity.CollectionEntity;
 import com.arangodb.entity.CollectionType;
+import com.arangodb.entity.DocumentUpdateEntity;
 import com.arangodb.entity.EdgeDefinition;
 import com.arangodb.entity.GraphEntity;
 import com.arangodb.model.CollectionCreateOptions;
@@ -172,9 +173,8 @@ public class DomainDao {
                     .createCollection(domainName
                             + arangoDbConfiguration.getServiceSufix(),
                             new CollectionCreateOptions().type(CollectionType.DOCUMENT));
-            
-            
-             arangoDatabase.collection(services.getName()).ensurePersistentIndex(
+
+            arangoDatabase.collection(services.getName()).ensurePersistentIndex(
                     Arrays.asList("name", "nodeAddress", "className", "domain._key"),
                     new PersistentIndexOptions().unique(true).name("ServiceUNIQIDX"));
 
@@ -194,6 +194,15 @@ public class DomainDao {
                     Arrays.asList("nodeAddress", "className", "domainName"),
                     new PersistentIndexOptions().unique(false).name("searchIDX1"));
 
+                CollectionEntity metrics = arangoDatabase
+                    .createCollection(domainName
+                            + arangoDbConfiguration.getMetricSufix(),
+                            new CollectionCreateOptions().type(CollectionType.DOCUMENT));
+
+            arangoDatabase.collection(metrics.getName()).ensurePersistentIndex(
+                    Arrays.asList("metricName", "domain._key"),
+                    new PersistentIndexOptions().unique(true).name("MetricUNIQIDX"));
+
             GraphEntity connectionLayer = createGraph(
                     domainName + arangoDbConfiguration.getConnectionLayerSufix(),
                     connections.getName(), nodes.getName(), services.getName(), circuits.getName());
@@ -203,6 +212,7 @@ public class DomainDao {
             domainRequestDTO.setConnections(connections.getName());
             domainRequestDTO.setNodes(nodes.getName());
             domainRequestDTO.setCircuits(circuits.getName());
+            domainRequestDTO.setMetrics(metrics.getName());
             domainRequestDTO.setDomainName(domainName);
 
             this.domainsCollection.insertDocument(domainRequestDTO);
@@ -235,9 +245,10 @@ public class DomainDao {
      *
      * @param domain
      */
-    public void updateDomain(Domain domain) {
+    public DocumentUpdateEntity<Domain> updateDomain(Domain domain) {
         logger.debug("Persinting Domain info...:{}", domain.getDomainName());
-        this.domainsCollection.updateDocument(domain.getDomainName(), domain);
+        DocumentUpdateEntity<Domain> result = this.domainsCollection.updateDocument(domain.getDomainName(), domain);
+        return result;
     }
 
     /**

@@ -28,6 +28,7 @@ public class ApiErrorDTO {
     private Integer statusCode = 500;
     private String className = "";
     private Object details;
+    private Object request;
 
     /**
      * @return the msg
@@ -83,6 +84,20 @@ public class ApiErrorDTO {
      */
     public Object getDetails() {
         return details;
+    }
+
+    /**
+     * @return the request
+     */
+    public Object getRequest() {
+        return request;
+    }
+
+    /**
+     * @param request the request to set
+     */
+    public void setRequest(Object request) {
+        this.request = request;
     }
 
 }

@@ -23,6 +23,11 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 
+/**
+ * Configuração da Autenticação da API
+ *
+ * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ */
 @Configuration
 public class SecurityConfiguration {
 
@@ -42,12 +47,17 @@ public class SecurityConfiguration {
                 .antMatchers(HttpMethod.DELETE, "/inventory/v1/**")
                 .hasAuthority("SCOPE_write")
                 .antMatchers(HttpMethod.POST, "/topology/v1/**")
-                .anonymous()
+                .hasAuthority("SCOPE_write")
+                .antMatchers(HttpMethod.GET, "/topology/v1/**")
+                .hasAuthority("SCOPE_write")
+                .antMatchers(HttpMethod.PATCH, "/topology/v1/**")
+                .hasAuthority("SCOPE_write")
+                .antMatchers(HttpMethod.DELETE, "/topology/v1/**")
+                .hasAuthority("SCOPE_write")
                 .anyRequest()
                 .anonymous()
                 .and()
                 .oauth2ResourceServer()
-                //                .jwt().and().authenticationEntryPoint(new BearerTokenAuthenticationEntryPoint());
                 .jwt();
 
         return http.build();

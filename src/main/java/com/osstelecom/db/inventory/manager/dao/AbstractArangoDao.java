@@ -42,7 +42,6 @@ import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.resources.BasicResource;
 import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.GraphList;
-import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import java.util.UUID;
 
 /**
@@ -101,7 +100,6 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
     /**
      * Queria deixar o Type como Generics....
      *
-     * @deprecated
      * @param aql
      * @param bindVars
      * @param type
@@ -110,11 +108,11 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
      * @throws
      * com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException
      */
-    public GraphList<T> query(String aql, Map<String, Object> bindVars, Class<T> type, ArangoDatabase db)
+    public GraphList<T> runNativeQuery(String aql, Map<String, Object> bindVars, Class<T> type, ArangoDatabase db)
             throws ResourceNotFoundException {
         Long start = System.currentTimeMillis();
         String uid = UUID.randomUUID().toString();
-        logger.info("(query) - [{}] - RUNNING: AQL:[{}]", uid, aql);
+        logger.info("(native-query) - [{}] - RUNNING: AQL:[{}]", uid, aql);
         if (bindVars != null) {
             bindVars.forEach((k, v) -> {
                 logger.info("\t  [@{}]=[{}]", k, v);
@@ -222,7 +220,7 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
         }
     }
 
-    public abstract Long getCount(Domain domain) throws ResourceNotFoundException, IOException, InvalidRequestException;
+    public abstract Long getCount(Domain domain) throws IOException, InvalidRequestException;
 
     public ArangoDatabase getDb() {
         return this.arangoDatabase;

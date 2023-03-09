@@ -21,8 +21,6 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
@@ -74,7 +72,6 @@ public class ServiceResource extends BasicResource {
     // God Help Our Souls!
     // @By Nishisan
     //
-    
     /**
      * IDS of Services that this services is parent of This aproach is easier to
      * maintain.Can be read as the "list of children Services" of this service
@@ -95,13 +92,10 @@ public class ServiceResource extends BasicResource {
      */
     private List<String> relatedResourceConnections;
 
-    @Schema(description = "If true, indicates that the Service has some broken connections")
     private boolean degrated = false;
 
-    @Schema(description = "If true, indicates that the Service has some broken connections, and it is broken")
     private boolean broken = false;
 
-    @Schema(description = "The ID List of the broken connections")
     private List<String> brokenResources;
 
     public ServiceResource(String attributeSchema, Domain domain) {

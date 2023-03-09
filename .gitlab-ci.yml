@@ -1,6 +1,18 @@
+image: registry.fedoraproject.org/fedora:latest
+
+
+variables:
+  CURRENT_VERSION: $(mvn validate | grep Build | awk '{print $4}'| cut -d '-' -f1)
+  CREATED_AT: $(date -u +'%Y-%m-%dT%H:%M:%SZ')
+
+
+
 stages:
   - test
   - build
+  - create-container-image
+  - publish-container-image
+  
 test-java-project:
   stage: test
   script:
@@ -12,7 +24,44 @@ test-java-project:
 build-java-project:
   stage: build
   script:
-    mvn package
+    - mvn package
   artifacts:
     paths:
       - "**/target"
+
+build-container-image:
+  stage: create-container-image
+  script:
+     - buildah rmi --all --force
+     - echo Compiling "org.opencontainers.image.version=$(mvn validate | grep Build | awk '{print $4}'| cut -d '-' -f1)"
+     - buildah --userns=keep-id bud 
+       --annotation "org.opencontainers.image.version=$(mvn validate | grep Build | awk '{print $4}'| cut -d '-' -f1)"
+       --annotation "org.opencontainers.image.authors=Lucas Nishimura <lucas.nishimura at telefonica.com>" 
+       --annotation "org.opencontainers.image.title=Netcompass API" 
+       --annotation "org.opencontainers.image.description=Microserviço do Netcompass Backend Java Spring"  
+       -t netcompass-api:$(mvn validate | grep Build | awk '{print $4}'| cut -d '-' -f1) .
+  tags:
+     - buildah
+  only:
+    refs:
+      - master
+
+publish-container-image:
+  stage: publish-container-image
+  script:
+     - echo Publishing localhost/netcompass-api:$(mvn validate | grep Build | awk '{print $4}'| cut -d '-' -f1)
+     # Sobe a versão atual
+     - buildah push --tls-verify=false 
+       --creds lucas_nishimura:77Y71MZEXYVZTZ5OBZ3HK557A8WTBSCH
+       localhost/netcompass-api:$(mvn validate | grep Build | awk '{print $4}'| cut -d '-' -f1) quay.apps.mgmt.telcostack.br.telefonica.com/netcompass/netcompass-server/netcompass-api:$(mvn validate | grep Build | awk '{print $4}'| cut -d '-' -f1)
+     # Faz o Push da atual para latest também
+     - buildah push --tls-verify=false 
+       --creds lucas_nishimura:77Y71MZEXYVZTZ5OBZ3HK557A8WTBSCH
+       localhost/netcompass-api:$(mvn validate | grep Build | awk '{print $4}'| cut -d '-' -f1) quay.apps.mgmt.telcostack.br.telefonica.com/netcompass/netcompass-server/netcompass-api:latest
+ 
+  tags:
+     - buildah
+  only:
+    refs:
+      - master
+  

@@ -29,9 +29,13 @@ import com.osstelecom.db.inventory.manager.operation.ResourceConnectionManager;
 import com.osstelecom.db.inventory.manager.operation.ResourceLocationManager;
 import com.osstelecom.db.inventory.manager.request.CreateConnectionRequest;
 import com.osstelecom.db.inventory.manager.request.CreateResourceLocationRequest;
-import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
+import com.osstelecom.db.inventory.manager.resources.LocationConnection;
 import com.osstelecom.db.inventory.manager.resources.ResourceLocation;
 import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstraintViolationException;
+import com.osstelecom.db.inventory.manager.resources.exception.ConnectionAlreadyExistsException;
+import com.osstelecom.db.inventory.manager.resources.exception.MetricConstraintException;
+import com.osstelecom.db.inventory.manager.resources.exception.NoResourcesAvailableException;
+import com.osstelecom.db.inventory.manager.response.CreateLocationConnectionResponse;
 import com.osstelecom.db.inventory.manager.response.CreateResourceConnectionResponse;
 import com.osstelecom.db.inventory.manager.response.CreateResourceLocationResponse;
 import java.util.Date;
@@ -75,12 +79,12 @@ public class ResourceLocationSession {
      * @throws SchemaNotFoundException
      * @throws AttributeConstraintViolationException
      */
-    public CreateResourceConnectionResponse createResourceLocationConnection(CreateConnectionRequest request) throws ResourceNotFoundException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, DomainNotFoundException, ArangoDaoException, InvalidRequestException {
+    public CreateLocationConnectionResponse createResourceLocationConnection(CreateConnectionRequest request) throws ResourceNotFoundException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, DomainNotFoundException, ArangoDaoException, InvalidRequestException {
 
         ResourceLocation from = resourceLocationManager.findResourceLocation(request.getPayLoad().getFromName(), request.getPayLoad().getFromNodeAddress(), request.getPayLoad().getFromClassName(), request.getRequestDomain());
         ResourceLocation to = resourceLocationManager.findResourceLocation(request.getPayLoad().getToName(), request.getPayLoad().getToNodeAddress(), request.getPayLoad().getToClassName(), request.getRequestDomain());
 
-        ResourceConnection connection = new ResourceConnection(domainManager.getDomain(request.getRequestDomain()));
+        LocationConnection connection = new LocationConnection(domainManager.getDomain(request.getRequestDomain()));
 
         if (request.getPayLoad().getConnectionName() == null && request.getPayLoad().getNodeAddress() == null) {
             throw new InvalidRequestException("Please Provide at Least a Name[name] or Node Address [nodeAddress]");
@@ -117,7 +121,7 @@ public class ResourceLocationSession {
         }
     
         connection.setInsertedDate(new Date());
-        CreateResourceConnectionResponse response = new CreateResourceConnectionResponse(resourceConnectionManager.createResourceConnection(connection));
+        CreateLocationConnectionResponse response = new CreateLocationConnectionResponse(resourceConnectionManager.createLocationConnection(connection));
         return response;
     }
 

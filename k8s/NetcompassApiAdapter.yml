@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: netcompass-api-adapter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: netcompass-api-adapter
+  template:
+    metadata:
+      labels:
+        app: netcompass-api-adapter
+    spec:
+      containers:
+      - name: inventory-api-adapter
+        metadata:
+          labels:
+            app: netcompass-api
+        image: quay.apps.mgmt.telcostack.br.telefonica.com/netcompass/netcompass-server/osstelecom-jdk17  
+        resources:
+          requests:
+            memory: "5120Mi"
+            cpu: "4"
+          limits:
+            memory: "5120Mi"
+            cpu: "8"
+        ports:
+          - name: api-https
+            containerPort: 9000
+            protocol: TCP
+        volumeMounts:
+          - mountPath: "/app/inventory-adapter"
+            name: netcompass-api-adapter-volume
+          # - name: config-volume
+          #   mountPath: /app/inventory-manager/config/
+        env:
+          - name: JAR_PATH
+            value: /app/inventory-adapter
+          - name: JAR_ARGS
+            value: -Xmx4G -Dspring.profiles.active=dev
+          - name: JAR_NAME
+            value: inventory-adapter-1.0-SNAPSHOT.jar
+          - name: SPRING_PROFILES_DEFAULT
+            value: dev
+          - name: http.proxyHost
+            value: 10.215.39.5
+          - name: http.proxyPort
+            value: "8080"
+          - name: https.proxyHost
+            value: 10.215.39.5
+          - name: https.proxyPort
+            value: "8080"
+      volumes:
+        - name: netcompass-api-adapter-volume
+          persistentVolumeClaim:
+            claimName: netcompass-api-adatper-volume-claim
+        # - name: config-volume
+        #   configMap:
+        #     name: inventory-config

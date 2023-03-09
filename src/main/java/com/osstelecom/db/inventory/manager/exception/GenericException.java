@@ -17,6 +17,7 @@
  */
 package com.osstelecom.db.inventory.manager.exception;
 
+import com.osstelecom.db.inventory.manager.request.BasicRequest;
 import com.osstelecom.db.inventory.manager.request.IRequest;
 import java.io.FileNotFoundException;
 
@@ -48,28 +49,34 @@ public class GenericException extends BasicException {
         super(msg, cause);
     }
 
-    public GenericException(IRequest<?> request) {
+    public GenericException(IRequest<? extends BasicRequest> request) {
         super(request);
     }
 
-    public GenericException(IRequest<?> request, String message) {
+    public GenericException(IRequest<? extends BasicRequest> request, String message) {
         super(request, message);
     }
 
-    public GenericException(IRequest<?> request, String message, Throwable cause) {
+    public GenericException(IRequest<? extends BasicRequest> request, String message, Throwable cause) {
         super(request, message, cause);
     }
 
-    public GenericException(IRequest<?> request, Throwable cause) {
+    public GenericException(IRequest<? extends BasicRequest> request, Throwable cause) {
         super(request, cause);
     }
 
-    public GenericException(IRequest<?> request, String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public GenericException(IRequest<? extends BasicRequest> request, String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(request, message, cause, enableSuppression, writableStackTrace);
     }
 
     public GenericException(String message, FileNotFoundException ex) {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+    
+    @Override
+    public GenericException addDetails(String key, Object value) {
+        this.addDetailMap(key, value);
+        return this;
     }
 
 }

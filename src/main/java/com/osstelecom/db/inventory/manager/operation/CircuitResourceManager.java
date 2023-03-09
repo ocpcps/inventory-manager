@@ -11,9 +11,11 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import com.arangodb.entity.DocumentCreateEntity;
+import com.arangodb.entity.DocumentDeleteEntity;
 import com.arangodb.entity.DocumentUpdateEntity;
 import com.google.common.eventbus.Subscribe;
 import com.osstelecom.db.inventory.manager.dao.CircuitResourceDao;
+import com.osstelecom.db.inventory.manager.dao.GraphDao;
 import com.osstelecom.db.inventory.manager.dao.ResourceConnectionDao;
 import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import com.osstelecom.db.inventory.manager.events.CircuitResourceCreatedEvent;
@@ -21,6 +23,7 @@ import com.osstelecom.db.inventory.manager.events.CircuitResourceUpdatedEvent;
 import com.osstelecom.db.inventory.manager.events.ManagedResourceUpdatedEvent;
 import com.osstelecom.db.inventory.manager.events.ResourceConnectionUpdatedEvent;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
+import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
 import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
@@ -63,7 +66,15 @@ public class CircuitResourceManager extends Manager {
     @Autowired
     private DomainManager domainManager;
 
+    @Autowired
+    private GraphDao graphDao;
+
     private Logger logger = LoggerFactory.getLogger(CircuitResourceManager.class);
+
+    public CircuitResource deleteCircuitResource(CircuitResource circuitResource) throws ArangoDaoException {
+        DocumentDeleteEntity<CircuitResource> result = this.circuitResourceDao.deleteResource(circuitResource);
+        return result.getOld();
+    }
 
     /**
      * Creates a Circuit Resource
@@ -78,16 +89,34 @@ public class CircuitResourceManager extends Manager {
     public CircuitResource createCircuitResource(CircuitResource circuit) throws GenericException,
             SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, ArangoDaoException {
         String timerId = startTimer("createCircuitResource");
+        Boolean useUpsert = false;
         try {
             lockManager.lock();
             Domain domain = circuit.getDomain();
-            circuit.setKey(this.getUUID());
+            //
+            // START - Subir as validações para session
+            //
+            if (circuit.getKey() == null) {
+                circuit.setKey(getUUID());
+            } else {
+                //
+                // Teve um ID declarado pelo usuário ou solicitante, podemos converter isso para um upsert
+                //
+                useUpsert = true;
+            }
+
             circuit.setAtomId(domain.addAndGetId());
             ResourceSchemaModel schemaModel = schemaSession.loadSchema(circuit.getAttributeSchemaName());
             circuit.setSchemaModel(schemaModel);
             schemaSession.validateResourceSchema(circuit);
             dynamicRuleSession.evalResource(circuit, "I", this);
-            DocumentCreateEntity<CircuitResource> result = this.circuitResourceDao.insertResource(circuit);
+            DocumentCreateEntity<CircuitResource> result;
+            if (useUpsert) {
+                result = this.circuitResourceDao.upsertResource(circuit);
+            } else {
+                result = this.circuitResourceDao.insertResource(circuit);
+
+            }
             circuit.setKey(result.getId());
             circuit.setRevisionId(result.getRev());
             //
@@ -132,11 +161,17 @@ public class CircuitResourceManager extends Manager {
      * @param resource
      * @return
      */
-    public CircuitResource updateCircuitResource(CircuitResource resource) throws ArangoDaoException {
+    public CircuitResource updateCircuitResource(CircuitResource resource) throws ArangoDaoException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
         String timerId = startTimer("updateCircuitResource");
         try {
             lockManager.lock();
             resource.setLastModifiedDate(new Date());
+
+            ResourceSchemaModel schemaModel = schemaSession.loadSchema(resource.getAttributeSchemaName());
+            resource.setSchemaModel(schemaModel);
+            schemaSession.validateResourceSchema(resource);
+            dynamicRuleSession.evalResource(resource, "U", this);
+
             DocumentUpdateEntity<CircuitResource> result = circuitResourceDao.updateResource(resource);
             CircuitResource newResource = result.getNew();
             CircuitResource oldResource = result.getOld();
@@ -163,10 +198,15 @@ public class CircuitResourceManager extends Manager {
      * @throws ArangoDaoException
      */
     public GraphList<ResourceConnection> findCircuitPaths(CircuitResource circuit) {
-        return this.resourceConnectionDao.findCircuitPaths(circuit);
+        return this.graphDao.findCircuitPaths(circuit);
     }
 
     public GraphList<CircuitResource> findCircuitsByFilter(FilterDTO filter, Domain domain) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
+        return this.circuitResourceDao.findResourceByFilter(filter, domain);
+    }
+
+    public GraphList<CircuitResource> findCircuitsByFilter(FilterDTO filter, String domainName) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException, DomainNotFoundException {
+        Domain domain = this.domainManager.getDomain(domainName);
         return this.circuitResourceDao.findResourceByFilter(filter, domain);
     }
 
@@ -181,7 +221,7 @@ public class CircuitResourceManager extends Manager {
      * @param updatedEvent
      */
     @Subscribe
-    public void onResourceConnectionUpdatedEvent(ResourceConnectionUpdatedEvent updatedEvent) throws InvalidRequestException {
+    public void onResourceConnectionUpdatedEvent(ResourceConnectionUpdatedEvent updatedEvent) throws InvalidRequestException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
         ResourceConnection newConnection = updatedEvent.getNewResource();
         ResourceConnection oldConnection = updatedEvent.getOldResource();
         if (newConnection.getCircuits() != null) {
@@ -240,7 +280,7 @@ public class CircuitResourceManager extends Manager {
 
                     }
                     this.updateCircuitResource(circuit);
-                } catch (ArangoDaoException ex) {
+                } catch (ArangoDaoException | AttributeConstraintViolationException | GenericException | SchemaNotFoundException | ScriptRuleException ex) {
                     logger.error("Failed to Update Resources on circuit", ex);
                 }
             });
@@ -259,7 +299,7 @@ public class CircuitResourceManager extends Manager {
      * @param connections
      * @param target
      */
-    private void computeCircuitIntegrity(CircuitResource circuit) throws ArangoDaoException {
+    private void computeCircuitIntegrity(CircuitResource circuit) throws ArangoDaoException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
         //
         // Forks with the logic of checking integrity
         //
@@ -276,6 +316,7 @@ public class CircuitResourceManager extends Manager {
                 //
                 // Transitou de normal para degradado
                 //
+                
                 degratedFlag = true;
             }
 
@@ -341,10 +382,10 @@ public class CircuitResourceManager extends Manager {
         }
 
         if (circuit.getBroken()) {
-            circuit.setOperationalStatus("DOWN");
+            circuit.setOperationalStatus("Down");
             circuit.setDegrated(true);
         } else {
-            circuit.setOperationalStatus("UP");
+            circuit.setOperationalStatus("Up");
         }
         if (circuit.getBrokenResources() != null) {
             if (!circuit.getBroken() && !circuit.getBrokenResources().isEmpty()) {
@@ -355,8 +396,13 @@ public class CircuitResourceManager extends Manager {
 
         Long end = System.currentTimeMillis();
         Long took = end - start;
-        logger.debug("Check Circuit Integrity for [{}] Took: {} ms State Changed: {} Broken Count:[{}] Total Connections:[{}]",
-                circuit.getId(), took, stateChanged, circuit.getBrokenResources().size(), connections.size());
+        if (circuit.getBrokenResources() != null) {
+            logger.debug("Check Circuit Integrity for [{}] Took: {} ms State Changed: {} Broken Count:[{}] Total Connections:[{}]",
+                    circuit.getId(), took, stateChanged, circuit.getBrokenResources().size(), connections.size());
+        } else {
+            logger.debug("Check Circuit Integrity for [{}] Took: {} ms State Changed: {}  Total Connections:[{}]",
+                    circuit.getId(), took, stateChanged, connections.size());
+        }
         if (stateChanged) {
             this.updateCircuitResource(circuit);
         }

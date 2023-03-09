@@ -18,7 +18,6 @@
 package com.osstelecom.db.inventory.topology.impact;
 
 import com.osstelecom.db.inventory.topology.ITopology;
-import com.osstelecom.db.inventory.topology.algorithm.ITopolocyAlgorithm;
 import com.osstelecom.db.inventory.topology.algorithm.WeakNodesAlgorithm;
 import com.osstelecom.db.inventory.topology.node.INetworkNode;
 import com.osstelecom.db.inventory.topology.node.SourceTargetWrapper;
@@ -30,6 +29,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.osstelecom.db.inventory.topology.algorithm.ITopologyAlgorithm;
 
 /**
  *
@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory;
  */
 public class WeakNodesImpactManager extends DefaultImpactManagerImpl {
 
-    private ITopolocyAlgorithm algorithm = new WeakNodesAlgorithm();
+    private ITopologyAlgorithm algorithm = new WeakNodesAlgorithm();
     private Logger logger = LoggerFactory.getLogger(WeakNodesImpactManager.class);
 
     public WeakNodesImpactManager(ITopology topology) {
@@ -94,7 +94,7 @@ public class WeakNodesImpactManager extends DefaultImpactManagerImpl {
 //        this.algorithm.calculate(weakQueue, options, threadCount);
         logger.debug("Commiting Queue With :[{}] Jobs", weakQueue.size());
 //        this.algorithm.calculate(weakQueue); // <-- Works
-        this.algorithm.calculate(weakQueue,threadCount); // <-- NOT Working
+        this.algorithm.calculate(weakQueue,threadCount); // <-- Working
 
         List<INetworkNode> result;
 

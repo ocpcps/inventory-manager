@@ -16,6 +16,7 @@
  */
 package com.osstelecom.db.inventory.manager.operation;
 
+import com.arangodb.entity.DocumentUpdateEntity;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -47,10 +48,8 @@ import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.DomainAlreadyExistsException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
-import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.listeners.EventManagerListener;
 import com.osstelecom.db.inventory.manager.resources.BasicResource;
-import com.osstelecom.db.inventory.manager.resources.ConsumableMetric;
 import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
@@ -99,6 +98,8 @@ public class DomainManager extends Manager {
 
     @Autowired
     private CircuitResourceDao circuitResourceDao;
+
+    private Map<String, Domain> updatingDomains = new ConcurrentHashMap<>();
 
     private Logger logger = LoggerFactory.getLogger(DomainManager.class);
 
@@ -160,7 +161,7 @@ public class DomainManager extends Manager {
         return domain;
     }
 
-    public Domain deleteDomain(Domain domain) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, IOException {
+    public Domain deleteDomain(Domain domain) throws DomainNotFoundException, ArangoDaoException {
         try {
             lockManager.lock();
             domain = this.getDomain(domain.getDomainName());
@@ -227,27 +228,56 @@ public class DomainManager extends Manager {
                 this.domainDao.updateDomain(domain);
             } else {
                 Calendar cal = Calendar.getInstance();
-                Date now= new Date();
+                Date now = new Date();
                 cal.setTime(now);
                 cal.add(Calendar.MINUTE, -5);
-                if (domain.getLastStatsCalc().after(cal.getTime())) {
-                    logger.debug("TTL Time Stats for domain: [{}]", domain.getDomainName());
-                    domain.setResourceCount(managedResourceDao.getCount(domain));
-                    domain.setConnectionCount(resourceConnectionDao.getCount(domain));
-                    domain.setCircuitCount(circuitResourceDao.getCount(domain));
-                    domain.setServiceCount(serviceResourceDao.getCount(domain));
-                    domain.setLastStatsCalc(new Date());
+                if (domain.getLastStatsCalc().before(cal.getTime())) {
+                    logger.debug("TTL Time Stats for domain: [{}] Last Date: [{}]", domain.getDomainName(), domain.getLastStatsCalc());
                     //
-                    // Sync DB
+                    // Estava levando um tempo e travando o front, vamos deixar multithread e assincrono
                     //
-                    this.domains.replace(domain.getDomainName(), domain);
-                    this.domainDao.updateDomain(domain);
+                    if (!this.updatingDomains.containsKey(domain.getDomainName())) {
+                        this.updatingDomains.put(domain.getDomainName(), domain);
+
+                        Thread t = new Thread(() -> {
+                            Long start = System.currentTimeMillis();
+
+                            try {
+                                logger.debug("Starting Stats Calculation for Domain:[{}]", domain.getDomainName());
+                                domain.setResourceCount(managedResourceDao.getCount(domain));
+                                domain.setConnectionCount(resourceConnectionDao.getCount(domain));
+                                domain.setCircuitCount(circuitResourceDao.getCount(domain));
+                                domain.setServiceCount(serviceResourceDao.getCount(domain));
+                                domain.setLastStatsCalc(new Date());
+                                //
+                                // Sync DB
+                                //
+                                domains.replace(domain.getDomainName(), domain);
+                                domainDao.updateDomain(domain);
+
+                            } catch (IOException | InvalidRequestException ex) {
+                                logger.error("Generic Error Updating Domain Stats", ex);
+                            } finally {
+                                this.updatingDomains.remove(domain.getDomainName());
+                                Long end = System.currentTimeMillis();
+                                Long took = end - start;
+                                logger.debug("Stats for domain: [{}] Last Date: [{}] Has Just Updated and Took: [{}] ms", domain.getDomainName(), domain.getLastStatsCalc(), took);
+
+                            }
+                        });
+                        t.setName(domain.getDomainName() + "-stats-thread");
+                        t.start();
+                    } else {
+                        logger.warn("Already Processing Stats for Domain:[{}]", domain.getDomainName());
+                    }
+
                 }
             }
-        } catch (IOException | ResourceNotFoundException ex) {
+        } catch (IOException ex) {
             //
             // Omite o Error
             //
+            logger.error("Generic Error Updating Domain Stats", ex);
         } catch (InvalidRequestException ex) {
             logger.error("Failed to Get Count", ex);
         }
@@ -268,32 +298,12 @@ public class DomainManager extends Manager {
         return result;
     }
 
-    /**
-     * Creates a consumable metric
-     *
-     * @param name
-     * @return
-     */
-    public ConsumableMetric createConsumableMetric(String name) {
-        String timerId = startTimer("createConsumableMetric");
-        try {
-            lockManager.lock();
-            ConsumableMetric metric = new ConsumableMetric(this);
-            metric.setMetricName(name);
-            endTimer(timerId);
-            //
-            // Notifica o event Manager da Metrica criada
-            //
-            ConsumableMetricCreatedEvent event = new ConsumableMetricCreatedEvent(metric);
-            eventManager.notifyGenericEvent(event);
-            return metric;
-        } finally {
-            if (lockManager.isLocked()) {
-                lockManager.unlock();
-            }
-            endTimer(timerId);
-        }
+   
 
+    public Domain updateDomain(Domain domain) {
+        DocumentUpdateEntity<Domain> result = this.domainDao.updateDomain(domain);
+        this.domains.replace(domain.getDomainName(), domain);
+        return result.getNew();
     }
 
     /**
@@ -346,7 +356,12 @@ public class DomainManager extends Manager {
                 }
 
                 if (connection.getOperationalStatus().equalsIgnoreCase("UP")) {
+                    connection.setOperationalStatus("Up");
                     topology.addConnection(from, to, "Connection: " + connection.getId());
+                    logger.debug("Connection from:[{}] To:[{}] is Up", connection.getFrom().getNodeAddress(), connection.getTo().getNodeAddress());
+
+                } else if (connection.getOperationalStatus().equalsIgnoreCase("DOWN")) {
+                    logger.debug("Connection from:[{}] To:[{}] is Down", connection.getFrom().getNodeAddress(), connection.getTo().getNodeAddress());
                 }
 
                 // topology.addConnection(to, from, connection.getId() + ".A");

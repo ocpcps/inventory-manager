@@ -39,9 +39,7 @@ import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.GraphList;
-import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import java.io.IOException;
-import java.lang.module.ResolutionException;
 
 /**
  *
@@ -170,7 +168,7 @@ public class CircuitResourceDao extends AbstractArangoDao<CircuitResource> {
         // A complexidade de validação dos requistos do dado deve ter sido feita na dao antes de chegar aqui.
         //
         try {
-            return this.getDb().collection(resource.getDomain().getCircuits()).updateDocument(resource.getKey(), resource, new DocumentUpdateOptions().returnNew(true).returnOld(true).keepNull(false).waitForSync(false), CircuitResource.class);
+            return this.getDb().collection(resource.getDomain().getCircuits()).updateDocument(resource.getKey(), resource, new DocumentUpdateOptions().returnNew(true).returnOld(true).mergeObjects(false).keepNull(false).waitForSync(false), CircuitResource.class);
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         } finally {
@@ -193,7 +191,7 @@ public class CircuitResourceDao extends AbstractArangoDao<CircuitResource> {
     @Override
     public DocumentDeleteEntity<CircuitResource> deleteResource(CircuitResource resource) throws ArangoDaoException {
         try {
-            return this.getDb().collection(resource.getDomain().getCircuits()).deleteDocument(resource.getId(), CircuitResource.class, new DocumentDeleteOptions().returnOld(true));
+            return this.getDb().collection(resource.getDomain().getCircuits()).deleteDocument(resource.getKey(), CircuitResource.class, new DocumentDeleteOptions().returnOld(true));
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         } finally {
@@ -395,12 +393,16 @@ public class CircuitResourceDao extends AbstractArangoDao<CircuitResource> {
     // Found in Domain:" + domain.getDomainName());
     // }
     @Override
-    public Long getCount(Domain domain) throws ResourceNotFoundException, IOException, InvalidRequestException {
+    public Long getCount(Domain domain) throws IOException, InvalidRequestException {
         String aql = "for doc in `" + domain.getCircuits() + "` ";
         FilterDTO filter = new FilterDTO(aql);
-        GraphList<CircuitResource> result = this.query(filter, CircuitResource.class, this.getDb());
-        Long longValue = result.size();
-        result.close();
-        return longValue;
+        try {
+            GraphList<CircuitResource> result = this.query(filter, CircuitResource.class, this.getDb());
+            Long longValue = result.size();
+            result.close();
+            return longValue;
+        } catch (ResourceNotFoundException ex) {
+            return 0L;
+        }
     }
 }

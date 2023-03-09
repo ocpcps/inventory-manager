@@ -17,7 +17,9 @@
 package com.osstelecom.db.inventory.manager.resources.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  *
@@ -41,6 +43,11 @@ public class ResourceSchemaModel {
     private Boolean attributesChanged = false;
     private Boolean isValid = true;
     private HashMap<String, ResourceAttributeModel> attributes = new HashMap<>();
+    private List<String> childrenSchemas = new ArrayList<>();
+
+    public void setChildrenSchemas(List<String> childrenSchemas) {
+        this.childrenSchemas = childrenSchemas;
+    }
 
     /**
      * @return the schemaName
@@ -146,5 +153,12 @@ public class ResourceSchemaModel {
      */
     public void setIsValid(Boolean isValid) {
         this.isValid = isValid;
+    }
+
+    /**
+     * @return the childrenSchemas
+     */
+    public List<String> getChildrenSchemas() {
+        return childrenSchemas;
     }
 }

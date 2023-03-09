@@ -17,6 +17,7 @@
  */
 package com.osstelecom.db.inventory.manager.events;
 
+import com.arangodb.entity.DocumentCreateEntity;
 import com.arangodb.entity.DocumentUpdateEntity;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 
@@ -28,6 +29,10 @@ import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 public class ResourceConnectionUpdatedEvent extends BasicResourceEvent<ResourceConnection> {
 
     public ResourceConnectionUpdatedEvent(DocumentUpdateEntity<ResourceConnection> entity) {
+        super(entity);
+    }
+
+    public ResourceConnectionUpdatedEvent(DocumentCreateEntity<ResourceConnection> entity) {
         super(entity);
     }
 

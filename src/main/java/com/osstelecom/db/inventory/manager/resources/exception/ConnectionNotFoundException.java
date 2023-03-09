@@ -16,11 +16,14 @@
  */
 package com.osstelecom.db.inventory.manager.resources.exception;
 
+import com.osstelecom.db.inventory.manager.exception.BasicException;
+import com.osstelecom.db.inventory.manager.exception.IBasicException;
+
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  */
-public class ConnectionNotFoundException extends Exception {
+public class ConnectionNotFoundException extends BasicException {
 
     public ConnectionNotFoundException(String string) {
         super(string);
@@ -32,6 +35,12 @@ public class ConnectionNotFoundException extends Exception {
 
     public ConnectionNotFoundException(Throwable thrwbl) {
         super(thrwbl);
+    }
+
+    @Override
+    public ConnectionNotFoundException addDetails(String key, Object value) {
+        this.addDetailMap(key, value);
+        return this;
     }
 
 }

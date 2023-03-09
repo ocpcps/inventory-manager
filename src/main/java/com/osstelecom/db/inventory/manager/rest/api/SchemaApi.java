@@ -40,6 +40,7 @@ import com.osstelecom.db.inventory.manager.response.TypedListResponse;
 import com.osstelecom.db.inventory.manager.response.TypedMapResponse;
 import com.osstelecom.db.inventory.manager.security.model.AuthenticatedCall;
 import com.osstelecom.db.inventory.manager.session.SchemaSession;
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * Handles the Dynamic Schema Mapping and Operations
@@ -75,9 +76,24 @@ public class SchemaApi extends BaseApi {
      */
     @AuthenticatedCall(role = {"user"})
     @GetMapping(path = "/{schema}", produces = "application/json")
-    public ResourceSchemaResponse getSchameDefinition(@PathVariable("schema") String schema)
+    public ResourceSchemaResponse getSchemaDefinition(@PathVariable("schema") String schema, HttpServletRequest httpRequest)
             throws GenericException, SchemaNotFoundException {
+        httpRequest.setAttribute("request", schema);
         return schemaSession.loadSchemaByName(schema);
+    }
+
+    /**
+     * Retrieves the schema representation
+     *
+     * @param schema
+     * @return
+     */
+    @AuthenticatedCall(role = {"user"})
+    @GetMapping(path = "/filter/{filter}", produces = "application/json")
+    public GetSchemasResponse getSchemaByFilter(@PathVariable("filter") String filter, HttpServletRequest httpRequest)
+            throws GenericException, SchemaNotFoundException {
+        httpRequest.setAttribute("request", filter);
+        return schemaSession.getSchemaByFilter(filter);
     }
 
     @AuthenticatedCall(role = {"user"})
@@ -97,10 +113,11 @@ public class SchemaApi extends BaseApi {
     @AuthenticatedCall(role = {"user"})
     @PatchMapping(path = "/{schema}", produces = "application/json")
     public PatchResourceSchemaModelResponse patchSchameDefinition(@PathVariable("schema") String schemaName,
-            @RequestBody PatchResourceSchemaModelRequest request)
+            @RequestBody PatchResourceSchemaModelRequest request, HttpServletRequest httpRequest)
             throws GenericException, SchemaNotFoundException, InvalidRequestException {
         request.getPayLoad().setSchemaName(schemaName);
         this.setUserDetails(request);
+        httpRequest.setAttribute("request", request);
         return schemaSession.patchSchemaModel(request.getPayLoad());
     }
 
@@ -112,9 +129,10 @@ public class SchemaApi extends BaseApi {
      */
     @AuthenticatedCall(role = {"user", "operator"})
     @PostMapping(path = "/", produces = "application/json", consumes = "application/json")
-    public CreateResourceSchemaModelResponse createSchema(@RequestBody CreateResourceSchemaModelRequest request)
+    public CreateResourceSchemaModelResponse createSchema(@RequestBody CreateResourceSchemaModelRequest request, HttpServletRequest httpRequest)
             throws GenericException, SchemaNotFoundException, InvalidRequestException {
         this.setUserDetails(request);
+        httpRequest.setAttribute("request", request);
         return this.schemaSession.createResourceSchemaModel(request.getPayLoad());
     }
 

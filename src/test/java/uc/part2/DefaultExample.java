@@ -23,7 +23,10 @@ import com.osstelecom.db.inventory.topology.impact.ImpactManagerIf;
 public class DefaultExample {
 
     public DefaultExample() throws GraphNotEnabledException {
-//WeakNodesImpactManager a =;
+
+        //
+        // Cria uma topologia com o algoritimo que procura weak nodes
+        //
         DefaultTopology topology = new DefaultTopology(new WeakNodesImpactManager());
 //        topology.setImpactManager();
         //

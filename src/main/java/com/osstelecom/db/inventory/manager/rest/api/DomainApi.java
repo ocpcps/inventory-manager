@@ -25,16 +25,20 @@ import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.request.CreateDomainRequest;
 import com.osstelecom.db.inventory.manager.request.DeleteDomainRequest;
+import com.osstelecom.db.inventory.manager.request.UpdateDomainRequest;
 import com.osstelecom.db.inventory.manager.response.CreateDomainResponse;
 import com.osstelecom.db.inventory.manager.response.DeleteDomainResponse;
 import com.osstelecom.db.inventory.manager.response.DomainResponse;
 import com.osstelecom.db.inventory.manager.response.GetDomainsResponse;
+import com.osstelecom.db.inventory.manager.response.UpdateDomainResponse;
 import com.osstelecom.db.inventory.manager.security.model.AuthenticatedCall;
 import com.osstelecom.db.inventory.manager.session.DomainSession;
 import java.io.IOException;
+import javax.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -64,7 +68,7 @@ public class DomainApi extends BaseApi {
      */
     @AuthenticatedCall(role = {"user", "operator"})
     @GetMapping(path = "/{domain}", produces = "application/json")
-    public DomainResponse getDomain(@PathVariable("domain") String domainName) throws DomainNotFoundException, InvalidRequestException, ArangoDaoException, ResourceNotFoundException, IOException {
+    public DomainResponse getDomain(@PathVariable("domain") String domainName, HttpServletRequest httpRequest) throws DomainNotFoundException, InvalidRequestException, ArangoDaoException, ResourceNotFoundException, IOException {
         return domainSession.getDomain(domainName);
     }
 
@@ -77,8 +81,9 @@ public class DomainApi extends BaseApi {
      */
     @AuthenticatedCall(role = {"user", "operator"})
     @DeleteMapping(path = "/{domainName}", produces = "application/json")
-    public DeleteDomainResponse deleteDomain(@PathVariable("domainName") String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, IOException {
+    public DeleteDomainResponse deleteDomain(@PathVariable("domainName") String domainName, HttpServletRequest httpRequest) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, IOException {
         DeleteDomainRequest request = new DeleteDomainRequest(domainName);
+        httpRequest.setAttribute("request", request);
         return domainSession.deleteDomain(request);
     }
 
@@ -104,11 +109,43 @@ public class DomainApi extends BaseApi {
      */
     @AuthenticatedCall(role = {"user"})
     @PutMapping(path = "/", produces = "application/json", consumes = "application/json")
-    public CreateDomainResponse createDomain(@RequestBody CreateDomainRequest request) throws DomainAlreadyExistsException, InvalidRequestException, GenericException {
+    public CreateDomainResponse createDomain(@RequestBody CreateDomainRequest request, HttpServletRequest httpRequest) throws DomainAlreadyExistsException, InvalidRequestException, GenericException {
         if (request != null) {
             logger.info("Request For Creating a new Domain named: [" + request + "] Received");
             if (request.getPayLoad() != null) {
+                httpRequest.setAttribute("request", request);
                 CreateDomainResponse response = domainSession.createDomain(request);
+                return response;
+            } else {
+                throw new InvalidRequestException("Request Body is null");
+            }
+        } else {
+            throw new InvalidRequestException("Request Body is null");
+        }
+    }
+
+    /**
+     * Atualiza o description do domain
+     *
+     * @param request
+     * @param domainName
+     * @param httpRequest
+     * @return
+     * @throws DomainAlreadyExistsException
+     * @throws InvalidRequestException
+     * @throws GenericException
+     * @throws DomainNotFoundException
+     * @throws ArangoDaoException
+     */
+    @AuthenticatedCall(role = {"user"})
+    @PatchMapping(path = "/{domainName}", produces = "application/json", consumes = "application/json")
+    public UpdateDomainResponse updateDomain(@RequestBody UpdateDomainRequest request, @PathVariable("domainName") String domainName, HttpServletRequest httpRequest) throws DomainAlreadyExistsException, InvalidRequestException, GenericException, DomainNotFoundException, ArangoDaoException {
+        if (request != null) {
+            request.setRequestDomain(domainName);
+            logger.info("Request For Update a Domain named: [" + request.getRequestDomain() + "] Received");
+            if (request.getPayLoad() != null) {
+                httpRequest.setAttribute("request", request);
+                UpdateDomainResponse response = domainSession.updateDomain(request);
                 return response;
             } else {
                 throw new InvalidRequestException("Request Body is null");

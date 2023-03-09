@@ -19,6 +19,7 @@ package com.osstelecom.db.inventory.manager.resources;
 
 import com.arangodb.entity.DocumentField;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Date;
 
 /**
@@ -30,22 +31,35 @@ import java.util.Date;
 public class Domain {
 
     @DocumentField(DocumentField.Type.KEY)
+    @Schema(example = "network")
     private String domainName;
+    @Schema(example = "network_connections")
     private String connections;
+    @Schema(example = "network_nodes")
     private String nodes;
     private String serviceConnections;
+    @Schema(example = "network_services")
     private String services;
     private String connectionLayer;
     private String serviceLayer;
     private String circuits;
     private String circuitsLayer;
+    private String domainDescription;
+    private String metrics;
+    @Schema(example = "0")
     private Long resourceCount;
+    @Schema(example = "0")
     private Long connectionCount;
+    @Schema(example = "0")
     private Long circuitCount;
+    @Schema(example = "0")
     private Long serviceCount;
+    @Schema(example = "0")
     private Long atomicId;
+    @Schema(example = "2023-04-18T23:20:00.000Z")
     private Date lastStatsCalc;
-  
+    @Schema(example = "2023-04-18T23:20:00.000Z")
+    private Date lastUpdate;
 
     /**
      * @return the domainName
@@ -73,6 +87,20 @@ public class Domain {
      */
     public void setConnections(String connections) {
         this.connections = connections;
+    }
+
+     /**
+     * @return the metrics
+     */
+    public String getMetrics() {
+        return metrics;
+    }
+
+    /**
+     * @param metrics the metrics to set
+     */
+    public void setMetrics(String metrics) {
+        this.metrics = metrics;
     }
 
     /**
@@ -262,6 +290,31 @@ public class Domain {
      */
     public void setLastStatsCalc(Date lastStatsCalc) {
         this.lastStatsCalc = lastStatsCalc;
+    }
+
+    public String getDomainDescription() {
+        return domainDescription;
+    }
+
+    /**
+     * @param domainDescription the domainDescription to set
+     */
+    public void setDomainDescription(String domainDescription) {
+        this.domainDescription = domainDescription;
+    }
+
+    /**
+     * @return the lastUpdate
+     */
+    public Date getLastUpdate() {
+        return lastUpdate;
+    }
+
+    /**
+     * @param lastUpdate the lastUpdate to set
+     */
+    public void setLastUpdate(Date lastUpdate) {
+        this.lastUpdate = lastUpdate;
     }
 
 }

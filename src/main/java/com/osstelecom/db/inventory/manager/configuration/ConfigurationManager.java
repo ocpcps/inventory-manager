@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 /**
- *
+ * Gerencia a configuração do Netcompass
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 15.12.2021
  */

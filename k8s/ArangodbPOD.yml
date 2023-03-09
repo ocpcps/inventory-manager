@@ -2,9 +2,11 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: inventory-manager-db
+  labels:
+    app: netcompass-db
 spec:
   volumes:
-    - name: pvc-8f28fb08-b301-4fe2-b21c-0c0b31d21447
+    - name: netcompass-db-volume
       persistentVolumeClaim:
         claimName: netcompass-db-volume-claim
   containers:
@@ -12,10 +14,10 @@ spec:
       image: quay.apps.mgmt.telcostack.br.telefonica.com/netcompass/netcompass-server/arangodb:latest
       resources:
         requests:
-          memory: "16384Mi"
+          memory: "32768Mi"
           cpu: "24"
         limits:
-          memory: "32768Mi"
+          memory: "65536Mi"
           cpu: "32"
       ports:
         - name: arango-port
@@ -23,7 +25,7 @@ spec:
           protocol: TCP
       volumeMounts:
         - mountPath: "/var/lib/arangodb3"
-          name: pvc-8f28fb08-b301-4fe2-b21c-0c0b31d21447
+          name: netcompass-db-volume
       env:
         - name: ARANGO_ROOT_PASSWORD
           value: prod@inventory15

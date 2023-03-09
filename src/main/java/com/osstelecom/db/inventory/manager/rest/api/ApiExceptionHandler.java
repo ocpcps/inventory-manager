@@ -19,11 +19,16 @@ package com.osstelecom.db.inventory.manager.rest.api;
 
 import com.osstelecom.db.inventory.manager.dto.ApiErrorDTO;
 import com.osstelecom.db.inventory.manager.exception.BasicException;
+import com.osstelecom.db.inventory.manager.session.UtilSession;
+import groovy.json.JsonSlurper;
+import javax.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
@@ -38,14 +43,25 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @ControllerAdvice
 public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 
+    @Autowired
+    private UtilSession utils;
+    //
+    // @since 12/12/2022
+    // @uthor: Lucas Nishimura
+    //
+    private Logger logger = LoggerFactory.getLogger(ApiExceptionHandler.class);
+
+    private JsonSlurper parser = new JsonSlurper();
+
     @ExceptionHandler(BasicException.class)
     public ResponseEntity<Object> handleGenericException(
-            BasicException ex) {
-                ex.printStackTrace();
+            BasicException ex, HttpServletRequest request) {
+        ex.printStackTrace();
         ApiErrorDTO apiError = new ApiErrorDTO();
         apiError.setMsg(ex.getMessage());
         apiError.setStatusCode(ex.getStatusCode());
         apiError.setClassName(ex.getClass().getSimpleName());
+
         if (ex.getDetails() != null) {
             apiError.setDetails(ex.getDetails());
         } else {
@@ -54,6 +70,15 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
             //
             apiError.setDetails("NONE");
         }
-        return new ResponseEntity(apiError, HttpStatus.INTERNAL_SERVER_ERROR);
+        logger.error("Excpetion Occurreed: MSG:[{}] ClassName: [{}]", ex.getMessage(), apiError.getClassName());
+        if (request.getHeader("x-show-errors") != null) {
+            if (request.getAttribute("request") != null) {
+                Object requestBody = request.getAttribute("request");
+                apiError.setRequest(requestBody);
+            }
+            return new ResponseEntity(apiError, HttpStatus.valueOf(500));
+        } else {
+            return new ResponseEntity(apiError, HttpStatus.valueOf(apiError.getStatusCode()));
+        }
     }
 }

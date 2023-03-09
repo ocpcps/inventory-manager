@@ -18,6 +18,7 @@
 package com.osstelecom.db.inventory.manager.rest.api;
 
 import com.osstelecom.db.inventory.manager.request.BasicRequest;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -29,6 +30,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 21.07.2022
  */
+@SecurityRequirement(name = "SecuredAPI")
 public class BaseApi {
 
     /**

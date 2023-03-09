@@ -28,6 +28,7 @@ public class ArangoDBConfiguration {
 
     private String nodeSufix = "_nodes";
     private String serviceSufix = "_services";
+    private String metricSufix = "_metrics";
     private String nodeConnectionSufix = "_connections";
     private String circuitsSufix = "_circuits";
     private String serviceConnectionSufix = "_srv_connections";
@@ -124,6 +125,20 @@ public class ArangoDBConfiguration {
      */
     public void setNodeSufix(String nodeSufix) {
         this.nodeSufix = nodeSufix;
+    }
+
+    /**
+     * @return the metricSufix
+     */
+    public String getMetricSufix() {
+        return metricSufix;
+    }
+
+    /**
+     * @param metricSufix the metricSufix to set
+     */
+    public void setMetricSufix(String metricSufix) {
+        this.metricSufix = metricSufix;
     }
 
     /**

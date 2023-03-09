@@ -1,0 +1,18 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: netcompass-api
+  namespace: netcompass
+spec:
+  ipFamilies:
+    - IPv4
+  ports:
+    - name: api-http
+      protocol: TCP
+      port: 8080
+      targetPort: 8080
+  internalTrafficPolicy: Cluster
+  selector:
+    app: netcompass-api-adapter
+status:
+  loadBalancer: {}

@@ -18,6 +18,7 @@
 package com.osstelecom.db.inventory.manager.request;
 
 import com.osstelecom.db.inventory.manager.dto.FilterDTO;
+import com.osstelecom.db.inventory.manager.resources.Domain;
 
 /**
  *
@@ -25,5 +26,25 @@ import com.osstelecom.db.inventory.manager.dto.FilterDTO;
  * @created 26.01.2022
  */
 public class FilterRequest extends BasicRequest<FilterDTO> {
+
+    public FilterRequest() {
+    }
+
+    public FilterRequest(FilterDTO filter) {
+        this.setPayLoad(filter);
+    }
+
+    public FilterRequest(FilterDTO filter, Domain domain) {
+        this.setPayLoad(filter);
+        this.setRequestDomain(domain.getDomainName());
+    }
+
+    public FilterRequest(FilterDTO filter, Domain domain, String... objects) {
+        this.setPayLoad(filter);
+        this.setRequestDomain(domain.getDomainName());
+        for (String object:objects){
+            this.getPayLoad().getObjects().add(object);
+        }
+    }
 
 }

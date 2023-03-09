@@ -15,16 +15,29 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import com.osstelecom.db.inventory.topology.impact.ImpactManagerIf;
 
+
 /**
  *
  * @author Nishisan
  */
 public class DefaultExample {
 
+    
+
     public DefaultExample() throws GraphNotEnabledException {
         Long start = System.currentTimeMillis();
         DefaultTopology topology = new DefaultTopology();
 
+        List<String> nomes = new ArrayList<>();
+        nomes.add("Nishimura");
+        nomes.add("Lucas");
+        nomes.add("Debora");
+
+        for (String nome:nomes){
+            nome = "la";
+            System.out.println(nome);
+        }
+        
         //
         // Elementos da Topologia
         //

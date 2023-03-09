@@ -17,11 +17,7 @@
  */
 package com.osstelecom.db.inventory.manager.operation;
 
-import java.io.IOException;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,12 +25,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.arangodb.entity.DocumentCreateEntity;
+import com.arangodb.entity.DocumentDeleteEntity;
 import com.arangodb.entity.DocumentUpdateEntity;
 import com.google.common.eventbus.Subscribe;
 import com.osstelecom.db.inventory.manager.dao.ManagedResourceDao;
 import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import com.osstelecom.db.inventory.manager.events.ManagedResourceCreatedEvent;
+import com.osstelecom.db.inventory.manager.events.ManagedResourceDeletedEvent;
 import com.osstelecom.db.inventory.manager.events.ManagedResourceUpdatedEvent;
+import com.osstelecom.db.inventory.manager.events.ResourceConnectionCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.ResourceSchemaUpdatedEvent;
 import com.osstelecom.db.inventory.manager.events.ServiceStateTransionedEvent;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
@@ -106,13 +105,21 @@ public class ManagedResourceManager extends Manager {
      * @param resource
      * @return
      */
-    public ManagedResource delete(ManagedResource resource) throws ArangoDaoException {
+    public ManagedResource delete(ManagedResource resource) throws ArangoDaoException, ResourceNotFoundException {
         //
         // Cuidar dessa lógica é triste...
         //
 //        throw new UnsupportedOperationException("Not supported yet.");
+        DocumentDeleteEntity<ManagedResource> deletedEntity = this.managedResourceDao.deleteResource(resource);
+        if (deletedEntity.getOld() != null) {
+            ManagedResource deletedResource = deletedEntity.getOld();
+            ManagedResourceDeletedEvent deletedEvent = new ManagedResourceDeletedEvent(deletedResource, null);
+            this.eventManager.notifyResourceEvent(deletedEvent);
+            return deletedResource;
+        } else {
+            throw new ResourceNotFoundException("Delete Request, didnt find the resource.");
+        }
 
-        return this.managedResourceDao.deleteResource(resource).getOld();
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -279,7 +286,7 @@ public class ManagedResourceManager extends Manager {
             //
             // Mover isso para session...
             //
-            if (!resource.getOperationalStatus().equalsIgnoreCase("UP") && !resource.getOperationalStatus().equalsIgnoreCase("DOWN")) {
+            if (!resource.getOperationalStatus().equals("Up") && !resource.getOperationalStatus().equals("Down")) {
                 throw new InvalidRequestException("Invalid OperationalStatus:[" + resource.getOperationalStatus() + "]");
             }
 
@@ -317,8 +324,18 @@ public class ManagedResourceManager extends Manager {
      */
     public GraphList<ManagedResource> getNodesByFilter(FilterDTO filter, String domainName) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
         Domain domain = domainManager.getDomain(domainName);
+        if (filter.getLimit() != null) {
+            if (filter.getLimit() > 1000) {
+                throw new InvalidRequestException("Result Set Limit cannot be over 1000, please descrease limit value to a range between 0 and 1000");
+            } else {
+                if (filter.getLimit() < 0L) {
+                    filter.setLimit(1000L);
+                }
+            }
+        } else {
+            filter.setLimit(1000L);
+        }
         if (filter.getObjects().contains("nodes")) {
-//            Map<String, Object> bindVars = new HashMap<>();
 
             if (filter.getClasses() != null && !filter.getClasses().isEmpty()) {
                 filter.getBindings().put("classes", filter.getClasses());
@@ -355,63 +372,73 @@ public class ManagedResourceManager extends Manager {
      * @param update
      */
     public void processSchemaUpdatedEvent(ResourceSchemaUpdatedEvent update) {
-        /**
-         * Here we need to find all resources that are using the schema, update
-         * ip, check validations and save it back to the database. Schemas are
-         * shared between all domains so we need to check all Domains..
-         */
-
-        for (Domain domain : domainManager.getAllDomains()) {
-            //
-            // Update the schema on each domain
-            //
-            logger.debug("Updating Schema[{}] On Domain:[{}]", update.getModel().getSchemaName(), domain.getDomainName());
-
-            try {
-                GraphList<ManagedResource> nodesToUpdate = this.findManagedResourcesBySchemaName(update.getModel(), domain);
-                logger.debug("Found {} Elements to Update", nodesToUpdate.size());
-
-                ResourceSchemaModel model = this.schemaSession.loadSchema(update.getModel().getSchemaName());
-                AtomicLong totalProcessed = new AtomicLong(0L);
-
-                //
-                // We need to make this processing multithread.
-                //
-                nodesToUpdate.forEachParallel(resource -> {
-
-                    try {
-
-                        resource.setSchemaModel(model);
-                        schemaSession.validateResourceSchema(resource);
-
-                    } catch (AttributeConstraintViolationException ex) {
-                        //
-                        // resource is invalid model.
-                        //
-
-                        logger.error("Failed to Validate Attributes", ex);
-                        //
-                        // Mark the resource schema model as invalid
-                        //      
-                        resource.getSchemaModel().setIsValid(false);
-                    }
-                    try {
-                        this.managedResourceDao.updateResource(resource);
-                    } catch (ArangoDaoException ex) {
-                        logger.error("Failed to Update resource:[{}]", resource.getKey(), ex);
-                    }
-                    if (totalProcessed.incrementAndGet() % 1000 == 0) {
-                        logger.debug("Updated {} Records", totalProcessed.get());
-                    }
-
-                });
-            } catch (IOException | IllegalStateException | GenericException | SchemaNotFoundException | InvalidRequestException | ArangoDaoException ex) {
-                logger.error("Failed to update Resource Schema Model", ex);
-            } catch (ResourceNotFoundException ex) {
-                logger.error("Domain Has No Resources on Schema:[{}]", update.getModel(), ex);
-            }
-            logger.debug("Updating Schema[{}] On Domain:[{}] DONE", update.getModel().getSchemaName(), domain.getDomainName());
-        }
+//        /**
+//         * Here we need to find all resources that are using the schema, update
+//         * ip, check validations and save it back to the database. Schemas are
+//         * shared between all domains so we need to check all Domains..
+//         */
+//
+//        for (Domain domain : domainManager.getAllDomains()) {
+//            //
+//            // Update the schema on each domain
+//            //
+//            logger.debug("Updating Schema[{}] On Domain:[{}]", update.getModel().getSchemaName(), domain.getDomainName());
+//
+//            try {
+//                GraphList<ManagedResource> nodesToUpdate = this.findManagedResourcesBySchemaName(update.getModel(), domain);
+//                logger.debug("Found {} Elements to Update On Domain:[{}]", nodesToUpdate.size(), domain.getDomainName());
+//
+//                ResourceSchemaModel model = this.schemaSession.loadSchema(update.getModel().getSchemaName(), false);
+//
+//                logger.debug("Schema:[{}] New Model Fields:", update.getModel().getSchemaName());
+//                model.getAttributes().forEach((k, v) -> {
+//                    logger.debug("  Field: [{}] Type: [{}]", k, v.getVariableType());
+//                });
+//
+//                AtomicLong totalProcessed = new AtomicLong(0L);
+//
+//                //
+//                // We need to make this processing multithread.
+//                //
+//                nodesToUpdate.forEachParallel(resource -> {
+//
+//                    try {
+//
+//                        resource.setSchemaModel(model);
+//
+//                        //
+//                        //
+//                        //
+//                        schemaSession.validateResourceSchema(resource);
+//
+//                    } catch (AttributeConstraintViolationException ex) {
+//                        //
+//                        // resource is invalid model.
+//                        //
+//
+//                        logger.error("Failed to Validate Attributes", ex);
+//                        //
+//                        // Mark the resource schema model as invalid
+//                        //      
+//                        resource.getSchemaModel().setIsValid(false);
+//                    }
+//                    try {
+//                        this.managedResourceDao.updateResource(resource);
+//                    } catch (ArangoDaoException ex) {
+//                        logger.error("Failed to Update resource:[{}]", resource.getKey(), ex);
+//                    }
+//                    if (totalProcessed.incrementAndGet() % 1000 == 0) {
+//                        logger.debug("Updated {} Records of / {}", totalProcessed.get(), nodesToUpdate.size());
+//                    }
+//
+//                });
+//            } catch (IOException | IllegalStateException | GenericException | SchemaNotFoundException | InvalidRequestException | ArangoDaoException ex) {
+//                logger.error("Failed to update Resource Schema Model", ex);
+//            } catch (ResourceNotFoundException ex) {
+//                logger.error("Domain Has No Resources on Schema:[{}]", update.getModel(), ex);
+//            }
+//            logger.debug("Updating Schema[{}] On Domain:[{}] DONE", update.getModel().getSchemaName(), domain.getDomainName());
+//        }
     }
 
     /**
@@ -449,6 +476,21 @@ public class ManagedResourceManager extends Manager {
     public void onManagedResourceUpdatedEvent(ManagedResourceUpdatedEvent updateEvent) {
         logger.debug("Managed Resource [{}] Updated: ", updateEvent.getOldResource().getId());
 
+    }
+
+    /**
+     * Recebe a notificação de que uma conexão foi criada,
+     *
+     * @param connectionCreatedEvent
+     */
+    @Subscribe
+    public void onResourceConnectionCreatedEvent(ResourceConnectionCreatedEvent connectionCreatedEvent) {
+        /**
+         * Como este método é chamado após a criação de uma conexão, é
+         * necessário avaliar se temos atributos dinamicaos setados, o problema
+         * é que ainda não sei como fazer com o atributo interdominio . Para
+         * obter um atributo do mesmo dominio --> $(resource.olt.shelf.mgmtIp)
+         */
     }
 
     /**

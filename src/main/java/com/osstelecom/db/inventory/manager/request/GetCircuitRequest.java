@@ -15,31 +15,16 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package com.osstelecom.db.inventory.topology.algorithm;
 
-import com.osstelecom.db.inventory.topology.node.SourceTargetWrapper;
-import java.util.Map;
-import java.util.Queue;
+package com.osstelecom.db.inventory.manager.request;
+
+import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
- * @created 24.10.2022
+ * @author  Lucas Nishimura <lucas.nishimura@gmail.com> 
+ * @created 06.12.2022
  */
-public interface ITopolocyAlgorithm {
+public class GetCircuitRequest extends BasicRequest<CircuitResource>{
 
-    /**
-     * Run Algorithm Calculation
-     *
-     * @param weakQueue
-     */
-    public void calculate(Queue<SourceTargetWrapper> weakQueue);
-
-    public void calculate(Queue<SourceTargetWrapper> weakQueue, int threadCount);
-
-    public void calculate(Queue<SourceTargetWrapper> weakQueue, Map<String, Object> options);
-
-    public void calculate(Queue<SourceTargetWrapper> weakQueue, Map<String, Object> options, int threadCount);
-
-//    public void start();
 }

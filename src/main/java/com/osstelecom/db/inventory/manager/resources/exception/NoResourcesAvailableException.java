@@ -16,11 +16,14 @@
  */
 package com.osstelecom.db.inventory.manager.resources.exception;
 
+import com.osstelecom.db.inventory.manager.exception.BasicException;
+import com.osstelecom.db.inventory.manager.exception.IBasicException;
+
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  */
-public class NoResourcesAvailableException extends Exception {
+public class NoResourcesAvailableException extends BasicException {
 
     public NoResourcesAvailableException() {
     }
@@ -35,6 +38,12 @@ public class NoResourcesAvailableException extends Exception {
 
     public NoResourcesAvailableException(Throwable thrwbl) {
         super(thrwbl);
+    }
+
+    @Override
+    public NoResourcesAvailableException addDetails(String key, Object value) {
+        this.addDetailMap(key, value);
+        return this;
     }
 
 }

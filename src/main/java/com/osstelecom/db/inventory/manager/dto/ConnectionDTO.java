@@ -45,8 +45,21 @@ public class ConnectionDTO {
     private String attributeSchemaName = "connection.default";
     private Boolean propagateOperStatus;
     private String operationalStatus = "Up";
+    private String description;
+    private String category;
+    private String adminStatus = "Up";
+    private String businessStatus = "Up";
     private Map<String, Object> attributes = new ConcurrentHashMap<>();
     private ServiceResource dependentService;
+    private String key;
+
+    public String getKey() {
+        return key;
+    }
+
+    public void setKey(String key) {
+        this.key = key;
+    }
 
     /**
      * @return the attributes
@@ -297,6 +310,45 @@ public class ConnectionDTO {
         this.toKey = toKey;
     }
 
-    
+    public String getClassName() {
+        return className;
+    }
+
+    public void setClassName(String className) {
+        this.className = className;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public String getAdminStatus() {
+        return adminStatus;
+    }
+
+    public void setAdminStatus(String adminStatus) {
+        this.adminStatus = adminStatus;
+    }
+
+    public String getBusinessStatus() {
+        return businessStatus;
+    }
+
+    public void setBusinessStatus(String businessStatus) {
+        this.businessStatus = businessStatus;
+    }
+
     
 }

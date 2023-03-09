@@ -22,8 +22,11 @@ import org.springframework.stereotype.Service;
 
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
+import com.osstelecom.db.inventory.manager.exception.GenericException;
 import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
+import com.osstelecom.db.inventory.manager.exception.SchemaNotFoundException;
+import com.osstelecom.db.inventory.manager.exception.ScriptRuleException;
 import com.osstelecom.db.inventory.manager.operation.DomainManager;
 import com.osstelecom.db.inventory.manager.operation.ServiceManager;
 import com.osstelecom.db.inventory.manager.request.CreateServiceRequest;
@@ -34,6 +37,7 @@ import com.osstelecom.db.inventory.manager.request.PatchServiceRequest;
 import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.GraphList;
 import com.osstelecom.db.inventory.manager.resources.ServiceResource;
+import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstraintViolationException;
 import com.osstelecom.db.inventory.manager.response.CreateServiceResponse;
 import com.osstelecom.db.inventory.manager.response.DeleteServiceResponse;
 import com.osstelecom.db.inventory.manager.response.FilterResponse;
@@ -134,7 +138,7 @@ public class ServiceSession {
         return new CreateServiceResponse(serviceManager.createService(payload));
     }
 
-    public PatchServiceResponse updateService(PatchServiceRequest request) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
+    public PatchServiceResponse updateService(PatchServiceRequest request) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
         if (request.getPayLoad().getId() == null && request.getPayLoad().getNodeAddress() == null && request.getPayLoad().getDomain() == null) {
             throw new InvalidRequestException("ID Field Missing");
         }
@@ -168,6 +172,16 @@ public class ServiceSession {
     }
 
     public FilterResponse findServiceByFilter(FilterRequest filter) throws InvalidRequestException, ArangoDaoException, DomainNotFoundException, ResourceNotFoundException {
+        //
+        // Validação para evitar abusos de uso da API
+        //
+        if (filter.getPayLoad() != null) {
+            if (filter.getPayLoad().getLimit() != null) {
+                if (filter.getPayLoad().getLimit() > 1000) {
+                    throw new InvalidRequestException("Result Set Limit cannot be over 1000, please descrease limit value to a range between 0 and 1000");
+                }
+            }
+        }
         FilterResponse response = new FilterResponse(filter.getPayLoad());
         if (filter.getPayLoad().getObjects().contains("service") || filter.getPayLoad().getObjects().contains("services")) {
             Domain domain = domainManager.getDomain(filter.getRequestDomain());
