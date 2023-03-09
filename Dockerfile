@@ -25,5 +25,5 @@ WORKDIR /app/inventory-manager
 COPY target/*.jar .
 COPY run-java.sh .
 
-
-CMD ["./run-java.sh"]
+RUN chmod +x run-java.sh
+ENTRYPOINT ["./run-java.sh"]
