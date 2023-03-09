@@ -560,6 +560,13 @@ public class ResourceSession {
         return this.resourceConnectionManager.findResourceConnection(connection);
     }
 
+    public GraphList<BasicResource> findParentsWithMetrics(BasicResource from) {
+        String aql = "FOR v, e, p IN 1..16 OUTBOUND '"+from.getId()+"' GRAPH '"+from.getDomainName() + "_connections_layer' ";
+        aql += "RETURN distinct v ";
+        return new GraphList<>(
+                getDb().query(aql, new HashMap<>(), new AqlQueryOptions().fullCount(true).count(true), BasicResource.class));
+    }
+
     /**
      * Atualiza um Managed Resource
      *
@@ -602,6 +609,12 @@ public class ResourceSession {
         //
         if (requestedPatch.getName() != null) {
             if (requestedPatch.getName().indexOf("$") != -1){
+                String value = requestedPatch.getName();
+                String[] split = value.split(".");
+                String table = split[0];
+                String collum = split[1];
+
+                fromDBResource.setName(this.findParentsWithMetrics(table, collum));
                 //SELECT
             }
             else{
