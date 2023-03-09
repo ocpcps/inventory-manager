@@ -18,6 +18,8 @@
 package com.osstelecom.db.inventory.manager.operation;
 
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
