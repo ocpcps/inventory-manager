@@ -24,7 +24,7 @@ RUN mkdir -p /app/inventory-manager
 WORKDIR /app/inventory-manager
 COPY target/*.jar .
 COPY run-java.sh .
-COPY ssl .
+ADD ssl /app/inventory-manager
 
 RUN chmod +x run-java.sh
 ENTRYPOINT ["./run-java.sh"]
