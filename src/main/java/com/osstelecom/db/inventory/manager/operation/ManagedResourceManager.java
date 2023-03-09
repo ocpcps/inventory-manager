@@ -514,24 +514,30 @@ public class ManagedResourceManager extends Manager {
     private Object calculateDefaultAttributeValue(String nodeId, String domain, String defaultValue) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException, AttributeNotFoundException{
         
         //remover cifrão e parenteses.
+        String regex = "^\\$\\([\\w]+[\\w+\\.]+[\\.]+[\\w]+\\)$";
         String maskSign = defaultValue.replace("$", "");
         String maskP = maskSign.replace("(", "");
         String value = maskP.replace(")", "");
-        Integer pointer = value.lastIndexOf(".");
-        String attributeSchemaName = defaultValue.substring(0, pointer);
-        String attributeName = defaultValue.substring(pointer+1, defaultValue.length()) ;
+        if(value.matches(regex)){
+            Integer pointer = value.lastIndexOf(".");
+            String attributeSchemaName = defaultValue.substring(0, pointer);
+            String attributeName = defaultValue.substring(pointer+1, defaultValue.length()) ;
+            
+            GraphList<BasicResource> result = managedResourceDao.findParentsByAttributeSchemaName(nodeId, domain, attributeSchemaName);
         
-        GraphList<BasicResource> result = managedResourceDao.findParentsByAttributeSchemaName(nodeId, domain, attributeSchemaName);
+            BasicResource parentResource = result.getOne();
     
-        BasicResource parentResource = result.getOne();
-
-        ManagedResource resource = managedResourceDao.findResource(new ManagedResource(parentResource.getDomain(), parentResource.getId()));
-        
-        if(resource.getAttributes().get(attributeName) == null){
-            throw new AttributeNotFoundException("Atributo " +attributeName+  "não encontrado no pai");
+            ManagedResource resource = managedResourceDao.findResource(new ManagedResource(parentResource.getDomain(), parentResource.getId()));
+            
+            if(resource.getAttributes().get(attributeName) == null){
+                throw new AttributeNotFoundException("Atributo " +attributeName+  "não encontrado no pai");
+            }
+            else {
+                return resource.getAttributes().get(attributeName);
+            }
         }
-        else {
-            return resource.getAttributes().get(attributeName);
+        else{
+            throw new AttributeNotFoundException("Valor inserido contém caracteres inválidos");
         }
     }
     
