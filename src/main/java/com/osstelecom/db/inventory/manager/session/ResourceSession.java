@@ -561,8 +561,8 @@ public class ResourceSession {
         return this.resourceConnectionManager.findResourceConnection(connection);
     }
 
-    public GraphList<BasicResource> findParentsWithMetrics(BasicResource from) {
-        String aql = "FOR v, e, p IN 1..16 OUTBOUND '"+from.getId()+"' GRAPH '"+from.getDomainName() + "_connections_layer' ";
+    public GraphList<BasicResource> findParentsWithMetrics(String from, String table) {
+        String aql = "FOR v, e, p IN 1..16 OUTBOUND '"+table+"' GRAPH '"+from + "_connections_layer' ";
         aql += "RETURN distinct v ";
         return new GraphList<>(
                 getDb().query(aql, new HashMap<>(), new AqlQueryOptions().fullCount(true).count(true), BasicResource.class));
@@ -625,6 +625,12 @@ public class ResourceSession {
 
         if (requestedPatch.getNodeAddress() != null) {
             if (requestedPatch.getNodeAddress().indexOf("$") != -1){
+                String value = requestedPatch.getName();
+                String[] split = value.split(".");
+                String table = split[0];
+                String collum = split[1];
+
+                fromDBResource.setNodeAddress(this.findParentsWithMetrics(table, collum));
                 //SELECT
             }
             else{
@@ -634,6 +640,12 @@ public class ResourceSession {
 
         if (requestedPatch.getClassName() != null && !requestedPatch.getClassName().equals("Default")) {
             if (requestedPatch.getClassName().indexOf("$") != -1){
+                String value = requestedPatch.getClassName();
+                String[] split = value.split(".");
+                String table = split[0];
+                String collum = split[1];
+
+                fromDBResource.setClassName(this.findParentsWithMetrics(table, collum));
                 //SELECT
             }
             else{
@@ -644,6 +656,12 @@ public class ResourceSession {
 
         if (requestedPatch.getOperationalStatus() != null) {
             if (requestedPatch.getOperationalStatus().indexOf("$") != -1){
+                String value = requestedPatch.getOperationalStatus();
+                String[] split = value.split(".");
+                String table = split[0];
+                String collum = split[1];
+
+                fromDBResource.setOperationalStatus(this.findParentsWithMetrics(table, collum));
                 //SELECT
             }
             else{
@@ -657,6 +675,12 @@ public class ResourceSession {
         //
         if (requestedPatch.getAdminStatus() != null) {
             if (requestedPatch.getAdminStatus().indexOf("$") != -1){
+                String value = requestedPatch.getAdminStatus();
+                String[] split = value.split(".");
+                String table = split[0];
+                String collum = split[1];
+
+                fromDBResource.setAdminStatus(this.findParentsWithMetrics(table, collum));
                 //SELECT
             }
             else{
@@ -672,6 +696,13 @@ public class ResourceSession {
             requestedPatch.getAttributes().forEach((name, attribute) -> {
                 if (requestedPatch.getName() != null) {
                     if (requestedPatch.getName().indexOf("$") != -1){
+                        String value = requestedPatch.getName();
+                        String[] split = value.split(".");
+                        String table = split[0];
+                        String collum = split[1];
+
+                        fromDBResource.getAttributes(this.findParentsWithMetrics(table, collum));
+                        
                      //SELECT
                     }
                     else{
@@ -688,6 +719,12 @@ public class ResourceSession {
 
         if (requestedPatch.getDescription() != null && !requestedPatch.getDescription().trim().equals("")) {
             if (requestedPatch.getDescription().indexOf("$") != -1) {
+                String value = requestedPatch.getDescription();
+                String[] split = value.split(".");
+                String table = split[0];
+                String collum = split[1];
+
+                fromDBResource.setDescription(this.findParentsWithMetrics(table, collum));
                //SELECT
             }
             else{
@@ -697,6 +734,12 @@ public class ResourceSession {
 
         if (requestedPatch.getResourceType() != null && !requestedPatch.getResourceType().trim().equals("")) {
             if (requestedPatch.getResourceType().indexOf("$") != -1) {
+                String value = requestedPatch.getResourceType();
+                String[] split = value.split(".");
+                String table = split[0];
+                String collum = split[1];
+
+                fromDBResource.setResourceType(this.findParentsWithMetrics(table, collum));
                 //SELECT
             }
             else{
