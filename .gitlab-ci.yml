@@ -39,7 +39,7 @@ build-container-image:
        --annotation "org.opencontainers.image.authors=Lucas Nishimura <lucas.nishimura at telefonica.com>" 
        --annotation "org.opencontainers.image.title=Netcompass API" 
        --annotation "org.opencontainers.image.description=Microserviço do Netcompass Backend Java Spring"  
-       -t netcompass-api .
+       -t netcompass-api:$(mvn validate | grep Build | awk '{print $4}'| cut -d '-' -f1) .
   tags:
      - buildah
 
