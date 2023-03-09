@@ -68,6 +68,7 @@ import com.osstelecom.db.inventory.manager.response.FindResourceConnectionRespon
 import com.osstelecom.db.inventory.manager.response.PatchManagedResourceResponse;
 import com.osstelecom.db.inventory.manager.response.PatchResourceConnectionResponse;
 import com.osstelecom.db.inventory.manager.response.TypedListResponse;
+import com.osstelecom.db.inventory.manager.resources.BasicResource;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
