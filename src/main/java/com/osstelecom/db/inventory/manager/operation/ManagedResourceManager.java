@@ -37,6 +37,7 @@ import com.osstelecom.db.inventory.manager.events.ResourceConnectionCreatedEvent
 import com.osstelecom.db.inventory.manager.events.ResourceSchemaUpdatedEvent;
 import com.osstelecom.db.inventory.manager.events.ServiceStateTransionedEvent;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
+import com.osstelecom.db.inventory.manager.exception.AttributeNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
 import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
@@ -44,11 +45,13 @@ import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.SchemaNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.ScriptRuleException;
 import com.osstelecom.db.inventory.manager.listeners.EventManagerListener;
+import com.osstelecom.db.inventory.manager.resources.BasicResource;
 import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.GraphList;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ServiceResource;
 import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstraintViolationException;
+import com.osstelecom.db.inventory.manager.resources.model.ResourceAttributeModel;
 import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
 import com.osstelecom.db.inventory.manager.session.DynamicRuleSession;
 import com.osstelecom.db.inventory.manager.session.SchemaSession;
@@ -132,8 +135,9 @@ public class ManagedResourceManager extends Manager {
      * @throws SchemaNotFoundException
      * @throws AttributeConstraintViolationException
      * @throws GenericException
+     * @throws AttributeNotFoundException
      */
-    public ManagedResource create(ManagedResource resource) throws SchemaNotFoundException, AttributeConstraintViolationException, GenericException, ScriptRuleException, ArangoDaoException, InvalidRequestException, ResourceNotFoundException, DomainNotFoundException {
+    public ManagedResource create(ManagedResource resource) throws SchemaNotFoundException, AttributeConstraintViolationException, GenericException, ScriptRuleException, ArangoDaoException, InvalidRequestException, ResourceNotFoundException, DomainNotFoundException, AttributeNotFoundException {
         String timerId = startTimer("createManagedResource");
         Boolean useUpsert = false;
         try {
@@ -177,6 +181,10 @@ public class ManagedResourceManager extends Manager {
             //
             // END - Subir as validações para session
             //
+
+            
+            resource.setAttributes(calculateDefaultValues(schemaModel, resource));
+
             DocumentCreateEntity<ManagedResource> result;
             if (useUpsert) {
                 result = this.managedResourceDao.upsertResource(resource);
@@ -529,5 +537,51 @@ public class ManagedResourceManager extends Manager {
             logger.debug("Service Transaction Ignored");
         }
     }
+    private Map<String,Object> calculateDefaultValues(ResourceSchemaModel schemaModel, ManagedResource managedResource) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException, AttributeNotFoundException{
+        Map<String, Object> result = new HashMap<>();
+        result.putAll(managedResource.getAttributes());
+        for(Map.Entry<String, ResourceAttributeModel>attribute: schemaModel.getAttributes().entrySet()){
+            if (attribute.getValue().getDefaultValue() != null){
+                if(managedResource.getAttributes().get(attribute.getKey()) == null){
+                   Object value = calculateDefaultAttributeValue( managedResource.getId() ,managedResource.getDomain().getDomainName(), attribute.getValue().getDefaultValue());
+                   result.put(attribute.getKey(), value);
+                }
+            }
+
+        }
+        return result;
+        
+    }
+
+    private Object calculateDefaultAttributeValue(String nodeId, String domain, String defaultValue) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException, AttributeNotFoundException{
+        
+        //remover cifrão e parenteses.
+        String regex = "^\\$\\([\\w]+[\\w+\\.]+[\\.]+[\\w]+\\)$";
+        String maskSign = defaultValue.replace("$", "");
+        String maskP = maskSign.replace("(", "");
+        String value = maskP.replace(")", "");
+        if(value.matches(regex)){
+            Integer pointer = value.lastIndexOf(".");
+            String attributeSchemaName = defaultValue.substring(0, pointer);
+            String attributeName = defaultValue.substring(pointer+1, defaultValue.length()) ;
+            
+            GraphList<BasicResource> result = managedResourceDao.findParentsByAttributeSchemaName(nodeId, domain, attributeSchemaName);
+        
+            BasicResource parentResource = result.getOne();
+    
+            ManagedResource resource = managedResourceDao.findResource(new ManagedResource(parentResource.getDomain(), parentResource.getId()));
+            
+            if(resource.getAttributes().get(attributeName) == null){
+                throw new AttributeNotFoundException("Atributo " +attributeName+  "não encontrado no pai");
+            }
+            else {
+                return resource.getAttributes().get(attributeName);
+            }
+        }
+        else{
+            throw new AttributeNotFoundException("Valor inserido contém caracteres inválidos");
+        }
+    }
+    
 
 }
