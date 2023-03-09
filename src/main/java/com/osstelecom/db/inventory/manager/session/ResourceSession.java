@@ -25,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
+import com.osstelecom.db.inventory.manager.exception.AttributeNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
 import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
@@ -51,7 +52,6 @@ import com.osstelecom.db.inventory.manager.request.PatchResourceConnectionReques
 import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.GraphList;
-import com.osstelecom.db.inventory.manager.resources.LocationConnection;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import com.osstelecom.db.inventory.manager.resources.ServiceResource;
@@ -466,7 +466,7 @@ public class ResourceSession {
      * @throws GenericException
      * @throws ScriptRuleException
      */
-    public CreateManagedResourceResponse createManagedResource(CreateManagedResourceRequest request) throws SchemaNotFoundException, AttributeConstraintViolationException, GenericException, ScriptRuleException, InvalidRequestException, DomainNotFoundException, ArangoDaoException, ResourceNotFoundException {
+    public CreateManagedResourceResponse createManagedResource(CreateManagedResourceRequest request) throws SchemaNotFoundException, AttributeConstraintViolationException, GenericException, ScriptRuleException, InvalidRequestException, DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, AttributeNotFoundException {
         Long start = System.currentTimeMillis();
         if (request == null) {
             throw new InvalidRequestException("Request is NULL!");
