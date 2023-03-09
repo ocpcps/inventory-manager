@@ -51,6 +51,8 @@ publish-container-image:
        --creds lucas_nishimura:77Y71MZEXYVZTZ5OBZ3HK557A8WTBSCH
        localhost/netcompass-api:$(mvn validate | grep Build | awk '{print $4}'| cut -d '-' -f1) quay.apps.mgmt.telcostack.br.telefonica.com/netcompass/netcompass-server/netcompass-api:$(mvn validate | grep Build | awk '{print $4}'| cut -d '-' -f1)
   tags:
-  
      - buildah
+  only:
+    refs:
+      - master
   
