@@ -32,6 +32,7 @@ build-java-project:
 build-container-image:
   stage: create-container-image
   script:
+     - buildah rmi --all --force
      - echo Compiling "org.opencontainers.image.version=$(mvn validate | grep Build | awk '{print $4}'| cut -d '-' -f1)"
      - buildah --userns=keep-id bud 
        --annotation "org.opencontainers.image.version=$(mvn validate | grep Build | awk '{print $4}'| cut -d '-' -f1)"
