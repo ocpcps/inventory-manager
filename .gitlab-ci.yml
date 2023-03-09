@@ -51,5 +51,6 @@ publish-container-image:
        --creds lucas_nishimura:77Y71MZEXYVZTZ5OBZ3HK557A8WTBSCH
        "localhost/netcompass-api:${CURRENT_VERSION}" "quay.apps.mgmt.telcostack.br.telefonica.com/netcompass/netcompass-server/netcompass-api:${CURRENT_VERSION}"
   tags:
+  
      - buildah
   
