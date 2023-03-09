@@ -32,7 +32,7 @@ build-java-project:
 build-container-image:
   stage: create-container-image
   script:
-     - echo Compiling "org.opencontainers.image.version='${CURRENT_VERSION}'"
+     - echo Compiling "org.opencontainers.image.version=${CURRENT_VERSION}"
 #     - buildah --userns=keep-id bud 
 #       --annotation "org.opencontainers.image.version='${CURRENT_VERSION}'"
 #       --annotation "org.opencontainers.image.authors=Lucas Nishimura <lucas.nishimura at telefonica.com>" 
@@ -46,7 +46,7 @@ build-container-image:
 publish-container-image:
   stage: publish-container-image
   script:
-     - echo Publishing "localhost/netcompass-api:'${CURRENT_VERSION}'"
+     - echo Publishing localhost/netcompass-api:${CURRENT_VERSION}
 #     - buildah push --tls-verify=false 
 #       --creds lucas_nishimura:77Y71MZEXYVZTZ5OBZ3HK557A8WTBSCH
 #       "localhost/netcompass-api:'${CURRENT_VERSION}'" "quay.apps.mgmt.telcostack.br.telefonica.com/netcompass/netcompass-server/netcompass-api:'${CURRENT_VERSION}'"
