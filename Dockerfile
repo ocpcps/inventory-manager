@@ -25,4 +25,4 @@ WORKDIR /app/inventory-manager
 COPY target/*.jar .
 
 
-CMD ["java", "${JAR_ARGS}","-jar","${JAR_NAME:-inventory-manager-1.0.0-alpha.jar}"]
+CMD ["java","-jar","${JAR_NAME:-inventory-manager-1.0.0-alpha.jar}","${JAR_ARGS}"]

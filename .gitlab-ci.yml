@@ -42,7 +42,9 @@ build-container-image:
        -t netcompass-api:$(mvn validate | grep Build | awk '{print $4}'| cut -d '-' -f1) .
   tags:
      - buildah
-
+  only:
+    refs:
+      - master
 
 publish-container-image:
   stage: publish-container-image
