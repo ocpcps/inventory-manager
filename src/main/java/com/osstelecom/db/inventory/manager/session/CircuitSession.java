@@ -124,23 +124,23 @@ public class CircuitSession {
         CircuitResource fromDbCircuit = this.circuitResourceManager.findCircuitResource(requestedCircuit);
 
         if (requestedCircuit.getName() != null) {
-            fromDbCircuit.setName(requestedCircuit.getName());
+                fromDbCircuit.setName(requestedCircuit.getName());
         }
 
         if (requestedCircuit.getNodeAddress() != null) {
-            fromDbCircuit.setNodeAddress(requestedCircuit.getNodeAddress());
+                fromDbCircuit.setNodeAddress(requestedCircuit.getNodeAddress());
         }
 
         if (requestedCircuit.getClassName() != null) {
-            fromDbCircuit.setClassName(requestedCircuit.getClassName());
+                fromDbCircuit.setClassName(requestedCircuit.getClassName());
         }
 
         if (requestedCircuit.getOperationalStatus() != null) {
-            fromDbCircuit.setOperationalStatus(requestedCircuit.getOperationalStatus());
+                fromDbCircuit.setOperationalStatus(requestedCircuit.getOperationalStatus());
         }
 
         if (requestedCircuit.getAdminStatus() != null) {
-            fromDbCircuit.setAdminStatus(requestedCircuit.getAdminStatus());
+                fromDbCircuit.setAdminStatus(requestedCircuit.getAdminStatus());
         }
 
         if (requestedCircuit.getBusinessStatus() != null) {
