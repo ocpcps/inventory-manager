@@ -15,9 +15,8 @@ echo "Listing"
 ls
 
 if [ -z ${XFS_DEVICE+x} ]; then
-    if ! $(sudo blkid ${XFS_DEVICE} -o value -s TYPE | grep -q xfs); then
-        mkfs.xfs ${XFS_DEVICE}
-    fi
+    echo "Creating XFS Device";
+    mkfs.xfs ${XFS_DEVICE}
 fi
 
 
