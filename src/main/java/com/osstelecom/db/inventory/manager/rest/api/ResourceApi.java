@@ -17,8 +17,22 @@
  */
 package com.osstelecom.db.inventory.manager.rest.api;
 
+import javax.servlet.http.HttpServletRequest;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.arangodb.ArangoDBException;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
+import com.osstelecom.db.inventory.manager.exception.AttributeNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
 import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
@@ -40,17 +54,6 @@ import com.osstelecom.db.inventory.manager.response.PatchManagedResourceResponse
 import com.osstelecom.db.inventory.manager.response.TypedListResponse;
 import com.osstelecom.db.inventory.manager.security.model.AuthenticatedCall;
 import com.osstelecom.db.inventory.manager.session.ResourceSession;
-import javax.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 /**
  * Deals with resource API
@@ -80,7 +83,7 @@ public class ResourceApi extends BaseApi {
      */
     @AuthenticatedCall(role = {"user"})
     @PutMapping(path = "/{domain}/resource", produces = "application/json", consumes = "application/json")
-    public CreateManagedResourceResponse createManagedResource(@RequestBody CreateManagedResourceRequest request, @PathVariable("domain") String domain, HttpServletRequest httpRequest) throws GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, InvalidRequestException, DomainNotFoundException, ArangoDaoException, ResourceNotFoundException {
+    public CreateManagedResourceResponse createManagedResource(@RequestBody CreateManagedResourceRequest request, @PathVariable("domain") String domain, HttpServletRequest httpRequest) throws GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, InvalidRequestException, DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, AttributeNotFoundException {
         try {
             this.setUserDetails(request);
             httpRequest.setAttribute("request", request);
@@ -191,10 +194,13 @@ public class ResourceApi extends BaseApi {
      * @throws ResourceNotFoundException
      * @throws ArangoDaoException
      * @throws InvalidRequestException
+     * @throws AttributeNotFoundException
+     * @throws GenericException
+     * @throws SchemaNotFoundException
      */
     @AuthenticatedCall(role = {"user"})
     @PatchMapping(path = "/{domain}/resource/{resourceId}", produces = "application/json", consumes = "application/json")
-    public PatchManagedResourceResponse patchManagedResource(@RequestBody PatchManagedResourceRequest request, @PathVariable("domain") String domainName, @PathVariable("resourceId") String resourceId, HttpServletRequest httpRequest) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException, ScriptRuleException {
+    public PatchManagedResourceResponse patchManagedResource(@RequestBody PatchManagedResourceRequest request, @PathVariable("domain") String domainName, @PathVariable("resourceId") String resourceId, HttpServletRequest httpRequest) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException, ScriptRuleException, SchemaNotFoundException, GenericException, AttributeNotFoundException {
         this.setUserDetails(request);
         request.setRequestDomain(domainName);
         request.getPayLoad().setId(resourceId);
@@ -204,7 +210,7 @@ public class ResourceApi extends BaseApi {
 
     @AuthenticatedCall(role = {"user"})
     @PatchMapping(path = "/{domain}/resource", produces = "application/json", consumes = "application/json")
-    public PatchManagedResourceResponse patchManagedResource(@RequestBody PatchManagedResourceRequest request, @PathVariable("domain") String domainName, HttpServletRequest httpRequest) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException, ScriptRuleException {
+    public PatchManagedResourceResponse patchManagedResource(@RequestBody PatchManagedResourceRequest request, @PathVariable("domain") String domainName, HttpServletRequest httpRequest) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException, ScriptRuleException, SchemaNotFoundException, GenericException, AttributeNotFoundException {
         this.setUserDetails(request);
         request.setRequestDomain(domainName);
         httpRequest.setAttribute("request", request);

@@ -17,6 +17,7 @@
  */
 package com.osstelecom.db.inventory.manager.exception;
 
+import com.osstelecom.db.inventory.manager.request.BasicRequest;
 import com.osstelecom.db.inventory.manager.request.IRequest;
 
 /**
@@ -33,24 +34,29 @@ public class AttributeNotFoundException extends BasicException {
         super(msg);
     }
 
-    public AttributeNotFoundException(IRequest<?> request) {
+    public AttributeNotFoundException(IRequest<? extends BasicRequest> request) {
         super(request);
     }
 
-    public AttributeNotFoundException(IRequest<?> request, String message) {
+    public AttributeNotFoundException(IRequest<? extends BasicRequest> request, String message) {
         super(request, message);
     }
 
-    public AttributeNotFoundException(IRequest<?> request, String message, Throwable cause) {
+    public AttributeNotFoundException(IRequest<? extends BasicRequest> request, String message, Throwable cause) {
         super(request, message, cause);
     }
 
-    public AttributeNotFoundException(IRequest<?> request, Throwable cause) {
+    public AttributeNotFoundException(IRequest<? extends BasicRequest> request, Throwable cause) {
         super(request, cause);
     }
 
-    public AttributeNotFoundException(IRequest<?> request, String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public AttributeNotFoundException(IRequest<? extends BasicRequest> request, String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
         super(request, message, cause, enableSuppression, writableStackTrace);
     }
 
+    @Override
+    public AttributeNotFoundException addDetails(String key, Object value) {
+        this.addDetailMap(key, value);
+        return this;
+    }
 }
