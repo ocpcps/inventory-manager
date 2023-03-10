@@ -14,8 +14,8 @@ pwd
 echo "Listing"
 ls
 
-if [ -z ${XFS_DEVICE+x} ]; then
-    echo "Creating XFS Device";
+if [ ! -z ${XFS_DEVICE} ]; then
+    echo "Creating XFS Device ${XFS_DEVICE}";
     mkfs.xfs ${XFS_DEVICE}
 fi
 
