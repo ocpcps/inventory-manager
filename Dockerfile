@@ -19,12 +19,12 @@ FROM debian:latest
 RUN apt update -y
 RUN apt upgrade -y
 RUN apt install openjdk-17-jdk -y
-RUN mkdir -p /app/inventory-manager
+RUN mkdir -p /app/inventory-manager/ssl
 
 WORKDIR /app/inventory-manager
 COPY target/*.jar .
 COPY run-java.sh .
-ADD ssl /app/inventory-manager
+ADD ssl /app/inventory-manager/ssl
 
 RUN chmod +x run-java.sh
 ENTRYPOINT ["./run-java.sh"]
