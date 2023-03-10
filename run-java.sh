@@ -14,6 +14,13 @@ pwd
 echo "Listing"
 ls
 
+if [ -z ${XFS_DEVICE+x} ]; then
+    if ! $(sudo blkid ${XFS_DEVICE} -o value -s TYPE | grep -q xfs); then
+        mkfs.xfs ${XFS_DEVICE}
+    fi
+fi
+
+
 while [ true ];
 do
    if [ -f "${JAR_NAME}" ]; then

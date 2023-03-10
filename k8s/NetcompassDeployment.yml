@@ -46,6 +46,8 @@ spec:
             value: inventory-manager-1.0.0-alpha.jar
           - name: SPRING_PROFILES_DEFAULT
             value: mvp
+          - name: XFS_DEVICE
+            value: /dev/xvda
       volumes:
         - name: netcompass-app-volume
           persistentVolumeClaim:
