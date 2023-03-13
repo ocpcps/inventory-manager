@@ -93,6 +93,16 @@ public class CircuitSession {
      * Atualiza um circuito no netcompass
      *
      * @param request
+     * @return
+     * @throws DomainNotFoundException
+     * @throws ResourceNotFoundException
+     * @throws ArangoDaoException
+     * @throws IOException
+     * @throws InvalidRequestException
+     * @throws SchemaNotFoundException
+     * @throws GenericException
+     * @throws AttributeConstraintViolationException
+     * @throws ScriptRuleException
      */
     public PatchCircuitResourceResponse patchCircuitResource(PatchCircuitResourceRequest request) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, IOException, InvalidRequestException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
 
@@ -124,23 +134,23 @@ public class CircuitSession {
         CircuitResource fromDbCircuit = this.circuitResourceManager.findCircuitResource(requestedCircuit);
 
         if (requestedCircuit.getName() != null) {
-                fromDbCircuit.setName(requestedCircuit.getName());
+            fromDbCircuit.setName(requestedCircuit.getName());
         }
 
         if (requestedCircuit.getNodeAddress() != null) {
-                fromDbCircuit.setNodeAddress(requestedCircuit.getNodeAddress());
+            fromDbCircuit.setNodeAddress(requestedCircuit.getNodeAddress());
         }
 
         if (requestedCircuit.getClassName() != null) {
-                fromDbCircuit.setClassName(requestedCircuit.getClassName());
+            fromDbCircuit.setClassName(requestedCircuit.getClassName());
         }
 
         if (requestedCircuit.getOperationalStatus() != null) {
-                fromDbCircuit.setOperationalStatus(requestedCircuit.getOperationalStatus());
+            fromDbCircuit.setOperationalStatus(requestedCircuit.getOperationalStatus());
         }
 
         if (requestedCircuit.getAdminStatus() != null) {
-                fromDbCircuit.setAdminStatus(requestedCircuit.getAdminStatus());
+            fromDbCircuit.setAdminStatus(requestedCircuit.getAdminStatus());
         }
 
         if (requestedCircuit.getBusinessStatus() != null) {
@@ -355,6 +365,10 @@ public class CircuitSession {
         }
         GetCircuitPathResponse response = new GetCircuitPathResponse(circuitDto);
         return response;
+    }
+
+    public CircuitResource findCircuitResource(CircuitResource resource) throws ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
+        return this.circuitResourceManager.findCircuitResource(resource);
     }
 
     /**

@@ -36,7 +36,8 @@ spec:
             mountPath: /app/inventory-manager/config/
         volumeDevices:
           - name: netcompass-app-volume
-            devicePath: /dev/xvda 
+            devicePath: /dev/xvda
+            fsType: xfs
         env:
           - name: JAR_PATH
             value: /app/inventory-manager
@@ -53,10 +54,11 @@ spec:
           persistentVolumeClaim:
             claimName: netcompass-app-volume-claim
           mountOptions:
+            - xfs
             - rw
             - nouuid
             - noatime
-          subPath: myapp-data
+          mountPath: /app/inventory-manager/samples
         - name: config-volume
           configMap:
             name: inventory-config

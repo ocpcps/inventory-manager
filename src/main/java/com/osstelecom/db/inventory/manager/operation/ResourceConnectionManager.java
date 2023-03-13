@@ -64,7 +64,7 @@ public class ResourceConnectionManager extends Manager {
 
     @Autowired
     private ResourceConnectionDao resourceConnectionDao;
-    
+
     @Autowired
     private LocationConnectionDao locationConnectionDao;
 
@@ -85,12 +85,10 @@ public class ResourceConnectionManager extends Manager {
         DocumentDeleteEntity<ResourceConnection> result = this.resourceConnectionDao.deleteResource(connection);
         ResourceConnectionDeletedEvent event = new ResourceConnectionDeletedEvent(result);
         eventManager.notifyResourceEvent(event);
-        
+
         return result.getOld();
     }
 
-     
-    
 //    /**
 //     * Cria uma nova Conexão entre dois elementos, Note que a ordem é importante
 //     * para garantir o Dê -> Para
@@ -113,7 +111,6 @@ public class ResourceConnectionManager extends Manager {
 //
 //        }
 //    }
-
     /**
      * Creates a connection between two resources
      *
@@ -301,7 +298,7 @@ public class ResourceConnectionManager extends Manager {
             endTimer(timerId);
         }
     }
-    
+
     /**
      * Cria uma nova Conexão entre dois elementos, Note que a ordem é importante
      * para garantir o Dê -> Para
@@ -427,7 +424,8 @@ public class ResourceConnectionManager extends Manager {
 
     public GraphList<ResourceConnection> getConnectionsByFilter(FilterDTO filter, String domainName) throws ArangoDaoException, DomainNotFoundException, InvalidRequestException, ResourceNotFoundException {
         Domain domain = domainManager.getDomain(domainName);
-        if (filter.getObjects().contains("connections")) {
+        if (filter.getObjects().contains("connections") || 
+                filter.getObjects().contains("connection")) {
 //            HashMap<String, Object> bindVars = new HashMap<>();
 
             if (filter.getClasses() != null && !filter.getClasses().isEmpty()) {

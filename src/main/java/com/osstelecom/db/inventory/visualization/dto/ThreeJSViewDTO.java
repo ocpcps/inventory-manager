@@ -154,10 +154,7 @@ public class ThreeJSViewDTO {
         try {
             resources.forEach(resource -> {
                 ThreeJsNodeDTO node = new ThreeJsNodeDTO(resource);
-                if (!this.nodes.contains(node)) {
-                    this.nodeMap.put(node.getId(), node);
-                    nodes.add(node);
-                }
+                this.addNode(node);
             });
         } catch (IOException | IllegalStateException ex) {
 
@@ -165,20 +162,48 @@ public class ThreeJSViewDTO {
 
     }
 
-    public void setLinksByGraph(GraphList<ResourceConnection> connections) {
+    private void addNode(ThreeJsNodeDTO node) {
+        if (!this.nodes.contains(node)) {
+            this.nodeMap.put(node.getId(), node);
+            nodes.add(node);
+        }
+    }
+
+    /**
+     * Monta o grafo, com links e nó a partir dos resource connection
+     *
+     * @param connections
+     * @param addNodes - se for true, ele vai adicionar os nós automaticamente
+     */
+    public void setLinksByGraph(GraphList<ResourceConnection> connections, boolean addNodes) {
         this.links.clear();
         try {
             connections.forEach(connection -> {
-
-                if (this.nodeMap.containsKey(connection.getFromResource().getKey())
-                        && this.nodeMap.containsKey(connection.getToResource().getKey())) {
+                if (addNodes) {
+                    if (!this.nodeMap.containsKey(connection.getFromResource().getKey())) {
+                        ThreeJsNodeDTO node = new ThreeJsNodeDTO(connection.getFromResource());
+                        this.addNode(node);
+                    }
+                    if (!this.nodeMap.containsKey(connection.getToResource().getKey())) {
+                        ThreeJsNodeDTO node = new ThreeJsNodeDTO(connection.getToResource());
+                        this.addNode(node);
+                    }
                     links.add(new ThreeJSLinkDTO(connection));
+                } else {
+                    if (this.nodeMap.containsKey(connection.getFromResource().getKey())
+                            && this.nodeMap.containsKey(connection.getToResource().getKey())) {
+                        links.add(new ThreeJSLinkDTO(connection));
+                    }
                 }
 
             });
         } catch (IOException | IllegalStateException ex) {
             ex.printStackTrace();
         }
+    }
+
+    public void setLinksByGraph(GraphList<ResourceConnection> connections) {
+        this.setLinksByGraph(connections, false);
     }
 
     @JsonIgnore
