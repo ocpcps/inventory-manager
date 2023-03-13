@@ -90,11 +90,11 @@ public class DomainDao {
             /**
              * Now we know that the domain exists. Lets delete it all
              */
-
             arangoDatabase.collection(domain.getNodes()).drop();
             arangoDatabase.collection(domain.getCircuits()).drop();
             arangoDatabase.collection(domain.getConnections()).drop();
             arangoDatabase.collection(domain.getServices()).drop();
+            arangoDatabase.collection(domain.getMetrics()).drop();
             arangoDatabase.graph(domain.getConnectionLayer()).drop();
             this.domainsCollection.deleteDocument(domain.getDomainName());
             logger.debug("Domain :[{}] Deleted", domain.getDomainName());
@@ -194,7 +194,7 @@ public class DomainDao {
                     Arrays.asList("nodeAddress", "className", "domainName"),
                     new PersistentIndexOptions().unique(false).name("searchIDX1"));
 
-                CollectionEntity metrics = arangoDatabase
+            CollectionEntity metrics = arangoDatabase
                     .createCollection(domainName
                             + arangoDbConfiguration.getMetricSufix(),
                             new CollectionCreateOptions().type(CollectionType.DOCUMENT));
