@@ -636,11 +636,15 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                                 //
                                 // Deve ser migrado para o método validateResourceSchema()
                                 //
-                                if (!model.getAllowedValues().contains(o.toString())) {
-                                    throw new AttributeConstraintViolationException(
-                                            "Attribute [" + model.getName() + "] of type:" + model.getVariableType() + " Value : ["
-                                            + o.toString() + "] is not allowed here Allowed vars are:["
-                                            + String.join(",", model.getAllowedValues()) + "]");
+                                if (o != null) {
+                                    if (!o.toString().trim().equals("")) {
+                                        if (!model.getAllowedValues().contains(o.toString())) {
+                                            throw new AttributeConstraintViolationException(
+                                                    "Attribute [" + model.getName() + "] of type:" + model.getVariableType() + " Value : ["
+                                                    + o.toString() + "] is not allowed here Allowed vars are:["
+                                                    + String.join(",", model.getAllowedValues()) + "]");
+                                        }
+                                    }
                                 }
                             }
                         } else {
@@ -650,15 +654,19 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                         }
 
                     } else {
-                        if (!model.getAllowedValues().contains(value.toString())) {
-                            //
-                            // Não Pode Prosseguir
-                            //
-                            throw new AttributeConstraintViolationException(
-                                    "Attribute [" + model.getName() + "] of type:" + model.getVariableType() + " Value : ["
-                                    + value + "] is not allowed here Allowed vars are:["
-                                    + String.join(",", model.getAllowedValues()) + "]");
+                        if (value != null) {
+                            if (!value.toString().trim().equals("")) {
+                                if (!model.getAllowedValues().contains(value.toString())) {
+                                    //
+                                    // Não Pode Prosseguir
+                                    //
+                                    throw new AttributeConstraintViolationException(
+                                            "Attribute [" + model.getName() + "] of type:" + model.getVariableType() + " Value : ["
+                                            + value + "] is not allowed here Allowed vars are:["
+                                            + String.join(",", model.getAllowedValues()) + "]");
 
+                                }
+                            }
                         }
                     }
                 }

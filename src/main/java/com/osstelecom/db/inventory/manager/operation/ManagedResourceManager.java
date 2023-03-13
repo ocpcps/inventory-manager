@@ -178,13 +178,18 @@ public class ManagedResourceManager extends Manager {
             resource.setAtomId(resource.getDomain().addAndGetId());
             ResourceSchemaModel schemaModel = schemaSession.loadSchema(resource.getAttributeSchemaName());
             resource.setSchemaModel(schemaModel);
+            //
+            // chama validate mas ele já seta os defaults
+            //
             schemaSession.validateResourceSchema(resource);       //  
             dynamicRuleSession.evalResource(resource, "I", this); // <--- Pode não ser verdade , se a chave for duplicada..
             //
             // END - Subir as validações para session
             //
 
-            
+            //
+            // Como o método acima setou o defaults, o caculo efetuado aqui está ambiguo
+            //
             resource.setAttributes(calculateDefaultValues(schemaModel, resource));
 
             DocumentCreateEntity<ManagedResource> result;
@@ -539,51 +544,87 @@ public class ManagedResourceManager extends Manager {
             logger.debug("Service Transaction Ignored");
         }
     }
-    private Map<String,Object> calculateDefaultValues(ResourceSchemaModel schemaModel, ManagedResource managedResource) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException, AttributeNotFoundException{
+
+    /**
+     * Este método recebe o modelo, e o recurso aparentemente ele reconstrói o
+     * map de atributos para os casos onde o default value é !=null e não há um
+     * atributo setado
+     *
+     * @param schemaModel
+     * @param managedResource
+     * @return
+     * @throws ArangoDaoException
+     * @throws ResourceNotFoundException
+     * @throws InvalidRequestException
+     * @throws AttributeNotFoundException
+     */
+    private Map<String, Object> calculateDefaultValues(ResourceSchemaModel schemaModel, ManagedResource managedResource) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException, AttributeNotFoundException {
         Map<String, Object> result = new HashMap<>();
         result.putAll(managedResource.getAttributes());
-        for(Map.Entry<String, ResourceAttributeModel>attribute: schemaModel.getAttributes().entrySet()){
-            if (attribute.getValue().getDefaultValue() != null){
-                if(managedResource.getAttributes().get(attribute.getKey()) == null){
-                   Object value = calculateDefaultAttributeValue( managedResource.getId() ,managedResource.getDomain().getDomainName(), attribute.getValue().getDefaultValue());
-                   result.put(attribute.getKey(), value);
+        for (Map.Entry<String, ResourceAttributeModel> attribute : schemaModel.getAttributes().entrySet()) {
+            //
+            // Valis e se o defualt value existe.
+            //
+            if (attribute.getValue().getDefaultValue() != null) {
+                //
+                // Agora verifica se a chave de valores possui um valor, no caso pode não possuir
+                //
+                if (managedResource.getAttributes().get(attribute.getKey()) == null) {
+                    //
+                    // Chama o métod que vai calcular o valor padrão com base no default value
+                    //
+                    Object value = calculateDefaultAttributeValue(managedResource.getId(), managedResource.getDomain().getDomainName(), attribute.getValue().getDefaultValue());
+                    //
+                    // Como nem tudo que é nulo precisa ter valor mesmo tendo um padrão validemos...
+                    //
+                    if (value != null) {
+                        result.put(attribute.getKey(), value);
+                    }
                 }
             }
 
         }
         return result;
-        
+
     }
 
-    private Object calculateDefaultAttributeValue(String nodeId, String domain, String defaultValue) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException, AttributeNotFoundException{
-        
+    private Object calculateDefaultAttributeValue(String nodeId, String domain, String defaultValue) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException, AttributeNotFoundException {
+
         //remover cifrão e parenteses.
         String regex = "^\\$\\([\\w]+[\\w+\\.]+[\\.]+[\\w]+\\)$";
         String maskSign = defaultValue.replace("$", "");
         String maskP = maskSign.replace("(", "");
         String value = maskP.replace(")", "");
-        if(value.matches(regex)){
+        /**
+         * Note que se o valor bater na regex temos uma situação de atributo
+         * dinamico no formato $(resource.default.Atributo), o que vai iniciar
+         * um processo de travessia nos elementos conectados.
+         */
+        if (value.matches(regex)) {
             Integer pointer = value.lastIndexOf(".");
             String attributeSchemaName = defaultValue.substring(0, pointer);
-            String attributeName = defaultValue.substring(pointer+1, defaultValue.length()) ;
-            
+            String attributeName = defaultValue.substring(pointer + 1, defaultValue.length());
+
             GraphList<BasicResource> result = managedResourceDao.findParentsByAttributeSchemaName(nodeId, domain, attributeSchemaName);
-        
+
             BasicResource parentResource = result.getOne();
-    
+
             ManagedResource resource = managedResourceDao.findResource(new ManagedResource(parentResource.getDomain(), parentResource.getId()));
-            
-            if(resource.getAttributes().get(attributeName) == null){
-                throw new AttributeNotFoundException("Atributo " +attributeName+  "não encontrado no pai");
-            }
-            else {
+
+            if (resource.getAttributes().get(attributeName) == null) {
+                throw new AttributeNotFoundException("Atributo " + attributeName + "não encontrado no pai");
+            } else {
                 return resource.getAttributes().get(attributeName);
             }
-        }
-        else{
-            throw new AttributeNotFoundException("Valor inserido contém caracteres inválidos");
+        } else {
+            /**
+             * No Caso da Regex não der match, não precisamos fazer nada. Apenas
+             * retornar o valor default
+             */
+//            throw new AttributeNotFoundException("Valor inserido contém caracteres inválidos");
+
+            return defaultValue;
         }
     }
-    
 
 }
