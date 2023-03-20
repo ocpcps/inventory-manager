@@ -526,6 +526,7 @@ public class CircuitSession {
         Domain domain = this.domainManager.getDomain(req.getDomainName());
         CircuitResource circuit = new CircuitResource(domain);
         circuit.setKey(req.getCircuitId());
+        circuit.setAttributeSchemaName(null);
         circuit = this.circuitResourceManager.findCircuitResource(circuit);
         return new GetCircuitResponse(circuit);
     }
