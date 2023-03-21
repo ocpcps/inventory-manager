@@ -647,12 +647,19 @@ public class ManagedResourceManager extends Manager {
                     }
                     //se for uma expressão, sempre recalcula 
                     Object value = calculateDefaultAttributeValue(managedResource.getId(),
-                            managedResource.getDomain().getDomainName(), attribute.getValue().getDefaultValue(), attribute.getValue().getRequired(), fromEvent);
-                    result.remove(attribute.getKey());
-                    result.put(attribute.getKey(), value);
-                    if(value == null && fromEvent){
-                        managedResource.getSchemaModel().setIsValid(false);
-                    }           
+                            managedResource.getDomain().getDomainName(), attribute.getValue().getDefaultValue());                    
+                    if(value == null){
+                        result.remove(attribute.getKey());
+                        if(attribute.getValue().getRequired().booleanValue()) {
+                            if(fromEvent)
+                                managedResource.getSchemaModel().setIsValid(false);
+                            else {
+                                throw new AttributeNotFoundException("Atributo " + attribute.getValue().getName() + " não encontrado em um nó pai");
+                            }
+                        }
+                    } 
+                    else
+                        result.replace(attribute.getKey(), value);      
                 } else {
                     //se não for expressão, só substitui se não tiver valor
                     Object resourceValue = managedResource.getAttributes().get(attribute.getKey());
@@ -666,8 +673,8 @@ public class ManagedResourceManager extends Manager {
         return result;
     }
 
-    private Object calculateDefaultAttributeValue(String nodeId, String domain, String defaultValue, boolean required, boolean fromEvent)
-            throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException, AttributeNotFoundException {
+    private Object calculateDefaultAttributeValue(String nodeId, String domain, String defaultValue)
+            throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
 
         // remover cifrão e parenteses.
         String maskSign = defaultValue.replace("$", "");
@@ -682,12 +689,8 @@ public class ManagedResourceManager extends Manager {
                 attributeSchemaName, attributeName);
 
         BasicResource parentResource = result.getOne();
-        if (parentResource == null) {
-            if(required && !fromEvent)
-                throw new AttributeNotFoundException("Atributo " + attributeName + " não encontrado em um nó pai");
-            else 
-                return null;
-        }
+        if (parentResource == null) 
+            return null;
 
         ManagedResource resource = managedResourceDao
                 .findResource(new ManagedResource(parentResource.getDomain(), parentResource.getId()));
