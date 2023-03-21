@@ -33,7 +33,8 @@ import org.springframework.stereotype.Service;
 import com.arangodb.entity.DocumentCreateEntity;
 import com.arangodb.entity.DocumentUpdateEntity;
 import com.google.common.eventbus.Subscribe;
-import com.osstelecom.db.inventory.manager.dao.ServiceResourceDao;
+import com.osstelecom.db.inventory.manager.dao.IconModelDao;
+import com.osstelecom.db.inventory.manager.dao.IconResourceDao;
 import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import com.osstelecom.db.inventory.manager.events.CircuitResourceUpdatedEvent;
 import com.osstelecom.db.inventory.manager.events.ManagedResourceCreatedEvent;
@@ -41,8 +42,8 @@ import com.osstelecom.db.inventory.manager.events.ManagedResourceUpdatedEvent;
 import com.osstelecom.db.inventory.manager.events.ProcessServiceIntegrityEvent;
 import com.osstelecom.db.inventory.manager.events.ResourceConnectionCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.ResourceConnectionUpdatedEvent;
-import com.osstelecom.db.inventory.manager.events.ServiceResourceCreatedEvent;
-import com.osstelecom.db.inventory.manager.events.ServiceResourceUpdatedEvent;
+import com.osstelecom.db.inventory.manager.events.IconModelCreatedEvent;
+import com.osstelecom.db.inventory.manager.events.IconModelUpdatedEvent;
 import com.osstelecom.db.inventory.manager.events.ServiceStateTransionedEvent;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
@@ -59,6 +60,7 @@ import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import com.osstelecom.db.inventory.manager.resources.ServiceResource;
 import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstraintViolationException;
+import com.osstelecom.db.inventory.manager.resources.model.IconModel;
 import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
 import com.osstelecom.db.inventory.manager.session.DynamicRuleSession;
 import com.osstelecom.db.inventory.manager.session.SchemaSession;
@@ -76,7 +78,7 @@ public class IconManager extends Manager {
     private SchemaSession schemaSession;
     
     @Autowired
-    private ServiceResourceDao serviceDao;
+    private IconResourceDao iconDao;
     
     @Autowired
     private EventManagerListener eventManager;
@@ -101,17 +103,15 @@ public class IconManager extends Manager {
      * @throws ArangoDaoException
      * @throws ServiceNotFoundException
      */
-    public ServiceResource getService(ServiceResource service) throws ResourceNotFoundException, ArangoDaoException, DomainNotFoundException {
-        if (service.getDomain() == null && service.getId() != null) {
-            String domainName = this.domainManager.getDomainNameFromId(service.getId());
-            Domain domain = this.domainManager.getDomain(domainName);
-            service.setDomain(domain);
+    public IconModel getIcon(IconModel icon) throws ResourceNotFoundException, ArangoDaoException, DomainNotFoundException {
+        if (icon.getSchemaName() == null) {
+            icon.setSchemaName(icon.getSchemaName());
             
         }
-        return this.serviceDao.findResource(service);
+        return this.iconDao.findResource(icon);
     }
     
-    public ServiceResource getServiceById(ServiceResource service)
+    public IconModel getIconById(IconModel icon)
             throws ResourceNotFoundException, ArangoDaoException, DomainNotFoundException {
         String timerId = startTimer("getServiceById");
         try {
@@ -119,24 +119,24 @@ public class IconManager extends Manager {
             //
             // Deveria estar na session ? Ainda tenho dúvidas..
             //
-            if (!service.getId().contains("/")) {
-                if (service.getDomain() != null) {
-                    service.setId(service.getDomain().getServices() + "/" + service.getId());
-                } else if (service.getDomainName() != null) {
-                    service.setDomain(this.domainManager.getDomain(service.getDomainName()));
-                    service.setId(service.getDomain().getServices() + "/" + service.getId());
+            if (!icon.getId().contains("/")) {
+                if (icon.getDomain() != null) {
+                    icon.setId(icon.getDomain().getServices() + "/" + icon.getId());
+                } else if (icon.getDomainName() != null) {
+                    icon.setDomain(this.domainManager.getDomain(icon.getDomainName()));
+                    icon.setId(icon.getDomain().getServices() + "/" + icon.getId());
                 }
                 
             } else {
                 
-                String domainName = this.domainManager.getDomainNameFromId(service.getId());
-                service.setDomainName(domainName);
-                service.setDomain(this.domainManager.getDomain(domainName));
+                String domainName = this.domainManager.getDomainNameFromId(icon.getId());
+                icon.setDomainName(domainName);
+                icon.setDomain(this.domainManager.getDomain(domainName));
             }
             Map<String, Object> binds = new HashMap<>();
-            binds.put("id", service.getId());
-            service = this.serviceDao.findResourceByFilter(new FilterDTO("doc._id == @id", binds), service.getDomain()).getOne();
-            return service;
+            binds.put("id", icon.getId());
+            icon = this.iconDao.findResourceByFilter(new FilterDTO("doc._id == @id", binds), icon.getDomain()).getOne();
+            return icon;
         } finally {
             if (lockManager.isLocked()) {
                 lockManager.unlock();
@@ -152,10 +152,10 @@ public class IconManager extends Manager {
      * @return
      * @throws ArangoDaoException
      */
-    public ServiceResource deleteService(ServiceResource service) throws ArangoDaoException {
+    public IconModel deleteIcon(IconModel service) throws ArangoDaoException {
         try {
             lockManager.lock();
-            this.serviceDao.deleteResource(service);
+            this.iconDao.deleteResource(service);
             return service;
         } finally {
             if (lockManager.isLocked()) {
@@ -171,8 +171,8 @@ public class IconManager extends Manager {
      * @return
      * @throws ArangoDaoException
      */
-    public ServiceResource createService(ServiceResource service) throws ArangoDaoException {
-        String timerId = startTimer("createServiceResource");
+    public IconModel createService(IconModel service) throws ArangoDaoException {
+        String timerId = startTimer("createIconModel");
         
         try {
             lockManager.lock();
@@ -218,7 +218,7 @@ public class IconManager extends Manager {
             // Já computa o stado final da solução
             //
             this.computeServiceIntegrity(service);
-            DocumentCreateEntity<ServiceResource> result = serviceDao.insertResource(service);
+            DocumentCreateEntity<IconModel> result = iconDao.insertResource(service);
             service.setKey(result.getId());
             service.setRevisionId(result.getRev());
             
@@ -226,11 +226,11 @@ public class IconManager extends Manager {
             //
             // Aqui criou o managed resource
             //
-            ServiceResourceCreatedEvent event = new ServiceResourceCreatedEvent(service);
+            IconModelCreatedEvent event = new IconModelCreatedEvent(service);
             this.eventManager.notifyResourceEvent(event);
             return service;
         } catch (Exception e) {
-            ArangoDaoException ex = new ArangoDaoException("Error while creating ServiceResource", e);
+            ArangoDaoException ex = new ArangoDaoException("Error while creating IconModel", e);
             e.printStackTrace();
             throw ex;
         } finally {
@@ -248,7 +248,7 @@ public class IconManager extends Manager {
      * @param oldService
      * @throws ArangoDaoException
      */
-    private void resolveCircuitServiceLinks(ServiceResource newService, ServiceResource oldService) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
+    private void resolveCircuitServiceLinks(IconModel newService, IconModel oldService) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
         //
         // Aqui temos certeza que o serviço foi criado, então vamos pegar e atualizar as dependencias do circuito
         //
@@ -315,12 +315,12 @@ public class IconManager extends Manager {
         
     }
     
-    public GraphList<ServiceResource> findServiceByFilter(FilterDTO filter, Domain domain) throws ArangoDaoException, ResourceNotFoundException {
-        return this.serviceDao.findResourceByFilter(filter, domain);
+    public GraphList<IconModel> findServiceByFilter(FilterDTO filter, Domain domain) throws ArangoDaoException, ResourceNotFoundException {
+        return this.iconDao.findResourceByFilter(filter, domain);
     }
     
-    public ServiceResource updateService(ServiceResource service) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
-        String timerId = startTimer("updateServiceResource");
+    public IconModel updateService(IconModel service) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
+        String timerId = startTimer("updateIconModel");
         try {
             this.lockManager.lock();
             service.setLastModifiedDate(new Date());
@@ -334,14 +334,14 @@ public class IconManager extends Manager {
             // Está salvando null de nested resources... ver o que fazer..
             // 
             this.computeServiceIntegrity(service);
-            DocumentUpdateEntity<ServiceResource> result = this.serviceDao.updateResource(service);
-            ServiceResource newService = result.getNew();
-            ServiceResource oldService = result.getOld();
+            DocumentUpdateEntity<IconModel> result = this.iconDao.updateResource(service);
+            IconModel newService = result.getNew();
+            IconModel oldService = result.getOld();
             this.resolveCircuitServiceLinks(newService, oldService);
             
             this.evaluateServiceStateTransition(result);
             
-            ServiceResourceUpdatedEvent event = new ServiceResourceUpdatedEvent(oldService, newService);
+            IconModelUpdatedEvent event = new IconModelUpdatedEvent(oldService, newService);
             this.eventManager.notifyResourceEvent(event);
             return newService;
         } finally {
@@ -360,12 +360,12 @@ public class IconManager extends Manager {
      * @throws ResourceNotFoundException
      * @throws ArangoDaoException
      */
-    public ServiceResource resolveService(ServiceResource service)
+    public IconModel resolveService(IconModel service)
             throws ResourceNotFoundException, ArangoDaoException, DomainNotFoundException, InvalidRequestException {
         
-        List<ServiceResource> resolvedServices = new ArrayList<>();
+        List<IconModel> resolvedServices = new ArrayList<>();
         if (service.getDependencies() != null && !service.getDependencies().isEmpty()) {
-            for (ServiceResource item : service.getDependencies()) {
+            for (IconModel item : service.getDependencies()) {
                 if (item.getDomain() == null) {
                     if (item.getDomainName() != null) {
                         //
@@ -384,7 +384,7 @@ public class IconManager extends Manager {
                  * referencias. Vou tentar resolver isso
                  */
 //                item.setOperationalStatus(null);
-                ServiceResource resolved = this.getService(item);
+                IconModel resolved = this.getService(item);
                 resolvedServices.add(resolved);
             }
         }
@@ -425,13 +425,13 @@ public class IconManager extends Manager {
      *
      * @param createdEvent
      */
-    private void updateServiceResourceConnectionReferenceCreateEvent(ResourceConnectionCreatedEvent createdEvent) throws ResourceNotFoundException, ArangoDaoException, DomainNotFoundException {
+    private void updateIconModelConnectionReferenceCreateEvent(ResourceConnectionCreatedEvent createdEvent) throws ResourceNotFoundException, ArangoDaoException, DomainNotFoundException {
         ResourceConnection connection = createdEvent.getNewResource();
         if (connection.getDependentService() != null) {
             //
             // Temos referencia a um serviço
             //
-            ServiceResource service = connection.getDependentService();
+            IconModel service = connection.getDependentService();
             //
             // Recupera a referencia do DB
             //
@@ -442,7 +442,7 @@ public class IconManager extends Manager {
             
             if (!service.getRelatedResourceConnections().contains(connection.getId())) {
                 service.getRelatedResourceConnections().add(connection.getId());
-                this.evaluateServiceStateTransition(this.serviceDao.updateResource(service));
+                this.evaluateServiceStateTransition(this.iconDao.updateResource(service));
             }
         }
     }
@@ -460,7 +460,7 @@ public class IconManager extends Manager {
     private void updateServiceManagedResourceReferenceCreateEvent(ManagedResourceCreatedEvent createdEvent) throws ResourceNotFoundException, ArangoDaoException, DomainNotFoundException {
         ManagedResource resource = createdEvent.getNewResource();
         if (resource.getDependentService() != null) {
-            ServiceResource service = resource.getDependentService();
+            IconModel service = resource.getDependentService();
             //
             // Recupera a referencia do DB
             //
@@ -471,7 +471,7 @@ public class IconManager extends Manager {
             
             if (!service.getRelatedManagedResources().contains(resource.getId())) {
                 service.getRelatedManagedResources().add(resource.getId());
-                this.evaluateServiceStateTransition(this.serviceDao.updateResource(service));
+                this.evaluateServiceStateTransition(this.iconDao.updateResource(service));
             }
         }
     }
@@ -492,7 +492,7 @@ public class IconManager extends Manager {
         if (updateEvent.getOldResource() == null && updateEvent.getNewResource() != null) {
             ManagedResource resource = updateEvent.getNewResource();
             if (resource.getDependentService() != null) {
-                ServiceResource service = resource.getDependentService();
+                IconModel service = resource.getDependentService();
                 //
                 // Recupera a referencia do DB
                 //
@@ -503,7 +503,7 @@ public class IconManager extends Manager {
                 
                 if (!service.getRelatedManagedResources().contains(resource.getId())) {
                     service.getRelatedManagedResources().add(resource.getId());
-                    this.evaluateServiceStateTransition(this.serviceDao.updateResource(service));
+                    this.evaluateServiceStateTransition(this.iconDao.updateResource(service));
                 }
             } else {
                 logger.debug("No Resource to Update");
@@ -516,7 +516,7 @@ public class IconManager extends Manager {
                 //
                 // Neste cenário não tinha depedencia e agora tem então é só salvar a referencia.
                 //
-                ServiceResource service = updateEvent.getNewResource().getDependentService();
+                IconModel service = updateEvent.getNewResource().getDependentService();
                 ManagedResource resource = updateEvent.getNewResource();
                 
                 service = this.getService(service);
@@ -526,7 +526,7 @@ public class IconManager extends Manager {
                 
                 if (!service.getRelatedManagedResources().contains(resource.getId())) {
                     service.getRelatedManagedResources().add(resource.getId());
-                    this.evaluateServiceStateTransition(this.serviceDao.updateResource(service));
+                    this.evaluateServiceStateTransition(this.iconDao.updateResource(service));
                 }
             } else if (updateEvent.getOldResource().getDependentService() != null && updateEvent.getNewResource().getDependentService() != null) {
                 ManagedResource resource = updateEvent.getNewResource();
@@ -538,8 +538,8 @@ public class IconManager extends Manager {
                     //
                     // Trocou o serviço, agora a gente precisa remover a referencia do antigo e atualizar no novo
                     //
-                    ServiceResource newService = updateEvent.getNewResource().getDependentService();
-                    ServiceResource oldService = updateEvent.getOldResource().getDependentService();
+                    IconModel newService = updateEvent.getNewResource().getDependentService();
+                    IconModel oldService = updateEvent.getOldResource().getDependentService();
                     //
                     // Obtem as referencias
                     //
@@ -585,11 +585,11 @@ public class IconManager extends Manager {
      * @throws ArangoDaoException
      * @throws DomainNotFoundException
      */
-    private void updateServiceResourceConnectionReferenceUpdateEvent(ResourceConnectionUpdatedEvent updateEvent) throws ResourceNotFoundException, ArangoDaoException, DomainNotFoundException, InvalidRequestException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
+    private void updateIconModelConnectionReferenceUpdateEvent(ResourceConnectionUpdatedEvent updateEvent) throws ResourceNotFoundException, ArangoDaoException, DomainNotFoundException, InvalidRequestException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
         if (updateEvent.getOldResource() == null && updateEvent.getNewResource() != null) {
             ResourceConnection resource = updateEvent.getNewResource();
             if (resource.getDependentService() != null) {
-                ServiceResource service = resource.getDependentService();
+                IconModel service = resource.getDependentService();
                 //
                 // Recupera a referencia do DB
                 //
@@ -600,7 +600,7 @@ public class IconManager extends Manager {
                 
                 if (!service.getRelatedResourceConnections().contains(resource.getId())) {
                     service.getRelatedResourceConnections().add(resource.getId());
-                    this.evaluateServiceStateTransition(this.serviceDao.updateResource(service));
+                    this.evaluateServiceStateTransition(this.iconDao.updateResource(service));
                 }
             }
         } else if (updateEvent.getOldResource() != null && updateEvent.getNewResource() != null) {
@@ -611,7 +611,7 @@ public class IconManager extends Manager {
                 //
                 // Neste cenário não tinha depedencia e agora tem então é só salvar a referencia.
                 //
-                ServiceResource service = updateEvent.getNewResource().getDependentService();
+                IconModel service = updateEvent.getNewResource().getDependentService();
                 ResourceConnection resource = updateEvent.getNewResource();
                 
                 service = this.getService(service);
@@ -621,7 +621,7 @@ public class IconManager extends Manager {
                 
                 if (!service.getRelatedResourceConnections().contains(resource.getId())) {
                     service.getRelatedResourceConnections().add(resource.getId());
-                    this.evaluateServiceStateTransition(this.serviceDao.updateResource(service));
+                    this.evaluateServiceStateTransition(this.iconDao.updateResource(service));
                 }
             } else if (updateEvent.getOldResource().getDependentService() != null && updateEvent.getNewResource().getDependentService() != null) {
                 ResourceConnection resource = updateEvent.getNewResource();
@@ -633,8 +633,8 @@ public class IconManager extends Manager {
                     //
                     // Trocou o serviço, agora a gente precisa remover a referencia do antigo e atualizar no novo
                     //
-                    ServiceResource newService = updateEvent.getNewResource().getDependentService();
-                    ServiceResource oldService = updateEvent.getOldResource().getDependentService();
+                    IconModel newService = updateEvent.getNewResource().getDependentService();
+                    IconModel oldService = updateEvent.getOldResource().getDependentService();
                     //
                     // Obtem as referencias
                     //
@@ -675,7 +675,7 @@ public class IconManager extends Manager {
      *
      * @param update
      */
-    private void evaluateServiceStateTransition(DocumentUpdateEntity<ServiceResource> update) {
+    private void evaluateServiceStateTransition(DocumentUpdateEntity<IconModel> update) {
         //
         // Verifica se houve transição de estado.
         //
@@ -698,12 +698,12 @@ public class IconManager extends Manager {
      * @param service
      * @throws ArangoDaoException
      */
-    private void updateServiceCircuitReference(ServiceResource service) throws ArangoDaoException, ResourceNotFoundException, IOException, DomainNotFoundException {
+    private void updateServiceCircuitReference(IconModel service) throws ArangoDaoException, ResourceNotFoundException, IOException, DomainNotFoundException {
 
         //
         // Actually Update on DB
         //
-        this.evaluateServiceStateTransition(this.serviceDao.updateResource(service));
+        this.evaluateServiceStateTransition(this.iconDao.updateResource(service));
 
         /**
          * Verifica se este serviço é necessário para algum outro, ou seja, do
@@ -723,7 +723,7 @@ public class IconManager extends Manager {
                 for (String relatedServiceId : service.getRelatedServices()) {
                     String domainName = this.domainManager.getDomainNameFromId(relatedServiceId);
                     
-                    ServiceResource dependentService = new ServiceResource(relatedServiceId);
+                    IconModel dependentService = new IconModel(relatedServiceId);
                     dependentService.setDomainName(domainName);
                     dependentService.setDomain(this.domainManager.getDomain(domainName));
                     dependentService = this.getServiceById(dependentService);
@@ -734,8 +734,8 @@ public class IconManager extends Manager {
                         // Computa primeiro para saber o estado
                         //
                         this.computeServiceIntegrity(dependentService);
-//                        DocumentUpdateEntity<ServiceResource> updateResult = this.serviceDao.updateResource(dependentService);
-                        this.evaluateServiceStateTransition(this.serviceDao.updateResource(dependentService));
+//                        DocumentUpdateEntity<IconModel> updateResult = this.iconDao.updateResource(dependentService);
+                        this.evaluateServiceStateTransition(this.iconDao.updateResource(dependentService));
                         //
                         // Salva no Banco de dados
                         //
@@ -750,7 +750,7 @@ public class IconManager extends Manager {
             /**
              * Desligado, pois somente consulta dados do mesmo domininio.
              */
-//            this.serviceDao.findUpperResources(service).forEach(dependentService -> {
+//            this.iconDao.findUpperResources(service).forEach(dependentService -> {
 //                //
 //                // Aqui vamos ter a lista dos serviços que dependem do serviço que acabou de ser atualizado.
 //                //
@@ -778,7 +778,7 @@ public class IconManager extends Manager {
      *
      * @param service
      */
-    private void computeServiceIntegrity(ServiceResource service) {
+    private void computeServiceIntegrity(IconModel service) {
         //
         // Verifica o estado final do serviço
         //
@@ -859,11 +859,11 @@ public class IconManager extends Manager {
                 // Temos multiplos serviços.
                 //
 
-                List<ServiceResource> workingServices = service.getDependencies()
+                List<IconModel> workingServices = service.getDependencies()
                         .stream()
                         .filter(c -> !c.getBroken()).collect(Collectors.toList());
                 
-                List<ServiceResource> brokenServices = service.getDependencies()
+                List<IconModel> brokenServices = service.getDependencies()
                         .stream()
                         .filter(c -> c.getBroken()).collect(Collectors.toList());
                 
@@ -911,20 +911,20 @@ public class IconManager extends Manager {
     }
     
     @Subscribe
-    public void onServiceResourceUpdatedEvent(ServiceResourceUpdatedEvent processEvent)
+    public void onIconModelUpdatedEvent(IconModelUpdatedEvent processEvent)
             throws ArangoDaoException, IllegalStateException, IOException, ResourceNotFoundException, DomainNotFoundException {
         this.updateServiceCircuitReference(processEvent.getNewResource());
     }
     
     @Subscribe
-    public void onServiceResourceCreatedEvent(ServiceResourceCreatedEvent createdEvent) throws ArangoDaoException, ResourceNotFoundException, IOException, DomainNotFoundException {
+    public void onIconModelCreatedEvent(IconModelCreatedEvent createdEvent) throws ArangoDaoException, ResourceNotFoundException, IOException, DomainNotFoundException {
         if (createdEvent.getNewResource().getDependencies() != null) {
             if (!createdEvent.getNewResource().getDependencies().isEmpty()) {
                 //
                 // Vamos olhar as dependencias do Serviço criado
                 //
-                List<ServiceResource> servicesToUpdate = new ArrayList<>();
-                for (ServiceResource dependency : createdEvent.getNewResource().getDependencies()) {
+                List<IconModel> servicesToUpdate = new ArrayList<>();
+                for (IconModel dependency : createdEvent.getNewResource().getDependencies()) {
                     //
                     // Valida se a dependencia é do mesmo dominio.
                     //
@@ -932,7 +932,7 @@ public class IconManager extends Manager {
                     //
                     // Sincroniza com o DB
                     //
-                    dependency = this.serviceDao.findResource(dependency);
+                    dependency = this.iconDao.findResource(dependency);
                     if (dependency.getRelatedServices() != null) {
                         if (!dependency.getRelatedServices().contains(createdEvent.getNewResource().getId())) {
                             dependency.getRelatedServices().add(createdEvent.getNewResource().getId());
@@ -948,7 +948,7 @@ public class IconManager extends Manager {
                 //
                 // Atualiza na origem a depedencia
                 //
-                for (ServiceResource service : servicesToUpdate) {
+                for (IconModel service : servicesToUpdate) {
                     this.updateServiceCircuitReference(service);
                 }
                 
@@ -976,13 +976,13 @@ public class IconManager extends Manager {
                 //
                 // Trata o Status Aqui
                 //
-                List<ServiceResource> servicesToUpdate = new ArrayList<>();
+                List<IconModel> servicesToUpdate = new ArrayList<>();
                 
                 for (String serviceId : event.getNewResource().getServices()) {
                     //
                     // o Circuito só pode impactar serviços do mesmo dominio.
                     //
-                    ServiceResource service = new ServiceResource(serviceId);
+                    IconModel service = new IconModel(serviceId);
                     service.setDomain(event.getNewResource().getDomain());
                     //
                     // Recupera o serviço do Banco
@@ -1011,7 +1011,7 @@ public class IconManager extends Manager {
                     
                 }
                 
-                for (ServiceResource service : servicesToUpdate) {
+                for (IconModel service : servicesToUpdate) {
                     //
                     // Computa o status Final do serviço
                     //
@@ -1072,7 +1072,7 @@ public class IconManager extends Manager {
             //
             // Ok Temos um serviço para atualizar.
             //
-            this.updateServiceResourceConnectionReferenceCreateEvent(resource);
+            this.updateIconModelConnectionReferenceCreateEvent(resource);
         }
     }
 
@@ -1084,7 +1084,7 @@ public class IconManager extends Manager {
     @Subscribe
     public void onResourceConnectionUpdatedEvent(ResourceConnectionUpdatedEvent updateEvent) throws ResourceNotFoundException, ArangoDaoException, DomainNotFoundException, InvalidRequestException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
         
-        this.updateServiceResourceConnectionReferenceUpdateEvent(updateEvent);
+        this.updateIconModelConnectionReferenceUpdateEvent(updateEvent);
 
         //
         // Avaliar se preciso disso agora...

@@ -93,19 +93,19 @@ public class IconApi extends BaseApi {
 
     @AuthenticatedCall(role = {"user"})
     @PutMapping(path = "/icon", produces = "application/json", consumes = "application/json")
-    public CreateIconResponse createService(@RequestBody CreateIconRequest request, HttpServletRequest httpRequest) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
+    public CreateIconResponse createIcon(@RequestBody CreateIconRequest request, HttpServletRequest httpRequest) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
         this.setUserDetails(request);
         httpRequest.setAttribute("request", request);
-        return iconSession.createService(request);
+        return iconSession.createIcon(request);
     }
 
     @AuthenticatedCall(role = {"user"})
     @PatchMapping(path = "/service/{schemaName}", produces = "application/json", consumes = "application/json")
     public PatchIconResponse patchManagedResource(@RequestBody PatchIconRequest request, @PathVariable("schemaName") String schemaName, HttpServletRequest httpRequest) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
         this.setUserDetails(request);
-        request.getPayLoad().setId(schemaName);
+        request.setPayLoad(new IconModel(schemaName));
         httpRequest.setAttribute("request", request);
-        return iconSession.updateService(request);
+        return iconSession.updateIcon(request);
     }
 
     // @AuthenticatedCall(role = {"user"})

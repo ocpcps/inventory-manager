@@ -73,10 +73,10 @@ public class IconSession {
             
         }
 
-        return new GetIconResponse(IconManager.getIconById(request.getPayLoad()));
+        return new GetIconResponse(IconManager.getIconById(request.getPayLoad().getSchemaName()));
     }
 
-    public DeleteIconResponse deleteIcon(DeleteIconRequest request) throws DomainNotFoundException, ArangoDaoException {
+    public DeleteIconResponse deleteIcon(DeleteIconRequest request) throws DomainNotFoundException, ArangoDaoException, InvalidRequestException {
         if (request.getPayLoad().getSchemaName() == null) {
             throw new InvalidRequestException("Schema name Field Missing");
         }
@@ -146,9 +146,9 @@ public class IconSession {
         }
         IconResource old = null;
         if (payload.getId() != null) {
-            old = serviceManager.getServiceById(payload);
+            old = iconManager.getServiceById(payload);
         } else {
-            old = serviceManager.getService(payload);
+            old = iconManager.getIcon(payload);
         }
         payload.setKey(old.getKey());
 
@@ -160,7 +160,7 @@ public class IconSession {
         //
         payload = serviceManager.resolveService(payload);
 
-        return new PatchServiceResponse(serviceManager.updateService(payload));
+        return new PatchIconResponse(serviceManager.updateService(payload));
     }
 
     // public FilterResponse findServiceByFilter(FilterRequest filter) throws InvalidRequestException, ArangoDaoException, DomainNotFoundException, ResourceNotFoundException {
