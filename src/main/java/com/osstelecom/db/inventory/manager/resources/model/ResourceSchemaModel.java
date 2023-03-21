@@ -44,10 +44,7 @@ public class ResourceSchemaModel {
     private Boolean isValid = true;
     private HashMap<String, ResourceAttributeModel> attributes = new HashMap<>();
     private List<String> childrenSchemas = new ArrayList<>();
-
-    public void setChildrenSchemas(List<String> childrenSchemas) {
-        this.childrenSchemas = childrenSchemas;
-    }
+    private List<String> relatedSchemas = new ArrayList<>();
 
     /**
      * @return the schemaName
@@ -160,5 +157,17 @@ public class ResourceSchemaModel {
      */
     public List<String> getChildrenSchemas() {
         return childrenSchemas;
+    }
+
+    public void setChildrenSchemas(List<String> childrenSchemas) {
+        this.childrenSchemas = childrenSchemas;
+    }
+
+    public List<String> getRelatedSchemas() {
+        return relatedSchemas;
+    }
+
+    public void setRelatedSchemas(List<String> relatedSchemas) {
+        this.relatedSchemas = relatedSchemas;
     }
 }

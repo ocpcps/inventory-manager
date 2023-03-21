@@ -27,6 +27,7 @@ import java.nio.file.Paths;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -400,6 +401,8 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
         removeAttributes.forEach(attribute -> {
             model.getAttributes().remove(attribute);
         });
+
+        resolveRelatedParentSchemas(model, null);
 
         this.writeModelToDisk(model, false);
         this.clearSchemaCache();
@@ -1039,6 +1042,8 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
 
         }
 
+        resolveRelatedParentSchemas(update, original);
+
         if (original.getAttributesChanged()) {
 
             this.writeModelToDisk(original, true);
@@ -1089,6 +1094,57 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
         validTypes.add("GeoLine");
         return validTypes;
     }
+
+
+
+    private void resolveRelatedParentSchemas(ResourceSchemaModel newSchemaModel, ResourceSchemaModel oldSchemaModel) throws SchemaNotFoundException, GenericException, InvalidRequestException{
+        String schemaName = newSchemaModel.getSchemaName();
+        List<String> parents = extractParentsFromDefaultExpression(newSchemaModel);
+        for (String parent : parents) {
+            ResourceSchemaModel parentSchema = loadSchemaFromDisk(parent, null);
+            List<String> relatedSchemas = parentSchema.getRelatedSchemas();
+            if(relatedSchemas != null) {
+                if(!relatedSchemas.contains(schemaName)) relatedSchemas.add(schemaName);
+            } else {
+                relatedSchemas = Arrays.asList(schemaName);
+                parentSchema.setRelatedSchemas(relatedSchemas);
+            }
+            writeModelToDisk(parentSchema, true);
+        }
+
+        if(oldSchemaModel != null){
+            List<String> oldParents = extractParentsFromDefaultExpression(oldSchemaModel);
+            for (String oldParent : oldParents) {
+                //não existe mais a referência na lista de atributos default
+                if(!parents.contains(oldParent)){
+                    ResourceSchemaModel oldParentSchema = loadSchemaFromDisk(oldParent, null);
+                    List<String> relatedSchemas = oldParentSchema.getRelatedSchemas();
+                    if(relatedSchemas != null && relatedSchemas.contains(schemaName)) {
+                        relatedSchemas.remove(schemaName);
+                        writeModelToDisk(oldParentSchema, true);
+                    }
+                }
+            }
+        }
+    }
+    
+    private List<String> extractParentsFromDefaultExpression(ResourceSchemaModel schemaModel){
+        List<String> parents = new ArrayList<>();
+        for (ResourceAttributeModel attrModel : schemaModel.getAttributes().values()) {
+           String defaultValue = attrModel.getDefaultValue();           
+           String regex = "^\\$\\([\\w]+[\\w+\\.]+[\\.]+[\\w]+\\)$";
+            if(defaultValue != null && defaultValue.matches(regex)) {
+                String value = defaultValue.replace("$", "");
+                value = value.replace("(", "");
+                Integer pointer = value.lastIndexOf(".");
+                String attributeSchemaName = value.substring(0, pointer);
+                parents.add(attributeSchemaName);
+            }
+        }
+
+        return parents;
+    }
+
 
     /**
      * Save the JSON Model to the disk

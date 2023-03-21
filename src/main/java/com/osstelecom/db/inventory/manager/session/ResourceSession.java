@@ -17,14 +17,20 @@
  */
 package com.osstelecom.db.inventory.manager.session;
 
-import com.arangodb.entity.DocumentUpdateEntity;
-import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.arangodb.entity.DocumentUpdateEntity;
+import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
+import com.osstelecom.db.inventory.manager.exception.AttributeNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
 import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
@@ -51,7 +57,6 @@ import com.osstelecom.db.inventory.manager.request.PatchResourceConnectionReques
 import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.GraphList;
-import com.osstelecom.db.inventory.manager.resources.LocationConnection;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import com.osstelecom.db.inventory.manager.resources.ServiceResource;
@@ -69,11 +74,6 @@ import com.osstelecom.db.inventory.manager.response.FindResourceConnectionRespon
 import com.osstelecom.db.inventory.manager.response.PatchManagedResourceResponse;
 import com.osstelecom.db.inventory.manager.response.PatchResourceConnectionResponse;
 import com.osstelecom.db.inventory.manager.response.TypedListResponse;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -466,7 +466,7 @@ public class ResourceSession {
      * @throws GenericException
      * @throws ScriptRuleException
      */
-    public CreateManagedResourceResponse createManagedResource(CreateManagedResourceRequest request) throws SchemaNotFoundException, AttributeConstraintViolationException, GenericException, ScriptRuleException, InvalidRequestException, DomainNotFoundException, ArangoDaoException, ResourceNotFoundException {
+    public CreateManagedResourceResponse createManagedResource(CreateManagedResourceRequest request) throws SchemaNotFoundException, AttributeConstraintViolationException, GenericException, ScriptRuleException, InvalidRequestException, DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, AttributeNotFoundException {
         Long start = System.currentTimeMillis();
         if (request == null) {
             throw new InvalidRequestException("Request is NULL!");
@@ -566,7 +566,7 @@ public class ResourceSession {
             response.setSize(nodesGraph.size());
             response.setArangoStats(nodesGraph.getStats());
         } else if (filter.getPayLoad().getObjects().contains("connections") || filter.getPayLoad().getObjects().contains("connection")) {
-//            response.getPayLoad().setConnections(resourceConnectionManager.getConnectionsByFilter(filter.getPayLoad(), filter.getRequestDomain()).toList());
+            //response.getPayLoad().setConnections(resourceConnectionManager.getConnectionsByFilter(filter.getPayLoad(), filter.getRequestDomain()).toList());
 
             GraphList<ResourceConnection> connectionsGraph = resourceConnectionManager.getConnectionsByFilter(filter.getPayLoad(), filter.getRequestDomain());
             List<ResourceConnection> connections = connectionsGraph.toList();
@@ -631,8 +631,11 @@ public class ResourceSession {
      * @throws ResourceNotFoundException
      * @throws ArangoDaoException
      * @throws InvalidRequestException
+     * @throws AttributeNotFoundException
+     * @throws GenericException
+     * @throws SchemaNotFoundException
      */
-    public PatchManagedResourceResponse patchManagedResource(PatchManagedResourceRequest patchRequest) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException, ScriptRuleException {
+    public PatchManagedResourceResponse patchManagedResource(PatchManagedResourceRequest patchRequest) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException, ScriptRuleException, SchemaNotFoundException, GenericException, AttributeNotFoundException {
         //
         //
         //
@@ -781,7 +784,7 @@ public class ResourceSession {
             }
         }
 
-        ManagedResource result = this.managedResourceManager.updateManagedResource(fromDBResource);
+        ManagedResource result = this.managedResourceManager.update(fromDBResource);
         return new PatchManagedResourceResponse(result);
     }
 
