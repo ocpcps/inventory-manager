@@ -17,6 +17,9 @@
  */
 package com.osstelecom.db.inventory.manager.session;
 
+import java.io.IOException;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -25,34 +28,18 @@ import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
 import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
-import com.osstelecom.db.inventory.manager.exception.SchemaNotFoundException;
-import com.osstelecom.db.inventory.manager.exception.ScriptRuleException;
-import com.osstelecom.db.inventory.manager.operation.DomainManager;
 import com.osstelecom.db.inventory.manager.operation.IconManager;
-import com.osstelecom.db.inventory.manager.operation.ServiceManager;
 import com.osstelecom.db.inventory.manager.request.CreateIconRequest;
-import com.osstelecom.db.inventory.manager.request.CreateServiceRequest;
 import com.osstelecom.db.inventory.manager.request.DeleteIconRequest;
-import com.osstelecom.db.inventory.manager.request.DeleteServiceRequest;
 import com.osstelecom.db.inventory.manager.request.FilterRequest;
 import com.osstelecom.db.inventory.manager.request.GetIconRequest;
-import com.osstelecom.db.inventory.manager.request.GetServiceRequest;
 import com.osstelecom.db.inventory.manager.request.PatchIconRequest;
-import com.osstelecom.db.inventory.manager.request.PatchServiceRequest;
-import com.osstelecom.db.inventory.manager.resources.Domain;
-import com.osstelecom.db.inventory.manager.resources.GraphList;
-import com.osstelecom.db.inventory.manager.resources.ServiceResource;
-import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstraintViolationException;
 import com.osstelecom.db.inventory.manager.resources.model.IconModel;
 import com.osstelecom.db.inventory.manager.response.CreateIconResponse;
-import com.osstelecom.db.inventory.manager.response.CreateServiceResponse;
 import com.osstelecom.db.inventory.manager.response.DeleteIconResponse;
-import com.osstelecom.db.inventory.manager.response.DeleteServiceResponse;
 import com.osstelecom.db.inventory.manager.response.FilterResponse;
 import com.osstelecom.db.inventory.manager.response.GetIconResponse;
-import com.osstelecom.db.inventory.manager.response.GetServiceResponse;
 import com.osstelecom.db.inventory.manager.response.PatchIconResponse;
-import com.osstelecom.db.inventory.manager.response.PatchServiceResponse;
 
 /**
  *
@@ -65,28 +52,60 @@ public class IconSession {
     @Autowired
     private IconManager iconManager;
 
-    @Autowired
-    private DomainManager domainManager;
-
-    public GetIconResponse getIconById(GetIconRequest request) throws ResourceNotFoundException, DomainNotFoundException, ArangoDaoException, InvalidRequestException {
+    public GetIconResponse getIconById(GetIconRequest request) throws ResourceNotFoundException, InvalidRequestException {
         if (request.getPayLoad().getSchemaName() == null) {
-            
+            throw new InvalidRequestException("Icons Field Missing");
         }
-
-        return new GetIconResponse(IconManager.getIconById(request.getPayLoad().getSchemaName()));
+        return new GetIconResponse(iconManager.getIconById(request.getPayLoad()));
     }
 
-    public DeleteIconResponse deleteIcon(DeleteIconRequest request) throws DomainNotFoundException, ArangoDaoException, InvalidRequestException {
+    public DeleteIconResponse deleteIcon(DeleteIconRequest request) throws InvalidRequestException, ResourceNotFoundException, IOException {
         if (request.getPayLoad().getSchemaName() == null) {
             throw new InvalidRequestException("Schema name Field Missing");
         }
-        
+        IconModel payload = request.getPayLoad(); 
+        IconModel old = iconManager.getIconById(payload);
+
+        if (old == null){
+            throw new ResourceNotFoundException("Icon not found");
+        }  
 
         return new DeleteIconResponse(iconManager.deleteIcon(request.getPayLoad()));
     }
 
-    public CreateIconResponse createIcon(CreateIconRequest request) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
+    public CreateIconResponse createIcon(CreateIconRequest request) throws InvalidRequestException, ResourceNotFoundException, GenericException {
+        
+        if (request == null || request.getPayLoad() == null) {
+            throw new InvalidRequestException("Request is null please send a valid request");
+        }
 
+        if (request.getPayLoad().getSchemaName() == null) {
+            throw new InvalidRequestException("Schema name Field Missing");
+        }
+        
+        IconModel payload = request.getPayLoad(); 
+        IconModel old = iconManager.getIconById(payload);
+
+        if (old != null){
+            throw new ResourceNotFoundException("Icon already exists");
+        }       
+        if (payload.getContent() == null) {
+            throw new InvalidRequestException("Content not found");
+        }
+        
+        if (payload.getMimeType() == null) {
+            throw new InvalidRequestException("Mime Type not found");
+        }
+        if(payload.getContent().length() == 0 || payload.getContent().length() > 3000){
+            throw new InvalidRequestException("Content size is invalid");
+        }
+
+        return new CreateIconResponse(iconManager.createIcon(payload));
+    }
+
+    public PatchIconResponse updateIcon(PatchIconRequest request) throws InvalidRequestException, ResourceNotFoundException, GenericException {
+        
+        
         if (request == null || request.getPayLoad() == null) {
             throw new InvalidRequestException("Request is null please send a valid request");
         }
@@ -95,97 +114,46 @@ public class IconSession {
             throw new InvalidRequestException("Schema name Field Missing");
         }
 
-        IconModel payload = request.getPayLoad();
-        if (payload == null) {
-            throw new InvalidRequestException("Payload not found");
+        IconModel payload = request.getPayLoad();       
+        if (payload.getContent() == null) {
+            throw new InvalidRequestException("Content not found");
         }
-        //
-        // Treat Defaults
-        //
-
-         //getConteudo
-        // Validate minimun requirements fields
-        //
-        if (payload.getSchemaName() != null) {
-            if (payload.getConteudo() == null) {
-                payload.setConteudo(payload.getConteudo());
-            }
-            payload.setSchemaName(payload.getSchemaName());
+        
+        if (payload.getMimeType() == null) {
+            throw new InvalidRequestException("Mime Type not found");
         }
-
-        if (payload.getSchemaName() != null) {
-            if (payload.getMimeType() == null) {
-                payload.setMimeType(payload.getMimeType());
-            }
+        if(payload.getContent().length() == 0 || payload.getContent().length() > 3000){
+            throw new InvalidRequestException("Content size is invalid");
         }
+        IconModel old = iconManager.getIconById(payload);
+        if (old == null){
+            throw new ResourceNotFoundException("Icon not found");
+        }        
 
-        if (payload.getSchemaName() == null) {
-            throw new InvalidRequestException("Plase set name, or nodeAddress values");
-        }
-        //
-        // Aqui resolve os circuitos e recursos.
-        //
-        payload = iconManager.resolveService(payload);
-
-        return new CreateIconResponse(iconManager.createService(payload));
+        return new PatchIconResponse(iconManager.updateIcon(payload));
+        
     }
 
-    public PatchIconResponse updateIcon(PatchIconRequest request) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
-        if (request.getPayLoad().getSchemaName() == null && request.getPayLoad().getMimeType() == null && request.getPayLoad().getConteudo() == null) {
-            throw new InvalidRequestException("ID Field Missing");
-        }
+    public FilterResponse findIconByFilter(FilterRequest filter) throws InvalidRequestException, ArangoDaoException, ResourceNotFoundException {
 
-        if (request.getSchemaName() == null) {
-            throw new DomainNotFoundException("Domain With Name:[" + request.getRequestDomain() + "] not found");
+        if (filter.getPayLoad() != null) {
+            if (filter.getPayLoad().getLimit() != null) {
+                if (filter.getPayLoad().getLimit() > 1000) {
+                    throw new InvalidRequestException("Result Set Limit cannot be over 1000, please descrease limit value to a range between 0 and 1000");
+                }
+            }
         }
-        request.getPayLoad().setSchemaName(domainManager.getSchemaName(request.getSchemaName()));
-
-        IconResource payload = request.getPayLoad();
-        if (payload == null) {
-            throw new InvalidRequestException("Payload not found");
-        }
-        IconResource old = null;
-        if (payload.getId() != null) {
-            old = iconManager.getServiceById(payload);
+        FilterResponse response = new FilterResponse(filter.getPayLoad());
+        if (filter.getPayLoad().getObjects().contains("icon") || filter.getPayLoad().getObjects().contains("icons")) {
+            List<IconModel> listIcon = iconManager.findIconByFilter(filter.getPayLoad());
+            response.getPayLoad().setIcons(listIcon);
+            response.getPayLoad().setIconCount(Long.valueOf(listIcon.size()));
+            response.setSize(Long.valueOf(listIcon.size()));
         } else {
-            old = iconManager.getIcon(payload);
+            throw new InvalidRequestException("Filter object does not have service");
         }
-        payload.setKey(old.getKey());
 
-        if ((payload.getCircuits() == null || payload.getCircuits().isEmpty()) && (payload.getDependencies() == null || payload.getDependencies().isEmpty())) {
-            throw new InvalidRequestException("Please give at least one circuit or dependency");
-        }
-        //
-        // Resolveu aqui, será que não faz sentido ir para o manager inteiro ?
-        //
-        payload = serviceManager.resolveService(payload);
-
-        return new PatchIconResponse(serviceManager.updateService(payload));
+        return response;
     }
-
-    // public FilterResponse findServiceByFilter(FilterRequest filter) throws InvalidRequestException, ArangoDaoException, DomainNotFoundException, ResourceNotFoundException {
-    //     //
-    //     // Validação para evitar abusos de uso da API
-    //     //
-    //     if (filter.getPayLoad() != null) {
-    //         if (filter.getPayLoad().getLimit() != null) {
-    //             if (filter.getPayLoad().getLimit() > 1000) {
-    //                 throw new InvalidRequestException("Result Set Limit cannot be over 1000, please descrease limit value to a range between 0 and 1000");
-    //             }
-    //         }
-    //     }
-    //     FilterResponse response = new FilterResponse(filter.getPayLoad());
-    //     if (filter.getPayLoad().getObjects().contains("service") || filter.getPayLoad().getObjects().contains("services")) {
-    //         Domain domain = domainManager.getDomain(filter.getRequestDomain());
-    //         GraphList<ServiceResource> graphList = serviceManager.findServiceByFilter(filter.getPayLoad(), domain);
-    //         response.getPayLoad().setServices(graphList.toList());
-    //         response.getPayLoad().setServiceCount(graphList.size());
-    //         response.setSize(graphList.size());
-    //     } else {
-    //         throw new InvalidRequestException("Filter object does not have service");
-    //     }
-
-    //     return response;
-    // }
 
 }

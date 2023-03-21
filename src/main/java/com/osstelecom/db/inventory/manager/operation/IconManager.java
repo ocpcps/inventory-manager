@@ -16,8 +16,13 @@
  */
 package com.osstelecom.db.inventory.manager.operation;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Date;
 import java.util.List;
 
@@ -26,25 +31,15 @@ import javax.management.ServiceNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
-import com.arangodb.entity.DocumentCreateEntity;
 import com.arangodb.entity.DocumentUpdateEntity;
-import com.google.common.eventbus.Subscribe;
-import com.osstelecom.db.inventory.manager.dao.IconModelDao;
-import com.osstelecom.db.inventory.manager.dao.IconResourceDao;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonIOException;
+import com.osstelecom.db.inventory.manager.configuration.ConfigurationManager;
+import com.osstelecom.db.inventory.manager.configuration.InventoryConfiguration;
 import com.osstelecom.db.inventory.manager.dto.FilterDTO;
-import com.osstelecom.db.inventory.manager.events.CircuitResourceUpdatedEvent;
-import com.osstelecom.db.inventory.manager.events.ManagedResourceCreatedEvent;
-import com.osstelecom.db.inventory.manager.events.ManagedResourceUpdatedEvent;
-import com.osstelecom.db.inventory.manager.events.ProcessServiceIntegrityEvent;
-import com.osstelecom.db.inventory.manager.events.ResourceConnectionCreatedEvent;
-import com.osstelecom.db.inventory.manager.events.ResourceConnectionUpdatedEvent;
-import com.osstelecom.db.inventory.manager.events.IconModelCreatedEvent;
-import com.osstelecom.db.inventory.manager.events.IconModelUpdatedEvent;
-import com.osstelecom.db.inventory.manager.events.ServiceStateTransionedEvent;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
@@ -53,192 +48,92 @@ import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.SchemaNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.ScriptRuleException;
 import com.osstelecom.db.inventory.manager.listeners.EventManagerListener;
-import com.osstelecom.db.inventory.manager.resources.CircuitResource;
-import com.osstelecom.db.inventory.manager.resources.Domain;
-import com.osstelecom.db.inventory.manager.resources.GraphList;
-import com.osstelecom.db.inventory.manager.resources.ManagedResource;
-import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
-import com.osstelecom.db.inventory.manager.resources.ServiceResource;
 import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstraintViolationException;
 import com.osstelecom.db.inventory.manager.resources.model.IconModel;
 import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
 import com.osstelecom.db.inventory.manager.session.DynamicRuleSession;
-import com.osstelecom.db.inventory.manager.session.SchemaSession;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 public class IconManager extends Manager {
     
     @Autowired
-    private DynamicRuleSession dynamicRuleSession;
+    private ConfigurationManager configurationManager;
     
-    @Autowired
-    private SchemaSession schemaSession;
-    
-    @Autowired
-    private IconResourceDao iconDao;
-    
-    @Autowired
-    private EventManagerListener eventManager;
-    
-    @Autowired
-    private CircuitResourceManager circuitResourceManager;
-    
-    @Autowired
-    private DomainManager domainManager;
-    
-    @Autowired
-    private LockManager lockManager;
-    
-    private Logger logger = LoggerFactory.getLogger(IconManager.class);
-
+    private String iconsDir;
+    private Gson gson = new GsonBuilder().setPrettyPrinting().create();
     /**
-     * Retrieves a domain by name
+     * Retrieves a icon by id
      *
-     * @param domainName
+     * @param icon
      * @return
-     * @throws DomainNotFoundException
-     * @throws ArangoDaoException
-     * @throws ServiceNotFoundException
-     */
-    public IconModel getIcon(IconModel icon) throws ResourceNotFoundException, ArangoDaoException, DomainNotFoundException {
-        if (icon.getSchemaName() == null) {
-            icon.setSchemaName(icon.getSchemaName());
-            
-        }
-        return this.iconDao.findResource(icon);
-    }
-    
+     * @throws ResourceNotFoundException
+ 
+     */ 
     public IconModel getIconById(IconModel icon)
-            throws ResourceNotFoundException, ArangoDaoException, DomainNotFoundException {
-        String timerId = startTimer("getServiceById");
-        try {
-            lockManager.lock();
-            //
-            // Deveria estar na session ? Ainda tenho dúvidas..
-            //
-            if (!icon.getId().contains("/")) {
-                if (icon.getDomain() != null) {
-                    icon.setId(icon.getDomain().getServices() + "/" + icon.getId());
-                } else if (icon.getDomainName() != null) {
-                    icon.setDomain(this.domainManager.getDomain(icon.getDomainName()));
-                    icon.setId(icon.getDomain().getServices() + "/" + icon.getId());
-                }
-                
-            } else {
-                
-                String domainName = this.domainManager.getDomainNameFromId(icon.getId());
-                icon.setDomainName(domainName);
-                icon.setDomain(this.domainManager.getDomain(domainName));
-            }
-            Map<String, Object> binds = new HashMap<>();
-            binds.put("id", icon.getId());
-            icon = this.iconDao.findResourceByFilter(new FilterDTO("doc._id == @id", binds), icon.getDomain()).getOne();
-            return icon;
-        } finally {
-            if (lockManager.isLocked()) {
-                lockManager.unlock();
-            }
-            endTimer(timerId);
+            throws ResourceNotFoundException {
+        if(iconsDir == null){
+            this.iconsDir = configurationManager.loadConfiguration().getIconsDir();
         }
+        String fileSeparator = File.separator;
+        try{
+            FileReader reader = new FileReader(iconsDir+fileSeparator+icon.getSchemaName());
+            return gson.fromJson(reader, IconModel.class);
+            
+        }
+        catch(FileNotFoundException  e){
+            throw new ResourceNotFoundException(e.getMessage());
+        }
+       
     }
 
     /**
-     * Deleta um serviço
+     * Deleta um Icone
      *
-     * @param service
+     * @param icon
      * @return
-     * @throws ArangoDaoException
+     * @throws IOException
+     * @throws ResourceNotFoundException
      */
-    public IconModel deleteIcon(IconModel service) throws ArangoDaoException {
-        try {
-            lockManager.lock();
-            this.iconDao.deleteResource(service);
-            return service;
-        } finally {
-            if (lockManager.isLocked()) {
-                lockManager.unlock();
-            }
+    public IconModel deleteIcon(IconModel iconModel) throws ResourceNotFoundException, IOException {
+        if(iconsDir == null){
+            this.iconsDir = configurationManager.loadConfiguration().getIconsDir();
         }
+        String fileSeparator = File.separator;
+        try{
+            Files.delete(Paths.get(iconsDir+fileSeparator+iconModel.getSchemaName()));
+            return iconModel;
+        }
+        catch(FileNotFoundException  e){
+            throw new ResourceNotFoundException(e.getMessage());
+        }
+     
+
     }
 
     /**
-     * Cria um novo serviço
+     * Cria um novo icone
      *
-     * @param service
+     * @param icone
      * @return
-     * @throws ArangoDaoException
+     * @throws GenericException
      */
-    public IconModel createService(IconModel service) throws ArangoDaoException {
-        String timerId = startTimer("createIconModel");
-        
-        try {
-            lockManager.lock();
-            
-            service.setRelatedServices(null);
-            //
-            // Garante que o Merge Funcione
-            //
-            if (service.getKey() == null) {
-                service.setKey(this.getUUID());
-            }
-            //
-            // Simula o ID a ser criado
-            //
-            String toPersistId = service.getDomain().getServices() + "/" + service.getKey();
-            if (service.getOperationalStatus() == null || service.getOperationalStatus().isEmpty()) {
-                service.setOperationalStatus("Up");
-            }
-            
-            service.setAtomId(service.getDomain().addAndGetId());
-            
-            ResourceSchemaModel schemaModel = schemaSession.loadSchema(service.getAttributeSchemaName());
-            service.setSchemaModel(schemaModel);
-            schemaSession.validateResourceSchema(service);
-            dynamicRuleSession.evalResource(service, "I", this); // <--- Pode não ser verdade , se a chave for  duplicada..
+    public IconModel createIcon(IconModel iconModel) throws GenericException {
 
-            //
-            // Trata a chave do circuito
-            //
-            if (service.getCircuits() != null) {
-                if (!service.getCircuits().isEmpty()) {
-                    service.getCircuits().forEach(circuit -> {
-                        /**
-                         * The ID
-                         */
-                        if (!circuit.getServices().contains(toPersistId)) {
-                            circuit.getServices().add(toPersistId);
-                        }
-                    });
-                }
-            }
-            //
-            // Já computa o stado final da solução
-            //
-            this.computeServiceIntegrity(service);
-            DocumentCreateEntity<IconModel> result = iconDao.insertResource(service);
-            service.setKey(result.getId());
-            service.setRevisionId(result.getRev());
-            
-            this.resolveCircuitServiceLinks(service, null);
-            //
-            // Aqui criou o managed resource
-            //
-            IconModelCreatedEvent event = new IconModelCreatedEvent(service);
-            this.eventManager.notifyResourceEvent(event);
-            return service;
-        } catch (Exception e) {
-            ArangoDaoException ex = new ArangoDaoException("Error while creating IconModel", e);
-            e.printStackTrace();
-            throw ex;
-        } finally {
-            if (lockManager.isLocked()) {
-                lockManager.unlock();
-            }
-            endTimer(timerId);
+        if(iconsDir == null){
+            this.iconsDir = configurationManager.loadConfiguration().getIconsDir();
         }
+        String fileSeparator = File.separator;
+        try{
+            FileWriter writer = new FileWriter(iconsDir+fileSeparator+iconModel.getSchemaName());
+
+            gson.toJson(iconModel, writer);
+            return iconModel;
+        }
+        catch(JsonIOException | IOException  e){
+            throw new GenericException(e.getMessage());
+        }
+
+           
         
     }
 
@@ -248,863 +143,39 @@ public class IconManager extends Manager {
      * @param oldService
      * @throws ArangoDaoException
      */
-    private void resolveCircuitServiceLinks(IconModel newService, IconModel oldService) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
-        //
-        // Aqui temos certeza que o serviço foi criado, então vamos pegar e atualizar as dependencias do circuito
-        //
-        if (newService.getCircuits() != null) {
-            if (!newService.getCircuits().isEmpty()) {
-                //
-                // Como temos serviços associados vamos garantir que o circuito seja notificado
-                //
-
-                for (CircuitResource circuit : newService.getCircuits()) {
-                    //
-                    // 
-                    //
-
-                    CircuitResource fromDbCircuit = circuitResourceManager.findCircuitResource(circuit);
-                    
-                    if (!fromDbCircuit.getServices().contains(newService.getId())) {
-                        //
-                        // Adiciona o ID do serviço no circuito
-                        //
-                        logger.debug("Adding New Service to the Circuit:[{}] Current Service Size is: [{}]", newService.getId(), fromDbCircuit.getServices().size());
-                        fromDbCircuit.getServices().add(newService.getId());
-                        circuitResourceManager.updateCircuitResource(fromDbCircuit);
-                    }
-                    
-                }
-                
-            } else {
-                //
-                // Se a lista de circuitos for vazia precisamos ver se antes não era.
-                //
-                if (oldService != null) {
-                    if (!oldService.getCircuits().isEmpty()) {
-                        //
-                        // Não era vazia, ou seja ficou vazia vamos precisar remover a referencia.
-                        //
-                        for (CircuitResource circuit : oldService.getCircuits()) {
-                            if (circuit.getServices().contains(oldService.getId())) {
-                                circuit.getServices().remove(circuit.getId());
-                                circuitResourceManager.updateCircuitResource(circuit);
-                            }
-                        }
-                    }
-                }
-                
-            }
-        }
-        //
-        // Agora vamos comparar com o OLD, para saber se temos circuitos para remover..
-        //
-        if (oldService != null) {
-            if (!oldService.getCircuits().isEmpty()) {
-                for (CircuitResource circuit : oldService.getCircuits()) {
-                    if (!newService.getCircuits().contains(circuit)) {
-                        //
-                        // Marca o Circuito para remoção
-                        //
-                        circuit.getServices().remove(circuit.getId());
-                        circuitResourceManager.updateCircuitResource(circuit);
-                    }
-                }
-            }
-        }
+    public List<IconModel> findIconByFilter(FilterDTO filter) throws ArangoDaoException, ResourceNotFoundException {
+        return this.iconDao.findResourceByFilter(filter);
+    }
+    
+    public IconModel updateIcon(IconModel iconModel) throws GenericException {
         
-    }
-    
-    public GraphList<IconModel> findServiceByFilter(FilterDTO filter, Domain domain) throws ArangoDaoException, ResourceNotFoundException {
-        return this.iconDao.findResourceByFilter(filter, domain);
-    }
-    
-    public IconModel updateService(IconModel service) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
-        String timerId = startTimer("updateIconModel");
-        try {
-            this.lockManager.lock();
-            service.setLastModifiedDate(new Date());
-            
-            ResourceSchemaModel schemaModel = schemaSession.loadSchema(service.getAttributeSchemaName());
-            service.setSchemaModel(schemaModel);
-            schemaSession.validateResourceSchema(service);
-            dynamicRuleSession.evalResource(service, "u", this); // <--- Pode não ser verdade , se a chave for  duplicada..
-
-            //
-            // Está salvando null de nested resources... ver o que fazer..
-            // 
-            this.computeServiceIntegrity(service);
-            DocumentUpdateEntity<IconModel> result = this.iconDao.updateResource(service);
-            IconModel newService = result.getNew();
-            IconModel oldService = result.getOld();
-            this.resolveCircuitServiceLinks(newService, oldService);
-            
-            this.evaluateServiceStateTransition(result);
-            
-            IconModelUpdatedEvent event = new IconModelUpdatedEvent(oldService, newService);
-            this.eventManager.notifyResourceEvent(event);
-            return newService;
-        } finally {
-            if (lockManager.isLocked()) {
-                lockManager.unlock();
+        if(iconsDir == null){
+            this.iconsDir = configurationManager.loadConfiguration().getIconsDir();
+        }
+        String fileSeparator = File.separator;
+        try{
+            if(Boolean.TRUE.equals(fileExist(iconsDir+fileSeparator+iconModel.getSchemaName()))){
+                FileWriter writer = new FileWriter(iconsDir+fileSeparator+iconModel.getSchemaName());
+                gson.toJson(iconModel, writer);
+                
             }
-            endTimer(timerId);
+            return iconModel;
+        }
+        catch(JsonIOException | IOException  e){
+            throw new GenericException(e.getMessage());
         }
     }
 
     /**
-     * Resolves Services and Circuits
-     *
-     * @param service
+     * @param fileName
      * @return
-     * @throws ResourceNotFoundException
-     * @throws ArangoDaoException
+     * @throws GenericException
      */
-    public IconModel resolveService(IconModel service)
-            throws ResourceNotFoundException, ArangoDaoException, DomainNotFoundException, InvalidRequestException {
-        
-        List<IconModel> resolvedServices = new ArrayList<>();
-        if (service.getDependencies() != null && !service.getDependencies().isEmpty()) {
-            for (IconModel item : service.getDependencies()) {
-                if (item.getDomain() == null) {
-                    if (item.getDomainName() != null) {
-                        //
-                        // Trata o Inter domain
-                        //
-                        item.setDomain(this.domainManager.getDomain(item.getDomainName()));
-                    } else {
-                        item.setDomain(service.getDomain());
-                    }
-                }
 
-                /**
-                 * Garante que não vamos levar em consideração o status
-                 * operacional,pois pode ter atualizado... isso é ruim,acontece
-                 * porque na atualização do serviço ele não atualizou as
-                 * referencias. Vou tentar resolver isso
-                 */
-//                item.setOperationalStatus(null);
-                IconModel resolved = this.getService(item);
-                resolvedServices.add(resolved);
-            }
-        }
-        service.setDependencies(resolvedServices);
-        
-        List<CircuitResource> resolvedCircuits = new ArrayList<>();
-        if (service.getCircuits() != null && !service.getCircuits().isEmpty()) {
-            for (CircuitResource circuit : service.getCircuits()) {
-                if (circuit.getDomain() == null) {
-                    circuit.setDomain(service.getDomain());
-                }
-                if (circuit.getRevisionId() == null) {
-                    CircuitResource resolved = this.circuitResourceManager.findCircuitResource(circuit);
-                    resolvedCircuits.add(resolved);
-                } else {
-                    //
-                    // Se tem revision já foi resolvido.
-                    //
-                    resolvedCircuits.add(circuit);
-                }
-            }
-        }
-        service.setCircuits(resolvedCircuits);
-        
-        return service;
+    public Boolean fileExist(String fileName){
+        File f = new File(fileName);
+        return f.exists();
     }
 
-    /**
-     * Registra o Listener no EventBUS
-     */
-    @EventListener(ApplicationReadyEvent.class)
-    private void onStartUp() {
-        eventManager.registerListener(this);
-    }
-
-    /**
-     * Quando uma conexão é criada
-     *
-     * @param createdEvent
-     */
-    private void updateIconModelConnectionReferenceCreateEvent(ResourceConnectionCreatedEvent createdEvent) throws ResourceNotFoundException, ArangoDaoException, DomainNotFoundException {
-        ResourceConnection connection = createdEvent.getNewResource();
-        if (connection.getDependentService() != null) {
-            //
-            // Temos referencia a um serviço
-            //
-            IconModel service = connection.getDependentService();
-            //
-            // Recupera a referencia do DB
-            //
-            service = this.getService(service);
-            if (service.getRelatedResourceConnections() == null) {
-                service.setRelatedResourceConnections(new ArrayList<>());
-            }
-            
-            if (!service.getRelatedResourceConnections().contains(connection.getId())) {
-                service.getRelatedResourceConnections().add(connection.getId());
-                this.evaluateServiceStateTransition(this.iconDao.updateResource(service));
-            }
-        }
-    }
-
-    /**
-     * Quando um recurso é criado. Este método cuida de atualizar as relações
-     * entre o Serviço e os supostos recursos dos demais dominios. Atenção é
-     * quando o recurso é criado!
-     *
-     * @param createdEvent
-     * @throws ResourceNotFoundException
-     * @throws ArangoDaoException
-     * @throws DomainNotFoundException
-     */
-    private void updateServiceManagedResourceReferenceCreateEvent(ManagedResourceCreatedEvent createdEvent) throws ResourceNotFoundException, ArangoDaoException, DomainNotFoundException {
-        ManagedResource resource = createdEvent.getNewResource();
-        if (resource.getDependentService() != null) {
-            IconModel service = resource.getDependentService();
-            //
-            // Recupera a referencia do DB
-            //
-            service = this.getService(service);
-            if (service.getRelatedManagedResources() == null) {
-                service.setRelatedManagedResources(new ArrayList<>());
-            }
-            
-            if (!service.getRelatedManagedResources().contains(resource.getId())) {
-                service.getRelatedManagedResources().add(resource.getId());
-                this.evaluateServiceStateTransition(this.iconDao.updateResource(service));
-            }
-        }
-    }
-
-    /**
-     * Quando um recurso é atualizado. Este método cuida de atualizar as
-     * relações entre o Serviço e os supostos recursos dos demais dominios.
-     * Atenção é quando o recurso é atualizado! Durante a atualização é mais
-     * complicado, pois o recurso pode ter sido movido de um serviço para o
-     * outro, e precisamos manter as referencias atualizadas
-     *
-     * @param createdEvent
-     * @throws ResourceNotFoundException
-     * @throws ArangoDaoException
-     * @throws DomainNotFoundException
-     */
-    private void updateServiceManagedResourceReferenceUpdateEvent(ManagedResourceUpdatedEvent updateEvent) throws ResourceNotFoundException, ArangoDaoException, DomainNotFoundException, InvalidRequestException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
-        if (updateEvent.getOldResource() == null && updateEvent.getNewResource() != null) {
-            ManagedResource resource = updateEvent.getNewResource();
-            if (resource.getDependentService() != null) {
-                IconModel service = resource.getDependentService();
-                //
-                // Recupera a referencia do DB
-                //
-                service = this.getService(service);
-                if (service.getRelatedManagedResources() == null) {
-                    service.setRelatedManagedResources(new ArrayList<>());
-                }
-                
-                if (!service.getRelatedManagedResources().contains(resource.getId())) {
-                    service.getRelatedManagedResources().add(resource.getId());
-                    this.evaluateServiceStateTransition(this.iconDao.updateResource(service));
-                }
-            } else {
-                logger.debug("No Resource to Update");
-            }
-        } else if (updateEvent.getOldResource() != null && updateEvent.getNewResource() != null) {
-            
-            if (updateEvent.getOldResource().getDependentService() == null && updateEvent.getNewResource().getDependentService() != null) {
-                logger.debug("Linking Service from Dependency to:[{}]", updateEvent.getNewResource().getDependentService().getId());
-
-                //
-                // Neste cenário não tinha depedencia e agora tem então é só salvar a referencia.
-                //
-                IconModel service = updateEvent.getNewResource().getDependentService();
-                ManagedResource resource = updateEvent.getNewResource();
-                
-                service = this.getService(service);
-                if (service.getRelatedManagedResources() == null) {
-                    service.setRelatedManagedResources(new ArrayList<>());
-                }
-                
-                if (!service.getRelatedManagedResources().contains(resource.getId())) {
-                    service.getRelatedManagedResources().add(resource.getId());
-                    this.evaluateServiceStateTransition(this.iconDao.updateResource(service));
-                }
-            } else if (updateEvent.getOldResource().getDependentService() != null && updateEvent.getNewResource().getDependentService() != null) {
-                ManagedResource resource = updateEvent.getNewResource();
-                logger.debug("Changing Service from Dependency from:[{}] to:[{}]", updateEvent.getOldResource().getDependentService().getId(), updateEvent.getNewResource().getDependentService().getId());
-                //
-                // Tinha serviço nos 2
-                //
-                if (!updateEvent.getOldResource().getDependentService().getId().equals(updateEvent.getNewResource().getDependentService().getId())) {
-                    //
-                    // Trocou o serviço, agora a gente precisa remover a referencia do antigo e atualizar no novo
-                    //
-                    IconModel newService = updateEvent.getNewResource().getDependentService();
-                    IconModel oldService = updateEvent.getOldResource().getDependentService();
-                    //
-                    // Obtem as referencias
-                    //
-                    oldService = this.getService(oldService);
-                    newService = this.getService(newService);
-
-                    //
-                    // No Old Service vamos remover a referencia.
-                    //
-                    if (oldService.getRelatedManagedResources() != null && !oldService.getRelatedManagedResources().isEmpty()) {
-                        if (oldService.getRelatedManagedResources().remove(resource.getId())) {
-                            this.updateService(oldService);
-                        } else {
-                            logger.debug("Resource: [{}] Not Found on Old Service:[{}]", resource.getId(), oldService.getId());
-                        }
-                    }
-                    if (newService.getRelatedManagedResources() == null) {
-                        newService.setRelatedManagedResources(new ArrayList<>());
-                    }
-                    
-                    if (!newService.getRelatedManagedResources().contains(resource.getId())) {
-                        newService.getRelatedManagedResources().add(resource.getId());
-                        this.updateService(newService);
-                    }
-                    
-                } else {
-                    logger.debug("Services Are Equal Not Updating...");
-                }
-                
-            }
-        }
-    }
-
-    /**
-     * Quando uma conexão é atualizada. Este método cuida de atualizar as
-     * relações entre o Serviço e os supostos recursos dos demais dominios.
-     * Atenção é quando o recurso é atualizado! Durante a atualização é mais
-     * complicado, pois o recurso pode ter sido movido de um serviço para o
-     * outro, e precisamos manter as referencias atualizadas
-     *
-     * @param createdEvent
-     * @throws ResourceNotFoundException
-     * @throws ArangoDaoException
-     * @throws DomainNotFoundException
-     */
-    private void updateIconModelConnectionReferenceUpdateEvent(ResourceConnectionUpdatedEvent updateEvent) throws ResourceNotFoundException, ArangoDaoException, DomainNotFoundException, InvalidRequestException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
-        if (updateEvent.getOldResource() == null && updateEvent.getNewResource() != null) {
-            ResourceConnection resource = updateEvent.getNewResource();
-            if (resource.getDependentService() != null) {
-                IconModel service = resource.getDependentService();
-                //
-                // Recupera a referencia do DB
-                //
-                service = this.getService(service);
-                if (service.getRelatedResourceConnections() == null) {
-                    service.setRelatedResourceConnections(new ArrayList<>());
-                }
-                
-                if (!service.getRelatedResourceConnections().contains(resource.getId())) {
-                    service.getRelatedResourceConnections().add(resource.getId());
-                    this.evaluateServiceStateTransition(this.iconDao.updateResource(service));
-                }
-            }
-        } else if (updateEvent.getOldResource() != null && updateEvent.getNewResource() != null) {
-            
-            if (updateEvent.getOldResource().getDependentService() == null && updateEvent.getNewResource().getDependentService() != null) {
-                logger.debug("Linking Service from Dependency to:[{}]", updateEvent.getNewResource().getDependentService().getId());
-
-                //
-                // Neste cenário não tinha depedencia e agora tem então é só salvar a referencia.
-                //
-                IconModel service = updateEvent.getNewResource().getDependentService();
-                ResourceConnection resource = updateEvent.getNewResource();
-                
-                service = this.getService(service);
-                if (service.getRelatedResourceConnections() == null) {
-                    service.setRelatedResourceConnections(new ArrayList<>());
-                }
-                
-                if (!service.getRelatedResourceConnections().contains(resource.getId())) {
-                    service.getRelatedResourceConnections().add(resource.getId());
-                    this.evaluateServiceStateTransition(this.iconDao.updateResource(service));
-                }
-            } else if (updateEvent.getOldResource().getDependentService() != null && updateEvent.getNewResource().getDependentService() != null) {
-                ResourceConnection resource = updateEvent.getNewResource();
-                logger.debug("Changing Service from Dependency from:[{}] to:[{}]", updateEvent.getOldResource().getDependentService().getId(), updateEvent.getNewResource().getDependentService().getId());
-                //
-                // Tinha serviço nos 2
-                //
-                if (!updateEvent.getOldResource().getDependentService().getId().equals(updateEvent.getNewResource().getDependentService().getId())) {
-                    //
-                    // Trocou o serviço, agora a gente precisa remover a referencia do antigo e atualizar no novo
-                    //
-                    IconModel newService = updateEvent.getNewResource().getDependentService();
-                    IconModel oldService = updateEvent.getOldResource().getDependentService();
-                    //
-                    // Obtem as referencias
-                    //
-                    oldService = this.getService(oldService);
-                    newService = this.getService(newService);
-
-                    //
-                    // No Old Service vamos remover a referencia.
-                    //
-                    if (oldService.getRelatedResourceConnections() != null && !oldService.getRelatedResourceConnections().isEmpty()) {
-                        if (oldService.getRelatedResourceConnections().remove(resource.getId())) {
-                            this.updateService(oldService);
-                        } else {
-                            logger.debug("Resource: [{}] Not Found on Old Service:[{}]", resource.getId(), oldService.getId());
-                        }
-                    }
-                    if (newService.getRelatedResourceConnections() == null) {
-                        newService.setRelatedResourceConnections(new ArrayList<>());
-                    }
-                    
-                    if (!newService.getRelatedResourceConnections().contains(resource.getId())) {
-                        newService.getRelatedResourceConnections().add(resource.getId());
-                        this.updateService(newService);
-                    }
-                    
-                } else {
-                    logger.debug("Services Are Equal Not Updating...");
-                }
-                
-            }
-        }
-    }
-
-    /**
-     * Avalia se houve transição de estado para notificação do evento de
-     * transição. Este cara que deve avisar o ResrouceManager sobre as
-     * alterações
-     *
-     * @param update
-     */
-    private void evaluateServiceStateTransition(DocumentUpdateEntity<IconModel> update) {
-        //
-        // Verifica se houve transição de estado.
-        //
-
-        if (update.getNew() != null && update.getOld() != null) {
-            if (!update.getNew().getOperationalStatus().equals(update.getOld().getOperationalStatus())) {
-                //
-                // Houve Transição de estado
-                //
-                ServiceStateTransionedEvent serviceTrasitionEvent = new ServiceStateTransionedEvent(update);
-                this.eventManager.notifyResourceEvent(serviceTrasitionEvent);
-                logger.debug("Service: [{}] Transitioned from:[{}] to:[{}]", update.getNew().getId(), update.getOld().getOperationalStatus(), update.getNew().getOperationalStatus());
-            }
-        }
-    }
-
-    /**
-     * Atualiza a referencia de um circuito com serviço.
-     *
-     * @param service
-     * @throws ArangoDaoException
-     */
-    private void updateServiceCircuitReference(IconModel service) throws ArangoDaoException, ResourceNotFoundException, IOException, DomainNotFoundException {
-
-        //
-        // Actually Update on DB
-        //
-        this.evaluateServiceStateTransition(this.iconDao.updateResource(service));
-
-        /**
-         * Verifica se este serviço é necessário para algum outro, ou seja, do
-         * pai, procura os filhos. Note que este método só encontra serviços do
-         * mesmo dominio.
-         */
-        try {
-
-            //
-            // Vamos procurar os filhos de outro jeito agora..
-            //
-            if (service.getRelatedServices() != null && !service.getRelatedServices().isEmpty()) {
-                //
-                // Tem Filhos 
-                //
-
-                for (String relatedServiceId : service.getRelatedServices()) {
-                    String domainName = this.domainManager.getDomainNameFromId(relatedServiceId);
-                    
-                    IconModel dependentService = new IconModel(relatedServiceId);
-                    dependentService.setDomainName(domainName);
-                    dependentService.setDomain(this.domainManager.getDomain(domainName));
-                    dependentService = this.getServiceById(dependentService);
-                    dependentService.getDependencies().removeIf(d -> d.getId().equals(service.getId()));
-                    dependentService.getDependencies().add(service);
-                    try {
-                        //
-                        // Computa primeiro para saber o estado
-                        //
-                        this.computeServiceIntegrity(dependentService);
-//                        DocumentUpdateEntity<IconModel> updateResult = this.iconDao.updateResource(dependentService);
-                        this.evaluateServiceStateTransition(this.iconDao.updateResource(dependentService));
-                        //
-                        // Salva no Banco de dados
-                        //
-                        this.updateServiceCircuitReference(dependentService);
-                    } catch (ArangoDaoException | ResourceNotFoundException | DomainNotFoundException | IOException ex) {
-                        logger.error("Failed to Update Service Dependecies", ex);
-                    }
-                }
-                
-            }
-
-            /**
-             * Desligado, pois somente consulta dados do mesmo domininio.
-             */
-//            this.iconDao.findUpperResources(service).forEach(dependentService -> {
-//                //
-//                // Aqui vamos ter a lista dos serviços que dependem do serviço que acabou de ser atualizado.
-//                //
-//                if (dependentService.getDependencies() != null) {
-//                    dependentService.getDependencies().removeIf(d -> d.getId().equals(service.getId()));
-//                    dependentService.getDependencies().add(service);
-//                    try {
-//                        this.computeServiceIntegrity(dependentService);
-//                        this.updateServiceReferences(dependentService);
-//                    } catch (ArangoDaoException | ResourceNotFoundException | DomainNotFoundException | IOException ex) {
-//                        logger.error("Failed to Update Service Dependecies", ex);
-//                    }
-//                }
-//
-//            });
-        } catch (ResourceNotFoundException ex) {
-            //
-            // Isto é esperado visto que podemos não ter dependencias.
-            // 
-        }
-    }
-
-    /**
-     * Computa o status final do serviço
-     *
-     * @param service
-     */
-    private void computeServiceIntegrity(IconModel service) {
-        //
-        // Verifica o estado final do serviço
-        //
-        if (service.getCircuits() != null && !service.getCircuits().isEmpty()) {
-            if (service.getCircuits().size() == 1) {
-                //
-                // Se tem apenas um circuito, o status do serviço reflete o status do circuito
-                //
-                service.setDegrated(service.getCircuits().get(0).getDegrated());
-                service.setBroken(service.getCircuits().get(0).getBroken());
-            } else {
-                
-                List<CircuitResource> workingCircuits = service.getCircuits()
-                        .stream()
-                        .filter(c -> !c.getBroken()).collect(Collectors.toList());
-                
-                List<CircuitResource> brokenCircuits = service.getCircuits()
-                        .stream()
-                        .filter(c -> c.getBroken()).collect(Collectors.toList());
-                
-                if (workingCircuits != null) {
-                    if (workingCircuits.isEmpty()) {
-                        if (!service.getBroken()) {
-                            service.setBroken(true);
-                            service.setOperationalStatus("Down");
-                        }
-                    } else {
-                        /**
-                         * Tem algum circuito funcionando, se estava quebrado,
-                         * normaliza, também avalia se tem algum circuito fora,
-                         * e se tiver marca como degradado
-                         */
-                        if (service.getBroken()) {
-                            service.setBroken(false);
-                            service.setOperationalStatus("Up");
-                            if (!brokenCircuits.isEmpty()) {
-                                service.setDegrated(true);
-                            } else {
-                                service.setDegrated(false);
-                                
-                            }
-                        }
-                        
-                    }
-                } else {
-                    /**
-                     * Nenhum circuito funcionando, marca o serviço como
-                     * quebrado
-                     */
-                    if (!service.getBroken()) {
-                        service.setBroken(true);
-                        service.setDegrated(true);
-                        service.setOperationalStatus("Down");
-                    }
-                    
-                }
-            }
-            
-            if (service.getBroken()) {
-                service.setDegrated(true);
-                service.setOperationalStatus("Down");
-            } else {
-                service.setOperationalStatus("Up");
-            }
-        } else if (service.getDependencies() != null && !service.getDependencies().isEmpty()) {
-            //
-            // Trabalha com a depedencia de serviço
-            //
-            if (service.getDependencies().size() == 1) {
-                //
-                // se só tiver um serviço reflete o status
-                //
-                service.setDegrated(service.getDependencies().get(0).getDegrated());
-                service.setBroken(service.getDependencies().get(0).getBroken());
-                service.setOperationalStatus(service.getDependencies().get(0).getOperationalStatus());
-            } else {
-                //
-                // Temos multiplos serviços.
-                //
-
-                List<IconModel> workingServices = service.getDependencies()
-                        .stream()
-                        .filter(c -> !c.getBroken()).collect(Collectors.toList());
-                
-                List<IconModel> brokenServices = service.getDependencies()
-                        .stream()
-                        .filter(c -> c.getBroken()).collect(Collectors.toList());
-                
-                if (workingServices != null) {
-                    if (workingServices.isEmpty()) {
-                        if (!service.getBroken()) {
-                            service.setBroken(true);
-                            service.setOperationalStatus("Down");
-                        }
-                    } else {
-                        
-                        if (service.getBroken()) {
-                            service.setBroken(false);
-                            service.setOperationalStatus("Up");
-                            if (!brokenServices.isEmpty()) {
-                                service.setDegrated(true);
-                            } else {
-                                service.setDegrated(false);
-                                
-                            }
-                        }
-                        
-                    }
-                } else {
-                    /**
-                     * Nenhum seriço funcionando, marca o serviço como quebrado
-                     */
-                    if (!service.getBroken()) {
-                        service.setBroken(true);
-                        service.setDegrated(true);
-                        service.setOperationalStatus("Down");
-                    }
-                    
-                }
-                
-            }
-        }
-        
-    }
-    
-    @Subscribe
-    public void onProcessServiceIntegrityEvent(ProcessServiceIntegrityEvent processEvent)
-            throws ArangoDaoException, ResourceNotFoundException {
-        
-    }
-    
-    @Subscribe
-    public void onIconModelUpdatedEvent(IconModelUpdatedEvent processEvent)
-            throws ArangoDaoException, IllegalStateException, IOException, ResourceNotFoundException, DomainNotFoundException {
-        this.updateServiceCircuitReference(processEvent.getNewResource());
-    }
-    
-    @Subscribe
-    public void onIconModelCreatedEvent(IconModelCreatedEvent createdEvent) throws ArangoDaoException, ResourceNotFoundException, IOException, DomainNotFoundException {
-        if (createdEvent.getNewResource().getDependencies() != null) {
-            if (!createdEvent.getNewResource().getDependencies().isEmpty()) {
-                //
-                // Vamos olhar as dependencias do Serviço criado
-                //
-                List<IconModel> servicesToUpdate = new ArrayList<>();
-                for (IconModel dependency : createdEvent.getNewResource().getDependencies()) {
-                    //
-                    // Valida se a dependencia é do mesmo dominio.
-                    //
-
-                    //
-                    // Sincroniza com o DB
-                    //
-                    dependency = this.iconDao.findResource(dependency);
-                    if (dependency.getRelatedServices() != null) {
-                        if (!dependency.getRelatedServices().contains(createdEvent.getNewResource().getId())) {
-                            dependency.getRelatedServices().add(createdEvent.getNewResource().getId());
-                            servicesToUpdate.add(dependency);
-                        }
-                    } else {
-                        dependency.setRelatedServices(new ArrayList<>());
-                        dependency.getRelatedServices().add(createdEvent.getNewResource().getId());
-                        servicesToUpdate.add(dependency);
-                    }
-                    
-                }
-                //
-                // Atualiza na origem a depedencia
-                //
-                for (IconModel service : servicesToUpdate) {
-                    this.updateServiceCircuitReference(service);
-                }
-                
-            }
-        }
-        
-    }
-
-    /**
-     * Recebe as notificações de udpate dos serviços serviço
-     *
-     * @param event
-     */
-    @Subscribe
-    public void onCircuitResourceUpdatedEvent(CircuitResourceUpdatedEvent event) throws ResourceNotFoundException, ArangoDaoException, IOException, DomainNotFoundException {
-        //
-        // Um Circuito Sofre alteração, mas ele foi alterado de estado ? 
-        //
-
-        if (event.getNewResource().getServices() != null) {
-            if (!event.getNewResource().getServices().isEmpty()) {
-                logger.debug("Circuit:[{}] State Changed, Impacted Services Count:[{}]",
-                        event.getNewResource().getId(),
-                        event.getNewResource().getServices().size());
-                //
-                // Trata o Status Aqui
-                //
-                List<IconModel> servicesToUpdate = new ArrayList<>();
-                
-                for (String serviceId : event.getNewResource().getServices()) {
-                    //
-                    // o Circuito só pode impactar serviços do mesmo dominio.
-                    //
-                    IconModel service = new IconModel(serviceId);
-                    service.setDomain(event.getNewResource().getDomain());
-                    //
-                    // Recupera o serviço do Banco
-                    //
-                    service = this.getServiceById(service);
-                    logger.debug("Found Service ID:[{}] to Update Related ManagedResources", service.getId());
-                    
-                    if (service.getRelatedManagedResources() != null) {
-                        logger.debug("\t Service ID:[{}] Has: [{}] Managed Resource Links", service.getId(), service.getRelatedManagedResources().size());
-                    }
-                    
-                    if (service.getRelatedResourceConnections() != null) {
-                        logger.debug("\t Service ID:[{}] Has: [{}] Resource Connections Links", service.getId(), service.getRelatedResourceConnections().size());
-                    }
-
-                    //
-                    // Atualiza as referencias do Circuito
-                    //
-                    service.getCircuits().removeIf(c -> c.getId().equals(event.getNewResource().getId()));
-                    service.getCircuits().add(event.getNewResource());
-
-                    //
-                    // Avalia o status dos Circuitos
-                    //
-                    servicesToUpdate.add(service);
-                    
-                }
-                
-                for (IconModel service : servicesToUpdate) {
-                    //
-                    // Computa o status Final do serviço
-                    //
-                    this.computeServiceIntegrity(service);
-                    /**
-                     * Manda para um método especifico só para atualizar as
-                     * referencias. do Circuito e seu Status. Como foi chamado
-                     * após o calculo ele também atualiza
-                     */
-                    this.updateServiceCircuitReference(service);
-                    
-                }
-                
-            }
-        }
-        
-    }
-
-    /**
-     * Recebe as atualizações de Managed Resource
-     *
-     * @param updateEvent
-     */
-    @Subscribe
-    public void onManagedResourceUpdatedEvent(ManagedResourceUpdatedEvent updateEvent) throws ResourceNotFoundException, ArangoDaoException, DomainNotFoundException, InvalidRequestException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
-        logger.debug("Managed Resource [{}] Updated: ", updateEvent.getOldResource().getId());
-        //
-        // Um Recurso foi Atualizado,  tem algum serviço que ele depende aqui ? 
-        //
-        this.updateServiceManagedResourceReferenceUpdateEvent(updateEvent);
-    }
-
-    /**
-     * Called when a Managed Resource is created
-     *
-     * @param resource
-     */
-    @Subscribe
-    public void onManagedResourceCreatedEvent(ManagedResourceCreatedEvent resource) throws ArangoDaoException, DomainNotFoundException, ResourceNotFoundException {
-        if (resource.getNewResource().getDependentService() != null) {
-            //
-            // Temos um Service, vamos notificar ele que um recurso uso ele.
-            //
-            logger.debug("New Link Between Managed Resource:[{}] and Service found:[{}]", resource.getNewResource().getId(), resource.getNewResource().getDependentService().getId());
-            this.updateServiceManagedResourceReferenceCreateEvent(resource);
-            
-        }
-    }
-
-    /**
-     * Recebe as notificações de conexões criadas
-     *
-     * @param resource
-     */
-    @Subscribe
-    public void onResourceConnectionCreatedEvent(ResourceConnectionCreatedEvent resource) throws ResourceNotFoundException, ArangoDaoException, DomainNotFoundException {
-        if (resource.getNewResource().getDependentService() != null) {
-            //
-            // Ok Temos um serviço para atualizar.
-            //
-            this.updateIconModelConnectionReferenceCreateEvent(resource);
-        }
-    }
-
-    /**
-     * Recebe as notificações de conexões atualizadas
-     *
-     * @param resource
-     */
-    @Subscribe
-    public void onResourceConnectionUpdatedEvent(ResourceConnectionUpdatedEvent updateEvent) throws ResourceNotFoundException, ArangoDaoException, DomainNotFoundException, InvalidRequestException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
-        
-        this.updateIconModelConnectionReferenceUpdateEvent(updateEvent);
-
-        //
-        // Avaliar se preciso disso agora...
-        //
-        if (updateEvent.getOldResource().getDependentService() == null && updateEvent.getNewResource().getDependentService() != null) {
-            //
-            // Neste cenário não tinha depedencia e agora tem então é só salvar a referencia.
-            //
-
-        } else if (updateEvent.getOldResource().getDependentService() != null && updateEvent.getNewResource().getDependentService() != null) {
-            //
-            // Tinha serviço nos 2
-            //
-
-            if (!updateEvent.getOldResource().getDependentService().equals(updateEvent.getNewResource().getDependentService())) {
-                //
-                // Trocou o serviço, agora a gente precisa remover a referencia do antigo e atualizar no novo
-                //
-            }
-            
-        }
-    }
+ 
 }

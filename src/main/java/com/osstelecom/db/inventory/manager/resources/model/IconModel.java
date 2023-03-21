@@ -3,10 +3,10 @@ package com.osstelecom.db.inventory.manager.resources.model;
 public class IconModel {
    private String schemaName;
    private String mimeType;
-   private String conteudo;
+   private String content;
 
-   public String getSchemaName() {
-    return schemaName;
+    public String getSchemaName() {
+        return schemaName;
     }
     public void setSchemaName(String schemaName) {
         this.schemaName = schemaName;
@@ -17,11 +17,11 @@ public class IconModel {
     public void setMimeType(String mimeType) {
         this.mimeType = mimeType;
     }
-    public String getConteudo() {
-        return conteudo;
+    public String getContent() {
+        return content;
     }
-    public void setConteudo(String conteudo) {
-        this.conteudo = conteudo;
+    public void setContent(String content) {
+        this.content = content;
     }
 
     public IconModel(String schemaName) {

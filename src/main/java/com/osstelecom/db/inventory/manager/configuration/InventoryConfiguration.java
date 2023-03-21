@@ -28,6 +28,7 @@ public class InventoryConfiguration {
     private ArangoDBConfiguration graphDbConfiguration = new ArangoDBConfiguration();
 
     private String schemaDir = "samples/schema";
+    private String iconsDir = "samples/icons";
     private String rulesDir = "rules/";
     private String dateFormat = "dd-MM-yyyy";
     private String dateTimeFormat = "dd-MM-yyyy hh:MM:ss";
@@ -82,6 +83,20 @@ public class InventoryConfiguration {
      */
     public void setSchemaDir(String schemaDir) {
         this.schemaDir = schemaDir;
+    }
+
+    /**
+     * @return the iconsDir
+     */
+    public String getIconsDir() {
+        return iconsDir;
+    }
+
+    /**
+     * @param iconsDir the iconsDir to set
+     */
+    public void setIconsDir(String iconsDir) {
+        this.iconsDir = iconsDir;
     }
 
     /**

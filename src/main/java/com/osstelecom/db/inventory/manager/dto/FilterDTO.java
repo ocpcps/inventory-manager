@@ -22,6 +22,8 @@ import com.osstelecom.db.inventory.manager.resources.ConsumableMetric;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import com.osstelecom.db.inventory.manager.resources.ServiceResource;
+import com.osstelecom.db.inventory.manager.resources.model.IconModel;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -46,11 +48,13 @@ public class FilterDTO {
     private List<ResourceConnection> connections;
     private List<CircuitResource> circuits;
     private List<ServiceResource> services;
+    private List<IconModel> icons;
     private List<ConsumableMetric> metrics;
     private Long nodeCount = 0L;
     private Long connectionsCount = 0L;
     private Long circuitCount = 0L;
     private Long serviceCount = 0L;
+    private Long iconCount = 0L;
     private Long metricCount = 0L;
     private String sortCondition = "";
     private Long offSet = -1L;
@@ -285,6 +289,20 @@ public class FilterDTO {
     }
 
     /**
+     * @return the icons
+     */
+    public List<IconModel> getIcons() {
+        return icons;
+    }
+    
+    /**
+     * @param icons the icons to set
+     */
+    public void setIcons(List<IconModel> icons) {
+        this.icons = icons;
+    }
+
+    /**
      * @return the metrics
      */
     public List<ConsumableMetric> getMetrics() {
@@ -324,6 +342,20 @@ public class FilterDTO {
      */
     public void setServiceCount(Long serviceCount) {
         this.serviceCount = serviceCount;
+    }
+
+    /**
+     * @return the iconCount
+     */
+    public Long getIconCount() {
+        return iconCount;
+    }
+
+     /**
+     * @param iconCount the iconCount to set
+     */
+    public void setIconCount(Long iconCount) {
+        this.iconCount = iconCount;
     }
 
     /**
