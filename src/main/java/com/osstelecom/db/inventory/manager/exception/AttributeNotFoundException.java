@@ -27,6 +27,10 @@ import com.osstelecom.db.inventory.manager.request.IRequest;
  */
 public class AttributeNotFoundException extends BasicException {
 
+    public AttributeNotFoundException(Throwable thrwbl) {
+        super(thrwbl);
+    }
+
     public AttributeNotFoundException() {
     }
 
@@ -40,6 +44,10 @@ public class AttributeNotFoundException extends BasicException {
 
     public AttributeNotFoundException(IRequest<? extends BasicRequest> request, String message) {
         super(request, message);
+    }
+
+    public AttributeNotFoundException(String msg, Throwable cause) {
+        super(msg, cause);
     }
 
     public AttributeNotFoundException(IRequest<? extends BasicRequest> request, String message, Throwable cause) {
