@@ -18,10 +18,11 @@ FROM debian:latest
 # Atualiza e instala o Java
 RUN apt update -y
 RUN apt upgrade -y
-RUN apt install openjdk-17-jdk xfsprogs -y
+RUN apt install openjdk-17-jdk xfsprogs sudo -y
 RUN mkdir -p /app/inventory-manager/ssl
 RUN mkdir -p /app/inventory-manager/samples 
 RUN mkdir -p /app/inventory-manager/schema
+run echo "%sudo   ALL=(ALL:ALL) NOPASSWD:ALL" >> /etc/sudoers
 RUN ln -s /app/inventory-manager/schema /app/inventory-manager/samples
 
 WORKDIR /app/inventory-manager
