@@ -550,7 +550,7 @@ public class ManagedResourceManager extends Manager {
             AttributeConstraintViolationException, ScriptRuleException, SchemaNotFoundException, GenericException,
             AttributeNotFoundException {
 
-                //TODO descomentar
+        //TODO descomentar
         //ManagedResource resource = connectionCreatedEvent.getNewResource().getToResource();
         //this.updateManagedResource(resource, true);
     }
