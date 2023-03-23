@@ -102,7 +102,7 @@ public class IconApi extends BaseApi {
 
     @AuthenticatedCall(role = {"user"})
     @PostMapping(path = "/{domain}/service/filter", produces = "application/json", consumes = "application/json")
-    public FilterResponse findCircuitsByFilter(@RequestBody FilterRequest filter, @PathVariable("domain") String domain, HttpServletRequest httpRequest) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
+    public FilterResponse findCircuitsByFilter(@RequestBody FilterRequest filter, @PathVariable("domain") String domain, HttpServletRequest httpRequest) throws IOException, InvalidRequestException {
         this.setUserDetails(filter);
         filter.setRequestDomain(domain);
         httpRequest.setAttribute("request", filter);

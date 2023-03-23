@@ -23,8 +23,6 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
-import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
 import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
@@ -52,29 +50,32 @@ public class IconSession {
     @Autowired
     private IconManager iconManager;
 
-    public GetIconResponse getIconById(GetIconRequest request) throws ResourceNotFoundException, InvalidRequestException {
+    public GetIconResponse getIconById(GetIconRequest request)
+            throws ResourceNotFoundException, InvalidRequestException {
         if (request.getPayLoad().getSchemaName() == null) {
-            throw new InvalidRequestException("Icons Field Missing");
+            throw new InvalidRequestException("Payload Missing");
         }
         return new GetIconResponse(iconManager.getIconById(request.getPayLoad()));
     }
 
-    public DeleteIconResponse deleteIcon(DeleteIconRequest request) throws InvalidRequestException, ResourceNotFoundException, IOException {
+    public DeleteIconResponse deleteIcon(DeleteIconRequest request)
+            throws InvalidRequestException, ResourceNotFoundException, IOException {
         if (request.getPayLoad().getSchemaName() == null) {
             throw new InvalidRequestException("Schema name Field Missing");
         }
-        IconModel payload = request.getPayLoad(); 
+        IconModel payload = request.getPayLoad();
         IconModel old = iconManager.getIconById(payload);
 
-        if (old == null){
+        if (old == null) {
             throw new ResourceNotFoundException("Icon not found");
-        }  
+        }
 
         return new DeleteIconResponse(iconManager.deleteIcon(request.getPayLoad()));
     }
 
-    public CreateIconResponse createIcon(CreateIconRequest request) throws InvalidRequestException, ResourceNotFoundException, GenericException {
-        
+    public CreateIconResponse createIcon(CreateIconRequest request)
+            throws InvalidRequestException, ResourceNotFoundException, GenericException {
+
         if (request == null || request.getPayLoad() == null) {
             throw new InvalidRequestException("Request is null please send a valid request");
         }
@@ -82,30 +83,30 @@ public class IconSession {
         if (request.getPayLoad().getSchemaName() == null) {
             throw new InvalidRequestException("Schema name Field Missing");
         }
-        
-        IconModel payload = request.getPayLoad(); 
+
+        IconModel payload = request.getPayLoad();
         IconModel old = iconManager.getIconById(payload);
 
-        if (old != null){
+        if (old != null) {
             throw new ResourceNotFoundException("Icon already exists");
-        }       
+        }
         if (payload.getContent() == null) {
             throw new InvalidRequestException("Content not found");
         }
-        
+
         if (payload.getMimeType() == null) {
             throw new InvalidRequestException("Mime Type not found");
         }
-        if(payload.getContent().length() == 0 || payload.getContent().length() > 3000){
+        if (payload.getContent().length() == 0 || payload.getContent().length() > 3000) {
             throw new InvalidRequestException("Content size is invalid");
         }
 
         return new CreateIconResponse(iconManager.createIcon(payload));
     }
 
-    public PatchIconResponse updateIcon(PatchIconRequest request) throws InvalidRequestException, ResourceNotFoundException, GenericException {
-        
-        
+    public PatchIconResponse updateIcon(PatchIconRequest request)
+            throws InvalidRequestException, ResourceNotFoundException, GenericException {
+
         if (request == null || request.getPayLoad() == null) {
             throw new InvalidRequestException("Request is null please send a valid request");
         }
@@ -114,35 +115,35 @@ public class IconSession {
             throw new InvalidRequestException("Schema name Field Missing");
         }
 
-        IconModel payload = request.getPayLoad();       
+        IconModel payload = request.getPayLoad();
         if (payload.getContent() == null) {
             throw new InvalidRequestException("Content not found");
         }
-        
+
         if (payload.getMimeType() == null) {
             throw new InvalidRequestException("Mime Type not found");
         }
-        if(payload.getContent().length() == 0 || payload.getContent().length() > 3000){
+        if (payload.getContent().length() == 0 || payload.getContent().length() > 3000) {
             throw new InvalidRequestException("Content size is invalid");
         }
         IconModel old = iconManager.getIconById(payload);
-        if (old == null){
+        if (old == null) {
             throw new ResourceNotFoundException("Icon not found");
-        }        
+        }
 
         return new PatchIconResponse(iconManager.updateIcon(payload));
-        
+
     }
 
-    public FilterResponse findIconByFilter(FilterRequest filter) throws InvalidRequestException, ArangoDaoException, ResourceNotFoundException {
+    public FilterResponse findIconByFilter(FilterRequest filter) throws InvalidRequestException, IOException {
 
-        if (filter.getPayLoad() != null) {
-            if (filter.getPayLoad().getLimit() != null) {
-                if (filter.getPayLoad().getLimit() > 1000) {
-                    throw new InvalidRequestException("Result Set Limit cannot be over 1000, please descrease limit value to a range between 0 and 1000");
-                }
-            }
+        if (filter.getPayLoad() != null && filter.getPayLoad().getLimit() != null
+                && filter.getPayLoad().getLimit() > 1000) {
+            throw new InvalidRequestException(
+                    "Result Set Limit cannot be over 1000, please descrease limit value to a range between 0 and 1000");
+
         }
+
         FilterResponse response = new FilterResponse(filter.getPayLoad());
         if (filter.getPayLoad().getObjects().contains("icon") || filter.getPayLoad().getObjects().contains("icons")) {
             List<IconModel> listIcon = iconManager.findIconByFilter(filter.getPayLoad());

@@ -22,36 +22,24 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Date;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
-import javax.management.ServiceNotFoundException;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.arangodb.entity.DocumentUpdateEntity;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonIOException;
 import com.osstelecom.db.inventory.manager.configuration.ConfigurationManager;
-import com.osstelecom.db.inventory.manager.configuration.InventoryConfiguration;
 import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
-import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
-import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
-import com.osstelecom.db.inventory.manager.exception.SchemaNotFoundException;
-import com.osstelecom.db.inventory.manager.exception.ScriptRuleException;
-import com.osstelecom.db.inventory.manager.listeners.EventManagerListener;
-import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstraintViolationException;
 import com.osstelecom.db.inventory.manager.resources.model.IconModel;
-import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
-import com.osstelecom.db.inventory.manager.session.DynamicRuleSession;
 
 @Service
 public class IconManager extends Manager {
@@ -74,9 +62,9 @@ public class IconManager extends Manager {
         if(iconsDir == null){
             this.iconsDir = configurationManager.loadConfiguration().getIconsDir();
         }
-        String fileSeparator = File.separator;
+        
         try{
-            FileReader reader = new FileReader(iconsDir+fileSeparator+icon.getSchemaName());
+            FileReader reader = new FileReader(iconsDir+File.separator+icon.getSchemaName());
             return gson.fromJson(reader, IconModel.class);
             
         }
@@ -98,9 +86,9 @@ public class IconManager extends Manager {
         if(iconsDir == null){
             this.iconsDir = configurationManager.loadConfiguration().getIconsDir();
         }
-        String fileSeparator = File.separator;
+
         try{
-            Files.delete(Paths.get(iconsDir+fileSeparator+iconModel.getSchemaName()));
+            Files.delete(Paths.get(iconsDir+File.separator+iconModel.getSchemaName()));
             return iconModel;
         }
         catch(FileNotFoundException  e){
@@ -122,10 +110,9 @@ public class IconManager extends Manager {
         if(iconsDir == null){
             this.iconsDir = configurationManager.loadConfiguration().getIconsDir();
         }
-        String fileSeparator = File.separator;
-        try{
-            FileWriter writer = new FileWriter(iconsDir+fileSeparator+iconModel.getSchemaName());
 
+        try{
+            FileWriter writer = new FileWriter(iconsDir+File.separator+iconModel.getSchemaName());
             gson.toJson(iconModel, writer);
             return iconModel;
         }
@@ -141,10 +128,35 @@ public class IconManager extends Manager {
      *
      * @param newService
      * @param oldService
+     * @throws IOException
      * @throws ArangoDaoException
      */
-    public List<IconModel> findIconByFilter(FilterDTO filter) throws ArangoDaoException, ResourceNotFoundException {
-        return this.iconDao.findResourceByFilter(filter);
+    public List<IconModel> findIconByFilter(FilterDTO filter) throws IOException   {
+        List<IconModel> result = new ArrayList<>();
+
+        if(iconsDir == null){
+            this.iconsDir = configurationManager.loadConfiguration().getIconsDir();
+        }
+        
+        Stream<Path> arquivos = Files.list(Paths.get(iconsDir)).sorted();
+
+        if(filter.getOffSet() != null){
+            arquivos.skip(filter.getOffSet()); 
+        }
+
+        if(filter.getLimit() != null){
+            arquivos.limit(filter.getLimit()); 
+        }        
+
+        arquivos.forEachOrdered((a)->{            
+            try(FileReader reader = new FileReader(a.toFile())){
+                IconModel icon = gson.fromJson(reader, IconModel.class);
+                result.add(icon);
+            }catch(IOException e){                
+            }
+        });
+
+        return result;
     }
     
     public IconModel updateIcon(IconModel iconModel) throws GenericException {
@@ -152,10 +164,10 @@ public class IconManager extends Manager {
         if(iconsDir == null){
             this.iconsDir = configurationManager.loadConfiguration().getIconsDir();
         }
-        String fileSeparator = File.separator;
+        
         try{
-            if(Boolean.TRUE.equals(fileExist(iconsDir+fileSeparator+iconModel.getSchemaName()))){
-                FileWriter writer = new FileWriter(iconsDir+fileSeparator+iconModel.getSchemaName());
+            if(Boolean.TRUE.equals(fileExist(iconsDir+File.separator+iconModel.getSchemaName()))){
+                FileWriter writer = new FileWriter(iconsDir+File.separator+iconModel.getSchemaName());
                 gson.toJson(iconModel, writer);
                 
             }
