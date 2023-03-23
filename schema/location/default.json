@@ -1,0 +1,8 @@
+{
+  "schemaName": "location.default",
+  "fromSchema": "default",
+  "isValid": true,
+  "attributes": {},
+  "childrenSchemas": [
+  ]
+}

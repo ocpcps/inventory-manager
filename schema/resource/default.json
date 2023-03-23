@@ -1,0 +1,8 @@
+{
+  "schemaName": "resource.default",
+  "fromSchema": "default",
+  "isValid": true,
+  "attributes": {},
+  "childrenSchemas": [
+  ]
+}

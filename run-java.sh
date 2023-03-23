@@ -14,11 +14,12 @@ pwd
 echo "Listing"
 ls
 
-if [ ! -z ${XFS_DEVICE} ]; then
-    echo "Creating XFS Device ${XFS_DEVICE}";
-    mkfs.xfs ${XFS_DEVICE}
+if [ -z "$(ls -A /app/inventory-manager/schema)" ]; then
+   echo "Copying Default Schemas"
+   cp -frv /app/inventory-manager/samples/schema/* /app/inventory-manager/schema
+else
+   echo "Schema Exists"
 fi
-
 
 while [ true ];
 do

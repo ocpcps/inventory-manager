@@ -15,19 +15,24 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 FROM debian:latest
 
+#
 # Atualiza e instala o Java
+#
 RUN apt update -y
 RUN apt upgrade -y
 RUN apt install openjdk-17-jdk xfsprogs sudo -y
 RUN mkdir -p /app/inventory-manager/ssl
 RUN mkdir -p /app/inventory-manager/samples 
 RUN mkdir -p /app/inventory-manager/schema
-run echo "%sudo   ALL=(ALL:ALL) NOPASSWD:ALL" >> /etc/sudoers
-RUN ln -s /app/inventory-manager/schema /app/inventory-manager/samples
+RUN echo "%sudo   ALL=(ALL:ALL) NOPASSWD:ALL" >> /etc/sudoers
+RUN chmod 0440 /etc/sudoers
+
 
 WORKDIR /app/inventory-manager
+
 COPY target/*.jar .
 COPY run-java.sh .
+ADD schema /app/inventory-manager/samples
 ADD ssl /app/inventory-manager/ssl
 
 RUN chmod +x run-java.sh

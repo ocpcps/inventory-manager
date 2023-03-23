@@ -30,14 +30,14 @@ spec:
             containerPort: 9000
             protocol: TCP
         volumeMounts:
-          # - mountPath: "/app/inventory-manager"
-          #   name: netcompass-app-volume
+          - name: netcompass-app-volume
+            mountPath: /app/inventory-manager/schemas
           - name: config-volume
             mountPath: /app/inventory-manager/config/
-        volumeDevices:
-          - name: netcompass-app-volume
-            devicePath: /dev/xvda
-            fsType: xfs
+#        volumeDevices:
+#          - name: netcompass-app-volume
+#            devicePath: /dev/xvda
+#            fsType: xfs
         env:
           - name: JAR_PATH
             value: /app/inventory-manager
@@ -53,12 +53,6 @@ spec:
         - name: netcompass-app-volume
           persistentVolumeClaim:
             claimName: netcompass-app-volume-claim
-          mountOptions:
-            - xfs
-            - rw
-            - nouuid
-            - noatime
-          mountPath: /app/inventory-manager/samples
         - name: config-volume
           configMap:
             name: inventory-config
