@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: netcompass-api-deployment
 spec:
-  replicas: 1
+  replicas: 4
   selector:
     matchLabels:
       app: netcompass-api-deployment
@@ -20,11 +20,11 @@ spec:
         image: quay.apps.mgmt.telcostack.br.telefonica.com/netcompass/netcompass-server/netcompass-api
         resources:
           requests:
-            memory: "5120Mi"
-            cpu: "4"
-          limits:
-            memory: "5120Mi"
+            memory: "24576Mi"
             cpu: "8"
+          limits:
+            memory: "24576Mi"
+            cpu: "16"
         ports:
           - name: api-https
             containerPort: 9000
@@ -34,21 +34,15 @@ spec:
             mountPath: /app/inventory-manager/schema
           - name: config-volume
             mountPath: /app/inventory-manager/config/
-#        volumeDevices:
-#          - name: netcompass-app-volume
-#            devicePath: /dev/xvda
-#            fsType: xfs
         env:
           - name: JAR_PATH
             value: /app/inventory-manager
           - name: JAR_ARGS
-            value: -Xmx4G -Dspring.profiles.active=mvp
+            value: -Xmx16G -Dspring.profiles.active=mvp
           - name: JAR_NAME
             value: inventory-manager-1.0.0-alpha.jar
           - name: SPRING_PROFILES_DEFAULT
-            value: mvp
-          - name: XFS_DEVICE
-            value: /dev/xvda
+            value: prod
       volumes:
         - name: netcompass-app-volume
           persistentVolumeClaim:
