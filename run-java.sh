@@ -16,7 +16,7 @@ ls
 
 if [ -z "$(ls -A /app/inventory-manager/schema)" ]; then
    echo "Copying Default Schemas"
-   cp -frv /app/inventory-manager/samples/schema/* /app/inventory-manager/schema
+   cp -frv /app/inventory-manager/samples/* /app/inventory-manager/schema
 else
    echo "Schema Exists"
 fi

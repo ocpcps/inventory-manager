@@ -31,7 +31,7 @@ spec:
             protocol: TCP
         volumeMounts:
           - name: netcompass-app-volume
-            mountPath: /app/inventory-manager/schemas
+            mountPath: /app/inventory-manager/schema
           - name: config-volume
             mountPath: /app/inventory-manager/config/
 #        volumeDevices:
