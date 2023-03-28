@@ -17,6 +17,7 @@
  */
 package com.osstelecom.db.inventory.manager.operation;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -28,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import com.arangodb.entity.DocumentCreateEntity;
@@ -57,6 +59,7 @@ import com.osstelecom.db.inventory.manager.resources.BasicResource;
 import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.GraphList;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
+import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import com.osstelecom.db.inventory.manager.resources.ServiceResource;
 import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstraintViolationException;
 import com.osstelecom.db.inventory.manager.resources.model.ResourceAttributeModel;
@@ -300,7 +303,8 @@ public class ManagedResourceManager extends Manager {
      * @throws AttributeNotFoundException
      * @throws ResourceNotFoundException
      */
-    public ManagedResource updateManagedResource(ManagedResource resource, Boolean fromEvent) throws InvalidRequestException,
+    public ManagedResource updateManagedResource(ManagedResource resource, Boolean fromEvent)
+            throws InvalidRequestException,
             ArangoDaoException, AttributeConstraintViolationException, ScriptRuleException, SchemaNotFoundException,
             GenericException, ResourceNotFoundException, AttributeNotFoundException {
         String timerId = startTimer("updateManagedResource");
@@ -328,9 +332,16 @@ public class ManagedResourceManager extends Manager {
             // Demora ?
             //
             String timerId2 = startTimer("updateManagedResource.1");
+            
+            List<String> eventSourceIds = resource.getEventSourceIds();
+            resource.setEventSourceIds(null);
+
             DocumentUpdateEntity<ManagedResource> updatedEntity = this.managedResourceDao.updateResource(resource);
             endTimer(timerId2);
+            
             ManagedResource updatedResource = updatedEntity.getNew();
+            updatedResource.setEventSourceIds(eventSourceIds);
+
             eventManager.notifyResourceEvent(
                     new ManagedResourceUpdatedEvent(updatedEntity.getOld(), updatedEntity.getNew()));
             return updatedResource;
@@ -523,9 +534,11 @@ public class ManagedResourceManager extends Manager {
      * @throws ArangoDaoException
      */
     @Subscribe
-    public void onManagedResourceUpdatedEvent(ManagedResourceUpdatedEvent updateEvent) throws SchemaNotFoundException, GenericException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException, AttributeConstraintViolationException, ScriptRuleException, AttributeNotFoundException {
+    public void onManagedResourceUpdatedEvent(ManagedResourceUpdatedEvent updateEvent) throws SchemaNotFoundException,
+            GenericException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException,
+            AttributeConstraintViolationException, ScriptRuleException, AttributeNotFoundException {
         logger.debug("Managed Resource [{}] Updated: ", updateEvent.getOldResource().getId());
-        
+
         ManagedResource resource = updateEvent.getNewResource();
         ResourceSchemaModel schemaModel = schemaSession.loadSchema(resource.getAttributeSchemaName());
         updateRelatedChildResources(resource.getId(), resource.getDomainName(), schemaModel.getRelatedSchemas());
@@ -550,9 +563,20 @@ public class ManagedResourceManager extends Manager {
             AttributeConstraintViolationException, ScriptRuleException, SchemaNotFoundException, GenericException,
             AttributeNotFoundException {
 
-        //TODO descomentar
-        //ManagedResource resource = connectionCreatedEvent.getNewResource().getToResource();
-        //this.updateManagedResource(resource, true);
+        ResourceConnection resourceConnection = connectionCreatedEvent.getNewResource();
+        if (!CollectionUtils.isEmpty(resourceConnection.getEventSourceIds())) {
+            if (resourceConnection.getEventSourceIds().contains(resourceConnection.getId())) {
+                return;
+            }
+        }
+
+        ManagedResource resource = connectionCreatedEvent.getNewResource().getToResource();
+
+        List<String> sourceIds = new ArrayList<>(resourceConnection.getEventSourceIds()); 
+        sourceIds.add(resourceConnection.getId());
+        resource.setEventSourceIds(sourceIds);
+
+        this.updateManagedResource(resource, true);
     }
 
     @Subscribe
@@ -560,9 +584,21 @@ public class ManagedResourceManager extends Manager {
             throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException,
             AttributeConstraintViolationException, ScriptRuleException, SchemaNotFoundException, GenericException,
             AttributeNotFoundException {
-        //TODO descomentar
-        //ManagedResource resource = connectionUpdatedEvent.getNewResource().getToResource();
-        //this.updateManagedResource(resource, true);
+        
+        ManagedResource resource = connectionUpdatedEvent.getNewResource().getToResource();
+        
+        ResourceConnection resourceConnection = connectionUpdatedEvent.getNewResource();
+        if (!CollectionUtils.isEmpty(resourceConnection.getEventSourceIds())) {
+            if (resourceConnection.getEventSourceIds().contains(resource.getId())) {
+                return;
+            }
+        }
+        
+        List<String> sourceIds = new ArrayList<>(resourceConnection.getEventSourceIds()); 
+        sourceIds.add(resourceConnection.getId());
+        resource.setEventSourceIds(sourceIds);
+
+        this.updateManagedResource(resource, true);
     }
 
     @Subscribe
@@ -571,9 +607,20 @@ public class ManagedResourceManager extends Manager {
             AttributeConstraintViolationException, ScriptRuleException, SchemaNotFoundException, GenericException,
             AttributeNotFoundException {
 
-        //TODO descomentar
-        //ManagedResource resource = connectionDeletedEvent.getNewResource().getToResource();
-        //this.updateManagedResource(resource, true);
+        ResourceConnection resourceConnection = connectionDeletedEvent.getNewResource();
+        if (!CollectionUtils.isEmpty(resourceConnection.getEventSourceIds())) {
+            if (resourceConnection.getEventSourceIds().contains(resourceConnection.getId())) {
+                return;
+            }
+        }
+
+        ManagedResource resource = connectionDeletedEvent.getNewResource().getToResource();
+
+        List<String> sourceIds = new ArrayList<>(resourceConnection.getEventSourceIds()); 
+        sourceIds.add(resourceConnection.getId());
+        resource.setEventSourceIds(sourceIds);
+
+        this.updateManagedResource(resource, true);
     }
 
     /**
@@ -630,7 +677,8 @@ public class ManagedResourceManager extends Manager {
         }
     }
 
-    private Map<String, Object> calculateDefaultValues(ResourceSchemaModel schemaModel, ManagedResource managedResource, boolean fromEvent)
+    private Map<String, Object> calculateDefaultValues(ResourceSchemaModel schemaModel, ManagedResource managedResource,
+            boolean fromEvent)
             throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException, AttributeNotFoundException {
         Map<String, Object> result = new HashMap<>();
         result.putAll(managedResource.getAttributes());
@@ -639,29 +687,30 @@ public class ManagedResourceManager extends Manager {
             if (defaultValue != null) {
                 String regex = "^\\$\\([\\w]+[\\w+\\.]+[\\.]+[\\w]+\\)$";
                 if (defaultValue.matches(regex)) {
-                    if(!fromEvent){
+                    if (!fromEvent) {
                         Object resourceValue = managedResource.getAttributes().get(attribute.getKey());
                         if (resourceValue != null && !ObjectUtils.isEmpty(resourceValue)) {
-                            throw new InvalidRequestException("O valor do Atributo " + attribute.getKey() + " não deve ser enviado, pois será calculado pelo expressão do schema");
+                            throw new InvalidRequestException("O valor do Atributo " + attribute.getKey()
+                                    + " não deve ser enviado, pois será calculado pelo expressão do schema");
                         }
                     }
-                    //se for uma expressão, sempre recalcula 
+                    // se for uma expressão, sempre recalcula
                     Object value = calculateDefaultAttributeValue(managedResource.getId(),
-                            managedResource.getDomain().getDomainName(), attribute.getValue().getDefaultValue());                    
-                    if(value == null){
+                            managedResource.getDomain().getDomainName(), attribute.getValue().getDefaultValue());
+                    if (value == null) {
                         result.remove(attribute.getKey());
-                        if(attribute.getValue().getRequired().booleanValue()) {
-                            if(fromEvent)
+                        if (attribute.getValue().getRequired().booleanValue()) {
+                            if (fromEvent)
                                 managedResource.getSchemaModel().setIsValid(false);
                             else {
-                                throw new AttributeNotFoundException("Atributo " + attribute.getValue().getName() + " não encontrado em um nó pai");
+                                throw new AttributeNotFoundException(
+                                        "Atributo " + attribute.getValue().getName() + " não encontrado em um nó pai");
                             }
                         }
-                    } 
-                    else
-                        result.replace(attribute.getKey(), value);      
+                    } else
+                        result.replace(attribute.getKey(), value);
                 } else {
-                    //se não for expressão, só substitui se não tiver valor
+                    // se não for expressão, só substitui se não tiver valor
                     Object resourceValue = managedResource.getAttributes().get(attribute.getKey());
                     if (resourceValue == null || ObjectUtils.isEmpty(resourceValue)) {
                         result.remove(attribute.getKey());
@@ -689,7 +738,7 @@ public class ManagedResourceManager extends Manager {
                 attributeSchemaName, attributeName);
 
         BasicResource parentResource = result.getOne();
-        if (parentResource == null) 
+        if (parentResource == null)
             return null;
 
         ManagedResource resource = managedResourceDao
@@ -697,14 +746,18 @@ public class ManagedResourceManager extends Manager {
         return resource.getAttributes().get(attributeName);
     }
 
-    private void updateRelatedChildResources(String nodeId, String domain, List<String> relatedSchemas) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException, AttributeConstraintViolationException, ScriptRuleException, SchemaNotFoundException, GenericException, AttributeNotFoundException{
-        if(relatedSchemas != null){
+    private void updateRelatedChildResources(String nodeId, String domain, List<String> relatedSchemas)
+            throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException,
+            AttributeConstraintViolationException, ScriptRuleException, SchemaNotFoundException, GenericException,
+            AttributeNotFoundException {
+        if (relatedSchemas != null) {
             for (String relatedSchema : relatedSchemas) {
-                GraphList<BasicResource> result = managedResourceDao.findChildrenByAttributeSchemaName(nodeId, domain, relatedSchema);
+                GraphList<BasicResource> result = managedResourceDao.findChildrenByAttributeSchemaName(nodeId, domain,
+                        relatedSchema);
                 for (BasicResource basicResource : result.toList()) {
                     logger.debug("Request update Child Resource [{}] Updated: ", basicResource.getId());
                     ManagedResource resource = managedResourceDao
-                        .findResource(new ManagedResource(basicResource.getDomain(), basicResource.getId()));
+                            .findResource(new ManagedResource(basicResource.getDomain(), basicResource.getId()));
                     this.updateManagedResource(resource, true);
                 }
             }
