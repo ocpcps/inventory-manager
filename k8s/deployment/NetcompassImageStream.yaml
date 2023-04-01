@@ -8,3 +8,5 @@ spec:
     from:
       kind: DockerImage
       name: quay.apps.mgmt.telcostack.br.telefonica.com/netcompass/netcompass-server/netcompass-api:latest
+      importPolicy:
+        scheduled: true

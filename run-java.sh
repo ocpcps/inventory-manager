@@ -27,7 +27,7 @@ do
            echo "Running: [/usr/bin/java -jar -Dspring.profiles.active=${SPRING_PROFILES_DEFAULT} ${JAR_ARGS} ${JAR_NAME}]"
            /usr/bin/java -jar -Dspring.profiles.active=${SPRING_PROFILES_DEFAULT} ${JAR_ARGS} ${JAR_NAME}
    else
-      echo "Waiting: ${JAR_NAME}"
+      echo "Waiting For: ${JAR_NAME}"
       sleep 1
    fi
 done
