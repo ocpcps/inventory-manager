@@ -1,0 +1,10 @@
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: netcompass-image-stream
+spec:
+  tags:
+  - name: latest
+    from:
+      kind: DockerImage
+      name: quay.apps.mgmt.telcostack.br.telefonica.com/netcompass/netcompass-server/netcompass-api:latest

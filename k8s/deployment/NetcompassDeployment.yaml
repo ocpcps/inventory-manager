@@ -17,7 +17,7 @@ spec:
         metadata:
           labels:
             app: netcompass-api
-        image: quay.apps.mgmt.telcostack.br.telefonica.com/netcompass/netcompass-server/netcompass-api
+        image: netcompass-image-stream:latest
         resources:
           requests:
             memory: "24576Mi"
@@ -38,7 +38,7 @@ spec:
           - name: JAR_PATH
             value: /app/inventory-manager
           - name: JAR_ARGS
-            value: -Xmx16G -Dspring.profiles.active=mvp
+            value: -Xmx16G
           - name: JAR_NAME
             value: inventory-manager-1.0.0-alpha.jar
           - name: SPRING_PROFILES_DEFAULT
