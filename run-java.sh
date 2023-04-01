@@ -24,7 +24,7 @@ fi
 while [ true ];
 do
    if [ -f "${JAR_NAME}" ]; then
-           /usr/bin/java -jar ${JAR_ARGS} ${JAR_NAME}
+           /usr/bin/java -jar -Dspring.profiles.active=${SPRING_PROFILES_DEFAULT} ${JAR_ARGS} ${JAR_NAME}
    else
       echo "Waiting: ${JAR_NAME}"
       sleep 1
