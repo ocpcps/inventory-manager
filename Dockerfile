@@ -20,7 +20,8 @@ FROM debian:latest
 #
 RUN apt update -y
 RUN apt upgrade -y
-RUN apt install openjdk-17-jdk xfsprogs sudo -y
+RUN apt install openjdk-17-jdk xfsprogs sudo procps -y
+RUN rm -rf /var/lib/apt/lists/*
 RUN mkdir -p /app/inventory-manager/ssl
 RUN mkdir -p /app/inventory-manager/samples 
 RUN mkdir -p /app/inventory-manager/schema

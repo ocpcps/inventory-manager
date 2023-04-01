@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: netcompass-config-map
+data:
+  inventory.json: |
+    {
+      "mongoDbConfiguration": {
+        "collections": []
+      },
+      "graphDbConfiguration": {
+        "databaseName": "inventory",
+        "nodeSufix": "_nodes",
+        "serviceSufix": "_services",
+        "nodeConnectionSufix": "_connections",
+        "serviceConnectionSufix": "_srv_connections",
+        "connectionLayerSufix": "_connections_layer",
+        "serviceLayerSufix": "_services_layer",
+        "host": "netcompass-db-coordinator-service.telefonica-netcompass.svc.cluster.local",
+        "port": 8529,
+        "user": "inventory",
+        "password": "prod@inventory",
+        "domainsCollection": "domains"
+      },
+      "schemaDir": "/app/inventory-manager/schema/",
+      "rulesDir": "/app/inventory-manager/rules/",
+      "dateFormat": "dd-MM-yyyy",
+      "dateTimeFormat": "dd-MM-yyyy hh:MM:ss",
+      "trackTimers": true
+    }

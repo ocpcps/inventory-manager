@@ -32,7 +32,7 @@ spec:
         volumeMounts:
           - name: netcompass-app-volume
             mountPath: /app/inventory-manager/schema
-          - name: config-volume
+          - name: netcompass-config-volume
             mountPath: /app/inventory-manager/config/
         env:
           - name: JAR_PATH
@@ -47,6 +47,6 @@ spec:
         - name: netcompass-app-volume
           persistentVolumeClaim:
             claimName: netcompass-app-volume-claim
-        - name: config-volume
+        - name: netcompass-config-volume
           configMap:
-            name: inventory-config
+            name: netcompass-config-map
