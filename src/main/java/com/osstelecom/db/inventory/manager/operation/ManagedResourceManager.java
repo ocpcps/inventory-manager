@@ -199,11 +199,6 @@ public class ManagedResourceManager extends Manager {
             // END - Subir as validações para session
             //
 
-            //
-            // Como o método acima setou o defaults, o caculo efetuado aqui está ambiguo
-            //
-            resource.setAttributes(calculateDefaultValues(schemaModel, resource));
-
             DocumentCreateEntity<ManagedResource> result;
             if (useUpsert) {
                 result = this.managedResourceDao.upsertResource(resource);
