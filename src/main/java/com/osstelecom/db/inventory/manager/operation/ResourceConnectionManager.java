@@ -1,17 +1,20 @@
 package com.osstelecom.db.inventory.manager.operation;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 import com.arangodb.entity.DocumentCreateEntity;
 import com.arangodb.entity.DocumentDeleteEntity;
 import com.arangodb.entity.DocumentUpdateEntity;
 import com.arangodb.entity.MultiDocumentEntity;
+import com.google.common.collect.Lists;
 import com.google.common.eventbus.Subscribe;
 import com.osstelecom.db.inventory.manager.dao.LocationConnectionDao;
 import com.osstelecom.db.inventory.manager.dao.ResourceConnectionDao;
@@ -377,10 +380,15 @@ public class ResourceConnectionManager extends Manager {
         try {
             lockManager.lock();
             connection.setLastModifiedDate(new Date());
+            
+            List<String> eventSourceIds = connection.getEventSourceIds();
+            connection.setEventSourceIds(null);
 
             schemaSession.validateResourceSchema(connection);
 
             DocumentUpdateEntity<ResourceConnection> result = this.resourceConnectionDao.updateResource(connection);
+
+            result.getNew().setEventSourceIds(eventSourceIds);
             ResourceConnectionUpdatedEvent updateEvent = new ResourceConnectionUpdatedEvent(result);
             this.eventManager.notifyResourceEvent(updateEvent);
             return result;
@@ -449,6 +457,7 @@ public class ResourceConnectionManager extends Manager {
     @Subscribe
     public void onManagedResourceUpdatedEvent(ManagedResourceUpdatedEvent updateEvent) {
         ManagedResource updatedResource = updateEvent.getNewResource();
+                
         // Update the related dependencies
         //
         try {
@@ -465,6 +474,12 @@ public class ResourceConnectionManager extends Manager {
             //
             try {
                 this.resourceConnectionDao.findResourceByFilter(new FilterDTO(filter, bindVars), updatedResource.getDomain()).forEach((connection) -> {
+
+                    if(!CollectionUtils.isEmpty(updatedResource.getEventSourceIds())){
+                        if(updatedResource.getEventSourceIds().contains(connection.getId())){
+                            return;
+                        }
+                    }
 
                     if (connection.getFrom().getKey().equals(updatedResource.getKey())) {
                         //
@@ -492,6 +507,10 @@ public class ResourceConnectionManager extends Manager {
                     }
 
                     try {
+                        List<String> sourceIds = new ArrayList<>(updatedResource.getEventSourceIds()); 
+                        sourceIds.add(updatedResource.getId());
+                        connection.setEventSourceIds(sourceIds);
+
                         //
                         // Atualiza a conexão
                         //

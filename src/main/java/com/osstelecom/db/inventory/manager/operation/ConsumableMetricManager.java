@@ -265,16 +265,17 @@ public class ConsumableMetricManager extends Manager {
             }
         }
 
-        String metricName = fromResource.getConsumerMetric().getMetricName();
-        if (result.get(metricName) != null) {
-            BigDecimal total = BigDecimal.valueOf(result.get(metricName));
-            total = total.add(BigDecimal.valueOf(fromResource.getConsumerMetric().getMetricValue()));
-            result.remove(metricName);
-            result.put(metricName, total.doubleValue());
-        } else {
-            result.put(metricName, fromResource.getConsumerMetric().getMetricValue());
+        if(fromResource.getConsumerMetric() != null) {
+            String metricName = fromResource.getConsumerMetric().getMetricName();
+            if (result.get(metricName) != null) {
+                BigDecimal total = BigDecimal.valueOf(result.get(metricName));
+                total = total.add(BigDecimal.valueOf(fromResource.getConsumerMetric().getMetricValue()));
+                result.remove(metricName);
+                result.put(metricName, total.doubleValue());
+            } else {
+                result.put(metricName, fromResource.getConsumerMetric().getMetricValue());
+            }
         }
-
         return result;
     }
 
