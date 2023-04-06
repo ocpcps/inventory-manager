@@ -28,6 +28,7 @@ import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -128,6 +129,8 @@ public class BasicResource {
     private ResourceSchemaModel schemaModel;
     @DocumentField(DocumentField.Type.REV)
     private String revisionId;
+
+    private List<String> eventSourceIds = new ArrayList<>();
 
     public void addTag(String tag) {
         if (this.tags == null) {
@@ -857,4 +860,13 @@ public class BasicResource {
     public void setDiscoveryAttributes(Map<String, Object> discoveryAttributes) {
         this.discoveryAttributes = discoveryAttributes;
     }
+
+    public List<String> getEventSourceIds() {
+        return eventSourceIds;
+    }
+
+    public void setEventSourceIds(List<String> eventSourceIds) {
+        this.eventSourceIds = eventSourceIds;
+    }
+    
 }

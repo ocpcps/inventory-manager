@@ -1,0 +1,20 @@
+{
+  "schemaName": "resource.swa.default",
+  "fromSchema": "resource.default",
+  "isValid": true,
+  "attributes": {
+    "name": {
+      "name": "name",
+      "variableType": "String",
+      "isList": false,
+      "itemHash": "a41f45c569f83a52a7384d5246944e98",
+      "isDiscovery": false,
+      "isUserAttribute": true,
+      "required": true
+    }
+  },
+  "childrenSchemas": [],
+  "relatedSchemas": [
+    "resource.swa.port.default"
+  ]
+}

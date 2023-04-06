@@ -67,5 +67,4 @@ public class AttributeNotFoundException extends BasicException {
         this.addDetailMap(key, value);
         return this;
     }
-
 }
