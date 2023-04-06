@@ -228,7 +228,7 @@ public class ConsumableMetricDao {
     }
 
     public GraphList<BasicResource> findParentsWithMetrics(BasicResource from) {
-        String aql = "FOR v, e, p IN 1..16 OUTBOUND '"+from.getId()+"' GRAPH '"+from.getDomainName() + "_connections_layer' ";
+        String aql = "FOR v, e, p IN 1..16 INBOUND '"+from.getId()+"' GRAPH '"+from.getDomainName() + "_connections_layer' ";
         aql += "FILTER v.consumableMetric != null ";
         aql += "RETURN distinct v ";
         return new GraphList<>(
@@ -236,7 +236,7 @@ public class ConsumableMetricDao {
     }
 
     public GraphList<BasicResource> findChildsWithMetrics(BasicResource to) {
-        String aql = "FOR v, e, p IN 1..16 INBOUND '"+to.getId()+"' GRAPH '"+to.getDomainName() + "_connections_layer' ";
+        String aql = "FOR v, e, p IN 1..16 OUTBOUND '"+to.getId()+"' GRAPH '"+to.getDomainName() + "_connections_layer' ";
         aql += "FILTER v.consumerMetric != null ";
         aql += "RETURN distinct v ";
         return new GraphList<>(
