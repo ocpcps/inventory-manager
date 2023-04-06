@@ -30,8 +30,8 @@ import java.util.List;
 public class CircuitPathDTO {
 
     private CircuitResource circuit;
+    private String domainName;
     private List<ResourceConnection> paths = new ArrayList<>();
-
 
     /**
      * @return the circuit
@@ -100,4 +100,18 @@ public class CircuitPathDTO {
 //    public void setBrokenResources(ArrayList<String> brokenConnections) {
 //        this.brokenResources = brokenConnections;
 //    }
+
+    /**
+     * @return the domainName
+     */
+    public String getDomainName() {
+        return domainName;
+    }
+
+    /**
+     * @param domainName the domainName to set
+     */
+    public void setDomainName(String domainName) {
+        this.domainName = domainName;
+    }
 }

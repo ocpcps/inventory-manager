@@ -21,6 +21,7 @@ import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
+import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import com.osstelecom.db.inventory.manager.rest.api.BaseApi;
@@ -28,6 +29,7 @@ import com.osstelecom.db.inventory.visualization.dto.ExpandNodeDTO;
 import com.osstelecom.db.inventory.visualization.exception.InvalidGraphException;
 import com.osstelecom.db.inventory.visualization.request.ExpandNodeRequest;
 import com.osstelecom.db.inventory.visualization.request.GetCircuitByConnectionTopologyRequest;
+import com.osstelecom.db.inventory.visualization.request.GetConnectionsByCircuitRequest;
 import com.osstelecom.db.inventory.visualization.request.GetDomainTopologyRequest;
 import com.osstelecom.db.inventory.visualization.request.GetStructureTopologyDependencyRequest;
 import com.osstelecom.db.inventory.visualization.response.ThreeJsViewResponse;
@@ -124,6 +126,33 @@ public class GraphViewApi extends BaseApi {
         return this.viewSession.expandNodeById(request);
     }
 
+    @GetMapping(path = "{domain}/circuit/{circuitKey}/expand", produces = "application/json")
+    public ThreeJsViewResponse expandCircuitById(@PathVariable("domain") String domain,
+            @PathVariable("circuitKey") String circuitKey,
+            HttpServletRequest httpRequest) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException, InvalidGraphException {
+        GetConnectionsByCircuitRequest request = new GetConnectionsByCircuitRequest();
+        CircuitResource circuit = new CircuitResource();
+        circuit.setKey(circuitKey);
+        circuit.setDomainName(domain);
+        request.setPayLoad(circuit);
+        request.setRequestDomain(domain);
+        this.setUserDetails(request);
+        httpRequest.setAttribute("request", request);
+        return this.viewSession.getConnectionsByCircuit(request);
+    }
+
+    /**
+     * Dado uma conexão, ela diz quais circuitos passam por ali
+     *
+     * @param domain
+     * @param connectionKey
+     * @return
+     * @throws DomainNotFoundException
+     * @throws ArangoDaoException
+     * @throws ResourceNotFoundException
+     * @throws InvalidRequestException
+     * @throws InvalidGraphException
+     */
     @GetMapping(path = "{domain}/connection/{connectionKey}/circuits", produces = "application/json")
     public ThreeJsViewResponse getCircuitsByConnectionId(@PathVariable("domain") String domain,
             @PathVariable("connectionKey") String connectionKey) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException, InvalidGraphException {

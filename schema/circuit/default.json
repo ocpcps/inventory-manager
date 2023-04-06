@@ -1,0 +1,8 @@
+{
+  "schemaName": "circuit.default",
+  "fromSchema": "default",
+  "isValid": true,
+  "attributes": {},
+  "childrenSchemas": [
+  ]
+}

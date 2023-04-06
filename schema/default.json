@@ -1,0 +1,13 @@
+{
+  "schemaName": "default",
+  "fromSchema": ".",
+  "isValid": true,
+  "attributes": {},
+  "childrenSchemas": [
+    "circuit.default",
+    "connection.default",
+    "location.default",
+    "resource.default",
+    "service.default"
+  ]
+}

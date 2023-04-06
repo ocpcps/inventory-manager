@@ -70,7 +70,7 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
             //
             apiError.setDetails("NONE");
         }
-        logger.error("Excpetion Occurreed: MSG:[{}] ClassName: [{}]", ex.getMessage(), apiError.getClassName());
+        logger.error("Exception Occurreed: MSG:[{}] ClassName: [{}]", ex.getMessage(), apiError.getClassName());
         if (request.getHeader("x-show-errors") != null) {
             if (request.getAttribute("request") != null) {
                 Object requestBody = request.getAttribute("request");

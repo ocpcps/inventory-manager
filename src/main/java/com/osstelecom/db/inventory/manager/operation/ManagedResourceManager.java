@@ -190,12 +190,19 @@ public class ManagedResourceManager extends Manager {
             resource.setAtomId(resource.getDomain().addAndGetId());
             ResourceSchemaModel schemaModel = schemaSession.loadSchema(resource.getAttributeSchemaName());
             resource.setSchemaModel(schemaModel);
-            schemaSession.validateResourceSchema(resource); //
-            dynamicRuleSession.evalResource(resource, "I", this); // <--- Pode não ser verdade , se a chave for
-                                                                  // duplicada..
+            //
+            // chama validate mas ele já seta os defaults
+            //
+            schemaSession.validateResourceSchema(resource);       //  
+            dynamicRuleSession.evalResource(resource, "I", this); // <--- Pode não ser verdade , se a chave for duplicada..
             //
             // END - Subir as validações para session
             //
+
+            //
+            // Como o método acima setou o defaults, o caculo efetuado aqui está ambiguo
+            //
+            resource.setAttributes(calculateDefaultValues(schemaModel, resource));
 
             DocumentCreateEntity<ManagedResource> result;
             if (useUpsert) {
