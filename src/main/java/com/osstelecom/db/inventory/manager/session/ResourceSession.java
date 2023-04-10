@@ -798,6 +798,9 @@ public class ResourceSession {
             }
         }
 
+        fromDBResource.setConsumableMetric(requestedPatch.getConsumableMetric());
+        fromDBResource.setConsumerMetric(requestedPatch.getConsumerMetric());
+
         ManagedResource result = this.managedResourceManager.update(fromDBResource);
         return new PatchManagedResourceResponse(result);
     }
