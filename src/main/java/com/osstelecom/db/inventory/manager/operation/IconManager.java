@@ -58,18 +58,19 @@ public class IconManager extends Manager {
  
      */ 
     public IconModel getIconById(IconModel icon)
-            throws ResourceNotFoundException {
+           {
         if(iconsDir == null){
             this.iconsDir = configurationManager.loadConfiguration().getIconsDir();
         }
         
         try{
-            FileReader reader = new FileReader(iconsDir+File.separator+icon.getSchemaName());
+            FileReader reader = new FileReader(iconsDir+File.separator+icon.getSchemaName()+".json");
             return gson.fromJson(reader, IconModel.class);
             
         }
         catch(FileNotFoundException  e){
-            throw new ResourceNotFoundException(e.getMessage());
+            return new IconModel();
+           // throw new ResourceNotFoundException(e.getMessage());
         }
        
     }
@@ -88,7 +89,7 @@ public class IconManager extends Manager {
         }
 
         try{
-            Files.delete(Paths.get(iconsDir+File.separator+iconModel.getSchemaName()));
+            Files.delete(Paths.get(iconsDir+File.separator+iconModel.getSchemaName()+".json"));
             return iconModel;
         }
         catch(FileNotFoundException  e){
@@ -112,8 +113,10 @@ public class IconManager extends Manager {
         }
 
         try{
-            FileWriter writer = new FileWriter(iconsDir+File.separator+iconModel.getSchemaName());
-            gson.toJson(iconModel, writer);
+            // File writer = new File(iconsDir+File.separator+iconModel.getSchemaName());
+            // writer.createNewFile();
+            FileWriter writer = new FileWriter(iconsDir+File.separator+iconModel.getSchemaName()+".json");
+           gson.toJson(iconModel, writer);
             return iconModel;
         }
         catch(JsonIOException | IOException  e){
@@ -166,8 +169,8 @@ public class IconManager extends Manager {
         }
         
         try{
-            if(Boolean.TRUE.equals(fileExist(iconsDir+File.separator+iconModel.getSchemaName()))){
-                FileWriter writer = new FileWriter(iconsDir+File.separator+iconModel.getSchemaName());
+            if(Boolean.TRUE.equals(fileExist(iconsDir+File.separator+iconModel.getSchemaName()+".json"))){
+                FileWriter writer = new FileWriter(iconsDir+File.separator+iconModel.getSchemaName()+".json");
                 gson.toJson(iconModel, writer);
                 
             }

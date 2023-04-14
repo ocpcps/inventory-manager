@@ -1,30 +1,54 @@
 {
-    "schemaName": "default",
-    "fromSchema": ".",
-    "attributes": {
-        "hostname": {
-            "name": "hostname",
-            "variableType": "String",
-            "description": "The Host Name of The Element",
-            "required": false,
-            "defaultValue": "HostName",
-            "validate": false
-        },
-        "vendor": {
-            "name": "vendor",
-            "variableType": "String",
-            "description": "The vendor of The Element",
-            "required": false,
-            "defaultValue": "vendor",
-            "validate": false
-        },
-        "model": {
-            "name": "model",
-            "variableType": "String",
-            "description": "The model of The Element",
-            "required": false,
-            "defaultValue": "model",
-            "validate": false
-        }
+  "schemaName": "default",
+  "fromSchema": ".",
+  "isValid": true,
+  "attributes": {
+    "hostname": {
+      "name": "hostname",
+      "variableType": "String",
+      "description": "The Host Name of The Element",
+      "defaultValue": "HostName",
+      "required": false,
+      "isList": false,
+      "validate": false,
+      "isDiscovery": false,
+      "isUserAttribute": true
+    },
+    "vendor": {
+      "name": "vendor",
+      "variableType": "String",
+      "description": "The vendor of The Element",
+      "defaultValue": "vendor",
+      "required": false,
+      "isList": false,
+      "validate": false,
+      "isDiscovery": false,
+      "isUserAttribute": true
+    },
+    "model": {
+      "name": "model",
+      "variableType": "String",
+      "description": "The model of The Element",
+      "defaultValue": "model",
+      "required": false,
+      "isList": false,
+      "validate": false,
+      "isDiscovery": false,
+      "isUserAttribute": true
     }
+  },
+  "childrenSchemas": [
+    "connection.default",
+    "location.city",
+    "location.country",
+    "location.default",
+    "location.geographicArea",
+    "location.site",
+    "location.state",
+    "resource.default",
+    "resource.erb",
+    "resource.swa.default",
+    "resource.swa.port.default"
+  ],
+  "relatedSchemas": []
 }
