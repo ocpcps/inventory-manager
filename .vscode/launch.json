@@ -6,6 +6,13 @@
     "configurations": [
         {
             "type": "java",
+            "name": "IconManager",
+            "request": "launch",
+            "mainClass": "com.osstelecom.db.inventory.manager.operation.IconManager",
+            "projectName": "inventory-manager"
+        },
+        {
+            "type": "java",
             "name": "Launch Current File",
             "request": "launch",
             "mainClass": "${file}"
