@@ -22,6 +22,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -739,9 +740,15 @@ public class ManagedResourceManager extends Manager {
         GraphList<BasicResource> result = managedResourceDao.findParentsByAttributeSchemaName(nodeId, domain,
                 attributeSchemaName, attributeName);
 
-        BasicResource parentResource = result.getOne();
-        if (parentResource == null)
+        BasicResource parentResource = null;
+        try{
+            parentResource = result.getOne();
+            if (parentResource == null)
+                return null;
+        }
+        catch(NoSuchElementException e){
             return null;
+        }        
 
         ManagedResource resource = managedResourceDao
                 .findResource(new ManagedResource(parentResource.getDomain(), parentResource.getId()));
