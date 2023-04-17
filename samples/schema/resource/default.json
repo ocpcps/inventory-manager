@@ -1,14 +1,23 @@
 {
-    "schemaName": "resource.default",
-    "fromSchema": "default",
-    "attributes": {
-        "equiIP": {
-            "name": "equiIP",
-            "variableType": "String",
-            "description": "The IP of The element",
-            "required": false,
-            "defaultValue": "0.0.0.0",
-            "validate": false
-        }
+  "schemaName": "resource.default",
+  "fromSchema": "default",
+  "isValid": true,
+  "attributes": {
+    "equiIP": {
+      "name": "equiIP",
+      "variableType": "String",
+      "description": "The IP of The element",
+      "defaultValue": "0.0.0.0",
+      "required": false,
+      "isList": false,
+      "validate": false,
+      "isDiscovery": false,
+      "isUserAttribute": true
     }
+  },
+  "childrenSchemas": [
+    "resource.swa.default",
+    "resource.swa.port.default"
+  ],
+  "relatedSchemas": []
 }

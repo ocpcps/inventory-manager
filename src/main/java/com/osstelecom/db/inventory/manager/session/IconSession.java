@@ -75,7 +75,7 @@ public class IconSession {
 
     public CreateIconResponse createIcon(CreateIconRequest request)
             throws InvalidRequestException, ResourceNotFoundException, GenericException {
-
+        
         if (request == null || request.getPayLoad() == null) {
             throw new InvalidRequestException("Request is null please send a valid request");
         }
@@ -85,9 +85,10 @@ public class IconSession {
         }
 
         IconModel payload = request.getPayLoad();
+
         IconModel old = iconManager.getIconById(payload);
 
-        if (old != null) {
+        if (old.getContent() != null) {
             throw new ResourceNotFoundException("Icon already exists");
         }
         if (payload.getContent() == null) {
@@ -97,11 +98,11 @@ public class IconSession {
         if (payload.getMimeType() == null) {
             throw new InvalidRequestException("Mime Type not found");
         }
-        if (payload.getContent().length() == 0 || payload.getContent().length() > 3000) {
+        if (payload.getContent().length() == 0 || payload.getContent().length() > 300000) {
             throw new InvalidRequestException("Content size is invalid");
         }
-
-        return new CreateIconResponse(iconManager.createIcon(payload));
+        CreateIconResponse createIconResponse = new CreateIconResponse(iconManager.createIcon(payload));
+        return createIconResponse;
     }
 
     public PatchIconResponse updateIcon(PatchIconRequest request)

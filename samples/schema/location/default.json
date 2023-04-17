@@ -1,33 +1,54 @@
 {
-    "schemaName": "location.default",
-    "fromSchema": "default",
-    "description": "This is a generic location",
-    "allowAll": false,
-    "attributes": {
-        "latitude": {
-            "name": "latitude",
-            "variableType": "float",
-            "description": "The wgs84 latitude of the location",
-            "required": true,
-            "defaultValue": "0.0",
-            "validate": false
-        },
-        "longitude": {
-            "name": "longitude",
-            "variableType": "float",
-            "description": "The wgs84 longitude of the location",
-            "required": false,
-            "defaultValue": "0.0",
-            "validate": false
-        },
-        "siteStatus": {
-            "name": "siteStatus",
-            "variableType": "String",
-            "description": "The status do site",
-            "required": false,
-            "defaultValue": "active",
-            "validate": false,
-            "allowedValues": ["active", "inactive", "sleeping"]
-        }
+  "schemaName": "location.default",
+  "fromSchema": "default",
+  "allowAll": false,
+  "isValid": true,
+  "attributes": {
+    "siteStatus": {
+      "name": "siteStatus",
+      "variableType": "String",
+      "description": "The status do site",
+      "defaultValue": "active",
+      "allowedValues": [
+        "active",
+        "inactive",
+        "sleeping"
+      ],
+      "required": false,
+      "isList": false,
+      "validate": false,
+      "isDiscovery": false,
+      "isUserAttribute": true
+    },
+    "latitude": {
+      "name": "latitude",
+      "variableType": "float",
+      "description": "The wgs84 latitude of the location",
+      "defaultValue": "0.0",
+      "required": true,
+      "isList": false,
+      "validate": false,
+      "isDiscovery": false,
+      "isUserAttribute": true
+    },
+    "longitude": {
+      "name": "longitude",
+      "variableType": "float",
+      "description": "The wgs84 longitude of the location",
+      "defaultValue": "0.0",
+      "required": false,
+      "isList": false,
+      "validate": false,
+      "isDiscovery": false,
+      "isUserAttribute": true
     }
+  },
+  "childrenSchemas": [
+    "location.city",
+    "location.country",
+    "location.geographicArea",
+    "location.site",
+    "location.state"
+  ],
+  "relatedSchemas": []
 }
