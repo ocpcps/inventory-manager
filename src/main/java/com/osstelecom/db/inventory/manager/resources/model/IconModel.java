@@ -1,6 +1,8 @@
 package com.osstelecom.db.inventory.manager.resources.model;
 
-public class IconModel {
+import com.osstelecom.db.inventory.manager.request.BasicRequest;
+
+public class IconModel{
    private String schemaName;
    private String mimeType;
    private String content;
@@ -27,5 +29,7 @@ public class IconModel {
     public IconModel(String schemaName) {
         this.setSchemaName(schemaName);
     }
+    public IconModel() {
     
+    }
 }
