@@ -16,9 +16,9 @@
     "password": "dev@inventory",
     "domainsCollection": "domains"
   },
-  "schemaDir": "/app/inventory-manager/samples/schema/",
-  "rulesDir": "/app/inventory-manager/rules/",
-  "iconsDir": "/app/inventory-manager/icons/",
+  "schemaDir": "./samples/schema/",
+  "rulesDir": "./rules/",
+  "iconsDir": "./icons/",
   "dateFormat": "dd-MM-yyyy",
   "dateTimeFormat": "dd-MM-yyyy hh:MM:ss",
   "trackTimers": true
