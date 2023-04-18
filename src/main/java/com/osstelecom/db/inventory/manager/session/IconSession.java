@@ -124,7 +124,7 @@ public class IconSession {
         if (payload.getMimeType() == null) {
             throw new InvalidRequestException("Mime Type not found");
         }
-        if (payload.getContent().length() == 0 || payload.getContent().length() > 3000) {
+        if (payload.getContent().length() == 0 || payload.getContent().length() > 300000) {
             throw new InvalidRequestException("Content size is invalid");
         }
         IconModel old = iconManager.getIconById(payload);

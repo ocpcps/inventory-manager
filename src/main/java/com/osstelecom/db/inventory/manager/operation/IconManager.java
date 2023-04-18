@@ -21,7 +21,9 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -60,21 +62,26 @@ public class IconManager extends Manager {
      * @throws ResourceNotFoundException
  
      */ 
-    public IconModel getIconById(IconModel icon)
+    public IconModel getIconById(IconModel icon) throws ResourceNotFoundException
            {
         if(iconsDir == null){
             this.iconsDir = configurationManager.loadConfiguration().getIconsDir();
         }
         
         try{
-            FileReader reader = new FileReader(iconsDir+File.separator+icon.getSchemaName()+".json");
-            return gson.fromJson(reader, IconModel.class);
-            
+            Path path =  Paths.get(iconsDir+File.separator+icon.getSchemaName()+".json");
+            FileReader reader = new FileReader(path.toFile());
+            icon = gson.fromJson(reader, IconModel.class);
+
         }
         catch(FileNotFoundException  e){
             return new IconModel();
-           // throw new ResourceNotFoundException(e.getMessage());
         }
+        catch (IOException x) {
+            // File permission problems are caught here.
+            System.err.println(x);
+        }
+        return icon;
        
     }
 
@@ -90,15 +97,24 @@ public class IconManager extends Manager {
         if(iconsDir == null){
             this.iconsDir = configurationManager.loadConfiguration().getIconsDir();
         }
-
+        Path fileDelete = Paths.get(iconsDir+File.separator+iconModel.getSchemaName()+".json");
+        //Path fileDelete = Paths.get("C:\\icons/"+iconModel.getSchemaName()+".json");
         try{
-            Files.delete(Paths.get(iconsDir+File.separator+iconModel.getSchemaName()+".json"));
+            Files.delete(fileDelete);
             return iconModel;
         }
         catch(FileNotFoundException  e){
             throw new ResourceNotFoundException(e.getMessage());
         }
-     
+         catch (NoSuchFileException x) {
+            System.err.format("%s: no such" + " file or directory%n", fileDelete);
+        } catch (DirectoryNotEmptyException x) {
+            System.err.format("%s not empty%n", fileDelete);
+        } catch (IOException x) {
+            // File permission problems are caught here.
+            System.err.println(x);
+        }
+        return iconModel;
 
     }
 
@@ -201,7 +217,7 @@ public class IconManager extends Manager {
             if(Boolean.TRUE.equals(fileExist(iconsDir+File.separator+iconModel.getSchemaName()+".json"))){
                 FileWriter writer = new FileWriter(iconsDir+File.separator+iconModel.getSchemaName()+".json");
                 gson.toJson(iconModel, writer);
-                
+                writer.close();
             }
             return iconModel;
         }
