@@ -95,7 +95,7 @@ public class IconApi extends BaseApi {
     @PatchMapping(path = "/icon/{schemaName}", produces = "application/json", consumes = "application/json")
     public PatchIconResponse patchManagedResource(@RequestBody PatchIconRequest request, @PathVariable("schemaName") String schemaName, HttpServletRequest httpRequest) throws InvalidRequestException, ResourceNotFoundException, GenericException {
         this.setUserDetails(request);
-        request.setPayLoad(new IconModel(schemaName));
+    //    request.setPayLoad(new IconModel(schemaName));
         httpRequest.setAttribute("request", request);
         return iconSession.updateIcon(request);
     }
