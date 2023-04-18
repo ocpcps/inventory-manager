@@ -28,7 +28,7 @@ public class InventoryConfiguration {
     private ArangoDBConfiguration graphDbConfiguration = new ArangoDBConfiguration();
 
     private String schemaDir = "samples/schema";
-    private String iconsDir = "samples/icons";
+    private String iconsDir = "icons/";
     private String rulesDir = "rules/";
     private String dateFormat = "dd-MM-yyyy";
     private String dateTimeFormat = "dd-MM-yyyy hh:MM:ss";
