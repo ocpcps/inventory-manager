@@ -26,6 +26,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +36,7 @@ import org.springframework.stereotype.Service;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonIOException;
+import com.google.gson.stream.JsonReader;
 import com.osstelecom.db.inventory.manager.configuration.ConfigurationManager;
 import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
@@ -48,7 +51,7 @@ public class IconManager extends Manager {
     private ConfigurationManager configurationManager;
     
     private String iconsDir;
-    private Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    private Gson gson = new GsonBuilder().create();
     /**
      * Retrieves a icon by id
      *
@@ -117,6 +120,7 @@ public class IconManager extends Manager {
             // writer.createNewFile();
             FileWriter writer = new FileWriter(iconsDir+File.separator+iconModel.getSchemaName()+".json");
            gson.toJson(iconModel, writer);
+           writer.close();
             return iconModel;
         }
         catch(JsonIOException | IOException  e){
@@ -134,6 +138,28 @@ public class IconManager extends Manager {
      * @throws IOException
      * @throws ArangoDaoException
      */
+
+
+    // public Set<String> listFilesUsingFilesList(FilterDTO filter) throws IOException {
+    //     if(iconsDir == null){
+    //         this.iconsDir = configurationManager.loadConfiguration().getIconsDir();
+    //     }
+    //     if(filter.getOffSet() != null){
+    //         arquivos.skip(filter.getOffSet()); 
+    //     }
+
+    //     if(filter.getLimit() != null){
+    //         arquivos.limit(filter.getLimit()); 
+    //     }    
+    //     try (Stream<Path> stream = Files.list(Paths.get(this.iconsDir))) {
+    //         return stream
+    //           .filter(file -> !Files.isDirectory(file))
+    //           .map(Path::getFileName)
+    //           .map(Path::toString)
+    //           .collect(Collectors.toSet());
+    //     }
+    // }
+
     public List<IconModel> findIconByFilter(FilterDTO filter) throws IOException   {
         List<IconModel> result = new ArrayList<>();
 
@@ -141,27 +167,30 @@ public class IconManager extends Manager {
             this.iconsDir = configurationManager.loadConfiguration().getIconsDir();
         }
         
-        Stream<Path> arquivos = Files.list(Paths.get(iconsDir)).sorted();
+        Stream<Path> arquivos = Files.list(new File("./icons").toPath()).sorted().skip(filter.getOffSet()).limit(filter.getLimit());
 
-        if(filter.getOffSet() != null){
-            arquivos.skip(filter.getOffSet()); 
-        }
+        // if(filter.getOffSet() != null){
+        //     arquivos.skip(filter.getOffSet()); 
+        // }
 
-        if(filter.getLimit() != null){
-            arquivos.limit(filter.getLimit()); 
-        }        
-
-        arquivos.forEachOrdered((a)->{            
-            try(FileReader reader = new FileReader(a.toFile())){
+        // if(filter.getLimit() != null){
+        //     arquivos.limit(filter.getLimit()); 
+        // }        
+        arquivos.forEachOrdered((a)->{         
+            try{
+                FileReader reader = new FileReader(a.toFile());
                 IconModel icon = gson.fromJson(reader, IconModel.class);
                 result.add(icon);
-            }catch(IOException e){                
+            }catch(IOException e){    
+           
             }
-        });
+        }) ;
 
         return result;
     }
     
+
+
     public IconModel updateIcon(IconModel iconModel) throws GenericException {
         
         if(iconsDir == null){
