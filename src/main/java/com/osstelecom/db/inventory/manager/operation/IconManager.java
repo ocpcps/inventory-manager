@@ -36,6 +36,7 @@ import org.springframework.stereotype.Service;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonIOException;
+import com.google.gson.stream.JsonReader;
 import com.osstelecom.db.inventory.manager.configuration.ConfigurationManager;
 import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
@@ -50,7 +51,7 @@ public class IconManager extends Manager {
     private ConfigurationManager configurationManager;
     
     private String iconsDir;
-    private Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    private Gson gson = new GsonBuilder().create();
     /**
      * Retrieves a icon by id
      *
@@ -119,6 +120,7 @@ public class IconManager extends Manager {
             // writer.createNewFile();
             FileWriter writer = new FileWriter(iconsDir+File.separator+iconModel.getSchemaName()+".json");
            gson.toJson(iconModel, writer);
+           writer.close();
             return iconModel;
         }
         catch(JsonIOException | IOException  e){
@@ -158,12 +160,6 @@ public class IconManager extends Manager {
     //     }
     // }
 
-    public static void main(String[] args) throws IOException {
-    
-        Files.list(new File("./icons").toPath()).sorted()
-                 .forEachOrdered(System.out::println);
-    }
-
     public List<IconModel> findIconByFilter(FilterDTO filter) throws IOException   {
         List<IconModel> result = new ArrayList<>();
 
@@ -171,9 +167,7 @@ public class IconManager extends Manager {
             this.iconsDir = configurationManager.loadConfiguration().getIconsDir();
         }
         
-        Stream<Path> arquivos = Files.list(new File("./icons").toPath()).sorted();
-
-
+        Stream<Path> arquivos = Files.list(new File("./icons").toPath()).sorted().skip(filter.getOffSet()).limit(filter.getLimit());
 
         // if(filter.getOffSet() != null){
         //     arquivos.skip(filter.getOffSet()); 
@@ -182,11 +176,13 @@ public class IconManager extends Manager {
         // if(filter.getLimit() != null){
         //     arquivos.limit(filter.getLimit()); 
         // }        
-        arquivos.forEach((a)->{            
-            try(FileReader reader = new FileReader(a.toFile())){
+        arquivos.forEachOrdered((a)->{         
+            try{
+                FileReader reader = new FileReader(a.toFile());
                 IconModel icon = gson.fromJson(reader, IconModel.class);
                 result.add(icon);
-            }catch(IOException e){                
+            }catch(IOException e){    
+           
             }
         }) ;
 

@@ -30,6 +30,5 @@ public class IconModel{
         this.setSchemaName(schemaName);
     }
     public IconModel() {
-    
     }
 }
