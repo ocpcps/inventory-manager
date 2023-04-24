@@ -32,6 +32,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -183,15 +184,18 @@ public class IconManager extends Manager {
             this.iconsDir = configurationManager.loadConfiguration().getIconsDir();
         }
         
-        Stream<Path> arquivos = Files.list(new File("./icons").toPath()).sorted().skip(filter.getOffSet()).limit(filter.getLimit());
+        Stream<Path> arquivos = Files.list(new File("./icons").toPath()).sorted();
 
-        // if(filter.getOffSet() != null){
-        //     arquivos.skip(filter.getOffSet()); 
-        // }
+        if(StringUtils.isNotEmpty(filter.getAqlFilter())){
+            arquivos = arquivos.filter(path -> path.toString().contains(filter.getAqlFilter()));
+        }
+        if(filter.getOffSet() >= 0){
+            arquivos = arquivos.skip(filter.getOffSet()); 
+        }
 
-        // if(filter.getLimit() != null){
-        //     arquivos.limit(filter.getLimit()); 
-        // }        
+        if(filter.getLimit() >= 0 && StringUtils.isEmpty(filter.getAqlFilter())){
+            arquivos = arquivos.limit(filter.getLimit()); 
+        }        
         arquivos.forEachOrdered((a)->{         
             try{
                 FileReader reader = new FileReader(a.toFile());

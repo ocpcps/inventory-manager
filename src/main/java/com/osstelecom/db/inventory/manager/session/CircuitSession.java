@@ -104,9 +104,12 @@ public class CircuitSession {
      * @throws AttributeConstraintViolationException
      * @throws ScriptRuleException
      */
-    public PatchCircuitResourceResponse patchCircuitResource(PatchCircuitResourceRequest request) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, IOException, InvalidRequestException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
+    public PatchCircuitResourceResponse patchCircuitResource(PatchCircuitResourceRequest request)
+            throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, IOException,
+            InvalidRequestException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException,
+            ScriptRuleException {
 
-        if (request == null && request.getPayLoad() == null) {
+        if (request == null || request.getPayLoad() == null) {
             throw new InvalidRequestException("Please provide data in the request and payLoad");
         }
 
@@ -125,7 +128,9 @@ public class CircuitSession {
         //
         // Arruma o domain para funcionar certinho
         //
-        requestedCircuit.setDomain(this.domainManager.getDomain(requestedCircuit.getDomainName()));
+        String domainName = requestedCircuit.getDomainName();
+        Domain domain = this.domainManager.getDomain(domainName);
+        requestedCircuit.setDomain(domain);
         requestedCircuit.setDomainName(requestedCircuit.getDomain().getDomainName());
 
         //
@@ -256,7 +261,8 @@ public class CircuitSession {
      */
     public CreateCircuitResponse createCircuit(CreateCircuitRequest request)
             throws ResourceNotFoundException, GenericException, SchemaNotFoundException,
-            AttributeConstraintViolationException, ScriptRuleException, DomainNotFoundException, ArangoDaoException, InvalidRequestException {
+            AttributeConstraintViolationException, ScriptRuleException, DomainNotFoundException, ArangoDaoException,
+            InvalidRequestException {
 
         if (request.getPayLoad().getaPoint().getDomain() == null) {
             if (request.getPayLoad().getaPoint().getDomainName() != null) {
@@ -367,7 +373,8 @@ public class CircuitSession {
         return response;
     }
 
-    public CircuitResource findCircuitResource(CircuitResource resource) throws ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
+    public CircuitResource findCircuitResource(CircuitResource resource)
+            throws ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
         return this.circuitResourceManager.findCircuitResource(resource);
     }
 
@@ -382,7 +389,8 @@ public class CircuitSession {
      * @throws ArangoDaoException
      */
     public CreateCircuitPathResponse createCircuitPath(CreateCircuitPathRequest request)
-            throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
+            throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException,
+            SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
         CreateCircuitPathResponse r = new CreateCircuitPathResponse(request.getPayLoad());
         //
         // Valida se temos paths...na request
@@ -394,8 +402,8 @@ public class CircuitSession {
         if (circuit.getDomainName() == null) {
             circuit.setDomainName(domain.getDomainName());
 
-//            String domainName = this.domainManager.getDomainNameFromId(circuit.getId());
-//            circuit.setDomainName(domainName);
+            // String domainName = this.domainManager.getDomainNameFromId(circuit.getId());
+            // circuit.setDomainName(domainName);
         }
         circuit.setDomain(domainManager.getDomain(circuit.getDomainName()));
         circuit = circuitResourceManager.findCircuitResource(circuit);
@@ -427,13 +435,15 @@ public class CircuitSession {
                 } else {
                     //
                     // Arruma os domains dos recursos abaixo
-                    // 
+                    //
 
-                    if (requestedPath.getFromResource() != null && requestedPath.getFromResource().getDomainName() == null) {
+                    if (requestedPath.getFromResource() != null
+                            && requestedPath.getFromResource().getDomainName() == null) {
                         requestedPath.getFromResource().setDomainName(domain.getDomainName());
                     }
 
-                    if (requestedPath.getToResource() != null && requestedPath.getToResource().getDomainName() == null) {
+                    if (requestedPath.getToResource() != null
+                            && requestedPath.getToResource().getDomainName() == null) {
                         requestedPath.getToResource().setDomainName(domain.getDomainName());
                     }
 
@@ -446,7 +456,8 @@ public class CircuitSession {
                     //
                     b.getCircuits().add(circuit.getId());
                 } else {
-//                    logger.warn("Connection: [{}] Already Has Circuit: {}", b.getId(), circuit.getId());
+                    // logger.warn("Connection: [{}] Already Has Circuit: {}", b.getId(),
+                    // circuit.getId());
                 }
 
                 //
@@ -486,7 +497,8 @@ public class CircuitSession {
         return r;
     }
 
-    public FilterResponse findCircuitByFilter(FilterRequest filter) throws InvalidRequestException, ArangoDaoException, DomainNotFoundException, ResourceNotFoundException {
+    public FilterResponse findCircuitByFilter(FilterRequest filter)
+            throws InvalidRequestException, ArangoDaoException, DomainNotFoundException, ResourceNotFoundException {
         FilterResponse response = new FilterResponse(filter.getPayLoad());
         //
         // Validação para evitar abusos de uso da API
@@ -494,14 +506,17 @@ public class CircuitSession {
         if (filter.getPayLoad() != null) {
             if (filter.getPayLoad().getLimit() != null) {
                 if (filter.getPayLoad().getLimit() > 1000) {
-                    throw new InvalidRequestException("Result Set Limit cannot be over 1000, please descrease limit value to a range between 0 and 1000");
+                    throw new InvalidRequestException(
+                            "Result Set Limit cannot be over 1000, please descrease limit value to a range between 0 and 1000");
                 }
             }
         }
 
-        if (filter.getPayLoad().getObjects().contains("circuit") || filter.getPayLoad().getObjects().contains("circuits")) {
+        if (filter.getPayLoad().getObjects().contains("circuit")
+                || filter.getPayLoad().getObjects().contains("circuits")) {
             Domain domain = domainManager.getDomain(filter.getRequestDomain());
-            GraphList<CircuitResource> graphList = circuitResourceManager.findCircuitsByFilter(filter.getPayLoad(), domain);
+            GraphList<CircuitResource> graphList = circuitResourceManager.findCircuitsByFilter(filter.getPayLoad(),
+                    domain);
             response.getPayLoad().setCircuits(graphList.toList());
             response.getPayLoad().setCircuitCount(graphList.size());
             response.setSize(graphList.size());
@@ -512,9 +527,11 @@ public class CircuitSession {
         return response;
     }
 
-    public GraphList<CircuitResource> findCircuitResourceByFilter(FilterDTO filter) throws ResourceNotFoundException, ArangoDaoException, InvalidRequestException, DomainNotFoundException {
+    public GraphList<CircuitResource> findCircuitResourceByFilter(FilterDTO filter)
+            throws ResourceNotFoundException, ArangoDaoException, InvalidRequestException, DomainNotFoundException {
         if (filter.getObjects().contains("circuit") || filter.getObjects().contains("circuits")) {
-            GraphList<CircuitResource> circuitGraph = this.circuitResourceManager.findCircuitsByFilter(filter, filter.getDomainName());
+            GraphList<CircuitResource> circuitGraph = this.circuitResourceManager.findCircuitsByFilter(filter,
+                    filter.getDomainName());
             return circuitGraph;
         } else {
             throw new InvalidRequestException("Invalida Object Type:[" + String.join(",", filter.getObjects()) + "]")
@@ -522,11 +539,11 @@ public class CircuitSession {
         }
     }
 
-    public GetCircuitResponse findCircuitById(GetCircuitPathRequest req) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
+    public GetCircuitResponse findCircuitById(GetCircuitPathRequest req)
+            throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
         Domain domain = this.domainManager.getDomain(req.getDomainName());
         CircuitResource circuit = new CircuitResource(domain);
         circuit.setKey(req.getCircuitId());
-        circuit.setAttributeSchemaName(null); // Garante que só o id será usado na pesquisa
         circuit = this.circuitResourceManager.findCircuitResource(circuit);
         return new GetCircuitResponse(circuit);
     }
@@ -539,7 +556,8 @@ public class CircuitSession {
      * @throws DomainNotFoundException
      * @throws ArangoDaoException
      */
-    public DeleteCircuitResponse deleteCircuitById(DeleteCircuitRequest req) throws DomainNotFoundException, ArangoDaoException, InvalidRequestException {
+    public DeleteCircuitResponse deleteCircuitById(DeleteCircuitRequest req)
+            throws DomainNotFoundException, ArangoDaoException, InvalidRequestException {
         Domain domain = this.domainManager.getDomain(req.getRequestDomain());
         CircuitResource circuit = req.getPayLoad();
         circuit.setDomain(domain);
@@ -557,8 +575,9 @@ public class CircuitSession {
         }
 
         //
-        // Vamos validar se tem algum serviço usando este circuito, pois se houver, não podemos deletar..
-        // 
+        // Vamos validar se tem algum serviço usando este circuito, pois se houver, não
+        // podemos deletar..
+        //
         FilterDTO filter = new FilterDTO("@circuitId in doc.circuits[*]._id");
 
         filter.getBindings().put("circuitId", circuit.getId());
@@ -568,7 +587,8 @@ public class CircuitSession {
             //
             // Ruim tem serviços depentendes do circuito
             //
-            throw new InvalidRequestException("Circuit Cannot Be Deleted: Dependent Service Count:[" + result.size() + "]");
+            throw new InvalidRequestException(
+                    "Circuit Cannot Be Deleted: Dependent Service Count:[" + result.size() + "]");
         } catch (ResourceNotFoundException ex) {
             //
             // Caminho feliz, pode excluir.
