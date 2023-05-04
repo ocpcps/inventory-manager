@@ -98,6 +98,15 @@ public class GraphViewApi extends BaseApi {
         return this.viewSession.getResourceStrucureDependency(request);
     }
 
+    
+
+    @GetMapping(path = "{domain}/resource/{resourceKey}/services", produces = "application/json")
+    public ThreeJsViewResponse getServicesByResourceId(@PathVariable("domain") String domain,
+            @PathVariable("resourceKey") String resourceKey) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException, InvalidGraphException {
+        
+        return null;
+    }
+
     /**
      * Expand um nó em uma direção especifica
      *
@@ -161,6 +170,13 @@ public class GraphViewApi extends BaseApi {
         request.getPayLoad().setKey(connectionKey);
         request.setRequestDomain(domain);
         return this.viewSession.getCircuitsByConnectionId(request);
+    }
+
+    @GetMapping(path = "{domain}/connection/{connectionKey}/services", produces = "application/json")
+    public ThreeJsViewResponse getServicesByConnectionId(@PathVariable("domain") String domain,
+            @PathVariable("connectionKey") String connectionKey) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException, InvalidGraphException {
+        
+        return null;
     }
 
     /**
