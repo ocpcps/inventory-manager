@@ -24,12 +24,14 @@ import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
+import com.osstelecom.db.inventory.manager.resources.ServiceResource;
 import com.osstelecom.db.inventory.manager.rest.api.BaseApi;
 import com.osstelecom.db.inventory.visualization.dto.ExpandNodeDTO;
 import com.osstelecom.db.inventory.visualization.exception.InvalidGraphException;
 import com.osstelecom.db.inventory.visualization.request.ExpandNodeRequest;
 import com.osstelecom.db.inventory.visualization.request.GetCircuitByConnectionTopologyRequest;
 import com.osstelecom.db.inventory.visualization.request.GetConnectionsByCircuitRequest;
+import com.osstelecom.db.inventory.visualization.request.GetConnectionsByServiceRequest;
 import com.osstelecom.db.inventory.visualization.request.GetDomainTopologyRequest;
 import com.osstelecom.db.inventory.visualization.request.GetStructureTopologyDependencyRequest;
 import com.osstelecom.db.inventory.visualization.response.ThreeJsViewResponse;
@@ -185,6 +187,21 @@ public class GraphViewApi extends BaseApi {
         this.setUserDetails(request);
         httpRequest.setAttribute("request", request);
         return this.viewSession.getDomainTopologyByFilter(request);
+    }
+    
+    @GetMapping(path = "{domain}/circuit/{circuitKey}/service", produces = "application/json")
+    public ThreeJsViewResponse expandCircuitByService(@PathVariable("domain") String domain,
+            @PathVariable("serviceKey") String serviceKey,
+            HttpServletRequest httpRequest) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException, InvalidGraphException {
+        GetConnectionsByServiceRequest request = new GetConnectionsByServiceRequest();
+        ServiceResource service = new ServiceResource();
+        service.setKey(serviceKey);
+        service.setDomainName(domain);
+        request.setPayLoad(service);
+        request.setRequestDomain(domain);
+        this.setUserDetails(request);
+        httpRequest.setAttribute("request", request);
+        return this.viewSession.getConnectionsByService(request);
     }
 
 }
