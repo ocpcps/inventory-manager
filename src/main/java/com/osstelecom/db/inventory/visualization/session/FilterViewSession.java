@@ -25,12 +25,14 @@ import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.operation.DomainManager;
 import com.osstelecom.db.inventory.manager.request.FilterRequest;
 import com.osstelecom.db.inventory.manager.resources.CircuitResource;
+import com.osstelecom.db.inventory.manager.resources.ServiceResource;
 import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.GraphList;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import com.osstelecom.db.inventory.manager.response.FilterResponse;
 import com.osstelecom.db.inventory.manager.session.CircuitSession;
+import com.osstelecom.db.inventory.manager.session.ServiceSession;
 import com.osstelecom.db.inventory.manager.session.GraphSession;
 import com.osstelecom.db.inventory.manager.session.ResourceSession;
 import com.osstelecom.db.inventory.manager.session.UtilSession;
@@ -41,6 +43,7 @@ import com.osstelecom.db.inventory.visualization.exception.InvalidGraphException
 import com.osstelecom.db.inventory.visualization.request.ExpandNodeRequest;
 import com.osstelecom.db.inventory.visualization.request.GetCircuitByConnectionTopologyRequest;
 import com.osstelecom.db.inventory.visualization.request.GetConnectionsByCircuitRequest;
+import com.osstelecom.db.inventory.visualization.request.GetConnectionsByServiceRequest;
 import com.osstelecom.db.inventory.visualization.request.GetDomainTopologyRequest;
 import com.osstelecom.db.inventory.visualization.request.GetStructureTopologyDependencyRequest;
 import com.osstelecom.db.inventory.visualization.response.ThreeJsViewResponse;
@@ -66,6 +69,9 @@ public class FilterViewSession {
 
     @Autowired
     private CircuitSession circuitSession;
+
+    @Autowired
+    private ServiceSession serviceSession;
 
     @Autowired
     private GraphSession graphSession;
@@ -338,6 +344,42 @@ public class FilterViewSession {
         // Ok, se chegamos aqui encontramos o circuito, agora vamos procurar as conexões
         // 
         GraphList<ResourceConnection> connections = this.resourceSession.findResourceConnectionByCircuit(circuit);
+
+        view.setLinksByGraph(connections, true);
+
+        //
+        // Chegamos ao ponto de ter todas as conexões agora vamos montar o response
+        //
+        
+        view.validate();
+        return new ThreeJsViewResponse(view);
+    }
+        /**
+     * Expande um circuito trazendo TODA sua topologia
+     * @param request
+     * @return
+     * @throws DomainNotFoundException
+     * @throws ArangoDaoException
+     * @throws ResourceNotFoundException
+     * @throws InvalidRequestException
+     * @throws InvalidGraphException 
+     */
+    
+
+    public ThreeJsViewResponse getConnectionsByService(GetConnectionsByServiceRequest request) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException, InvalidGraphException {
+        ThreeJSViewDTO view = new ThreeJSViewDTO();
+        ServiceResource service = request.getPayLoad();
+        Domain domain = domainManager.getDomain(request.getRequestDomain());
+        service.setDomain(domain);
+        //
+        // Vamos procurar a Referencia do service
+        //
+        service = this.serviceSession.findServiceResource(service);
+
+        //
+        // Ok, se chegamos aqui encontramos o circuito, agora vamos procurar as conexões
+        // 
+        GraphList<ResourceConnection> connections = this.resourceSession.findResourceConnectionByService(service);
 
         view.setLinksByGraph(connections, true);
 

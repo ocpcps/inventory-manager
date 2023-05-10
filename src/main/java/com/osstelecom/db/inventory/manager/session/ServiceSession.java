@@ -196,4 +196,9 @@ public class ServiceSession {
         return response;
     }
 
+    public ServiceResource findServiceResource(ServiceResource resource)
+        throws ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
+        return this.serviceManager.findServiceResource(resource);
+    }
+
 }

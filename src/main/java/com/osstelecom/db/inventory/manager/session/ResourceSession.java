@@ -626,6 +626,22 @@ public class ResourceSession {
         filter.addObject("connections");
         return this.findResourceConnectionByFilter(filter);
     }
+
+    /**
+     * Retorna as areastas de um servico no grafo
+     *
+     * @param service
+     * @return
+     */
+    public GraphList<ResourceConnection> findResourceConnectionByService(ServiceResource service) throws InvalidRequestException, ArangoDaoException, DomainNotFoundException, ResourceNotFoundException {
+        FilterDTO filter = new FilterDTO();
+        filter.setDomainName(service.getDomain().getDomainName());
+        filter.addBinding("serviceId", service.getId());
+        //in  doc.relatedNodes[*]
+        filter.setAqlFilter(" @serviceId in doc.services[*]");
+        filter.addObject("connections");
+        return this.findResourceConnectionByFilter(filter);
+    }
     
     public ManagedResource findManagedResource(ManagedResource resource) throws ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
         return this.manager.findManagedResource(resource);
