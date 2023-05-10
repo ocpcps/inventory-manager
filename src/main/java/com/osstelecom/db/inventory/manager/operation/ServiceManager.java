@@ -1107,4 +1107,25 @@ public class ServiceManager extends Manager {
             
         }
     }
+    /**
+     * Find a Service Instance
+     *
+     * @param service
+     * @return
+     * @throws ResourceNotFoundException
+     * @throws ArangoDaoException
+     */
+    public ServiceResource findServiceResource(ServiceResource service)
+            throws ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
+        String timerId = startTimer("findServiceResource");
+        try {
+            lockManager.lock();
+            return this.serviceDao.findResource(service);
+        } finally {
+            if (lockManager.isLocked()) {
+                lockManager.unlock();
+            }
+            endTimer(timerId);
+        }
+    }
 }
