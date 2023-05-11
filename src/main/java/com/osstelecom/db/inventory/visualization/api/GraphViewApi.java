@@ -21,6 +21,7 @@ import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
+import com.osstelecom.db.inventory.manager.request.FindManagedResourceRequest;
 import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
@@ -31,6 +32,8 @@ import com.osstelecom.db.inventory.visualization.request.ExpandNodeRequest;
 import com.osstelecom.db.inventory.visualization.request.GetCircuitByConnectionTopologyRequest;
 import com.osstelecom.db.inventory.visualization.request.GetConnectionsByCircuitRequest;
 import com.osstelecom.db.inventory.visualization.request.GetDomainTopologyRequest;
+import com.osstelecom.db.inventory.visualization.request.GetServiceByConnectionTopologyRequest;
+import com.osstelecom.db.inventory.visualization.request.GetServiceByResourceTopologyRequest;
 import com.osstelecom.db.inventory.visualization.request.GetStructureTopologyDependencyRequest;
 import com.osstelecom.db.inventory.visualization.response.ThreeJsViewResponse;
 import com.osstelecom.db.inventory.visualization.session.FilterViewSession;
@@ -102,9 +105,14 @@ public class GraphViewApi extends BaseApi {
 
     @GetMapping(path = "{domain}/resource/{resourceKey}/services", produces = "application/json")
     public ThreeJsViewResponse getServicesByResourceId(@PathVariable("domain") String domain,
-            @PathVariable("resourceKey") String resourceKey) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException, InvalidGraphException {
-        
-        return null;
+            @PathVariable("resourceKey") String resourceKey) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException, InvalidGraphException { 
+            GetServiceByResourceTopologyRequest request = new GetServiceByResourceTopologyRequest();
+            FindManagedResourceRequest findRequest = new FindManagedResourceRequest(resourceKey, domain);
+            request.setPayLoad(new ResourceConnection());
+            request.getPayLoad().setKey(resourceKey);
+            request.setRequestDomain(domain);
+            return this.viewSession.getServiceByResource(findRequest, request);
+
     }
 
     /**
@@ -175,8 +183,12 @@ public class GraphViewApi extends BaseApi {
     @GetMapping(path = "{domain}/connection/{connectionKey}/services", produces = "application/json")
     public ThreeJsViewResponse getServicesByConnectionId(@PathVariable("domain") String domain,
             @PathVariable("connectionKey") String connectionKey) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException, InvalidGraphException {
-        
-        return null;
+            GetServiceByConnectionTopologyRequest request = new GetServiceByConnectionTopologyRequest();
+            request.setPayLoad(new ResourceConnection());
+            request.getPayLoad().setKey(connectionKey);
+            request.setRequestDomain(domain);
+            return this.viewSession.getGraphServicesByConnection(request);
+
     }
 
     /**

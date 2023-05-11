@@ -24,17 +24,22 @@ import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.operation.DomainManager;
 import com.osstelecom.db.inventory.manager.request.FilterRequest;
+import com.osstelecom.db.inventory.manager.request.FindManagedResourceRequest;
+import com.osstelecom.db.inventory.manager.request.GetServiceRequest;
 import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.GraphList;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
+import com.osstelecom.db.inventory.manager.resources.ServiceResource;
 import com.osstelecom.db.inventory.manager.response.FilterResponse;
 import com.osstelecom.db.inventory.manager.session.CircuitSession;
 import com.osstelecom.db.inventory.manager.session.GraphSession;
 import com.osstelecom.db.inventory.manager.session.ResourceSession;
+import com.osstelecom.db.inventory.manager.session.ServiceSession;
 import com.osstelecom.db.inventory.manager.session.UtilSession;
 import com.osstelecom.db.inventory.visualization.dto.ThreeJSLinkDTO;
+import com.osstelecom.db.inventory.visualization.dto.ThreeJSServiceDTO;
 import com.osstelecom.db.inventory.visualization.dto.ThreeJSViewDTO;
 import com.osstelecom.db.inventory.visualization.dto.ThreeJsNodeDTO;
 import com.osstelecom.db.inventory.visualization.exception.InvalidGraphException;
@@ -42,6 +47,8 @@ import com.osstelecom.db.inventory.visualization.request.ExpandNodeRequest;
 import com.osstelecom.db.inventory.visualization.request.GetCircuitByConnectionTopologyRequest;
 import com.osstelecom.db.inventory.visualization.request.GetConnectionsByCircuitRequest;
 import com.osstelecom.db.inventory.visualization.request.GetDomainTopologyRequest;
+import com.osstelecom.db.inventory.visualization.request.GetServiceByConnectionTopologyRequest;
+import com.osstelecom.db.inventory.visualization.request.GetServiceByResourceTopologyRequest;
 import com.osstelecom.db.inventory.visualization.request.GetStructureTopologyDependencyRequest;
 import com.osstelecom.db.inventory.visualization.response.ThreeJsViewResponse;
 import java.io.IOException;
@@ -63,6 +70,9 @@ public class FilterViewSession {
 
     @Autowired
     private ResourceSession resourceSession;
+
+    @Autowired
+    private ServiceSession serviceSession;
 
     @Autowired
     private CircuitSession circuitSession;
@@ -314,12 +324,76 @@ public class FilterViewSession {
         return new ThreeJsViewResponse(view);
     }
 
+        /**
+     * Dado uma conexão procura os servicos que dependem dela
+     *
+     * @param request
+     * @return
+     * @throws DomainNotFoundException
+     * @throws ArangoDaoException
+     * @throws ResourceNotFoundException
+     * @throws InvalidRequestException
+     * @throws InvalidGraphException
+     */
+    public List<ServiceResource> getServicesByConnectionId(GetServiceByConnectionTopologyRequest request) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
+        Domain domain = domainManager.getDomain(request.getRequestDomain());
+        ResourceConnection connection = request.getPayLoad();
+        List<ServiceResource>lista = new ArrayList<>();
+        connection.setDomain(domain);
+        connection = this.resourceSession.findResourceConnection(connection);
+        //
+        // OK A conexão Existe, agora vamos procurar os Circuitos...
+        //
+
+        if (!connection.getCircuits().isEmpty()) {
+            logger.debug("Found:[{}] Circuits for Connection ID:[{}]", connection.getCircuits().size(), connection.getKey());
+            FilterDTO filter = new FilterDTO();
+            filter.setDomainName(domain.getDomainName());
+            filter.addBinding("circuitIds", connection.getCircuits());
+            filter.setAqlFilter("doc._id in @circuitIds");
+            filter.addObject("circuit");
+
+            GraphList<CircuitResource> circuitsFound = this.circuitSession.findCircuitResourceByFilter(filter);
+
+            
+           
+            
+            for(CircuitResource circuito: circuitsFound.toList()){
+               for(String serviceId: circuito.getServices()){
+                GetServiceRequest serviceRequest = new GetServiceRequest();
+                serviceRequest.setPayLoad(new ServiceResource(serviceId));
+                serviceRequest.setRequestDomain(circuito.getDomainName());
+                lista.add(serviceSession.getServiceById(serviceRequest).getPayLoad());
+               }
+            }
+        }
+        return lista;      
+        
+    }
+
+    public ThreeJsViewResponse getGraphServicesByConnection(GetServiceByConnectionTopologyRequest request) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException, InvalidGraphException{
+        
+        List<ServiceResource> servicesFound = getServicesByConnectionId(request);
+        ThreeJSViewDTO view = new ThreeJSViewDTO();
+        if (!servicesFound.isEmpty()) {
+            view.setServices(servicesFound);
+        }
+        view.validate();
+        return new ThreeJsViewResponse(view);
+    }
+
+    public ThreeJsViewResponse getServiceByResource(FindManagedResourceRequest findRequest, GetServiceByResourceTopologyRequest request){
+        resourceSession.findManagedResourceById(findRequest);
+        request.getResourceId();
+        
+    }
+
     /**
      * Expande um circuito trazendo TODA sua topologia
      * @param request
      * @return
      * @throws DomainNotFoundException
-     * @throws ArangoDaoException
+     * @throws ArangoDaoExceptionCircuitResource
      * @throws ResourceNotFoundException
      * @throws InvalidRequestException
      * @throws InvalidGraphException 
