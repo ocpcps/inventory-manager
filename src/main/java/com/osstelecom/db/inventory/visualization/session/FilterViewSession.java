@@ -17,6 +17,7 @@
  */
 package com.osstelecom.db.inventory.visualization.session;
 
+import com.osstelecom.db.inventory.manager.dao.ResourceConnectionDao;
 import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
@@ -24,19 +25,25 @@ import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.operation.DomainManager;
 import com.osstelecom.db.inventory.manager.request.FilterRequest;
+import com.osstelecom.db.inventory.manager.request.FindManagedResourceRequest;
+import com.osstelecom.db.inventory.manager.request.GetServiceRequest;
 import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 import com.osstelecom.db.inventory.manager.resources.ServiceResource;
 import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.GraphList;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
+import com.osstelecom.db.inventory.manager.resources.ServiceResource;
 import com.osstelecom.db.inventory.manager.response.FilterResponse;
+import com.osstelecom.db.inventory.manager.response.FindManagedResourceResponse;
 import com.osstelecom.db.inventory.manager.session.CircuitSession;
 import com.osstelecom.db.inventory.manager.session.ServiceSession;
 import com.osstelecom.db.inventory.manager.session.GraphSession;
 import com.osstelecom.db.inventory.manager.session.ResourceSession;
+import com.osstelecom.db.inventory.manager.session.ServiceSession;
 import com.osstelecom.db.inventory.manager.session.UtilSession;
 import com.osstelecom.db.inventory.visualization.dto.ThreeJSLinkDTO;
+import com.osstelecom.db.inventory.visualization.dto.ThreeJSServiceDTO;
 import com.osstelecom.db.inventory.visualization.dto.ThreeJSViewDTO;
 import com.osstelecom.db.inventory.visualization.dto.ThreeJsNodeDTO;
 import com.osstelecom.db.inventory.visualization.exception.InvalidGraphException;
@@ -45,6 +52,8 @@ import com.osstelecom.db.inventory.visualization.request.GetCircuitByConnectionT
 import com.osstelecom.db.inventory.visualization.request.GetConnectionsByCircuitRequest;
 import com.osstelecom.db.inventory.visualization.request.GetConnectionsByServiceRequest;
 import com.osstelecom.db.inventory.visualization.request.GetDomainTopologyRequest;
+import com.osstelecom.db.inventory.visualization.request.GetServiceByConnectionTopologyRequest;
+import com.osstelecom.db.inventory.visualization.request.GetServiceByResourceTopologyRequest;
 import com.osstelecom.db.inventory.visualization.request.GetStructureTopologyDependencyRequest;
 import com.osstelecom.db.inventory.visualization.response.ThreeJsViewResponse;
 import java.io.IOException;
@@ -68,6 +77,9 @@ public class FilterViewSession {
     private ResourceSession resourceSession;
 
     @Autowired
+    private ServiceSession serviceSession;
+
+    @Autowired
     private CircuitSession circuitSession;
 
     @Autowired
@@ -81,6 +93,9 @@ public class FilterViewSession {
 
     @Autowired
     private DomainManager domainManager;
+
+    @Autowired
+    private ResourceConnectionDao resourceConnectionDao;
 
     private org.slf4j.Logger logger = LoggerFactory.getLogger(FilterViewSession.class);
 
@@ -320,12 +335,103 @@ public class FilterViewSession {
         return new ThreeJsViewResponse(view);
     }
 
+        /**
+     * Dado uma conexão procura os servicos que dependem dela
+     *
+     * @param request
+     * @return
+     * @throws DomainNotFoundException
+     * @throws ArangoDaoException
+     * @throws ResourceNotFoundException
+     * @throws InvalidRequestException
+     * @throws InvalidGraphException
+     */
+    public List<ServiceResource> getServicesByConnectionId(ResourceConnection connection, Domain domain) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
+
+        List<ServiceResource>lista = new ArrayList<>();
+        connection.setDomain(domain);
+        connection = this.resourceSession.findResourceConnection(connection);
+        //
+        // OK A conexão Existe, agora vamos procurar os Circuitos...
+        //
+
+        if (!connection.getCircuits().isEmpty()) {
+            logger.debug("Found:[{}] Circuits for Connection ID:[{}]", connection.getCircuits().size(), connection.getKey());
+            FilterDTO filter = new FilterDTO();
+            filter.setDomainName(domain.getDomainName());
+            filter.addBinding("circuitIds", connection.getCircuits());
+            filter.setAqlFilter("doc._id in @circuitIds");
+            filter.addObject("circuit");
+
+            GraphList<CircuitResource> circuitsFound = this.circuitSession.findCircuitResourceByFilter(filter);
+
+            
+           
+            
+            for(CircuitResource circuito: circuitsFound.toList()){
+               for(String serviceId: circuito.getServices()){
+                GetServiceRequest serviceRequest = new GetServiceRequest();
+                serviceRequest.setPayLoad(new ServiceResource(serviceId));
+                serviceRequest.setRequestDomain(circuito.getDomainName());
+                lista.add(serviceSession.getServiceById(serviceRequest).getPayLoad());
+               }
+            }
+        }
+        return lista;      
+        
+    }
+
+    public ThreeJsViewResponse getGraphServicesByConnection(GetServiceByConnectionTopologyRequest request) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException, InvalidGraphException{
+        Domain domain = domainManager.getDomain(request.getRequestDomain());
+        ResourceConnection connection = request.getPayLoad();
+        List<ServiceResource> servicesFound = getServicesByConnectionId(connection, domain);
+        ThreeJSViewDTO view = new ThreeJSViewDTO();
+        if (!servicesFound.isEmpty()) {
+            view.setServices(servicesFound);
+        }
+        view.validate();
+        return new ThreeJsViewResponse(view);
+    }
+
+    public ThreeJsViewResponse getServiceByResource(FindManagedResourceRequest findRequest) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, IllegalStateException, IOException, InvalidGraphException{
+        FindManagedResourceResponse response = resourceSession.findManagedResourceById(findRequest);
+        Domain domain = domainManager.getDomain(findRequest.getRequestDomain());
+        
+        List<ServiceResource> servicesFound = new ArrayList<>();
+        String filter = "@resourceId in  doc.relatedNodes[*]";
+        Map<String, Object> bindVars = new HashMap<>();
+        ThreeJSViewDTO view = new ThreeJSViewDTO();
+        
+        bindVars.put("resourceId", response.getPayLoad().getId());
+        //
+        // Procura as conexões relacionadas no mesmo dominio
+        //
+        
+        this.resourceConnectionDao.findResourceByFilter(new FilterDTO(filter, bindVars), response.getPayLoad().getDomain()).forEach((connection) -> {
+            try {
+                servicesFound.addAll(getServicesByConnectionId(connection, domain));
+            } catch (DomainNotFoundException | ArangoDaoException | ResourceNotFoundException
+                    | InvalidRequestException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        });
+        
+        if (!servicesFound.isEmpty()) {
+            view.setServices(servicesFound);
+        }
+        view.validate();
+        return new ThreeJsViewResponse(view);
+
+        
+    }
+
     /**
      * Expande um circuito trazendo TODA sua topologia
      * @param request
      * @return
      * @throws DomainNotFoundException
-     * @throws ArangoDaoException
+     * @throws ArangoDaoExceptionCircuitResource
      * @throws ResourceNotFoundException
      * @throws InvalidRequestException
      * @throws InvalidGraphException 

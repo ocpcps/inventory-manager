@@ -22,6 +22,7 @@ import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 import com.osstelecom.db.inventory.manager.resources.GraphList;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
+import com.osstelecom.db.inventory.manager.resources.ServiceResource;
 import com.osstelecom.db.inventory.manager.response.FilterResponse;
 import com.osstelecom.db.inventory.visualization.exception.InvalidGraphException;
 import java.io.IOException;
@@ -51,6 +52,7 @@ public class ThreeJSViewDTO {
     private List<ThreeJsNodeDTO> nodes = new ArrayList<>();
     private List<ThreeJSLinkDTO> links = new ArrayList<>();
     private List<ThreeJSCircuitDTO> circuits = new ArrayList<>();
+    private List<ThreeJSServiceDTO> services = new ArrayList<>();
     @JsonIgnore
     private Map<String, ThreeJsNodeDTO> nodeMap = new ConcurrentHashMap<>();
 
@@ -73,6 +75,13 @@ public class ThreeJSViewDTO {
             });
         } catch (IOException ex) {
         }
+    }
+
+    public void setServices(List<ServiceResource> services) {
+        this.services.clear();
+        services.forEach(c -> {
+            this.services.add(new ThreeJSServiceDTO(c));
+        });
     }
 
     /**
