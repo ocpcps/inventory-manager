@@ -37,6 +37,9 @@ import com.osstelecom.db.inventory.visualization.request.GetServiceByResourceTop
 import com.osstelecom.db.inventory.visualization.request.GetStructureTopologyDependencyRequest;
 import com.osstelecom.db.inventory.visualization.response.ThreeJsViewResponse;
 import com.osstelecom.db.inventory.visualization.session.FilterViewSession;
+
+import java.io.IOException;
+
 import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -105,13 +108,9 @@ public class GraphViewApi extends BaseApi {
 
     @GetMapping(path = "{domain}/resource/{resourceKey}/services", produces = "application/json")
     public ThreeJsViewResponse getServicesByResourceId(@PathVariable("domain") String domain,
-            @PathVariable("resourceKey") String resourceKey) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException, InvalidGraphException { 
-            GetServiceByResourceTopologyRequest request = new GetServiceByResourceTopologyRequest();
+            @PathVariable("resourceKey") String resourceKey) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException, InvalidGraphException, IllegalStateException, IOException { 
             FindManagedResourceRequest findRequest = new FindManagedResourceRequest(resourceKey, domain);
-            request.setPayLoad(new ResourceConnection());
-            request.getPayLoad().setKey(resourceKey);
-            request.setRequestDomain(domain);
-            return this.viewSession.getServiceByResource(findRequest, request);
+            return this.viewSession.getServiceByResource(findRequest);
 
     }
 

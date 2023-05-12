@@ -17,6 +17,7 @@
  */
 package com.osstelecom.db.inventory.visualization.session;
 
+import com.osstelecom.db.inventory.manager.dao.ResourceConnectionDao;
 import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
@@ -33,6 +34,7 @@ import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import com.osstelecom.db.inventory.manager.resources.ServiceResource;
 import com.osstelecom.db.inventory.manager.response.FilterResponse;
+import com.osstelecom.db.inventory.manager.response.FindManagedResourceResponse;
 import com.osstelecom.db.inventory.manager.session.CircuitSession;
 import com.osstelecom.db.inventory.manager.session.GraphSession;
 import com.osstelecom.db.inventory.manager.session.ResourceSession;
@@ -85,6 +87,9 @@ public class FilterViewSession {
 
     @Autowired
     private DomainManager domainManager;
+
+    @Autowired
+    private ResourceConnectionDao resourceConnectionDao;
 
     private org.slf4j.Logger logger = LoggerFactory.getLogger(FilterViewSession.class);
 
@@ -335,9 +340,8 @@ public class FilterViewSession {
      * @throws InvalidRequestException
      * @throws InvalidGraphException
      */
-    public List<ServiceResource> getServicesByConnectionId(GetServiceByConnectionTopologyRequest request) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
-        Domain domain = domainManager.getDomain(request.getRequestDomain());
-        ResourceConnection connection = request.getPayLoad();
+    public List<ServiceResource> getServicesByConnectionId(ResourceConnection connection, Domain domain) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
+
         List<ServiceResource>lista = new ArrayList<>();
         connection.setDomain(domain);
         connection = this.resourceSession.findResourceConnection(connection);
@@ -372,8 +376,9 @@ public class FilterViewSession {
     }
 
     public ThreeJsViewResponse getGraphServicesByConnection(GetServiceByConnectionTopologyRequest request) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException, InvalidGraphException{
-        
-        List<ServiceResource> servicesFound = getServicesByConnectionId(request);
+        Domain domain = domainManager.getDomain(request.getRequestDomain());
+        ResourceConnection connection = request.getPayLoad();
+        List<ServiceResource> servicesFound = getServicesByConnectionId(connection, domain);
         ThreeJSViewDTO view = new ThreeJSViewDTO();
         if (!servicesFound.isEmpty()) {
             view.setServices(servicesFound);
@@ -382,9 +387,36 @@ public class FilterViewSession {
         return new ThreeJsViewResponse(view);
     }
 
-    public ThreeJsViewResponse getServiceByResource(FindManagedResourceRequest findRequest, GetServiceByResourceTopologyRequest request){
-        resourceSession.findManagedResourceById(findRequest);
-        request.getResourceId();
+    public ThreeJsViewResponse getServiceByResource(FindManagedResourceRequest findRequest) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, IllegalStateException, IOException, InvalidGraphException{
+        FindManagedResourceResponse response = resourceSession.findManagedResourceById(findRequest);
+        Domain domain = domainManager.getDomain(findRequest.getRequestDomain());
+        
+        List<ServiceResource> servicesFound = new ArrayList<>();
+        String filter = "@resourceId in  doc.relatedNodes[*]";
+        Map<String, Object> bindVars = new HashMap<>();
+        ThreeJSViewDTO view = new ThreeJSViewDTO();
+        
+        bindVars.put("resourceId", response.getPayLoad().getId());
+        //
+        // Procura as conexões relacionadas no mesmo dominio
+        //
+        
+        this.resourceConnectionDao.findResourceByFilter(new FilterDTO(filter, bindVars), response.getPayLoad().getDomain()).forEach((connection) -> {
+            try {
+                servicesFound.addAll(getServicesByConnectionId(connection, domain));
+            } catch (DomainNotFoundException | ArangoDaoException | ResourceNotFoundException
+                    | InvalidRequestException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        });
+        
+        if (!servicesFound.isEmpty()) {
+            view.setServices(servicesFound);
+        }
+        view.validate();
+        return new ThreeJsViewResponse(view);
+
         
     }
 
