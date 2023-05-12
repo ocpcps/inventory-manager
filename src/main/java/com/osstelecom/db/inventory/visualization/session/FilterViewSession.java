@@ -77,9 +77,6 @@ public class FilterViewSession {
     private ResourceSession resourceSession;
 
     @Autowired
-    private ServiceSession serviceSession;
-
-    @Autowired
     private CircuitSession circuitSession;
 
     @Autowired
