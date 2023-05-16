@@ -367,8 +367,11 @@ public class FilterViewSession {
             
             for(CircuitResource circuito: circuitsFound.toList()){
                for(String serviceId: circuito.getServices()){
+                ServiceResource serviceResource = new ServiceResource();
+                serviceResource.setId(serviceId.split("/")[1]);
+                serviceResource.setDomain(domain);
                 GetServiceRequest serviceRequest = new GetServiceRequest();
-                serviceRequest.setPayLoad(new ServiceResource(serviceId));
+                serviceRequest.setPayLoad(serviceResource);
                 serviceRequest.setRequestDomain(circuito.getDomainName());
                 lista.add(serviceSession.getServiceById(serviceRequest).getPayLoad());
                }
