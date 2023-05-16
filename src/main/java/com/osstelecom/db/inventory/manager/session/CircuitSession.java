@@ -542,8 +542,7 @@ public class CircuitSession {
     public GetCircuitResponse findCircuitById(GetCircuitPathRequest req)
             throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
         Domain domain = this.domainManager.getDomain(req.getDomainName());
-        CircuitResource circuit = new CircuitResource(domain);
-        circuit.setKey(req.getCircuitId());
+        CircuitResource circuit = new CircuitResource(domain, req.getCircuitId());
         circuit = this.circuitResourceManager.findCircuitResource(circuit);
         return new GetCircuitResponse(circuit);
     }
