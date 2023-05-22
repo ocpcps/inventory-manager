@@ -198,7 +198,7 @@ public class ResourceConnectionManager extends Manager {
             //
             // Update Edges
             //
-
+            schemaSession.validateResourceSchema(connection);
             return connection;
         } finally {
             if (lockManager.isLocked()) {
