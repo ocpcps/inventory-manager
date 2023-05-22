@@ -36,6 +36,7 @@ import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import com.osstelecom.db.inventory.manager.resources.ServiceResource;
 import com.osstelecom.db.inventory.manager.response.FilterResponse;
 import com.osstelecom.db.inventory.manager.response.FindManagedResourceResponse;
+import com.osstelecom.db.inventory.manager.response.GetServiceResponse;
 import com.osstelecom.db.inventory.manager.session.CircuitSession;
 import com.osstelecom.db.inventory.manager.session.ServiceSession;
 import com.osstelecom.db.inventory.manager.session.GraphSession;
@@ -367,8 +368,11 @@ public class FilterViewSession {
             
             for(CircuitResource circuito: circuitsFound.toList()){
                for(String serviceId: circuito.getServices()){
+                ServiceResource serviceResource = new ServiceResource();
+                serviceResource.setId(serviceId.split("/")[1]);
+                serviceResource.setDomain(domain);
                 GetServiceRequest serviceRequest = new GetServiceRequest();
-                serviceRequest.setPayLoad(new ServiceResource(serviceId));
+                serviceRequest.setPayLoad(serviceResource);
                 serviceRequest.setRequestDomain(circuito.getDomainName());
                 lista.add(serviceSession.getServiceById(serviceRequest).getPayLoad());
                }
@@ -386,6 +390,37 @@ public class FilterViewSession {
         if (!servicesFound.isEmpty()) {
             view.setServices(servicesFound);
         }
+        view.validate();
+        return new ThreeJsViewResponse(view);
+    }
+
+    public ThreeJsViewResponse getGraphNodesByService(GetServiceRequest request) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException, InvalidGraphException{
+        if (request.getPayLoad().getId() == null) {
+            throw new InvalidRequestException("ID Field Missing");
+        }
+
+        if (request.getRequestDomain() == null) {
+            throw new DomainNotFoundException("Domain With Name:[" + request.getRequestDomain() + "] not found");
+        }
+        GetServiceResponse serviceId = serviceSession.getServiceById(request);
+        List<ThreeJsNodeDTO>listaNodes = new ArrayList<ThreeJsNodeDTO>();
+        List<ThreeJSLinkDTO>listaLinks = new ArrayList<ThreeJSLinkDTO>();
+        List<CircuitResource> circuitsFound = serviceId.getPayLoad().getCircuits();
+        
+
+        for(CircuitResource circuito: circuitsFound){
+            GetConnectionsByCircuitRequest circuitRequest = new GetConnectionsByCircuitRequest();
+            
+            circuitRequest.setPayLoad(circuito);
+            circuitRequest.setRequestDomain(circuito.getDomainName());
+            ThreeJSViewDTO payload = getConnectionsByCircuit(circuitRequest).getPayLoad();
+            listaLinks.addAll(payload.getLinks());
+            listaNodes.addAll(payload.getNodes());
+         }
+
+        ThreeJSViewDTO view = new ThreeJSViewDTO();
+        view.setLinks(listaLinks);
+        view.setNodes(listaNodes);
         view.validate();
         return new ThreeJsViewResponse(view);
     }

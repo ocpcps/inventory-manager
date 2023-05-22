@@ -49,6 +49,10 @@ public class ThreeJSViewDTO {
         return circuits;
     }
 
+    public List<ThreeJSServiceDTO> getServices() {
+        return services;
+    }
+
     private List<ThreeJsNodeDTO> nodes = new ArrayList<>();
     private List<ThreeJSLinkDTO> links = new ArrayList<>();
     private List<ThreeJSCircuitDTO> circuits = new ArrayList<>();
@@ -105,9 +109,10 @@ public class ThreeJSViewDTO {
     public ThreeJSViewDTO(FilterResponse filter) {
 
         if (filter.getPayLoad().getNodes() != null) {
-//            filter.getPayLoad().getNodes().forEach(node -> {
-//                this.nodes.add(new ThreeJsNodeDTO(node.getKey(), node.getName(), "", node.getDomainName()));
-//            });
+            // filter.getPayLoad().getNodes().forEach(node -> {
+            // this.nodes.add(new ThreeJsNodeDTO(node.getKey(), node.getName(), "",
+            // node.getDomainName()));
+            // });
         }
 
         if (filter.getPayLoad().getConnections() != null) {
@@ -182,7 +187,7 @@ public class ThreeJSViewDTO {
      * Monta o grafo, com links e nó a partir dos resource connection
      *
      * @param connections
-     * @param addNodes - se for true, ele vai adicionar os nós automaticamente
+     * @param addNodes    - se for true, ele vai adicionar os nós automaticamente
      */
     public void setLinksByGraph(GraphList<ResourceConnection> connections, boolean addNodes) {
         this.links.clear();
@@ -239,14 +244,17 @@ public class ThreeJSViewDTO {
         List<String> connectionsToRemove = new ArrayList<>();
         if (!this.links.isEmpty()) {
             for (ThreeJSLinkDTO link : this.links) {
-                if (this.nodes.stream().filter(n -> n.getId().equals(link.getSource()) || n.getId().equals(link.getTarget())).count() > 0) {
+                if (this.nodes.stream()
+                        .filter(n -> n.getId().equals(link.getSource()) || n.getId().equals(link.getTarget()))
+                        .count() > 0) {
                 } else {
                     if (this.nodes.stream().filter(n -> n.getId().equals(link.getTarget())).count() > 0) {
                     } else {
                         if (fixGraph) {
                             connectionsToRemove.add(link.getId());
                         } else {
-                            throw new InvalidGraphException("Connection Node(target) not found: ConnectionID:[" + link.getId() + "] Node: [" + link.getTarget() + "]").addDetails("nodes", nodes);
+                            throw new InvalidGraphException("Connection Node(target) not found: ConnectionID:["
+                                    + link.getId() + "] Node: [" + link.getTarget() + "]").addDetails("nodes", nodes);
                         }
                     }
 
@@ -255,7 +263,8 @@ public class ThreeJSViewDTO {
                         if (fixGraph) {
                             connectionsToRemove.add(link.getId());
                         } else {
-                            throw new InvalidGraphException("Connection Node(source) not found: ConnectionID:[" + link.getId() + "] Node: [" + link.getTarget() + "]").addDetails("nodes", nodes);
+                            throw new InvalidGraphException("Connection Node(source) not found: ConnectionID:["
+                                    + link.getId() + "] Node: [" + link.getTarget() + "]").addDetails("nodes", nodes);
                         }
                     }
                 }
@@ -304,4 +313,5 @@ public class ThreeJSViewDTO {
     public void setLinkCount(Long linkCount) {
         this.linkCount = linkCount;
     }
+
 }
