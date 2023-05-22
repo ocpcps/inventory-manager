@@ -36,6 +36,7 @@ import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import com.osstelecom.db.inventory.manager.resources.ServiceResource;
 import com.osstelecom.db.inventory.manager.response.FilterResponse;
 import com.osstelecom.db.inventory.manager.response.FindManagedResourceResponse;
+import com.osstelecom.db.inventory.manager.response.GetServiceResponse;
 import com.osstelecom.db.inventory.manager.session.CircuitSession;
 import com.osstelecom.db.inventory.manager.session.ServiceSession;
 import com.osstelecom.db.inventory.manager.session.GraphSession;
@@ -386,6 +387,37 @@ public class FilterViewSession {
         if (!servicesFound.isEmpty()) {
             view.setServices(servicesFound);
         }
+        view.validate();
+        return new ThreeJsViewResponse(view);
+    }
+
+    public ThreeJsViewResponse getGraphNodesByService(GetServiceRequest request) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException, InvalidGraphException{
+        if (request.getPayLoad().getId() == null) {
+            throw new InvalidRequestException("ID Field Missing");
+        }
+
+        if (request.getRequestDomain() == null) {
+            throw new DomainNotFoundException("Domain With Name:[" + request.getRequestDomain() + "] not found");
+        }
+        GetServiceResponse serviceId = serviceSession.getServiceById(request);
+        List<ThreeJSViewDTO>lista = new ArrayList<>();
+        List<CircuitResource> circuitsFound = serviceId.getPayLoad().getCircuits();
+
+        for(CircuitResource circuito: circuitsFound){
+            GetConnectionsByCircuitRequest circuitRequest = new GetConnectionsByCircuitRequest();
+            circuitRequest.setPayLoad(circuito);
+            circuitRequest.setRequestDomain(circuito.getDomainName());
+            lista.add(getConnectionsByCircuit(circuitRequest).getPayLoad());
+         }
+
+         
+
+        //List<ServiceResource> connection = getServicesByConnectionId(connection, domain);
+        ThreeJSViewDTO view = new ThreeJSViewDTO();
+        //if (!servicesFound.isEmpty()) {
+            view.setLinksByGraph(lista);
+        //    view.setServices(servicesFound);
+        //}
         view.validate();
         return new ThreeJsViewResponse(view);
     }
