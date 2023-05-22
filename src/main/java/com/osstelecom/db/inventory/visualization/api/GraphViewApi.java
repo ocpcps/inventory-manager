@@ -22,6 +22,7 @@ import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.request.FindManagedResourceRequest;
+import com.osstelecom.db.inventory.manager.request.GetServiceRequest;
 import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
@@ -189,6 +190,19 @@ public class GraphViewApi extends BaseApi {
             request.getPayLoad().setKey(connectionKey);
             request.setRequestDomain(domain);
             return this.viewSession.getGraphServicesByConnection(request);
+
+    }
+
+    @GetMapping(path = "{domain}/services/{serviceKey}", produces = "application/json")
+    public ThreeJsViewResponse getNodesByServices(@PathVariable("domain") String domain,
+            @PathVariable("serviceKey") String serviceKey, HttpServletRequest httpRequest) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException, InvalidGraphException {
+            GetServiceRequest request = new GetServiceRequest();
+            this.setUserDetails(request);
+            request.setRequestDomain(domain);
+            request.setPayLoad(new ServiceResource(serviceKey));
+    
+            httpRequest.setAttribute("request", request);
+            return this.viewSession.getGraphNodesByService(request);
 
     }
 
