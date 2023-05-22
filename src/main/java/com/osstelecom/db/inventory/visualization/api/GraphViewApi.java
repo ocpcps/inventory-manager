@@ -193,13 +193,13 @@ public class GraphViewApi extends BaseApi {
 
     }
 
-    @GetMapping(path = "{domain}/serices/{serviceKey}", produces = "application/json")
+    @GetMapping(path = "{domain}/services/{serviceKey}", produces = "application/json")
     public ThreeJsViewResponse getNodesByServices(@PathVariable("domain") String domain,
-            @PathVariable("serviceKeyserviceKey") String serviceKeyserviceKey, HttpServletRequest httpRequest) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException, InvalidGraphException {
+            @PathVariable("serviceKey") String serviceKey, HttpServletRequest httpRequest) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException, InvalidGraphException {
             GetServiceRequest request = new GetServiceRequest();
             this.setUserDetails(request);
             request.setRequestDomain(domain);
-            request.setPayLoad(new ServiceResource(serviceKeyserviceKey));
+            request.setPayLoad(new ServiceResource(serviceKey));
     
             httpRequest.setAttribute("request", request);
             return this.viewSession.getGraphNodesByService(request);

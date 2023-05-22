@@ -400,24 +400,24 @@ public class FilterViewSession {
             throw new DomainNotFoundException("Domain With Name:[" + request.getRequestDomain() + "] not found");
         }
         GetServiceResponse serviceId = serviceSession.getServiceById(request);
-        List<ThreeJSViewDTO>lista = new ArrayList<>();
+        List<ThreeJsNodeDTO>listaNodes = new ArrayList<ThreeJsNodeDTO>();
+        List<ThreeJSLinkDTO>listaLinks = new ArrayList<ThreeJSLinkDTO>();
         List<CircuitResource> circuitsFound = serviceId.getPayLoad().getCircuits();
+        
 
         for(CircuitResource circuito: circuitsFound){
             GetConnectionsByCircuitRequest circuitRequest = new GetConnectionsByCircuitRequest();
+            
             circuitRequest.setPayLoad(circuito);
             circuitRequest.setRequestDomain(circuito.getDomainName());
-            lista.add(getConnectionsByCircuit(circuitRequest).getPayLoad());
+            ThreeJSViewDTO payload = getConnectionsByCircuit(circuitRequest).getPayLoad();
+            listaLinks.addAll(payload.getLinks());
+            listaNodes.addAll(payload.getNodes());
          }
 
-         
-
-        //List<ServiceResource> connection = getServicesByConnectionId(connection, domain);
         ThreeJSViewDTO view = new ThreeJSViewDTO();
-        //if (!servicesFound.isEmpty()) {
-            view.setLinksByGraph(lista);
-        //    view.setServices(servicesFound);
-        //}
+        view.setLinks(listaLinks);
+        view.setNodes(listaNodes);
         view.validate();
         return new ThreeJsViewResponse(view);
     }
