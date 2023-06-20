@@ -100,7 +100,7 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
      */
     @Override
     public void handleException(Throwable thrwbl, SubscriberExceptionContext sec) {
-        logger.error("Subscription Error in EventBUS Please Check ME:", thrwbl);
+        logger.error("Subscription Error in EventBUS Please Check Me:", thrwbl);
         thrwbl.printStackTrace();
     }
 
@@ -110,8 +110,7 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
     @Override
     public void run() {
         while (running) {
-            try {
-                
+            try {                
                 Object event = eventQueue.poll(5, TimeUnit.SECONDS);
                 if (event != null) {
                     //
@@ -129,7 +128,6 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
                 }
             } catch (InterruptedException ex) {
                 logger.error("Error on Processing Event: [{}]", ex.getMessage());
-                Thread.currentThread().interrupt();
             }
         }
     }

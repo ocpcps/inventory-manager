@@ -57,22 +57,28 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
 
     protected Logger logger = LoggerFactory.getLogger(AbstractArangoDao.class);
 
-    public abstract T findResource(T resource) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException;
+    public abstract T findResource(T resource)
+            throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException;
 
-    public abstract DocumentCreateEntity<T> insertResource(T resource) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException;
+    public abstract DocumentCreateEntity<T> insertResource(T resource)
+            throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException;
 
-    public abstract DocumentCreateEntity<T> upsertResource(T resource) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException;
+    public abstract DocumentCreateEntity<T> upsertResource(T resource)
+            throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException;
 
-    public abstract DocumentUpdateEntity<T> updateResource(T resource) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException;
+    public abstract DocumentUpdateEntity<T> updateResource(T resource)
+            throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException;
 
     public abstract MultiDocumentEntity<DocumentUpdateEntity<T>> updateResources(List<T> resources, Domain domain)
             throws BasicException;
 
     public abstract DocumentDeleteEntity<T> deleteResource(T resource) throws BasicException;
 
-    public abstract GraphList<T> findResourcesBySchemaName(String schemaName, Domain domain) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException;
+    public abstract GraphList<T> findResourcesBySchemaName(String schemaName, Domain domain)
+            throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException;
 
-    public abstract GraphList<T> findResourcesByClassName(String className, Domain domain) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException;
+    public abstract GraphList<T> findResourcesByClassName(String className, Domain domain)
+            throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException;
 
     public abstract GraphList<T> findResourceByFilter(FilterDTO filter, Domain domain)
             throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException;
@@ -126,6 +132,11 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
                 //
                 // Create a Detail map to the user
                 //
+                try {
+                    result.close();
+                } catch (Exception e) {
+                    logger.error("close cursos error when empty response", e);
+                }
                 ex.addDetails("AQL", aql);
                 ex.addDetails("params", bindVars);
                 throw ex;
@@ -133,7 +144,7 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
             Long end = System.currentTimeMillis();
             Long took = end - start;
             //
-            // Se for maior que 100ms, avaliar 
+            // Se for maior que 100ms, avaliar
             //
             if (took > 100) {
                 logger.warn("(query) - [{}] - Took: [{}] ms", uid, took);
@@ -157,7 +168,8 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
      * @return
      * @throws ResourceNotFoundException
      */
-    public GraphList<T> query(FilterDTO filter, Class<T> type, ArangoDatabase db) throws ResourceNotFoundException, InvalidRequestException {
+    public GraphList<T> query(FilterDTO filter, Class<T> type, ArangoDatabase db)
+            throws ResourceNotFoundException, InvalidRequestException {
         Long start = System.currentTimeMillis();
         String uid = UUID.randomUUID().toString();
 
@@ -191,13 +203,20 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
                 logger.info("\t  [@{}]=[{}]", k, v);
             });
             GraphList<T> result = new GraphList<>(
-                    db.query(filter.getAqlFilter(), filter.getBindings(), new AqlQueryOptions().fullCount(true).count(true), type));
+                    db.query(filter.getAqlFilter(), filter.getBindings(),
+                            new AqlQueryOptions().fullCount(true).count(true), type));
 
             if (result.isEmpty()) {
                 ResourceNotFoundException ex = new ResourceNotFoundException();
                 //
                 // Create a Detail map to the user
                 //
+                try {
+                    result.close();
+                } catch (Exception e) {
+                    logger.error("close cursos error when empty response", e);
+                }
+
                 ex.addDetails("AQL", filter.getAqlFilter());
                 ex.addDetails("params", filter.getBindings());
                 throw ex;
@@ -205,7 +224,7 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
             Long end = System.currentTimeMillis();
             Long took = end - start;
             //
-            // Se for maior que 100ms, avaliar 
+            // Se for maior que 100ms, avaliar
             //
             if (took > 100) {
                 logger.warn("(query) - [{}] - Took: [{}] ms", uid, took);
