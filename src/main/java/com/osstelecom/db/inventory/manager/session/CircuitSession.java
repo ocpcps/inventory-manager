@@ -423,30 +423,34 @@ public class CircuitSession {
                 //
                 // Valida se dá para continuar
                 //
-                if (requestedPath.getNodeAddress() == null
-                        && (requestedPath.getFrom() == null || requestedPath.getTo() == null)) {
-                    //
-                    // No Node Addres
-                    //
-                    InvalidRequestException ex = new InvalidRequestException(
-                            "Please give at least,nodeAddress or from and to");
-                    ex.addDetails("connection", requestedPath);
-                    throw ex;
+                if (requestedPath.getKey() == null && requestedPath.getId() == null) {
+                    if (requestedPath.getNodeAddress() == null
+                            && (requestedPath.getFrom() == null || requestedPath.getTo() == null)) {
+                        //
+                        // No Node Addres
+                        //
+                        InvalidRequestException ex = new InvalidRequestException(
+                                "Please give at least,nodeAddress or from and to");
+                        ex.addDetails("connection", requestedPath);
+                        throw ex;
+                    } else {
+                        //
+                        // Arruma os domains dos recursos abaixo
+                        //
+
+                        if (requestedPath.getFromResource() != null
+                                && requestedPath.getFromResource().getDomainName() == null) {
+                            requestedPath.getFromResource().setDomainName(domain.getDomainName());
+                        }
+
+                        if (requestedPath.getToResource() != null
+                                && requestedPath.getToResource().getDomainName() == null) {
+                            requestedPath.getToResource().setDomainName(domain.getDomainName());
+                        }
+
+                    }
                 } else {
-                    //
-                    // Arruma os domains dos recursos abaixo
-                    //
-
-                    if (requestedPath.getFromResource() != null
-                            && requestedPath.getFromResource().getDomainName() == null) {
-                        requestedPath.getFromResource().setDomainName(domain.getDomainName());
-                    }
-
-                    if (requestedPath.getToResource() != null
-                            && requestedPath.getToResource().getDomainName() == null) {
-                        requestedPath.getToResource().setDomainName(domain.getDomainName());
-                    }
-
+                   requestedPath.setDomain(domain);
                 }
 
                 ResourceConnection b = resourceConnectionManager.findResourceConnection(requestedPath);

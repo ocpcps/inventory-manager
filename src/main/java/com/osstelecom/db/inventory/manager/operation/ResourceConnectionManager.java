@@ -356,6 +356,7 @@ public class ResourceConnectionManager extends Manager {
             if (connection.getId() != null) {
                 if (!connection.getId().contains("/")) {
                     connection.setId(connection.getDomain().getConnections() + "/" + connection.getId());
+                   
                 }
             }
             lockManager.lock();

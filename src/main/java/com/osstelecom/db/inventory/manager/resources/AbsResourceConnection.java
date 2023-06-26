@@ -105,6 +105,14 @@ public class AbsResourceConnection<T extends BasicResource> extends AbsRelatedRe
         }
     }
 
+    public String getFromKeyWithoutCollection() {
+        return this.getFromKey().split("/")[1];
+    }
+
+    public String getToKeyWithoutCollection() {
+        return this.getToKey().split("/")[1];
+    }
+
     /**
      * @return the propagateCapacity
      */
@@ -142,7 +150,7 @@ public class AbsResourceConnection<T extends BasicResource> extends AbsRelatedRe
 
     /**
      * @param bidirectionalConsuptions the bidirectionalConsuptions toResource
-     * set
+     *                                 set
      */
     public void setBidirectionalConsuptions(Boolean bidirectionalConsuption) {
         this.bidirectionalConsuption = bidirectionalConsuption;
