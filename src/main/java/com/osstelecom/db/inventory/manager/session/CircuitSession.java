@@ -395,15 +395,21 @@ public class CircuitSession {
         //
         // Valida se temos paths...na request
         //
-
         Domain domain = this.domainManager.getDomain(request.getRequestDomain());
 
+        /**
+         * Melhor validação de circuito, se não enviar vai lança uma exception
+         */
+        if (request.getPayLoad().getCircuit() == null) {
+            throw new InvalidRequestException("Circuit is null, please check if circuit is provided")
+                    .addDetails("circuit", "missing");
+        }
+
         CircuitResource circuit = request.getPayLoad().getCircuit();
+
         if (circuit.getDomainName() == null) {
             circuit.setDomainName(domain.getDomainName());
-
-            // String domainName = this.domainManager.getDomainNameFromId(circuit.getId());
-            // circuit.setDomainName(domainName);
+           
         }
         circuit.setDomain(domainManager.getDomain(circuit.getDomainName()));
         circuit = circuitResourceManager.findCircuitResource(circuit);
@@ -450,7 +456,7 @@ public class CircuitSession {
 
                     }
                 } else {
-                   requestedPath.setDomain(domain);
+                    requestedPath.setDomain(domain);
                 }
 
                 ResourceConnection b = resourceConnectionManager.findResourceConnection(requestedPath);
@@ -497,6 +503,8 @@ public class CircuitSession {
                 //
                 logger.warn("Resolved Path Differs from Request: {}", resolved.size());
             }
+        } else {
+            logger.warn("Empty Paths, creating Empty Circuit");
         }
         return r;
     }
