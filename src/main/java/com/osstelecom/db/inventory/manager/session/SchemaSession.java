@@ -448,6 +448,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
 
         if (!deletedAttributes.isEmpty()) {
             deletedAttributes.forEach((deletedAttrName) -> {
+                logger.debug("Deleting Attribute from Resource:[{}]",resource.getKey());
                 resource.getAttributes().remove(deletedAttrName);
             });
 

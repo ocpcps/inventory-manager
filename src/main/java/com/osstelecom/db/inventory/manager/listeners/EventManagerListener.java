@@ -128,8 +128,8 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
                     jobManager.notifyJobEnd(job);
                 }
             } catch (InterruptedException ex) {
-                logger.error("Error on Processing Event: [{}]", ex.getMessage());
-                Thread.currentThread().interrupt();
+//                logger.error("Error on Processing Event: [{}]", ex.getMessage());
+//                Thread.currentThread().interrupt();
             }
         }
     }
