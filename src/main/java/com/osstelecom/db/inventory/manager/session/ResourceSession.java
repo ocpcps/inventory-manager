@@ -643,6 +643,11 @@ public class ResourceSession {
         return this.findResourceConnectionByFilter(filter);
     }
     
+    public String findManagedResource(FilterRequest filter) {
+        FilterDTO filterDTO = filter.getPayLoad();
+        return this.manager.findManagedResource(filterDTO.getAqlFilter(), filterDTO.getBindings());
+    }
+
     public ManagedResource findManagedResource(ManagedResource resource) throws ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
         return this.manager.findManagedResource(resource);
     }

@@ -160,6 +160,43 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
 
     }
 
+    public String runNativeQuery(String aql, Map<String, Object> bindVars) {
+        Long start = System.currentTimeMillis();
+        String uid = UUID.randomUUID().toString();
+        StringBuilder buffer = new StringBuilder("[");
+
+        logger.info("(native-query) - [{}] - RUNNING: AQL:[{}]", uid, aql);
+        if (bindVars != null) {
+            bindVars.forEach((k, v) -> {
+                logger.info("\t  [@{}]=[{}]", k, v);
+            });
+        }
+
+        ArangoCursor<String> result = this.getDb().query(aql, bindVars, new AqlQueryOptions().fullCount(true).count(true), String.class);          
+        if (result.getCount() > 0) {
+            result.stream().forEach(s->buffer.append(s+","));
+            try {
+                result.close();
+            } catch (Exception e) {
+                logger.error("close cursor euurror when empty response", e);
+            }                
+        }
+
+        Long end = System.currentTimeMillis();
+        Long took = end - start;
+        //
+        // Se for maior que 100ms, avaliar
+        //
+        if (took > 100) {
+            logger.warn("(query) - [{}] - Took: [{}] ms", uid, took);
+        } else {
+            logger.info("(query) - [{}] - Took: [{}] ms", uid, took);
+        }
+        
+        buffer.append("]");
+        return buffer.toString();
+    }
+
     /**
      *
      * @param filter

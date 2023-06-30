@@ -295,6 +295,10 @@ public class ManagedResourceManager extends Manager {
         }
     }
 
+    public String findManagedResource(String aql, Map<String, Object> bindVars) {
+        return this.managedResourceDao.runNativeQuery(aql, bindVars);
+    }
+
     /**
      * Update a Resource,
      *
