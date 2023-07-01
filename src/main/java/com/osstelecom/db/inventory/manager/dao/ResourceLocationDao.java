@@ -24,6 +24,8 @@ import java.util.Map;
 import org.springframework.stereotype.Component;
 
 import com.arangodb.ArangoCollection;
+import com.arangodb.ArangoCursor;
+import com.arangodb.ArangoDBException;
 import com.arangodb.entity.DocumentCreateEntity;
 import com.arangodb.entity.DocumentDeleteEntity;
 import com.arangodb.entity.DocumentUpdateEntity;
@@ -53,19 +55,25 @@ import java.io.IOException;
 public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
 
     @Override
-    public ResourceLocation findResource(ResourceLocation resource) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    public ResourceLocation findResource(ResourceLocation resource)
+            throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
+        throw new UnsupportedOperationException("Not supported yet."); // Generated from
+        // nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
     }
 
     @Override
     public DocumentCreateEntity<ResourceLocation> insertResource(ResourceLocation resource) throws ArangoDaoException {
-//        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        // throw new UnsupportedOperationException("Not supported yet."); // Generated
+        // from
+        // nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
 
         //
-        // A complexidade de validação dos requistos do dado deve ter sido feita na dao antes de chegar aqui.
+        // A complexidade de validação dos requistos do dado deve ter sido feita na dao
+        // antes de chegar aqui.
         //
         try {
-            return this.getDb().collection(resource.getDomain().getNodes()).insertDocument(resource, new DocumentCreateOptions().returnNew(true).returnOld(true));
+            return this.getDb().collection(resource.getDomain().getNodes()).insertDocument(resource,
+                    new DocumentCreateOptions().returnNew(true).returnOld(true));
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         } finally {
@@ -77,13 +85,18 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
 
     @Override
     public DocumentCreateEntity<ResourceLocation> upsertResource(ResourceLocation resource) throws ArangoDaoException {
-//        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        // throw new UnsupportedOperationException("Not supported yet."); // Generated
+        // from
+        // nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
         //
-        // A complexidade de validação dos requistos do dado deve ter sido feita na dao antes de chegar aqui.
+        // A complexidade de validação dos requistos do dado deve ter sido feita na dao
+        // antes de chegar aqui.
         //
 
         try {
-            return this.getDb().collection(resource.getDomain().getNodes()).insertDocument(resource, new DocumentCreateOptions().overwriteMode(OverwriteMode.update).mergeObjects(true).returnNew(true).returnOld(true));
+            return this.getDb().collection(resource.getDomain().getNodes()).insertDocument(resource,
+                    new DocumentCreateOptions().overwriteMode(OverwriteMode.update).mergeObjects(true).returnNew(true)
+                            .returnOld(true));
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         } finally {
@@ -94,13 +107,20 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
     }
 
     @Override
-    public DocumentUpdateEntity<ResourceLocation> updateResource(ResourceLocation resource) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
-//        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    public DocumentUpdateEntity<ResourceLocation> updateResource(ResourceLocation resource)
+            throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
+        // throw new UnsupportedOperationException("Not supported yet."); // Generated
+        // from
+        // nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
         //
-        // A complexidade de validação dos requistos do dado deve ter sido feita na dao antes de chegar aqui.
+        // A complexidade de validação dos requistos do dado deve ter sido feita na dao
+        // antes de chegar aqui.
         //
         try {
-            return this.getDb().collection(resource.getDomain().getNodes()).updateDocument(resource.getKey(), resource, new DocumentUpdateOptions().returnNew(true).returnOld(true).mergeObjects(false).keepNull(false).waitForSync(false), ResourceLocation.class);
+            return this.getDb().collection(resource.getDomain().getNodes())
+                    .updateDocument(resource.getKey(), resource, new DocumentUpdateOptions().returnNew(true)
+                            .returnOld(true).mergeObjects(false).keepNull(false).waitForSync(false),
+                            ResourceLocation.class);
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         } finally {
@@ -111,11 +131,16 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
     }
 
     @Override
-    public MultiDocumentEntity<DocumentUpdateEntity<ResourceLocation>> updateResources(List<ResourceLocation> resources, Domain domain) throws BasicException {
-//        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    public MultiDocumentEntity<DocumentUpdateEntity<ResourceLocation>> updateResources(List<ResourceLocation> resources,
+            Domain domain) throws BasicException {
+        // throw new UnsupportedOperationException("Not supported yet."); // Generated
+        // from
+        // nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
         try {
             ArangoCollection connectionCollection = this.getDb().collection(domain.getNodes());
-            return connectionCollection.updateDocuments(resources, new DocumentUpdateOptions().returnNew(true).returnOld(true).keepNull(false).mergeObjects(false), ResourceLocation.class);
+            return connectionCollection.updateDocuments(resources,
+                    new DocumentUpdateOptions().returnNew(true).returnOld(true).keepNull(false).mergeObjects(false),
+                    ResourceLocation.class);
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         }
@@ -123,9 +148,12 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
 
     @Override
     public DocumentDeleteEntity<ResourceLocation> deleteResource(ResourceLocation resource) throws BasicException {
-//        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        // throw new UnsupportedOperationException("Not supported yet."); // Generated
+        // from
+        // nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
         try {
-            return this.getDb().collection(resource.getDomain().getNodes()).deleteDocument(resource.getId(), ResourceLocation.class, new DocumentDeleteOptions().returnOld(true));
+            return this.getDb().collection(resource.getDomain().getNodes()).deleteDocument(resource.getId(),
+                    ResourceLocation.class, new DocumentDeleteOptions().returnOld(true));
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         } finally {
@@ -136,10 +164,14 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
     }
 
     @Override
-    public GraphList<ResourceLocation> findResourcesBySchemaName(String attributeSchemaName, Domain domain) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
-//        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    public GraphList<ResourceLocation> findResourcesBySchemaName(String attributeSchemaName, Domain domain)
+            throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
+        // throw new UnsupportedOperationException("Not supported yet."); // Generated
+        // from
+        // nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
         try {
-            String aql = "for doc in `" + domain.getNodes() + "` filter doc.attributeSchemaName == @attributeSchemaName ";
+            String aql = "for doc in `" + domain.getNodes()
+                    + "` filter doc.attributeSchemaName == @attributeSchemaName ";
             Map<String, Object> bindVars = new HashMap<>();
 
             bindVars.put("attributeSchemaName", attributeSchemaName);
@@ -153,8 +185,11 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
     }
 
     @Override
-    public GraphList<ResourceLocation> findResourcesByClassName(String className, Domain domain) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
-//        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    public GraphList<ResourceLocation> findResourcesByClassName(String className, Domain domain)
+            throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
+        // throw new UnsupportedOperationException("Not supported yet."); // Generated
+        // from
+        // nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
         try {
             String aql = "for doc in `" + domain.getNodes() + "` filter doc.className == @className ";
             Map<String, Object> bindVars = new HashMap<>();
@@ -169,8 +204,11 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
     }
 
     @Override
-    public GraphList<ResourceLocation> findResourceByFilter(FilterDTO filter, Domain domain) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
-//        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+    public GraphList<ResourceLocation> findResourceByFilter(FilterDTO filter, Domain domain)
+            throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
+        // throw new UnsupportedOperationException("Not supported yet."); // Generated
+        // from
+        // nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
         try {
             String aql = " for doc in   `" + domain.getNodes() + "`";
             aql += " filter doc.domainName == @domainName ";
@@ -184,7 +222,7 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
                 aql += " " + filter.getSortCondition();
             }
 
-//            aql += " return doc";
+            // aql += " return doc";
             return this.query(filter, ResourceLocation.class, this.getDb());
         } catch (ResourceNotFoundException | InvalidRequestException ex) {
             throw ex;
@@ -200,7 +238,8 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
      * @return
      * @throws GenericException
      */
-    public DocumentCreateEntity<ResourceLocation> createResourceLocation(ResourceLocation resource) throws GenericException {
+    public DocumentCreateEntity<ResourceLocation> createResourceLocation(ResourceLocation resource)
+            throws GenericException {
         try {
             return this.getDb().collection(resource.getDomain().getNodes()).insertDocument(resource);
         } catch (Exception ex) {
@@ -220,13 +259,14 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
      * @return
      * @throws ResourceNotFoundException
      */
-    public ResourceLocation findResourceLocation(String name, String nodeAddress, String className, Domain domain) throws ResourceNotFoundException, InvalidRequestException {
+    public ResourceLocation findResourceLocation(String name, String nodeAddress, String className, Domain domain)
+            throws ResourceNotFoundException, InvalidRequestException {
         HashMap<String, Object> bindVars = new HashMap<>();
         if (name != null && !name.equals("null")) {
             bindVars.put("name", name);
         }
         bindVars.put("className", className);
-//        this.database.collection("").getd
+        // this.database.collection("").getd
         String aql = "FOR doc IN `"
                 + domain.getNodes() + "` FILTER ";
 
@@ -247,7 +287,7 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
             aql += " and doc.domainName == @domainName ";
         }
 
-//        aql += " RETURN doc ";
+        // aql += " RETURN doc ";
         logger.info("(findResourceLocation) RUNNING: AQL:[{}]", aql);
         logger.info("\tBindings:");
         bindVars.forEach((k, v) -> {
@@ -257,30 +297,36 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
 
         FilterDTO filter = new FilterDTO(aql, bindVars);
         GraphList<ResourceLocation> locations = this.query(filter, ResourceLocation.class, this.getDb());
-//        List<ResourceLocation> locations = cursor.asListRemaining();
+        // List<ResourceLocation> locations = cursor.asListRemaining();
 
         if (!locations.isEmpty()) {
             return locations.getOne();
         }
 
-        logger.warn("Resource with name:[{}] nodeAddress:[{}] className:[{}] was not found..", name, nodeAddress, className);
+        logger.warn("Resource with name:[{}] nodeAddress:[{}] className:[{}] was not found..", name, nodeAddress,
+                className);
         if (bindVars.containsKey("name") && name != null) {
-            throw new ResourceNotFoundException("1 Resource With Name:[" + name + "] and Class: [" + className + "] Not Found in Domain:" + domain.getDomainName());
+            throw new ResourceNotFoundException("1 Resource With Name:[" + name + "] and Class: [" + className
+                    + "] Not Found in Domain:" + domain.getDomainName());
         }
-        throw new ResourceNotFoundException("2 Resource With Node Address:[" + nodeAddress + "] and Class: [" + className + "] Not Found in Domain:" + domain.getDomainName());
+        throw new ResourceNotFoundException("2 Resource With Node Address:[" + nodeAddress + "] and Class: ["
+                + className + "] Not Found in Domain:" + domain.getDomainName());
     }
 
     @Override
     public Long getCount(Domain domain) throws IOException, InvalidRequestException {
-        String aql = "for doc in `" + domain.getConnections() + "` ";
+        String aql = "RETURN LENGTH(@d)` ";
         FilterDTO filter = new FilterDTO(aql);
+        filter.getBindings().put("d", domain.getConnections());
         try {
-            GraphList<ResourceLocation> result = this.query(filter, ResourceLocation.class, this.getDb());
-            Long longValue = result.size();
-            result.close();
+            ArangoCursor<Long> cursor = this.getDb().query(aql, Long.class);
+            Long longValue;
+            try (GraphList<Long> result = new GraphList<>(cursor)) {
+                longValue = result.getOne();
+            }
             return longValue;
-        } catch (ResourceNotFoundException ex) {
-            return 0L;
+        } catch (ArangoDBException | IOException ex) {
+            return -1L;
         }
     }
 }

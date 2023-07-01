@@ -25,6 +25,8 @@ import java.util.Map;
 import org.springframework.stereotype.Component;
 
 import com.arangodb.ArangoCollection;
+import com.arangodb.ArangoCursor;
+import com.arangodb.ArangoDBException;
 import com.arangodb.entity.DocumentCreateEntity;
 import com.arangodb.entity.DocumentDeleteEntity;
 import com.arangodb.entity.DocumentUpdateEntity;
@@ -274,30 +276,32 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
 
     @Override
     public Long getCount(Domain domain) throws IOException, InvalidRequestException {
-        String aql = "for doc in `" + domain.getNodes() + "` ";
+        String aql = "RETURN LENGTH(@d)` ";
         FilterDTO filter = new FilterDTO(aql);
+        filter.getBindings().put("d", domain.getNodes());
         try {
-            GraphList<ManagedResource> result = this.query(filter, ManagedResource.class, this.getDb());
-            Long longValue = result.size();
-            result.close();
+            ArangoCursor<Long> cursor = this.getDb().query(aql, Long.class);
+            Long longValue;
+            try (GraphList<Long> result = new GraphList<>(cursor)) {
+                longValue = result.getOne();
+            }
             return longValue;
-        } catch (ResourceNotFoundException ex) {
-            return 0L;
+        } catch (ArangoDBException | IOException ex) {
+            return -1L;
         }
     }
 
     public GraphList<BasicResource> findParentsByAttributeSchemaName(String from, String domain, String attributeSchemaName, String attributeName) {
-        String aql = "FOR v, e, p IN 1..16 INBOUND '"+from+"' GRAPH '"+domain + "_connections_layer' ";
-        aql += "FILTER v.attributeSchemaName == '"+attributeSchemaName+"' and v.attributes."+attributeName+" != null ";
+        String aql = "FOR v, e, p IN 1..16 INBOUND '" + from + "' GRAPH '" + domain + "_connections_layer' ";
+        aql += "FILTER v.attributeSchemaName == '" + attributeSchemaName + "' and v.attributes." + attributeName + " != null ";
         aql += "RETURN distinct v ";
         return new GraphList<>(
                 getDb().query(aql, new HashMap<>(), new AqlQueryOptions().fullCount(true).count(true), BasicResource.class));
     }
 
-
     public GraphList<BasicResource> findChildrenByAttributeSchemaName(String from, String domain, String attributeSchemaName) {
-        String aql = "FOR v, e, p IN 1..16 OUTBOUND '"+from+"' GRAPH '"+domain + "_connections_layer' ";
-        aql += "FILTER v.attributeSchemaName == '"+attributeSchemaName+"' ";
+        String aql = "FOR v, e, p IN 1..16 OUTBOUND '" + from + "' GRAPH '" + domain + "_connections_layer' ";
+        aql += "FILTER v.attributeSchemaName == '" + attributeSchemaName + "' ";
         aql += "RETURN distinct v ";
         return new GraphList<>(
                 getDb().query(aql, new HashMap<>(), new AqlQueryOptions().fullCount(true).count(true), BasicResource.class));

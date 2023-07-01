@@ -395,15 +395,21 @@ public class CircuitSession {
         //
         // Valida se temos paths...na request
         //
-
         Domain domain = this.domainManager.getDomain(request.getRequestDomain());
 
+        /**
+         * Melhor validação de circuito, se não enviar vai lança uma exception
+         */
+        if (request.getPayLoad().getCircuit() == null) {
+            throw new InvalidRequestException("Circuit is null, please check if circuit is provided")
+                    .addDetails("circuit", "missing");
+        }
+
         CircuitResource circuit = request.getPayLoad().getCircuit();
+
         if (circuit.getDomainName() == null) {
             circuit.setDomainName(domain.getDomainName());
-
-            // String domainName = this.domainManager.getDomainNameFromId(circuit.getId());
-            // circuit.setDomainName(domainName);
+           
         }
         circuit.setDomain(domainManager.getDomain(circuit.getDomainName()));
         circuit = circuitResourceManager.findCircuitResource(circuit);
@@ -423,30 +429,34 @@ public class CircuitSession {
                 //
                 // Valida se dá para continuar
                 //
-                if (requestedPath.getNodeAddress() == null
-                        && (requestedPath.getFrom() == null || requestedPath.getTo() == null)) {
-                    //
-                    // No Node Addres
-                    //
-                    InvalidRequestException ex = new InvalidRequestException(
-                            "Please give at least,nodeAddress or from and to");
-                    ex.addDetails("connection", requestedPath);
-                    throw ex;
+                if (requestedPath.getKey() == null && requestedPath.getId() == null) {
+                    if (requestedPath.getNodeAddress() == null
+                            && (requestedPath.getFrom() == null || requestedPath.getTo() == null)) {
+                        //
+                        // No Node Addres
+                        //
+                        InvalidRequestException ex = new InvalidRequestException(
+                                "Please give at least,nodeAddress or from and to");
+                        ex.addDetails("connection", requestedPath);
+                        throw ex;
+                    } else {
+                        //
+                        // Arruma os domains dos recursos abaixo
+                        //
+
+                        if (requestedPath.getFromResource() != null
+                                && requestedPath.getFromResource().getDomainName() == null) {
+                            requestedPath.getFromResource().setDomainName(domain.getDomainName());
+                        }
+
+                        if (requestedPath.getToResource() != null
+                                && requestedPath.getToResource().getDomainName() == null) {
+                            requestedPath.getToResource().setDomainName(domain.getDomainName());
+                        }
+
+                    }
                 } else {
-                    //
-                    // Arruma os domains dos recursos abaixo
-                    //
-
-                    if (requestedPath.getFromResource() != null
-                            && requestedPath.getFromResource().getDomainName() == null) {
-                        requestedPath.getFromResource().setDomainName(domain.getDomainName());
-                    }
-
-                    if (requestedPath.getToResource() != null
-                            && requestedPath.getToResource().getDomainName() == null) {
-                        requestedPath.getToResource().setDomainName(domain.getDomainName());
-                    }
-
+                    requestedPath.setDomain(domain);
                 }
 
                 ResourceConnection b = resourceConnectionManager.findResourceConnection(requestedPath);
@@ -493,6 +503,8 @@ public class CircuitSession {
                 //
                 logger.warn("Resolved Path Differs from Request: {}", resolved.size());
             }
+        } else {
+            logger.warn("Empty Paths, creating Empty Circuit");
         }
         return r;
     }

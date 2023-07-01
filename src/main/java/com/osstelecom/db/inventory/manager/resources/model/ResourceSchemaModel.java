@@ -18,6 +18,7 @@ package com.osstelecom.db.inventory.manager.resources.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
@@ -45,6 +46,9 @@ public class ResourceSchemaModel {
     private HashMap<String, ResourceAttributeModel> attributes = new HashMap<>();
     private List<String> childrenSchemas = new ArrayList<>();
     private List<String> relatedSchemas = new ArrayList<>();
+
+    private Date creationDate;
+    private Date lastUpdate;
 
     /**
      * @return the schemaName
@@ -169,5 +173,33 @@ public class ResourceSchemaModel {
 
     public void setRelatedSchemas(List<String> relatedSchemas) {
         this.relatedSchemas = relatedSchemas;
+    }
+
+    /**
+     * @return the creationDate
+     */
+    public Date getCreationDate() {
+        return creationDate;
+    }
+
+    /**
+     * @param creationDate the creationDate to set
+     */
+    public void setCreationDate(Date creationDate) {
+        this.creationDate = creationDate;
+    }
+
+    /**
+     * @return the lastUpdate
+     */
+    public Date getLastUpdate() {
+        return lastUpdate;
+    }
+
+    /**
+     * @param lastUpdate the lastUpdate to set
+     */
+    public void setLastUpdate(Date lastUpdate) {
+        this.lastUpdate = lastUpdate;
     }
 }

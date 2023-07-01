@@ -38,6 +38,7 @@ public class FilterDTO {
 
     private List<String> classes;
     private List<String> objects = new ArrayList<>();
+    private List<String> fields = new ArrayList<>();
     private String aqlFilter;
     private Map<String, Object> bindings = new ConcurrentHashMap<>();
     private String targetRegex;
@@ -61,15 +62,15 @@ public class FilterDTO {
     private Long limit = -1L;
     private String domainName;
     private Boolean paginated = false;
-    
+
     public void addBinding(String name, Object value) {
         this.bindings.put(name, value);
     }
-    
+
     public void addObject(String object) {
         this.objects.add(object);
     }
-    
+
     public FilterDTO() {
     }
 
@@ -113,9 +114,9 @@ public class FilterDTO {
 
     public void setConnections(List<ResourceConnection> connections) {
         this.connections = connections;
-//        if (this.connections != null) {
-//            this.setConnectionsCount(this.connections.size());
-//        }
+        // if (this.connections != null) {
+        // this.setConnectionsCount(this.connections.size());
+        // }
     }
 
     public Long getNodeCount() {
@@ -280,7 +281,7 @@ public class FilterDTO {
     public List<ServiceResource> getServices() {
         return services;
     }
-    
+
     /**
      * @param services the services to set
      */
@@ -294,7 +295,7 @@ public class FilterDTO {
     public List<IconModel> getIcons() {
         return icons;
     }
-    
+
     /**
      * @param icons the icons to set
      */
@@ -351,7 +352,7 @@ public class FilterDTO {
         return iconCount;
     }
 
-     /**
+    /**
      * @param iconCount the iconCount to set
      */
     public void setIconCount(Long iconCount) {
@@ -419,5 +420,17 @@ public class FilterDTO {
      */
     public void setDomainName(String domainName) {
         this.domainName = domainName;
+    }
+
+    public List<String> getFields() {
+        return this.fields;
+    }
+
+    public void setFields(List<String> fields) {
+        this.fields = fields;
+    }
+
+    public void addField(String field) {
+        this.fields.add(field);
     }
 }

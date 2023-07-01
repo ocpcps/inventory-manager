@@ -204,8 +204,8 @@ public class ThreeJSViewDTO {
                     }
                     links.add(new ThreeJSLinkDTO(connection));
                 } else {
-                    if (this.nodeMap.containsKey(connection.getFromResource().getKey())
-                            && this.nodeMap.containsKey(connection.getToResource().getKey())) {
+                    if (this.nodeMap.containsKey(connection.getFromKeyWithoutCollection())
+                            && this.nodeMap.containsKey(connection.getToKeyWithoutCollection())) {
                         links.add(new ThreeJSLinkDTO(connection));
                     }
                 }
