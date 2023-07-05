@@ -57,6 +57,7 @@ import com.osstelecom.db.inventory.manager.response.CreateResourceSchemaModelRes
 import com.osstelecom.db.inventory.manager.response.GetSchemasResponse;
 import com.osstelecom.db.inventory.manager.response.PatchResourceSchemaModelResponse;
 import com.osstelecom.db.inventory.manager.response.ResourceSchemaResponse;
+import java.util.Date;
 import org.apache.tools.ant.DirectoryScanner;
 
 /**
@@ -394,6 +395,9 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
             }
         });
 
+        model.setCreationDate(new Date());
+        model.setLastUpdate(new Date());
+
         if (!invalidAttributes.isEmpty()) {
             throw new InvalidRequestException("Invalid Attribute Names: [" + String.join(",", invalidAttributes) + "]");
         }
@@ -448,7 +452,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
 
         if (!deletedAttributes.isEmpty()) {
             deletedAttributes.forEach((deletedAttrName) -> {
-                logger.debug("Deleting Attribute from Resource:[{}]",resource.getKey());
+                logger.debug("Deleting Attribute from Resource:[{}]", resource.getKey());
                 resource.getAttributes().remove(deletedAttrName);
             });
 
@@ -1037,6 +1041,22 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
 //                                }
                             }
 
+                            if (updateModel.getDisplayName() != null) {
+                                if (!updateModel.getDisplayName().equals(originalAttributeModel.getDisplayName())) {
+                                    originalAttributeModel.setDisplayName(updateModel.getDisplayName());
+                                }
+                            }
+
+                            if (updateModel.isDisplayable()) {
+                                if (!originalAttributeModel.isDisplayable()) {
+                                    originalAttributeModel.setDisplayable(true);
+                                }
+                            } else {
+                                if (originalAttributeModel.isDisplayable()) {
+                                    originalAttributeModel.setDisplayable(false);
+                                }
+                            }
+
                         }
                         //
                         // Do not need to show this to the user and file..
@@ -1051,6 +1071,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
 
         }
 
+        original.setLastUpdate(new Date());
         resolveRelatedParentSchemas(update, original);
 
         if (original.getAttributesChanged()) {
@@ -1104,16 +1125,16 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
         return validTypes;
     }
 
-
-
-    private void resolveRelatedParentSchemas(ResourceSchemaModel newSchemaModel, ResourceSchemaModel oldSchemaModel) throws SchemaNotFoundException, GenericException, InvalidRequestException{
+    private void resolveRelatedParentSchemas(ResourceSchemaModel newSchemaModel, ResourceSchemaModel oldSchemaModel) throws SchemaNotFoundException, GenericException, InvalidRequestException {
         String schemaName = newSchemaModel.getSchemaName();
         List<String> parents = extractParentsFromDefaultExpression(newSchemaModel);
         for (String parent : parents) {
             ResourceSchemaModel parentSchema = loadSchemaFromDisk(parent, null);
             List<String> relatedSchemas = parentSchema.getRelatedSchemas();
-            if(relatedSchemas != null) {
-                if(!relatedSchemas.contains(schemaName)) relatedSchemas.add(schemaName);
+            if (relatedSchemas != null) {
+                if (!relatedSchemas.contains(schemaName)) {
+                    relatedSchemas.add(schemaName);
+                }
             } else {
                 relatedSchemas = Arrays.asList(schemaName);
                 parentSchema.setRelatedSchemas(relatedSchemas);
@@ -1121,14 +1142,14 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
             writeModelToDisk(parentSchema, true);
         }
 
-        if(oldSchemaModel != null){
+        if (oldSchemaModel != null) {
             List<String> oldParents = extractParentsFromDefaultExpression(oldSchemaModel);
             for (String oldParent : oldParents) {
                 //não existe mais a referência na lista de atributos default
-                if(!parents.contains(oldParent)){
+                if (!parents.contains(oldParent)) {
                     ResourceSchemaModel oldParentSchema = loadSchemaFromDisk(oldParent, null);
                     List<String> relatedSchemas = oldParentSchema.getRelatedSchemas();
-                    if(relatedSchemas != null && relatedSchemas.contains(schemaName)) {
+                    if (relatedSchemas != null && relatedSchemas.contains(schemaName)) {
                         relatedSchemas.remove(schemaName);
                         writeModelToDisk(oldParentSchema, true);
                     }
@@ -1136,13 +1157,13 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
             }
         }
     }
-    
-    private List<String> extractParentsFromDefaultExpression(ResourceSchemaModel schemaModel){
+
+    private List<String> extractParentsFromDefaultExpression(ResourceSchemaModel schemaModel) {
         List<String> parents = new ArrayList<>();
         for (ResourceAttributeModel attrModel : schemaModel.getAttributes().values()) {
-           String defaultValue = attrModel.getDefaultValue();           
-           String regex = "^\\$\\([\\w]+[\\w+\\.]+[\\.]+[\\w]+\\)$";
-            if(defaultValue != null && defaultValue.matches(regex)) {
+            String defaultValue = attrModel.getDefaultValue();
+            String regex = "^\\$\\([\\w]+[\\w+\\.]+[\\.]+[\\w]+\\)$";
+            if (defaultValue != null && defaultValue.matches(regex)) {
                 String value = defaultValue.replace("$", "");
                 value = value.replace("(", "");
                 Integer pointer = value.lastIndexOf(".");
@@ -1153,7 +1174,6 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
 
         return parents;
     }
-
 
     /**
      * Save the JSON Model to the disk

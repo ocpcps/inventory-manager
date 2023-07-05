@@ -24,6 +24,8 @@ import java.util.Map;
 import org.springframework.stereotype.Component;
 
 import com.arangodb.ArangoCollection;
+import com.arangodb.ArangoCursor;
+import com.arangodb.ArangoDBException;
 import com.arangodb.entity.DocumentCreateEntity;
 import com.arangodb.entity.DocumentDeleteEntity;
 import com.arangodb.entity.DocumentUpdateEntity;
@@ -394,15 +396,18 @@ public class CircuitResourceDao extends AbstractArangoDao<CircuitResource> {
     // }
     @Override
     public Long getCount(Domain domain) throws IOException, InvalidRequestException {
-        String aql = "for doc in `" + domain.getCircuits() + "` ";
+        String aql = "RETURN LENGTH(@d)` ";
         FilterDTO filter = new FilterDTO(aql);
+        filter.getBindings().put("d", domain.getCircuits());
         try {
-            GraphList<CircuitResource> result = this.query(filter, CircuitResource.class, this.getDb());
-            Long longValue = result.size();
-            result.close();
+            ArangoCursor<Long> cursor = this.getDb().query(aql, Long.class);
+            Long longValue;
+            try (GraphList<Long> result = new GraphList<>(cursor)) {
+                longValue = result.getOne();
+            }
             return longValue;
-        } catch (ResourceNotFoundException ex) {
-            return 0L;
+        } catch (ArangoDBException | IOException ex) {
+            return -1L;
         }
     }
 }
