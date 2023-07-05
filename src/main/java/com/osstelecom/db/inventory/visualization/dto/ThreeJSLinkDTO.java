@@ -61,8 +61,8 @@ public class ThreeJSLinkDTO extends BaseGraphDTO {
     }
 
     public ThreeJSLinkDTO(ResourceConnection con) {
-        this.source = con.getFromResource().getKey();
-        this.target = con.getToResource().getKey();
+        this.source = con.getFromKeyWithoutCollection();
+        this.target = con.getToKeyWithoutCollection();
         this.id = con.getKey();
         if (con.getCircuits() != null) {
             if (!con.getCircuits().isEmpty()) {

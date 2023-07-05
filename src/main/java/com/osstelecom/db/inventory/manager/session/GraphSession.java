@@ -37,7 +37,11 @@ public class GraphSession {
     @Autowired
     private GraphManager graphManager;
 
-    public GraphList<ResourceConnection> expandNode(ManagedResource resource, String direction, Integer depth) throws ResourceNotFoundException, InvalidRequestException {
+    public GraphList<ResourceConnection> expandNode(ManagedResource resource, String direction, Integer depth)
+            throws ResourceNotFoundException, InvalidRequestException {
+        if (depth > 64)
+            throw new InvalidRequestException("Depth cannot be greater than 64");
+
         return this.graphManager.expandNode(resource, direction, depth);
     }
 }
