@@ -319,14 +319,6 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
         FilterDTO filter = new FilterDTO(aql);
         filter.getBindings().put("d", domain.getConnections());
         try {
-<<<<<<< HEAD
-            GraphList<Long> result = this.query(filter, Long.class, this.getDb());
-            Long longValue = result.getOne();
-            result.close();
-            return longValue;
-        } catch (ResourceNotFoundException  ex) {
-            return 0L;
-=======
             ArangoCursor<Long> cursor = this.getDb().query(aql, Long.class);
             Long longValue;
             try (GraphList<Long> result = new GraphList<>(cursor)) {
@@ -335,7 +327,6 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
             return longValue;
         } catch (ArangoDBException | IOException ex) {
             return -1L;
->>>>>>> feature/performance
         }
     }
 }
