@@ -4,14 +4,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.apache.groovy.json.internal.LazyMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import com.osstelecom.db.inventory.manager.response.FilterResponse;
 
-import groovy.json.JsonSlurper;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
@@ -36,6 +34,7 @@ public class FilterProjectionSession {
      *
      * @param <T>
      * @param filterDTO
+     * @param response
      * @param list
      * @return
      */
