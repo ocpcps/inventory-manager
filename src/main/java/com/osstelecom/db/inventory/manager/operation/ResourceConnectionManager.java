@@ -85,11 +85,16 @@ public class ResourceConnectionManager extends Manager {
     }
 
     public ResourceConnection deleteResourceConnection(ResourceConnection connection) throws ArangoDaoException {
-        DocumentDeleteEntity<ResourceConnection> result = this.resourceConnectionDao.deleteResource(connection);
-        ResourceConnectionDeletedEvent event = new ResourceConnectionDeletedEvent(result);
-        eventManager.notifyResourceEvent(event);
+        String timerId = startTimer("deleteResourceConnection");
+        try {
+            DocumentDeleteEntity<ResourceConnection> result = this.resourceConnectionDao.deleteResource(connection);
+            ResourceConnectionDeletedEvent event = new ResourceConnectionDeletedEvent(result);
+            eventManager.notifyResourceEvent(event);
 
-        return result.getOld();
+            return result.getOld();
+        } finally {
+            endTimer(timerId);
+        }
     }
 
 //    /**
@@ -356,7 +361,7 @@ public class ResourceConnectionManager extends Manager {
             if (connection.getId() != null) {
                 if (!connection.getId().contains("/")) {
                     connection.setId(connection.getDomain().getConnections() + "/" + connection.getId());
-                   
+
                 }
             }
             lockManager.lock();
@@ -381,7 +386,7 @@ public class ResourceConnectionManager extends Manager {
         try {
             lockManager.lock();
             connection.setLastModifiedDate(new Date());
-            
+
             List<String> eventSourceIds = connection.getEventSourceIds();
             connection.setEventSourceIds(null);
 
@@ -432,21 +437,26 @@ public class ResourceConnectionManager extends Manager {
     }
 
     public GraphList<ResourceConnection> getConnectionsByFilter(FilterDTO filter, String domainName) throws ArangoDaoException, DomainNotFoundException, InvalidRequestException, ResourceNotFoundException {
-        Domain domain = domainManager.getDomain(domainName);
-        if (filter.getObjects().contains("connections") || 
-                filter.getObjects().contains("connection")) {
+        String timerId = startTimer("getConnectionsByFilter");
+        try {
+            Domain domain = domainManager.getDomain(domainName);
+            if (filter.getObjects().contains("connections")
+                    || filter.getObjects().contains("connection")) {
 //            HashMap<String, Object> bindVars = new HashMap<>();
 
-            if (filter.getClasses() != null && !filter.getClasses().isEmpty()) {
-                filter.getBindings().put("classes", filter.getClasses());
-            }
+                if (filter.getClasses() != null && !filter.getClasses().isEmpty()) {
+                    filter.getBindings().put("classes", filter.getClasses());
+                }
 
-            if (filter.getBindings() != null && !filter.getBindings().isEmpty()) {
-                filter.getBindings().putAll(filter.getBindings());
+                if (filter.getBindings() != null && !filter.getBindings().isEmpty()) {
+                    filter.getBindings().putAll(filter.getBindings());
+                }
+                return this.resourceConnectionDao.findResourceByFilter(filter, domain);
             }
-            return this.resourceConnectionDao.findResourceByFilter(filter, domain);
+            throw new InvalidRequestException("getConnectionsByFilter() can only retrieve connections objects");
+        } finally {
+            endTimer(timerId);
         }
-        throw new InvalidRequestException("getConnectionsByFilter() can only retrieve connections objects");
     }
 
     /**
@@ -457,8 +467,8 @@ public class ResourceConnectionManager extends Manager {
      */
     @Subscribe
     public void onManagedResourceUpdatedEvent(ManagedResourceUpdatedEvent updateEvent) {
+        String timerId = startTimer("onManagedResourceUpdatedEvent");
         ManagedResource updatedResource = updateEvent.getNewResource();
-                
         // Update the related dependencies
         //
         try {
@@ -476,8 +486,8 @@ public class ResourceConnectionManager extends Manager {
             try {
                 this.resourceConnectionDao.findResourceByFilter(new FilterDTO(filter, bindVars), updatedResource.getDomain()).forEach((connection) -> {
 
-                    if(!CollectionUtils.isEmpty(updatedResource.getEventSourceIds())){
-                        if(updatedResource.getEventSourceIds().contains(connection.getId())){
+                    if (!CollectionUtils.isEmpty(updatedResource.getEventSourceIds())) {
+                        if (updatedResource.getEventSourceIds().contains(connection.getId())) {
                             return;
                         }
                     }
@@ -508,7 +518,7 @@ public class ResourceConnectionManager extends Manager {
                     }
 
                     try {
-                        List<String> sourceIds = new ArrayList<>(updatedResource.getEventSourceIds()); 
+                        List<String> sourceIds = new ArrayList<>(updatedResource.getEventSourceIds());
                         sourceIds.add(updatedResource.getId());
                         connection.setEventSourceIds(sourceIds);
 
@@ -530,6 +540,8 @@ public class ResourceConnectionManager extends Manager {
         } catch (IOException | IllegalStateException | InvalidRequestException | ArangoDaoException ex) {
             logger.error("Failed to Update Resource Connection Relation", ex);
 
+        } finally {
+            endTimer(timerId);
         }
     }
 
@@ -540,48 +552,53 @@ public class ResourceConnectionManager extends Manager {
      */
     @Subscribe
     public void onServiceStateTransionedEvent(ServiceStateTransionedEvent serviceStateTransitionedEvent) throws DomainNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException {
-        if (serviceStateTransitionedEvent.getNewResource().getRelatedResourceConnections() != null
-                && !serviceStateTransitionedEvent.getNewResource().getRelatedResourceConnections().isEmpty()) {
+        String timerId = startTimer("onServiceStateTransionedEvent");
+        try {
+            if (serviceStateTransitionedEvent.getNewResource().getRelatedResourceConnections() != null
+                    && !serviceStateTransitionedEvent.getNewResource().getRelatedResourceConnections().isEmpty()) {
 
-            for (String connectionId : serviceStateTransitionedEvent.getNewResource().getRelatedResourceConnections()) {
-                String domainName = this.domainManager.getDomainNameFromId(connectionId);
-                if (!domainName.equals(serviceStateTransitionedEvent.getNewResource().getDomainName())) {
-                    //
-                    // Só propaga se o serviço e o recurso estiverem em dominios diferentes!
-                    // Isto é para "tentar" evitar uma referencia circular, é para tentar, pois não garante.
-                    //
-
-                    //
-                    // Então sabemos que o Serviço em questão afeta recursos de outros dominios!
-                    //
-                    Domain domain = this.domainManager.getDomain(domainName);
-                    ResourceConnection connection = new ResourceConnection(domain, connectionId);
-
-                    connection.setAttributeSchemaName(null);
-                    try {
+                for (String connectionId : serviceStateTransitionedEvent.getNewResource().getRelatedResourceConnections()) {
+                    String domainName = this.domainManager.getDomainNameFromId(connectionId);
+                    if (!domainName.equals(serviceStateTransitionedEvent.getNewResource().getDomainName())) {
                         //
-                        // Obtem a referencia do DB
+                        // Só propaga se o serviço e o recurso estiverem em dominios diferentes!
+                        // Isto é para "tentar" evitar uma referencia circular, é para tentar, pois não garante.
                         //
-                        connection = this.findResourceConnection(connection);
 
                         //
-                        // Replica o estado do Serviço no Recurso.
-                        // 
-                        connection.setOperationalStatus(serviceStateTransitionedEvent.getNewResource().getOperationalStatus());
-                        connection.setDependentService(serviceStateTransitionedEvent.getNewResource());
+                        // Então sabemos que o Serviço em questão afeta recursos de outros dominios!
                         //
-                        // Atualiza tudo, retrigando todo ciclo novamente
-                        //
-                        this.updateResourceConnection(connection);
-                    } catch (ResourceNotFoundException ex) {
-                        //
-                        // Não integro, arruma e vida que segue...
-                        //
-                        logger.warn("Connection [{}] In Service Reference does not exists.", connectionId);
+                        Domain domain = this.domainManager.getDomain(domainName);
+                        ResourceConnection connection = new ResourceConnection(domain, connectionId);
+
+                        connection.setAttributeSchemaName(null);
+                        try {
+                            //
+                            // Obtem a referencia do DB
+                            //
+                            connection = this.findResourceConnection(connection);
+
+                            //
+                            // Replica o estado do Serviço no Recurso.
+                            // 
+                            connection.setOperationalStatus(serviceStateTransitionedEvent.getNewResource().getOperationalStatus());
+                            connection.setDependentService(serviceStateTransitionedEvent.getNewResource());
+                            //
+                            // Atualiza tudo, retrigando todo ciclo novamente
+                            //
+                            this.updateResourceConnection(connection);
+                        } catch (ResourceNotFoundException ex) {
+                            //
+                            // Não integro, arruma e vida que segue...
+                            //
+                            logger.warn("Connection [{}] In Service Reference does not exists.", connectionId);
+                        }
+
                     }
-
                 }
             }
+        } finally {
+            endTimer(timerId);
         }
     }
 }

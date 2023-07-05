@@ -288,17 +288,17 @@ public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
 
     @Override
     public Long getCount(Domain domain) throws IOException, InvalidRequestException {
-        String aql = "RETURN LENGTH(@d)` ";
+        String aql = "RETURN COLLECTION_COUNT(@d) ";
         FilterDTO filter = new FilterDTO(aql);
         filter.getBindings().put("d", domain.getServices());
-        try {
-            ArangoCursor<Long> cursor = this.getDb().query(aql, Long.class);
+        try (ArangoCursor<Long> cursor = this.getDb().query(aql, filter.getBindings(), Long.class)) {
             Long longValue;
             try (GraphList<Long> result = new GraphList<>(cursor)) {
                 longValue = result.getOne();
             }
             return longValue;
         } catch (ArangoDBException | IOException ex) {
+            logger.error("Failed to Get Service Count:[{}]", ex.getMessage(), ex);
             return -1L;
         }
     }

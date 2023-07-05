@@ -37,7 +37,8 @@ public class ResourceAttributeModel {
     //
     // Diz se o campo vai ser exibido ou não
     //
-    private boolean displayable;
+    private boolean displayable = true;
+    private boolean readOnly = false;
     private String variableType;
     private String description; //Updateble
     private String defaultValue;
@@ -347,6 +348,20 @@ public class ResourceAttributeModel {
      */
     public void setLastUpdate(Date lastUpdate) {
         this.lastUpdate = lastUpdate;
+    }
+
+    /**
+     * @return the readOnly
+     */
+    public boolean isReadOnly() {
+        return readOnly;
+    }
+
+    /**
+     * @param readOnly the readOnly to set
+     */
+    public void setReadOnly(boolean readOnly) {
+        this.readOnly = readOnly;
     }
 
 }
