@@ -194,11 +194,11 @@ public class ThreeJSViewDTO {
         try {
             connections.forEach(connection -> {
                 if (addNodes) {
-                    if (!this.nodeMap.containsKey(connection.getFromResource().getKey())) {
+                    if (!this.nodeMap.containsKey(connection.getFromKey())) {
                         ThreeJsNodeDTO node = new ThreeJsNodeDTO(connection.getFromResource());
                         this.addNode(node);
                     }
-                    if (!this.nodeMap.containsKey(connection.getToResource().getKey())) {
+                    if (!this.nodeMap.containsKey(connection.getToKey())) {
                         ThreeJsNodeDTO node = new ThreeJsNodeDTO(connection.getToResource());
                         this.addNode(node);
                     }
