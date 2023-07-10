@@ -26,14 +26,14 @@ import com.osstelecom.db.inventory.manager.resources.ServiceResource;
  */
 public class ThreeJSServiceDTO extends BaseGraphDTO {
 
-    
     public ThreeJSServiceDTO(ServiceResource service) {
         this.serviceId = service.getKey();
+        this.nodeAddress = service.getNodeAddress();
+
     }
-    
-    
+
     private String serviceId;
-   
+
     /**
      * @return the circuitId
      */
@@ -46,6 +46,16 @@ public class ThreeJSServiceDTO extends BaseGraphDTO {
      */
     public void setServiceId(String serviceId) {
         this.serviceId = serviceId;
+    }
+
+    private String nodeAddress;
+
+    public String getNodeAddress() {
+        return nodeAddress;
+    }
+
+    public void setNodeAddress(String nodeAddress) {
+        this.nodeAddress = nodeAddress;
     }
 
 }
