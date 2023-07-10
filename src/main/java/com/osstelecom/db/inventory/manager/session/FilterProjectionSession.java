@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
@@ -80,14 +79,20 @@ public class FilterProjectionSession {
                 ArrayList<Object> objectsUsed = this.objects.remove(uid);
                 if (objectsUsed != null) {
                     if (!objectsUsed.isEmpty()) {
-                        logger.debug("Releasing [{}] from Filter Buffer", objectsUsed.size());
+                        logger.debug("Releasing [{}] from Filter Buffer IN UID:[{}]", objectsUsed.size(), uid);
                         while (!objectsUsed.isEmpty()) {
                             Object o = objectsUsed.remove(0);
                             o = null;
                         }
 
+                    } else {
+                        logger.warn("UID:[{}] Has No Objects Attached", uid);
                     }
                     objectsUsed = null;
+                } else {
+
+                    logger.warn("UID:[{}] Has No Map Attached", uid);
+
                 }
             }
         }
