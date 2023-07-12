@@ -51,8 +51,6 @@ public class InventoryManagerApplication {
     public static void main(String[] args) {
         disableSslVerification();
         SpringApplication.run(InventoryManagerApplication.class, args);
-//        HttpsURLConnection.setDefaultHostnameVerifier(SSLConnectionSocketFactory.);
-
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -65,6 +63,9 @@ public class InventoryManagerApplication {
         logger.debug("Bye Master of Universe,Inventory Manager Shutting Down...");
     }
 
+    /**
+     * Garante que não vamos validar certificados autoassinados.
+     */
     private static void disableSslVerification() {
         try {
             // Create a trust manager that does not validate certificate chains
