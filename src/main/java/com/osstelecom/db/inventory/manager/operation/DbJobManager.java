@@ -45,9 +45,11 @@ public class DbJobManager extends Manager {
 
     public void notifyJobEnd(DBJobInstance job) {
         job.setJobEnded(new Date());
-        this.runningJobs.remove(job.getJobId());
-        Long took = job.getJobEnded().getTime() - job.getJobStarted().getTime();
-        logger.debug("JOB:[{}] Done: And Took:[{}] ms", job.getJobId(), took);
+        job = this.runningJobs.remove(job.getJobId());
+        if (job.getJobStarted() != null) {
+            Long took = job.getJobEnded().getTime() - job.getJobStarted().getTime();
+            logger.debug("JOB:[{}] Done: And Took:[{}] ms", job.getJobId(), took);
+        }
     }
 
     public DBJobInstance createJobInstance() {
