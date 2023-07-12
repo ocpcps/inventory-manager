@@ -24,20 +24,10 @@ import com.osstelecom.db.inventory.manager.resources.ConsumableMetric;
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 05.06.2022
  */
-public class ConsumableMetricCreatedEvent {
+public class ConsumableMetricCreatedEvent extends BasicEvent<ConsumableMetric> {
 
-    private ConsumableMetric createdMetric;
-
-    public ConsumableMetric getCreatedMetric() {
-        return createdMetric;
-    }
-
-    public void setCreatedMetric(ConsumableMetric createdMetric) {
-        this.createdMetric = createdMetric;
-    }
-
-    public ConsumableMetricCreatedEvent(ConsumableMetric createdMetric) {
-        this.createdMetric = createdMetric;
+    public ConsumableMetricCreatedEvent(ConsumableMetric eventData) {
+        super(eventData);
     }
 
 }

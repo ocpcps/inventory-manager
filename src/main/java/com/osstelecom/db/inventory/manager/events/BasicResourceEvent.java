@@ -20,6 +20,7 @@ package com.osstelecom.db.inventory.manager.events;
 import com.arangodb.entity.DocumentCreateEntity;
 import com.arangodb.entity.DocumentDeleteEntity;
 import com.arangodb.entity.DocumentUpdateEntity;
+import com.osstelecom.db.inventory.manager.jobs.DBJobInstance;
 import com.osstelecom.db.inventory.manager.resources.BasicResource;
 import java.util.Date;
 import java.util.HashMap;
@@ -36,6 +37,7 @@ public abstract class BasicResourceEvent<T extends BasicResource> {
     private Date eventDate;
     private String sourceEventId;
     private String sourceEventDescription;
+    private DBJobInstance relatedJob;
 
     private T oldResource;
     private T newResource;
@@ -98,6 +100,14 @@ public abstract class BasicResourceEvent<T extends BasicResource> {
 
     public void addEventDetail(String key, Object value) {
         this.details.put(key, value);
+    }
+
+    public DBJobInstance getRelatedJob() {
+        return relatedJob;
+    }
+
+    public void setRelatedJob(DBJobInstance relatedJob) {
+        this.relatedJob = relatedJob;
     }
 
     /**

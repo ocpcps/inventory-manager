@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 /**
+ * Gerencia as jobs de update que possam estar rodando no banco
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 26.01.2023

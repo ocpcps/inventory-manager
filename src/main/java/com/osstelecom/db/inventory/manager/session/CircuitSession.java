@@ -353,7 +353,7 @@ public class CircuitSession {
                 }
 
             }
-
+            
             List<String> brokenNodes = this.domainManager.checkBrokenGraph(circuitDto.getPaths(), circuit.getaPoint());
 
             if (!brokenNodes.isEmpty()) {

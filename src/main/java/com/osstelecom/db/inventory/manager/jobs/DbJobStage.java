@@ -15,20 +15,30 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-
 package com.osstelecom.db.inventory.manager.jobs;
 
+import java.util.Date;
+import java.util.UUID;
+
 /**
- *
- * @author  Lucas Nishimura <lucas.nishimura@gmail.com> 
+ * Esta classe representa um dos estagios de uma job
+ * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 14.12.2022
  */
 public class DbJobStage {
-    private String jobStageId;
+
+    private final String jobStageId;
     private String jobStageName;
+    private String jobDescription;
+    private Date startDate;
+    private Date doneDate;
     private Double percDone;
     private Long totalRecords;
     private Long doneRecords;
+
+    public DbJobStage() {
+        this.jobStageId = UUID.randomUUID().toString();
+    }
 
     /**
      * @return the jobStageId
@@ -37,12 +47,7 @@ public class DbJobStage {
         return jobStageId;
     }
 
-    /**
-     * @param jobStageId the jobStageId to set
-     */
-    public void setJobStageId(String jobStageId) {
-        this.jobStageId = jobStageId;
-    }
+   
 
     /**
      * @return the jobStageName
@@ -98,5 +103,47 @@ public class DbJobStage {
      */
     public void setDoneRecords(Long doneRecords) {
         this.doneRecords = doneRecords;
+    }
+
+    /**
+     * @return the jobDescription
+     */
+    public String getJobDescription() {
+        return jobDescription;
+    }
+
+    /**
+     * @param jobDescription the jobDescription to set
+     */
+    public void setJobDescription(String jobDescription) {
+        this.jobDescription = jobDescription;
+    }
+
+    /**
+     * @return the startDate
+     */
+    public Date getStartDate() {
+        return startDate;
+    }
+
+    /**
+     * @param startDate the startDate to set
+     */
+    public void setStartDate(Date startDate) {
+        this.startDate = startDate;
+    }
+
+    /**
+     * @return the doneDate
+     */
+    public Date getDoneDate() {
+        return doneDate;
+    }
+
+    /**
+     * @param doneDate the doneDate to set
+     */
+    public void setDoneDate(Date doneDate) {
+        this.doneDate = doneDate;
     }
 }

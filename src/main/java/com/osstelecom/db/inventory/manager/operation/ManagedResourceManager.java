@@ -326,7 +326,7 @@ public class ManagedResourceManager extends Manager {
 
             this.schemaSession.validateResourceSchema(resource);
             dynamicRuleSession.evalResource(resource, "U", this); // <--- Pode não ser verdade , se a chave for
-                                                                  // duplicada..
+            // duplicada..
 
             resource.setAttributes(calculateDefaultValues(schemaModel, resource, fromEvent));
 
@@ -335,13 +335,13 @@ public class ManagedResourceManager extends Manager {
             // Demora ?
             //
             String timerId2 = startTimer("updateManagedResource.1");
-            
+
             List<String> eventSourceIds = resource.getEventSourceIds();
             resource.setEventSourceIds(null);
 
             DocumentUpdateEntity<ManagedResource> updatedEntity = this.managedResourceDao.updateResource(resource);
             endTimer(timerId2);
-            
+
             ManagedResource updatedResource = updatedEntity.getNew();
             updatedResource.setEventSourceIds(eventSourceIds);
 
@@ -417,85 +417,11 @@ public class ManagedResourceManager extends Manager {
      * Once a schema is updates, all referenced objects must be updated and all
      * rules has to be rechecked.
      *
+     * @deprecated 
      * @param update
      */
     public void processSchemaUpdatedEvent(ResourceSchemaUpdatedEvent update) {
-        // /**
-        // * Here we need to find all resources that are using the schema, update
-        // * ip, check validations and save it back to the database. Schemas are
-        // * shared between all domains so we need to check all Domains..
-        // */
-        //
-        // for (Domain domain : domainManager.getAllDomains()) {
-        // //
-        // // Update the schema on each domain
-        // //
-        // logger.debug("Updating Schema[{}] On Domain:[{}]",
-        // update.getModel().getSchemaName(), domain.getDomainName());
-        //
-        // try {
-        // GraphList<ManagedResource> nodesToUpdate =
-        // this.findManagedResourcesBySchemaName(update.getModel(), domain);
-        // logger.debug("Found {} Elements to Update On Domain:[{}]",
-        // nodesToUpdate.size(), domain.getDomainName());
-        //
-        // ResourceSchemaModel model =
-        // this.schemaSession.loadSchema(update.getModel().getSchemaName(), false);
-        //
-        // logger.debug("Schema:[{}] New Model Fields:",
-        // update.getModel().getSchemaName());
-        // model.getAttributes().forEach((k, v) -> {
-        // logger.debug(" Field: [{}] Type: [{}]", k, v.getVariableType());
-        // });
-        //
-        // AtomicLong totalProcessed = new AtomicLong(0L);
-        //
-        // //
-        // // We need to make this processing multithread.
-        // //
-        // nodesToUpdate.forEachParallel(resource -> {
-        //
-        // try {
-        //
-        // resource.setSchemaModel(model);
-        //
-        // //
-        // //
-        // //
-        // schemaSession.validateResourceSchema(resource);
-        //
-        // } catch (AttributeConstraintViolationException ex) {
-        // //
-        // // resource is invalid model.
-        // //
-        //
-        // logger.error("Failed to Validate Attributes", ex);
-        // //
-        // // Mark the resource schema model as invalid
-        // //
-        // resource.getSchemaModel().setIsValid(false);
-        // }
-        // try {
-        // this.managedResourceDao.updateResource(resource);
-        // } catch (ArangoDaoException ex) {
-        // logger.error("Failed to Update resource:[{}]", resource.getKey(), ex);
-        // }
-        // if (totalProcessed.incrementAndGet() % 1000 == 0) {
-        // logger.debug("Updated {} Records of / {}", totalProcessed.get(),
-        // nodesToUpdate.size());
-        // }
-        //
-        // });
-        // } catch (IOException | IllegalStateException | GenericException |
-        // SchemaNotFoundException | InvalidRequestException | ArangoDaoException ex) {
-        // logger.error("Failed to update Resource Schema Model", ex);
-        // } catch (ResourceNotFoundException ex) {
-        // logger.error("Domain Has No Resources on Schema:[{}]", update.getModel(),
-        // ex);
-        // }
-        // logger.debug("Updating Schema[{}] On Domain:[{}] DONE",
-        // update.getModel().getSchemaName(), domain.getDomainName());
-        // }
+
     }
 
     /**
@@ -575,7 +501,7 @@ public class ManagedResourceManager extends Manager {
 
         ManagedResource resource = connectionCreatedEvent.getNewResource().getToResource();
 
-        List<String> sourceIds = new ArrayList<>(resourceConnection.getEventSourceIds()); 
+        List<String> sourceIds = new ArrayList<>(resourceConnection.getEventSourceIds());
         sourceIds.add(resourceConnection.getId());
         resource.setEventSourceIds(sourceIds);
 
@@ -587,17 +513,17 @@ public class ManagedResourceManager extends Manager {
             throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException,
             AttributeConstraintViolationException, ScriptRuleException, SchemaNotFoundException, GenericException,
             AttributeNotFoundException {
-        
+
         ManagedResource resource = connectionUpdatedEvent.getNewResource().getToResource();
-        
+
         ResourceConnection resourceConnection = connectionUpdatedEvent.getNewResource();
         if (!CollectionUtils.isEmpty(resourceConnection.getEventSourceIds())) {
             if (resourceConnection.getEventSourceIds().contains(resource.getId())) {
                 return;
             }
         }
-        
-        List<String> sourceIds = new ArrayList<>(resourceConnection.getEventSourceIds()); 
+
+        List<String> sourceIds = new ArrayList<>(resourceConnection.getEventSourceIds());
         sourceIds.add(resourceConnection.getId());
         resource.setEventSourceIds(sourceIds);
 
@@ -619,7 +545,7 @@ public class ManagedResourceManager extends Manager {
 
         ManagedResource resource = connectionDeletedEvent.getNewResource().getToResource();
 
-        List<String> sourceIds = new ArrayList<>(resourceConnection.getEventSourceIds()); 
+        List<String> sourceIds = new ArrayList<>(resourceConnection.getEventSourceIds());
         sourceIds.add(resourceConnection.getId());
         resource.setEventSourceIds(sourceIds);
 
@@ -703,15 +629,16 @@ public class ManagedResourceManager extends Manager {
                     if (value == null) {
                         result.remove(attribute.getKey());
                         if (attribute.getValue().getRequired().booleanValue()) {
-                            if (fromEvent)
+                            if (fromEvent) {
                                 managedResource.getSchemaModel().setIsValid(false);
-                            else {
+                            } else {
                                 throw new AttributeNotFoundException(
                                         "Atributo " + attribute.getValue().getName() + " não encontrado em um nó pai");
                             }
                         }
-                    } else
+                    } else {
                         result.replace(attribute.getKey(), value);
+                    }
                 } else {
                     // se não for expressão, só substitui se não tiver valor
                     Object resourceValue = managedResource.getAttributes().get(attribute.getKey());
@@ -741,14 +668,14 @@ public class ManagedResourceManager extends Manager {
                 attributeSchemaName, attributeName);
 
         BasicResource parentResource = null;
-        try{
+        try {
             parentResource = result.getOne();
-            if (parentResource == null)
+            if (parentResource == null) {
                 return null;
-        }
-        catch(NoSuchElementException e){
+            }
+        } catch (NoSuchElementException e) {
             return null;
-        }        
+        }
 
         ManagedResource resource = managedResourceDao
                 .findResource(new ManagedResource(parentResource.getDomain(), parentResource.getId()));

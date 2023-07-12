@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Lucas Nishimura <lucas.nishimura@gmail.com>
+ * Copyright (C) 2023 Lucas Nishimura <lucas.nishimura@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -17,17 +17,41 @@
  */
 package com.osstelecom.db.inventory.manager.events;
 
-import com.osstelecom.db.inventory.manager.resources.ConsumableMetric;
+import com.osstelecom.db.inventory.manager.jobs.DBJobInstance;
 
 /**
- * @todo: Verificar
+ *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
- * @created 05.06.2022
+ * @created 12.07.2023
  */
-public class ConsumableMetricUpdatedEvent extends BasicUpdateEvent<ConsumableMetric> {
+public abstract class BasicEvent<T> implements IEvent {
 
-    public ConsumableMetricUpdatedEvent(ConsumableMetric oldMetric, ConsumableMetric newMetric) {
-        super(oldMetric, newMetric);
+    private T eventData;
+
+    private DBJobInstance relatedJob;
+
+    public BasicEvent(T eventData) {
+        this.eventData = eventData;
     }
 
+    public BasicEvent(T eventData, DBJobInstance relatedJob) {
+        this.eventData = eventData;
+        this.relatedJob = relatedJob;
+    }
+
+    public T getEventData() {
+        return eventData;
+    }
+
+    public void setEventData(T eventData) {
+        this.eventData = eventData;
+    }
+
+    public DBJobInstance getRelatedJob() {
+        return relatedJob;
+    }
+
+    public void setRelatedJob(DBJobInstance relatedJob) {
+        this.relatedJob = relatedJob;
+    }
 }
