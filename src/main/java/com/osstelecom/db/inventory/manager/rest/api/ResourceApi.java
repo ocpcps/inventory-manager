@@ -183,6 +183,15 @@ public class ResourceApi extends BaseApi {
         return resourceSession.findManagedResourceByFilter(filter);
     }
 
+    @AuthenticatedCall(role = {"user"})
+    @PostMapping(path = {"/{domain}/query", "/{domain}/resource/query"}, produces = "application/json", consumes = "application/json")
+    public String queryResourceByFilter(@RequestBody FilterRequest filter, @PathVariable("domain") String domain, HttpServletRequest httpRequest) {
+        this.setUserDetails(filter);
+        filter.setRequestDomain(domain);
+        httpRequest.setAttribute("request", filter);
+        return resourceSession.findManagedResource(filter);
+    }
+
     /**
      * Atualiza um managed resource
      *
@@ -216,5 +225,7 @@ public class ResourceApi extends BaseApi {
         httpRequest.setAttribute("request", request);
         return this.resourceSession.patchManagedResource(request);
     }
+
+
 
 }
