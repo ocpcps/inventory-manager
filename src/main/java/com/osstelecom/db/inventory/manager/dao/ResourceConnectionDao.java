@@ -25,6 +25,7 @@ import org.springframework.stereotype.Component;
 
 import com.arangodb.ArangoCollection;
 import com.arangodb.ArangoCursor;
+import com.arangodb.ArangoDBException;
 import com.arangodb.entity.DocumentCreateEntity;
 import com.arangodb.entity.DocumentDeleteEntity;
 import com.arangodb.entity.DocumentUpdateEntity;
@@ -342,16 +343,19 @@ public class ResourceConnectionDao extends AbstractArangoDao<ResourceConnection>
     }
 
     @Override
-    public Long getCount(Domain domain) throws  IOException, InvalidRequestException {
-        String aql = "for doc in `" + domain.getConnections() + "` ";
+    public Long getCount(Domain domain) throws IOException, InvalidRequestException {
+        String aql = "RETURN COLLECTION_COUNT(@d) ";
         FilterDTO filter = new FilterDTO(aql);
-        try {
-            GraphList<ResourceConnection> result = this.query(filter, ResourceConnection.class, this.getDb());
-            Long longValue = result.size();
-            result.close();
+        filter.getBindings().put("d", domain.getConnections());
+        try (ArangoCursor<Long> cursor = this.getDb().query(aql, filter.getBindings(), Long.class)) {
+            Long longValue;
+            try (GraphList<Long> result = new GraphList<>(cursor)) {
+                longValue = result.getOne();
+            }
             return longValue;
-        } catch (ResourceNotFoundException ex) {
-            return 0L;
+        } catch (ArangoDBException | IOException ex) {
+            logger.error("Failed to Get Connection Count:[{}]", ex.getMessage(), ex);
+            return -1L;
         }
     }
 }

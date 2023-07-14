@@ -17,6 +17,7 @@
 package com.osstelecom.db.inventory.manager.resources.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -29,6 +30,15 @@ public class ResourceAttributeModel {
 
     private String _id;
     private String name;
+    //
+    // Nome do campo a ser mostrado no front
+    //
+    private String displayName;
+    //
+    // Diz se o campo vai ser exibido ou não
+    //
+    private boolean displayable = true;
+    private boolean readOnly = false;
     private String variableType;
     private String description; //Updateble
     private String defaultValue;
@@ -44,6 +54,8 @@ public class ResourceAttributeModel {
     private Boolean validate;
     private String itemHash;
     private Boolean doRemove;
+    private Date creationDate;
+    private Date lastUpdate;
     //
     //  Diz se é um atributo fornecido pelo discovery
     //
@@ -280,6 +292,76 @@ public class ResourceAttributeModel {
      */
     public void setIsDiscovery(Boolean isDiscovery) {
         this.isDiscovery = isDiscovery;
+    }
+
+    /**
+     * @return the displayName
+     */
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    /**
+     * @param displayName the displayName to set
+     */
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
+    /**
+     * @return the displayable
+     */
+    public boolean isDisplayable() {
+        return displayable;
+    }
+
+    /**
+     * @param displayable the displayable to set
+     */
+    public void setDisplayable(boolean displayable) {
+        this.displayable = displayable;
+    }
+
+    /**
+     * @return the creationDate
+     */
+    public Date getCreationDate() {
+        return creationDate;
+    }
+
+    /**
+     * @param creationDate the creationDate to set
+     */
+    public void setCreationDate(Date creationDate) {
+        this.creationDate = creationDate;
+    }
+
+    /**
+     * @return the lastUpdate
+     */
+    public Date getLastUpdate() {
+        return lastUpdate;
+    }
+
+    /**
+     * @param lastUpdate the lastUpdate to set
+     */
+    public void setLastUpdate(Date lastUpdate) {
+        this.lastUpdate = lastUpdate;
+    }
+
+    /**
+     * @return the readOnly
+     */
+    public boolean isReadOnly() {
+        return readOnly;
+    }
+
+    /**
+     * @param readOnly the readOnly to set
+     */
+    public void setReadOnly(boolean readOnly) {
+        this.readOnly = readOnly;
     }
 
 }

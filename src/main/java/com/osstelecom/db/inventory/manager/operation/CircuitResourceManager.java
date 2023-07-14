@@ -198,16 +198,31 @@ public class CircuitResourceManager extends Manager {
      * @throws ArangoDaoException
      */
     public GraphList<ResourceConnection> findCircuitPaths(CircuitResource circuit) {
-        return this.graphDao.findCircuitPaths(circuit);
+        String timerId = startTimer("findCircuitPaths");
+        try {
+            return this.graphDao.findCircuitPaths(circuit);
+        } finally {
+            endTimer(timerId);
+        }
     }
 
     public GraphList<CircuitResource> findCircuitsByFilter(FilterDTO filter, Domain domain) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
-        return this.circuitResourceDao.findResourceByFilter(filter, domain);
+        String timerId = startTimer("findCircuitsByFilter");
+        try {
+            return this.circuitResourceDao.findResourceByFilter(filter, domain);
+        } finally {
+            endTimer(timerId);
+        }
     }
 
     public GraphList<CircuitResource> findCircuitsByFilter(FilterDTO filter, String domainName) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException, DomainNotFoundException {
-        Domain domain = this.domainManager.getDomain(domainName);
-        return this.circuitResourceDao.findResourceByFilter(filter, domain);
+        String timerId = startTimer("findCircuitsByFilter");
+        try {
+            Domain domain = this.domainManager.getDomain(domainName);
+            return this.circuitResourceDao.findResourceByFilter(filter, domain);
+        } finally {
+            endTimer(timerId);
+        }
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -222,30 +237,35 @@ public class CircuitResourceManager extends Manager {
      */
     @Subscribe
     public void onResourceConnectionUpdatedEvent(ResourceConnectionUpdatedEvent updatedEvent) throws InvalidRequestException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
-        ResourceConnection newConnection = updatedEvent.getNewResource();
-        ResourceConnection oldConnection = updatedEvent.getOldResource();
-        if (newConnection.getCircuits() != null) {
-            if (!newConnection.getCircuits().isEmpty()) {
-                //
-                // Uma Conexão foi atualizada.
-                //
-                if (!newConnection.getOperationalStatus().equals(oldConnection.getOperationalStatus())) {
+        String timerId = startTimer("onResourceConnectionUpdatedEvent");
+        try {
+            ResourceConnection newConnection = updatedEvent.getNewResource();
+            ResourceConnection oldConnection = updatedEvent.getOldResource();
+            if (newConnection.getCircuits() != null) {
+                if (!newConnection.getCircuits().isEmpty()) {
                     //
-                    // Trasicionou o estado da conexão.
+                    // Uma Conexão foi atualizada.
                     //
-                    for (String circuitId : newConnection.getCircuits()) {
-                        try {
-                            CircuitResource circuit = this.findCircuitResource(new CircuitResource(newConnection.getDomain(), circuitId));
-                            this.computeCircuitIntegrity(circuit);
-                        } catch (ResourceNotFoundException ex) {
-                            logger.warn("Inconsistent Database Detetected");
-                        } catch (ArangoDaoException ex) {
-                            logger.warn("Generic Error", ex);
+                    if (!newConnection.getOperationalStatus().equals(oldConnection.getOperationalStatus())) {
+                        //
+                        // Trasicionou o estado da conexão.
+                        //
+                        for (String circuitId : newConnection.getCircuits()) {
+                            try {
+                                CircuitResource circuit = this.findCircuitResource(new CircuitResource(newConnection.getDomain(), circuitId));
+                                this.computeCircuitIntegrity(circuit);
+                            } catch (ResourceNotFoundException ex) {
+                                logger.warn("Inconsistent Database Detetected");
+                            } catch (ArangoDaoException ex) {
+                                logger.warn("Generic Error", ex);
+                            }
                         }
-                    }
 
+                    }
                 }
             }
+        } finally {
+            endTimer(timerId);
         }
 
     }
@@ -257,7 +277,7 @@ public class CircuitResourceManager extends Manager {
      */
     @Subscribe
     public void onManagedResourceUpdatedEvent(ManagedResourceUpdatedEvent updatedEvent) throws ArangoDaoException, IOException, InvalidRequestException {
-
+        String timerId = startTimer("onManagedResourceUpdatedEvent");
         //
         // Vamos filtrar se algum circuito usa  a gente
         //
@@ -288,6 +308,8 @@ public class CircuitResourceManager extends Manager {
             //
             // This is expetected
             //
+        } finally {
+            endTimer(timerId);
         }
     }
 
@@ -300,68 +322,80 @@ public class CircuitResourceManager extends Manager {
      * @param target
      */
     private void computeCircuitIntegrity(CircuitResource circuit) throws ArangoDaoException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
-        //
-        // Forks with the logic of checking integrity
-        //
-        Long start = System.currentTimeMillis();
-        boolean stateChanged = false;
-        List<ResourceConnection> connections = this.findCircuitPaths(circuit).toList();
-        boolean degratedFlag = false;
-        for (ResourceConnection connection : connections) {
-            logger.debug("Connection [{}] Status:[{}]", connection.getId(), connection.getOperationalStatus());
+        String timerId = startTimer("onManagedResourceUpdatedEvent");
+        try {
             //
-            // get current node status
+            // Forks with the logic of checking integrity
             //
-            if (!connection.getOperationalStatus().equalsIgnoreCase("UP")) {
+            Long start = System.currentTimeMillis();
+            boolean stateChanged = false;
+            List<ResourceConnection> connections = this.findCircuitPaths(circuit).toList();
+            boolean degratedFlag = false;
+            for (ResourceConnection connection : connections) {
+                logger.debug("Connection [{}] Status:[{}]", connection.getId(), connection.getOperationalStatus());
                 //
-                // Transitou de normal para degradado
+                // get current node status
                 //
-                
-                degratedFlag = true;
-            }
-
-        }
-
-        if (circuit.getDegrated()) {
-            if (!degratedFlag) {
-                //
-                // Estava degradado e agora normalizou
-                //
-                circuit.setDegrated(false);
-                stateChanged = true;
-            }
-        } else {
-            if (degratedFlag) {
-                //
-                // Estava bom e agora degradou
-                //
-                circuit.setDegrated(true);
-                stateChanged = true;
-            }
-        }
-
-        //
-        // Checks the current state of the circuit
-        //
-        List<String> brokenNodes = this.domainManager.checkBrokenGraph(connections, circuit.getaPoint());
-
-        //
-        //
-        //
-        if (!brokenNodes.isEmpty()) {
-            //
-            // Check if the broken nodes has the zPoint or aPoint,
-            // If so it means that the circuit is broken!
-            //
-            if (brokenNodes.contains(circuit.getzPoint().getId())
-                    || brokenNodes.contains(circuit.getaPoint().getId())) {
-                if (!circuit.getBroken()) {
+                if (!connection.getOperationalStatus().equalsIgnoreCase("UP")) {
                     //
-                    // Transitou para Broken..
+                    // Transitou de normal para degradado
                     //
-                    circuit.setBroken(true);
+
+                    degratedFlag = true;
+                }
+
+            }
+
+            if (circuit.getDegrated()) {
+                if (!degratedFlag) {
+                    //
+                    // Estava degradado e agora normalizou
+                    //
+                    circuit.setDegrated(false);
                     stateChanged = true;
                 }
+            } else {
+                if (degratedFlag) {
+                    //
+                    // Estava bom e agora degradou
+                    //
+                    circuit.setDegrated(true);
+                    stateChanged = true;
+                }
+            }
+
+            //
+            // Checks the current state of the circuit
+            //
+            List<String> brokenNodes = this.domainManager.checkBrokenGraph(connections, circuit.getaPoint());
+
+            //
+            //
+            //
+            if (!brokenNodes.isEmpty()) {
+                //
+                // Check if the broken nodes has the zPoint or aPoint,
+                // If so it means that the circuit is broken!
+                //
+                if (brokenNodes.contains(circuit.getzPoint().getId())
+                        || brokenNodes.contains(circuit.getaPoint().getId())) {
+                    if (!circuit.getBroken()) {
+                        //
+                        // Transitou para Broken..
+                        //
+                        circuit.setBroken(true);
+                        stateChanged = true;
+                    }
+                } else if (circuit.getBroken()) {
+                    //
+                    // Normalizou
+                    //
+                    circuit.setBroken(false);
+                    stateChanged = true;
+
+                }
+
+                circuit.setBrokenResources(brokenNodes);
             } else if (circuit.getBroken()) {
                 //
                 // Normalizou
@@ -371,40 +405,33 @@ public class CircuitResourceManager extends Manager {
 
             }
 
-            circuit.setBrokenResources(brokenNodes);
-        } else if (circuit.getBroken()) {
-            //
-            // Normalizou
-            //
-            circuit.setBroken(false);
-            stateChanged = true;
-
-        }
-
-        if (circuit.getBroken()) {
-            circuit.setOperationalStatus("Down");
-            circuit.setDegrated(true);
-        } else {
-            circuit.setOperationalStatus("Up");
-        }
-        if (circuit.getBrokenResources() != null) {
-            if (!circuit.getBroken() && !circuit.getBrokenResources().isEmpty()) {
-                stateChanged = true;
-                circuit.getBrokenResources().clear();
+            if (circuit.getBroken()) {
+                circuit.setOperationalStatus("Down");
+                circuit.setDegrated(true);
+            } else {
+                circuit.setOperationalStatus("Up");
             }
-        }
+            if (circuit.getBrokenResources() != null) {
+                if (!circuit.getBroken() && !circuit.getBrokenResources().isEmpty()) {
+                    stateChanged = true;
+                    circuit.getBrokenResources().clear();
+                }
+            }
 
-        Long end = System.currentTimeMillis();
-        Long took = end - start;
-        if (circuit.getBrokenResources() != null) {
-            logger.debug("Check Circuit Integrity for [{}] Took: {} ms State Changed: {} Broken Count:[{}] Total Connections:[{}]",
-                    circuit.getId(), took, stateChanged, circuit.getBrokenResources().size(), connections.size());
-        } else {
-            logger.debug("Check Circuit Integrity for [{}] Took: {} ms State Changed: {}  Total Connections:[{}]",
-                    circuit.getId(), took, stateChanged, connections.size());
-        }
-        if (stateChanged) {
-            this.updateCircuitResource(circuit);
+            Long end = System.currentTimeMillis();
+            Long took = end - start;
+            if (circuit.getBrokenResources() != null) {
+                logger.debug("Check Circuit Integrity for [{}] Took: {} ms State Changed: {} Broken Count:[{}] Total Connections:[{}]",
+                        circuit.getId(), took, stateChanged, circuit.getBrokenResources().size(), connections.size());
+            } else {
+                logger.debug("Check Circuit Integrity for [{}] Took: {} ms State Changed: {}  Total Connections:[{}]",
+                        circuit.getId(), took, stateChanged, connections.size());
+            }
+            if (stateChanged) {
+                this.updateCircuitResource(circuit);
+            }
+        } finally {
+            endTimer(timerId);
         }
     }
 

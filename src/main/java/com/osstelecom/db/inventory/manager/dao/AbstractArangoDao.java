@@ -155,6 +155,15 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
         } else {
             GraphList<T> result = new GraphList<>(
                     db.query(aql, new AqlQueryOptions().fullCount(true).count(true), type));
+            if (result.isEmpty()) {
+                ResourceNotFoundException ex = new ResourceNotFoundException();
+                //
+                // Create a Detail map to the user
+                //
+                ex.addDetails("AQL", aql);
+                ex.addDetails("params", "NO_PARAMS");
+                throw ex;
+            }
             return result;
         }
 
@@ -256,6 +265,7 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
 
                 ex.addDetails("AQL", filter.getAqlFilter());
                 ex.addDetails("params", filter.getBindings());
+
                 throw ex;
             }
             Long end = System.currentTimeMillis();
