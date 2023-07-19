@@ -172,7 +172,7 @@ public class FilterProjectionSession {
             ArrayNode arrayNode = objectMapper.createArrayNode();
             this.objects.get(uid).add(arrayNode);
             jsonNode.elements().forEachRemaining(element -> {
-                JsonNode child = filter(element, fields, currentPath + ".[*]", objectMapper, uid);
+                JsonNode child = filter(element, fields, currentPath, objectMapper, uid);
                 this.objects.get(uid).add(child);
                 if (child != null && !child.isEmpty(objectMapper.getSerializerProvider())) {
                     arrayNode.add(child);
