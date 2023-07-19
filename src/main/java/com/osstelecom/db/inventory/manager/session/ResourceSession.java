@@ -695,7 +695,9 @@ public class ResourceSession {
     
     public String findManagedResource(FilterRequest filter) {
         FilterDTO filterDTO = filter.getPayLoad();
-        return this.manager.findManagedResource(filterDTO.getAqlFilter(), filterDTO.getBindings());
+       
+        String json = this.manager.findManagedResource(filterDTO.getAqlFilter(), filterDTO.getBindings());
+        return this.filterProjectionSession.filterJson(json, filterDTO.getFields());
     }
 
     public ManagedResource findManagedResource(ManagedResource resource) throws ResourceNotFoundException, ArangoDaoException, InvalidRequestException {

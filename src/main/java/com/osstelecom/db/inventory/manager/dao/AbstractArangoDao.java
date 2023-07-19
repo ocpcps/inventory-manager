@@ -43,6 +43,7 @@ import com.osstelecom.db.inventory.manager.resources.BasicResource;
 import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.GraphList;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -172,7 +173,7 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
     public String runNativeQuery(String aql, Map<String, Object> bindVars) {
         Long start = System.currentTimeMillis();
         String uid = UUID.randomUUID().toString();
-        StringBuilder buffer = new StringBuilder("[");
+        String buffer = "[";
 
         logger.info("(native-query) - [{}] - RUNNING: AQL:[{}]", uid, aql);
         if (bindVars != null) {
@@ -183,11 +184,11 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
 
         ArangoCursor<String> result = this.getDb().query(aql, bindVars, new AqlQueryOptions().fullCount(true).count(true), String.class);          
         if (result.getCount() > 0) {
-            result.stream().forEach(s->buffer.append(s+","));
+            buffer = buffer.concat(result.stream().collect(Collectors.joining(", ")));
             try {
                 result.close();
             } catch (Exception e) {
-                logger.error("close cursor euurror when empty response", e);
+                logger.error("close cursor error when empty response", e);
             }                
         }
 
@@ -202,8 +203,8 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
             logger.info("(query) - [{}] - Took: [{}] ms", uid, took);
         }
         
-        buffer.append("]");
-        return buffer.toString();
+        buffer = buffer.concat("]");
+        return buffer;
     }
 
     /**
