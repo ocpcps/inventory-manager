@@ -178,8 +178,8 @@ public class ConsumableMetricDao {
             throws ArangoDaoException {
         try {
             return this.getDb().collection(consumableMetric.getDomain().getMetrics()).deleteDocument(
-                    consumableMetric.getMetricName(), ConsumableMetric.class,
-                    new DocumentDeleteOptions().returnOld(true));
+                    consumableMetric.getMetricName(),
+                    new DocumentDeleteOptions().returnOld(true), ConsumableMetric.class);
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         } finally {
@@ -228,19 +228,19 @@ public class ConsumableMetricDao {
     }
 
     public GraphList<BasicResource> findParentsWithMetrics(BasicResource from) {
-        String aql = "FOR v, e, p IN 1..16 INBOUND '"+from.getId()+"' GRAPH '"+from.getDomainName() + "_connections_layer' ";
+        String aql = "FOR v, e, p IN 1..16 INBOUND '" + from.getId() + "' GRAPH '" + from.getDomainName() + "_connections_layer' ";
         aql += "FILTER v.consumableMetric != null ";
         aql += "RETURN distinct v ";
         return new GraphList<>(
-                getDb().query(aql, new HashMap<>(), new AqlQueryOptions().fullCount(true).count(true), BasicResource.class));
+                getDb().query(aql, BasicResource.class, new HashMap<>(), new AqlQueryOptions().fullCount(true).count(true)));
     }
 
     public GraphList<BasicResource> findChildsWithMetrics(BasicResource to) {
-        String aql = "FOR v, e, p IN 1..16 OUTBOUND '"+to.getId()+"' GRAPH '"+to.getDomainName() + "_connections_layer' ";
+        String aql = "FOR v, e, p IN 1..16 OUTBOUND '" + to.getId() + "' GRAPH '" + to.getDomainName() + "_connections_layer' ";
         aql += "FILTER v.consumerMetric != null ";
         aql += "RETURN distinct v ";
         return new GraphList<>(
-                getDb().query(aql, new HashMap<>(), new AqlQueryOptions().fullCount(true).count(true), BasicResource.class));
+                getDb().query(aql, BasicResource.class, new HashMap<>(), new AqlQueryOptions().fullCount(true).count(true)));
     }
 
     /**
@@ -286,8 +286,8 @@ public class ConsumableMetricDao {
                 logger.info("\t  [@{}]=[{}]", k, v);
             });
             GraphList<ConsumableMetric> result = new GraphList<>(
-                    db.query(filter.getAqlFilter(), filter.getBindings(),
-                            new AqlQueryOptions().fullCount(true).count(true), ConsumableMetric.class));
+                    db.query(filter.getAqlFilter(), ConsumableMetric.class, filter.getBindings(),
+                            new AqlQueryOptions().fullCount(true).count(true)));
 
             if (result.isEmpty()) {
                 ResourceNotFoundException ex = new ResourceNotFoundException();
@@ -311,8 +311,8 @@ public class ConsumableMetricDao {
             return result;
         } else {
             return new GraphList<>(
-                    db.query(filter.getAqlFilter(), new AqlQueryOptions().fullCount(true).count(true),
-                            ConsumableMetric.class));
+                    db.query(filter.getAqlFilter(),
+                            ConsumableMetric.class, new AqlQueryOptions().fullCount(true).count(true)));
         }
     }
 

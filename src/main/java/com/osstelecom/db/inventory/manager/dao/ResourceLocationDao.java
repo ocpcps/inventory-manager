@@ -152,8 +152,8 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
         // from
         // nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
         try {
-            return this.getDb().collection(resource.getDomain().getNodes()).deleteDocument(resource.getId(),
-                    ResourceLocation.class, new DocumentDeleteOptions().returnOld(true));
+            return this.getDb().collection(resource.getDomain().getNodes()).deleteDocument(resource.getId(), new DocumentDeleteOptions().returnOld(true),
+                    ResourceLocation.class);
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         } finally {
@@ -241,7 +241,7 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
     public DocumentCreateEntity<ResourceLocation> createResourceLocation(ResourceLocation resource)
             throws GenericException {
         try {
-            return this.getDb().collection(resource.getDomain().getNodes()).insertDocument(resource);
+            return this.getDb().collection(resource.getDomain().getNodes()).insertDocument(resource, new DocumentCreateOptions().returnNew(true), ResourceLocation.class);
         } catch (Exception ex) {
             ex.printStackTrace();
             throw new GenericException(ex.getMessage());
@@ -318,14 +318,14 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
      * @param domain
      * @return
      * @throws IOException
-     * @throws InvalidRequestException 
+     * @throws InvalidRequestException
      */
     @Override
     public Long getCount(Domain domain) throws IOException, InvalidRequestException {
         String aql = "RETURN COLLECTION_COUNT(@d) ";
         FilterDTO filter = new FilterDTO(aql);
         filter.getBindings().put("d", domain.getNodes());
-        try (ArangoCursor<Long> cursor = this.getDb().query(aql, filter.getBindings(), Long.class)) {
+        try (ArangoCursor<Long> cursor = this.getDb().query(aql, Long.class, filter.getBindings())) {
             Long longValue;
             try (GraphList<Long> result = new GraphList<>(cursor)) {
                 longValue = result.getOne();

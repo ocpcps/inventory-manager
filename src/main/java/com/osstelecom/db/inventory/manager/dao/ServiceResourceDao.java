@@ -211,7 +211,7 @@ public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
     @Override
     public DocumentDeleteEntity<ServiceResource> deleteResource(ServiceResource resource) throws ArangoDaoException {
         try {
-            return this.getDb().collection(resource.getDomain().getServices()).deleteDocument(resource.getId(), ServiceResource.class, new DocumentDeleteOptions().returnOld(true));
+            return this.getDb().collection(resource.getDomain().getServices()).deleteDocument(resource.getId(), new DocumentDeleteOptions().returnOld(true), ServiceResource.class);
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         }
@@ -291,7 +291,7 @@ public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
         String aql = "RETURN COLLECTION_COUNT(@d) ";
         FilterDTO filter = new FilterDTO(aql);
         filter.getBindings().put("d", domain.getServices());
-        try (ArangoCursor<Long> cursor = this.getDb().query(aql, filter.getBindings(), Long.class)) {
+        try (ArangoCursor<Long> cursor = this.getDb().query(aql, Long.class, filter.getBindings())) {
             Long longValue;
             try (GraphList<Long> result = new GraphList<>(cursor)) {
                 longValue = result.getOne();

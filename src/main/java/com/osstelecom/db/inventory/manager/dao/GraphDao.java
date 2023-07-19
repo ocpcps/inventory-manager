@@ -81,8 +81,8 @@ public class GraphDao {
             logger.info("\t  [@{}]=[{}]", k, v);
 
         });
-        ArangoCursor<ResourceConnection> cursor = this.arangoDatabase.query(aql, bindVars,
-                new AqlQueryOptions().fullCount(true).count(true).batchSize(5000), ResourceConnection.class);
+        ArangoCursor<ResourceConnection> cursor = this.arangoDatabase.query(aql, ResourceConnection.class, bindVars,
+                new AqlQueryOptions().fullCount(true).count(true).batchSize(5000));
         return new GraphList<>(cursor);
     }
 
@@ -106,10 +106,9 @@ public class GraphDao {
             logger.debug("Running GRAPH AQL:[{}]", aql);
             Map<String, Object> bindVars = new ConcurrentHashMap<>();
             bindVars.put("depth", depth);
-//        bindVars.put("direction", direction);
             bindVars.put("resourceId", resource.getId());
             bindVars.put("graphName", resource.getDomain().getConnectionLayer());
-            ArangoCursor<ResourceConnection> cursor = this.arangoDatabase.query(aql, bindVars, new AqlQueryOptions().fullCount(true).count(true).batchSize(5000), ResourceConnection.class);
+            ArangoCursor<ResourceConnection> cursor = this.arangoDatabase.query(aql, ResourceConnection.class, bindVars, new AqlQueryOptions().fullCount(true).count(true).batchSize(5000));
 
             GraphList<ResourceConnection> result = new GraphList<>(cursor);
             if (result.isEmpty()) {

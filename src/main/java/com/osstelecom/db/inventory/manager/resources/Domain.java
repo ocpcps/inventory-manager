@@ -17,7 +17,7 @@
  */
 package com.osstelecom.db.inventory.manager.resources;
 
-import com.arangodb.entity.DocumentField;
+import com.arangodb.serde.InternalKey;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Date;
@@ -30,7 +30,7 @@ import java.util.Date;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Domain {
 
-    @DocumentField(DocumentField.Type.KEY)
+    @InternalKey
     @Schema(example = "network")
     private String domainName;
     @Schema(example = "network_connections")
