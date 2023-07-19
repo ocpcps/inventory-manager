@@ -202,11 +202,11 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
     }
 
     /**
-     * 
+     *
      * @param filter
      * @return
      * @throws SchemaNotFoundException
-     * @throws GenericException 
+     * @throws GenericException
      */
     public GetSchemasResponse getSchemaByFilter(String filter) throws SchemaNotFoundException, GenericException {
         GetSchemasResponse r = this.loadSchemas();
@@ -265,12 +265,14 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                     //
                     // Eu tenho um filho
                     //
-                    if (!resourceModel.getChildrenSchemas().contains(result.getSchemaName())) {
-                        resourceModel.getChildrenSchemas().add(result.getSchemaName());
-                        try {
-                            this.writeModelToDisk(resourceModel, true);
-                        } catch (InvalidRequestException ex) {
-                            logger.error("Failed to Syncronize Data with DISK");
+                    if (resourceModel.getChildrenSchemas() != null) {
+                        if (!resourceModel.getChildrenSchemas().contains(result.getSchemaName())) {
+                            resourceModel.getChildrenSchemas().add(result.getSchemaName());
+                            try {
+                                this.writeModelToDisk(resourceModel, true);
+                            } catch (InvalidRequestException ex) {
+                                logger.error("Failed to Syncronize Data with DISK");
+                            }
                         }
                     }
                 }
@@ -290,7 +292,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
             } catch (IOException ex) {
                 throw new GenericException(ex.getMessage(), ex);
             } catch (JsonSyntaxException | JsonIOException ex) {
-                logger.error("Invalid Json File:[{}]",f,ex);
+                logger.error("Invalid Json File:[{}]", f, ex);
                 throw new GenericException(ex.getMessage(), ex);
             }
         } else {
