@@ -121,6 +121,10 @@ public class FilterProjectionSession {
     }
 
     public String filterJson(String json, List<String> fields) {
+        
+        if(fields == null || fields.isEmpty())
+            return json;
+        
         String uid = utils.getRequestId();
         String response = "";
         try {
