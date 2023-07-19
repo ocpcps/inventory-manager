@@ -36,6 +36,7 @@ import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
  *
@@ -44,6 +45,7 @@ import org.springframework.context.event.EventListener;
  */
 @SpringBootApplication(exclude = {MongoAutoConfiguration.class, MongoDataAutoConfiguration.class})
 @ComponentScan({"com.osstelecom.db.inventory"})
+@EnableScheduling
 public class InventoryManagerApplication {
 
     private Logger logger = LoggerFactory.getLogger(InventoryManagerApplication.class);
