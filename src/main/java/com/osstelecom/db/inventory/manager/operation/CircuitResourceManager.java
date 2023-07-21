@@ -18,6 +18,7 @@ import com.osstelecom.db.inventory.manager.dao.CircuitResourceDao;
 import com.osstelecom.db.inventory.manager.dao.GraphDao;
 import com.osstelecom.db.inventory.manager.dao.ResourceConnectionDao;
 import com.osstelecom.db.inventory.manager.dto.FilterDTO;
+import com.osstelecom.db.inventory.manager.events.CircuitPathUpdatedEvent;
 import com.osstelecom.db.inventory.manager.events.CircuitResourceCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.CircuitResourceUpdatedEvent;
 import com.osstelecom.db.inventory.manager.events.ManagedResourceUpdatedEvent;
@@ -166,6 +167,28 @@ public class CircuitResourceManager extends Manager {
     }
 
     /**
+     * Criado para diferenciar o motivo da atualização
+     *
+     * @param resource
+     * @return
+     * @throws ArangoDaoException
+     * @throws SchemaNotFoundException
+     * @throws GenericException
+     * @throws AttributeConstraintViolationException
+     * @throws ScriptRuleException
+     */
+    public CircuitResource updateCircuitPath(CircuitResource resource) throws ArangoDaoException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
+
+        /**
+         * então atualizou os paths. vamos verificar depois se o
+         */
+        CircuitResource updatedResource = this.updateCircuitResource(resource);
+        CircuitPathUpdatedEvent event = new CircuitPathUpdatedEvent(updatedResource);
+        this.eventManager.notifyResourceEvent(event);
+        return updatedResource;
+    }
+
+    /**
      * Update a circuit
      *
      * @param resource
@@ -238,6 +261,18 @@ public class CircuitResourceManager extends Manager {
     @EventListener(ApplicationReadyEvent.class)
     private void onStartUp() {
         eventManager.registerListener(this);
+    }
+
+    @Subscribe
+    public void onCircuitPathUpdatedEvent(CircuitPathUpdatedEvent event) throws ResourceNotFoundException, InvalidRequestException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
+        try {
+            CircuitResource circuit = this.findCircuitResource(event.getNewResource());
+            this.computeCircuitIntegrity(circuit);
+        } catch (ResourceNotFoundException ex) {
+            logger.warn("Inconsistent Database Detetected on computeCircuitIntegrity()");
+        } catch (ArangoDaoException ex) {
+            logger.warn("Generic Error on computeCircuitIntegrity()", ex);
+        }
     }
 
     /**

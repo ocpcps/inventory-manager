@@ -43,6 +43,7 @@ public class ResourceSchemaModel {
     private Boolean allowAll;
     private Boolean attributesChanged = false;
     private Boolean isValid = true;
+    private String graphItemColor;
     private HashMap<String, ResourceAttributeModel> attributes = new HashMap<>();
     private List<String> childrenSchemas = new ArrayList<>();
     private List<String> relatedSchemas = new ArrayList<>();
@@ -201,5 +202,19 @@ public class ResourceSchemaModel {
      */
     public void setLastUpdate(Date lastUpdate) {
         this.lastUpdate = lastUpdate;
+    }
+
+    /**
+     * @return the graphItemColor
+     */
+    public String getGraphItemColor() {
+        return graphItemColor;
+    }
+
+    /**
+     * @param graphItemColor the graphItemColor to set
+     */
+    public void setGraphItemColor(String graphItemColor) {
+        this.graphItemColor = graphItemColor;
     }
 }

@@ -526,7 +526,8 @@ public class CircuitSession {
                 resolved = resourceConnectionManager.updateResourceConnections(resolved, circuit.getDomain());
                 request.getPayLoad().getPaths().clear();
                 request.getPayLoad().getPaths().addAll(resolved);
-                circuit = circuitResourceManager.updateCircuitResource(circuit);
+                circuit = circuitResourceManager.updateCircuitPath(circuit);
+                
             } else {
                 //
                 // Aqui temos um problema que precisamos ver se precisamos tratar.
