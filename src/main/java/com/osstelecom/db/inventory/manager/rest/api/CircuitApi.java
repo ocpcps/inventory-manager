@@ -166,21 +166,33 @@ public class CircuitApi extends BaseApi {
     @PostMapping(path = "/{domain}/circuit/path", produces = "application/json", consumes = "application/json")
     public GetCircuitPathResponse getCircuitPath(@RequestBody GetCircuitPathRequest request,
             @PathVariable("domain") String domain, HttpServletRequest httpRequest) throws ArangoDaoException, ResourceNotFoundException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, AttributeConstraintViolationException, DomainNotFoundException, InvalidRequestException {
-//        GetCircuitPathRequest request = gson.fromJson(strReq, GetCircuitPathRequest.class);
         request.setRequestDomain(domain);
         this.setUserDetails(request);
         httpRequest.setAttribute("request", request);
         return circuitSession.findCircuitPath(request);
     }
 
+    /**
+     * Recupera os paths de um circuito pelo id, solicitado pelo @Wellyngton
+     *
+     * @param domain
+     * @param id
+     * @param httpRequest
+     * @return
+     * @throws ArangoDaoException
+     * @throws ResourceNotFoundException
+     * @throws DomainNotFoundException
+     * @throws InvalidRequestException
+     */
     @AuthenticatedCall(role = {"user"})
-    @PostMapping(path = "/{domain}/circuit/filter", produces = "application/json", consumes = "application/json")
-    public FilterResponse findCircuitsByFilter(@RequestBody FilterRequest filter,
-            @PathVariable("domain") String domain, HttpServletRequest httpRequest) throws ArangoDaoException, ResourceNotFoundException, DomainNotFoundException, InvalidRequestException {
-        this.setUserDetails(filter);
-        filter.setRequestDomain(domain);
-        httpRequest.setAttribute("request", filter);
-        return circuitSession.findCircuitByFilter(filter);
+    @GetMapping(path = "/{domain}/circuit/{id}/path", produces = "application/json", consumes = "application/json")
+    public GetCircuitPathResponse getCircuitPathById(
+            @PathVariable("domain") String domain, @PathVariable("domain") String id, HttpServletRequest httpRequest) throws ArangoDaoException, ResourceNotFoundException, DomainNotFoundException, InvalidRequestException {
+        GetCircuitPathRequest req = new GetCircuitPathRequest(id, domain);
+        this.setUserDetails(req);
+        req.setRequestDomain(domain);
+        httpRequest.setAttribute("request", req);
+        return circuitSession.findCircuitPathById(req);
     }
 
     @AuthenticatedCall(role = {"user"})

@@ -49,7 +49,7 @@ public class FilterProjectionSession {
             String uid = utils.getRequestId();
             try {
 
-                this.objects.put(uid, new ArrayList<Object>());
+                this.objects.put(uid, new ArrayList<>());
                 /**
                  * Encontramos fields para filtrar, o problema é que este método
                  * vai exigir bastante memória pois vai trabalhar com maps e
@@ -120,6 +120,42 @@ public class FilterProjectionSession {
         }
     }
 
+    public String filterJson(String json, List<String> fields) {
+        
+        if(fields == null || fields.isEmpty())
+            return json;
+        
+        String uid = utils.getRequestId();
+        String response = "";
+        try {
+
+            this.objects.put(uid, new ArrayList<>());        
+            response = filterJson(json, fields, uid);
+        } catch (Exception ex) {
+            //
+            // Omite O erro
+            //
+            logger.error("Failed to Apply Filter", ex);
+        } finally {
+            ArrayList<Object> objectsUsed = this.objects.remove(uid);
+            if (objectsUsed != null) {
+                if (!objectsUsed.isEmpty()) {
+                    logger.debug("Releasing [{}] from Filter Buffer IN UID:[{}]", objectsUsed.size(), uid);
+                    while (!objectsUsed.isEmpty()) {
+                        Object o = objectsUsed.remove(0);
+                        o = null;
+                    }
+                } else {
+                    logger.warn("UID:[{}] Has No Objects Attached", uid);
+                }
+                objectsUsed = null;
+            } else {
+                logger.warn("UID:[{}] Has No Map Attached", uid);
+            }
+        }
+        return response;
+    }
+
     private JsonNode filter(JsonNode jsonNode, Set<String> fields, String currentPath, ObjectMapper objectMapper, String uid) {
         if (jsonNode.isObject()) {
             ObjectNode objectNode = objectMapper.createObjectNode();
@@ -140,7 +176,7 @@ public class FilterProjectionSession {
             ArrayNode arrayNode = objectMapper.createArrayNode();
             this.objects.get(uid).add(arrayNode);
             jsonNode.elements().forEachRemaining(element -> {
-                JsonNode child = filter(element, fields, currentPath + ".[*]", objectMapper, uid);
+                JsonNode child = filter(element, fields, currentPath, objectMapper, uid);
                 this.objects.get(uid).add(child);
                 if (child != null && !child.isEmpty(objectMapper.getSerializerProvider())) {
                     arrayNode.add(child);
