@@ -32,6 +32,7 @@ public class CircuitPathDTO {
     private CircuitResource circuit;
     private String domainName;
     private List<ResourceConnection> paths = new ArrayList<>();
+    private List<String> hops;
 
     /**
      * @return the circuit
@@ -59,6 +60,31 @@ public class CircuitPathDTO {
      */
     public void setPaths(List<ResourceConnection> paths) {
         this.paths = paths;
+        try {
+            if (paths != null && paths.isEmpty()) {
+                if (this.hops == null) {
+                    this.hops = new ArrayList<>();
+                }
+                this.hops.clear();
+
+                /**
+                 * Monta a lista de saltos, não sei se tem a ordem certa
+                 */
+                this.paths.forEach(p -> {
+                    if (!this.hops.contains(p.getFromResource().getNodeAddress())) {
+                        this.hops.add(p.getFromResource().getNodeAddress());
+                    }
+                    if (!this.hops.contains(p.getToResource().getNodeAddress())) {
+                        this.hops.add(p.getToResource().getNodeAddress());
+                    }
+                });
+            }
+        } catch (Exception ex) {
+            /**
+             * Regras em DTO.....que já são usadas..... oh lord...
+             */
+            ex.printStackTrace();
+        }
     }
 
 //    /**
@@ -100,7 +126,6 @@ public class CircuitPathDTO {
 //    public void setBrokenResources(ArrayList<String> brokenConnections) {
 //        this.brokenResources = brokenConnections;
 //    }
-
     /**
      * @return the domainName
      */

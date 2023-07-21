@@ -18,9 +18,11 @@
 package com.osstelecom.db.inventory.manager.jobs;
 
 import java.util.Date;
-import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
+ * Esta classe representa as jobs que podem ser desencadeadas em função das
+ * atualizações
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 14.12.2022
@@ -31,7 +33,7 @@ public class DBJobInstance {
     private Date jobStarted = new Date();
     private Date jobEnded;
     private DbJobStage currentJobStage;
-    private List<DbJobStage> jobStages;
+    private ConcurrentHashMap<String, DbJobStage> jobStages;
 
     public DBJobInstance(String jobId) {
         this.jobId = jobId;
@@ -82,14 +84,14 @@ public class DBJobInstance {
     /**
      * @return the jobStages
      */
-    public List<DbJobStage> getJobStages() {
+    public ConcurrentHashMap<String, DbJobStage> getJobStages() {
         return jobStages;
     }
 
     /**
      * @param jobStages the jobStages to set
      */
-    public void setJobStages(List<DbJobStage> jobStages) {
+    public void setJobStages(ConcurrentHashMap<String, DbJobStage> jobStages) {
         this.jobStages = jobStages;
     }
 
@@ -105,6 +107,15 @@ public class DBJobInstance {
      */
     public void setJobEnded(Date jobEnded) {
         this.jobEnded = jobEnded;
+    }
+
+    public DbJobStage createJobStage(String name, String description) {
+        DbJobStage stage = new DbJobStage();
+        stage.setStartDate(new Date());
+        stage.setJobStageName(name);
+        stage.setJobDescription(description);
+        this.jobStages.put(stage.getJobStageId(), stage);
+        return stage;
     }
 
 }

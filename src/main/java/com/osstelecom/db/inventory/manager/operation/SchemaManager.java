@@ -29,6 +29,7 @@ import com.osstelecom.db.inventory.manager.exception.GenericException;
 import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.SchemaNotFoundException;
+import com.osstelecom.db.inventory.manager.jobs.DbJobStage;
 import com.osstelecom.db.inventory.manager.listeners.EventManagerListener;
 import com.osstelecom.db.inventory.manager.resources.BasicResource;
 import com.osstelecom.db.inventory.manager.resources.CircuitResource;
@@ -124,32 +125,34 @@ public class SchemaManager extends Manager {
             //
             // Update the schema on each domain
             //
-            logger.debug("Updating Schema[{}] On Domain:[{}]", update.getModel().getSchemaName(), domain.getDomainName());
+            logger.debug("Updating Schema[{}] On Domain:[{}]", update.getEventData().getSchemaName(), domain.getDomainName());
 
             try {
 
-                ResourceSchemaModel model = this.schemaSession.loadSchema(update.getModel().getSchemaName(), false);
+                ResourceSchemaModel model = this.schemaSession.loadSchema(update.getEventData().getSchemaName(), false);
 
-                logger.debug("Schema:[{}] New Model Fields:", update.getModel().getSchemaName());
+                logger.debug("Schema:[{}] New Model Fields:", update.getEventData().getSchemaName());
                 model.getAttributes().forEach((k, v) -> {
                     logger.debug("  Field: [{}] Type: [{}]", k, v.getVariableType());
                 });
 
-                String schemaName = update.getModel().getSchemaName();
+                String schemaName = update.getEventData().getSchemaName();
 
-//                AtomicLong resourcesProcessed = new AtomicLong(0L);
-//                AtomicLong connectionsProcessed = new AtomicLong(0L);
-//                AtomicLong circuitsProcessed = new AtomicLong(0L);
-//                AtomicLong servicesProcessed = new AtomicLong(0L);
                 //
                 // Recursos
                 //
                 try {
+
+                    //
+                    // Vamos criar o Job Stage para indicar o inicio do processamento
+                    //
+                    DbJobStage currentStage = update.getRelatedJob().createJobStage("Update Resource Schema", "Update Resource Schema Definition on [" + domain.getDomainName() + "]");
                     GraphList<ManagedResource> resourcesToUpdate = this.managedResourceDao.findResourcesBySchemaName(schemaName, domain);
+                    currentStage.setTotalRecords(resourcesToUpdate.size());
 
                     if (!resourcesToUpdate.isEmpty()) {
                         logger.debug("Found {} Resources to Update On Domain:[{}]", resourcesToUpdate.size(), domain.getDomainName());
-                        this.processGraphListUpdate(resourcesToUpdate, model, this.managedResourceDao);
+                        this.processGraphListUpdate(resourcesToUpdate, model, this.managedResourceDao, currentStage);
                     }
                 } catch (ResourceNotFoundException ex) {
                     logger.debug("No Resources to Update On Domain:[{}]", domain.getDomainName());
@@ -159,10 +162,12 @@ public class SchemaManager extends Manager {
                 // Connections
                 //
                 try {
+                    DbJobStage currentStage = update.getRelatedJob().createJobStage("Update Connections Schema", "Update Connections Schema Definition on [" + domain.getDomainName() + "]");
                     GraphList<ResourceConnection> connectionsToUpdate = this.resourceConnectionDao.findResourcesBySchemaName(schemaName, domain);
+                    currentStage.setTotalRecords(connectionsToUpdate.size());
                     if (!connectionsToUpdate.isEmpty()) {
                         logger.debug("Found {} Connections to Update On Domain:[{}]", connectionsToUpdate.size(), domain.getDomainName());
-                        this.processGraphListUpdate(connectionsToUpdate, model, this.resourceConnectionDao);
+                        this.processGraphListUpdate(connectionsToUpdate, model, this.resourceConnectionDao, currentStage);
                     }
                 } catch (ResourceNotFoundException ex) {
                     logger.debug("No Connections to Update On Domain:[{}]", domain.getDomainName());
@@ -172,11 +177,12 @@ public class SchemaManager extends Manager {
                 // Circuits
                 //
                 try {
+                    DbJobStage currentStage = update.getRelatedJob().createJobStage("Update Connections Schema", "Update Connections Schema Definition on [" + domain.getDomainName() + "]");
                     GraphList<CircuitResource> circuitsToUpdate = this.circuitResourceDao.findResourcesBySchemaName(schemaName, domain);
-
+                    currentStage.setTotalRecords(circuitsToUpdate.size());
                     if (!circuitsToUpdate.isEmpty()) {
                         logger.debug("Found {} Circuits to Update On Domain:[{}]", circuitsToUpdate.size(), domain.getDomainName());
-                        this.processGraphListUpdate(circuitsToUpdate, model, this.circuitResourceDao);
+                        this.processGraphListUpdate(circuitsToUpdate, model, this.circuitResourceDao, currentStage);
                     }
                 } catch (ResourceNotFoundException ex) {
                     logger.debug("No Circuits to Update On Domain:[{}]", domain.getDomainName());
@@ -186,12 +192,15 @@ public class SchemaManager extends Manager {
                 // Services
                 //
                 try {
+                    DbJobStage currentStage = update.getRelatedJob().createJobStage("Update Connections Schema", "Update Connections Schema Definition on [" + domain.getDomainName() + "]");
                     GraphList<ServiceResource> servicesToUpdate = this.serviceResourceDao.findResourcesBySchemaName(schemaName, domain);
+                    currentStage.setTotalRecords(servicesToUpdate.size());
 
                     if (!servicesToUpdate.isEmpty()) {
                         logger.debug("Found {} Services to Update On Domain:[{}]", servicesToUpdate.size(), domain.getDomainName());
-                        this.processGraphListUpdate(servicesToUpdate, model, this.serviceResourceDao);
+                        this.processGraphListUpdate(servicesToUpdate, model, this.serviceResourceDao, currentStage);
                     }
+
                 } catch (ResourceNotFoundException ex) {
                     logger.debug("No Services to Update On Domain:[{}]", domain.getDomainName());
                 }
@@ -200,11 +209,11 @@ public class SchemaManager extends Manager {
                 logger.error("Failed to update Resource Schema Model", ex);
             }
 
-            logger.debug("Updating Schema[{}] On Domain:[{}] DONE", update.getModel().getSchemaName(), domain.getDomainName());
+            logger.debug("Updating Schema[{}] On Domain:[{}] DONE", update.getEventData().getSchemaName(), domain.getDomainName());
         }
     }
 
-    private void processGraphListUpdate(GraphList<? extends BasicResource> resourcesToUpdate, ResourceSchemaModel newModel, AbstractArangoDao resourceDao) throws IOException {
+    private void processGraphListUpdate(GraphList<? extends BasicResource> resourcesToUpdate, ResourceSchemaModel newModel, AbstractArangoDao resourceDao, DbJobStage stage) throws IOException {
         //
         // We need to make this processing multithread.
         //
@@ -236,6 +245,11 @@ public class SchemaManager extends Manager {
             } catch (ArangoDaoException | ResourceNotFoundException | InvalidRequestException ex) {
                 logger.error("Failed to Update resource:[{}]", resource.getKey(), ex);
             }
+            //
+            // Atualiza o Processo da JOB
+            //
+            stage.setDoneRecords(resourcesProcessed.get());
+
             if (resourcesProcessed.incrementAndGet() % 1000 == 0) {
                 logger.debug("Updated Resource {} Records of / {}", resourcesProcessed.get(), resourcesToUpdate.size());
             }

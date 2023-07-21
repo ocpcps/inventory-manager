@@ -16,7 +16,9 @@
  */
 package com.osstelecom.db.inventory.manager.resources;
 
-import com.arangodb.entity.DocumentField;
+import com.arangodb.serde.InternalId;
+import com.arangodb.serde.InternalKey;
+import com.arangodb.serde.InternalRev;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -65,7 +67,7 @@ public class BasicResource {
     private Boolean isLeaf;
     private Boolean isConsumable;
     private Boolean isConsumer = false; //revisar
-    
+
     private ConsumableMetric consumableMetric;
     private ConsumableMetric consumerMetric;
 
@@ -92,9 +94,9 @@ public class BasicResource {
     private String node;
     private String structureId;
     private ArrayList<String> tags;
-    @DocumentField(DocumentField.Type.KEY)
+    @InternalKey
     private String key;
-    @DocumentField(DocumentField.Type.ID)
+    @InternalId
     private String id;
 
     /**
@@ -127,7 +129,7 @@ public class BasicResource {
 
     private Long atomId = 0L;
     private ResourceSchemaModel schemaModel;
-    @DocumentField(DocumentField.Type.REV)
+    @InternalRev
     private String revisionId;
 
     private List<String> eventSourceIds = new ArrayList<>();
@@ -868,5 +870,5 @@ public class BasicResource {
     public void setEventSourceIds(List<String> eventSourceIds) {
         this.eventSourceIds = eventSourceIds;
     }
-    
+
 }

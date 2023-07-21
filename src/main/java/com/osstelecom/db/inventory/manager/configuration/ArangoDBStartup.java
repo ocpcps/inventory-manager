@@ -26,7 +26,6 @@ import com.arangodb.ArangoCollection;
 import com.arangodb.ArangoDB;
 import com.arangodb.ArangoDBException;
 import com.arangodb.ArangoDatabase;
-import com.arangodb.DbName;
 import com.arangodb.entity.CollectionType;
 import com.arangodb.model.CollectionCreateOptions;
 
@@ -45,10 +44,8 @@ public class ArangoDBStartup {
                 .host(arangoDbConfiguration.getHost(), arangoDbConfiguration.getPort())
                 .user(arangoDbConfiguration.getUser())
                 .password(arangoDbConfiguration.getPassword())
-//                .maxConnections(25)
-//                .keepAliveInterval(5 * 60) //5 minutes //<-- Está causando ConcurrentException
                 .build();
-        ArangoDatabase database = graphDb.db(DbName.of(arangoDbConfiguration.getDatabaseName()));
+        ArangoDatabase database = graphDb.db(arangoDbConfiguration.getDatabaseName());
 
         if (!database.exists()) {
             logger.warn("ERROR DB DOES NOT EXISTS... TRYING TO CREATE IT...");

@@ -24,19 +24,10 @@ import com.osstelecom.db.inventory.manager.resources.Domain;
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 05.06.2022
  */
-public class DomainCreatedEvent {
+public class DomainCreatedEvent extends BasicEvent<Domain> {
 
-    private Domain createdDomain;
-
-    public Domain getCreatedDomain() {
-        return createdDomain;
+    public DomainCreatedEvent(Domain eventData) {
+        super(eventData);
     }
 
-    public void setCreatedDomain(Domain createdDomain) {
-        this.createdDomain = createdDomain;
-    }
-
-    public DomainCreatedEvent(Domain createdDomain) {
-        this.createdDomain = createdDomain;
-    }
 }

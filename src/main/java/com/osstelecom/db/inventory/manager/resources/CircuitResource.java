@@ -30,6 +30,27 @@ import java.util.List;
 @JsonInclude(Include.NON_NULL)
 public class CircuitResource extends BasicResource {
 
+    private boolean degrated = false;
+    private boolean broken = false;
+    private List<String> brokenResources;
+
+    private ManagedResource aPoint;
+
+    private ManagedResource zPoint;
+
+    /**
+     * Services (IDS) Carried By this Circuit
+     */
+    private List<String> services = new ArrayList<>();
+
+    /**
+     * Later Will be used by the impact manager to check if the circuit is
+     * reliable
+     */
+    private Integer minRedundancyCount = 3;
+
+    private List<String> circuitPath = new ArrayList<>();
+
     /**
      * @return the services
      */
@@ -43,10 +64,6 @@ public class CircuitResource extends BasicResource {
     public void setServices(List<String> services) {
         this.services = services;
     }
-
-    private boolean degrated = false;
-    private boolean broken = false;
-    private List<String> brokenResources;
 
     public boolean getDegrated() {
         return degrated;
@@ -77,23 +94,6 @@ public class CircuitResource extends BasicResource {
     public void setCircuitPath(List<String> circuitPath) {
         this.circuitPath = circuitPath;
     }
-
-    private ManagedResource aPoint;
-
-    private ManagedResource zPoint;
-
-    /**
-     * Services (IDS) Carried By this Circuit
-     */
-    private List<String> services = new ArrayList<>();
-
-    /**
-     * Later Will be used by the impact manager to check if the circuit is
-     * reliable
-     */
-    private Integer minRedundancyCount = 3;
-
-    private List<String> circuitPath = new ArrayList<>();
 
     /**
      * @return the aPoint

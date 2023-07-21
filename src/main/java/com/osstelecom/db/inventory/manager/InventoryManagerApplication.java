@@ -36,6 +36,7 @@ import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
  *
@@ -44,6 +45,7 @@ import org.springframework.context.event.EventListener;
  */
 @SpringBootApplication(exclude = {MongoAutoConfiguration.class, MongoDataAutoConfiguration.class})
 @ComponentScan({"com.osstelecom.db.inventory"})
+@EnableScheduling
 public class InventoryManagerApplication {
 
     private Logger logger = LoggerFactory.getLogger(InventoryManagerApplication.class);
@@ -51,8 +53,6 @@ public class InventoryManagerApplication {
     public static void main(String[] args) {
         disableSslVerification();
         SpringApplication.run(InventoryManagerApplication.class, args);
-//        HttpsURLConnection.setDefaultHostnameVerifier(SSLConnectionSocketFactory.);
-
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -65,6 +65,9 @@ public class InventoryManagerApplication {
         logger.debug("Bye Master of Universe,Inventory Manager Shutting Down...");
     }
 
+    /**
+     * Garante que não vamos validar certificados autoassinados.
+     */
     private static void disableSslVerification() {
         try {
             // Create a trust manager that does not validate certificate chains

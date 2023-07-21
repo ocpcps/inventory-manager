@@ -323,6 +323,34 @@ public class CircuitSession {
     }
 
     /**
+     * Recupera um circuito pelo iD e trás a lista de paths
+     *
+     * @param request
+     * @return
+     * @throws ResourceNotFoundException
+     * @throws DomainNotFoundException
+     * @throws ArangoDaoException
+     * @throws InvalidRequestException
+     */
+    public GetCircuitPathResponse findCircuitPathById(GetCircuitPathRequest request) throws ResourceNotFoundException, DomainNotFoundException, ArangoDaoException, InvalidRequestException {
+
+        /**
+         * Vamos garantir que tenhamos pelo menos o domain e o id do circuito
+         */
+        if (request.getRequestDomain() == null) {
+            throw new InvalidRequestException("Please provide a domain");
+        }
+        if (request.getCircuitId() == null) {
+
+            throw new InvalidRequestException("Please provide a CircuidID (_key)");
+        }
+        CircuitResource circuit = new CircuitResource(domainManager.getDomain(request.getRequestDomain()),request.getCircuitId());
+      
+
+        return this.findCircuitPath(request);
+    }
+
+    /**
      * Lista o path de um circuito
      *
      * @param request
@@ -334,7 +362,9 @@ public class CircuitSession {
         CircuitPathDTO circuitDto = request.getPayLoad();
         CircuitResource circuit = circuitDto.getCircuit();
         circuit.setDomainName(request.getRequestDomain());
-        circuit.setDomain(domainManager.getDomain(circuit.getDomainName()));
+        if (circuit.getDomain() == null) {
+            circuit.setDomain(domainManager.getDomain(circuit.getDomainName()));
+        }
         circuit = circuitResourceManager.findCircuitResource(circuitDto.getCircuit());
         circuitDto.setCircuit(circuit);
         circuitDto.setPaths(circuitResourceManager.findCircuitPaths(circuit).toList());
@@ -409,7 +439,7 @@ public class CircuitSession {
 
         if (circuit.getDomainName() == null) {
             circuit.setDomainName(domain.getDomainName());
-           
+
         }
         circuit.setDomain(domainManager.getDomain(circuit.getDomainName()));
         circuit = circuitResourceManager.findCircuitResource(circuit);

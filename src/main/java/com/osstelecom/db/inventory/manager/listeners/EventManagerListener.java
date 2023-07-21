@@ -25,7 +25,10 @@ import org.springframework.stereotype.Service;
 import com.google.common.eventbus.EventBus;
 import com.google.common.eventbus.SubscriberExceptionContext;
 import com.google.common.eventbus.SubscriberExceptionHandler;
+import com.osstelecom.db.inventory.manager.events.BasicEvent;
 import com.osstelecom.db.inventory.manager.events.BasicResourceEvent;
+import com.osstelecom.db.inventory.manager.events.BasicUpdateEvent;
+import com.osstelecom.db.inventory.manager.events.IEvent;
 import com.osstelecom.db.inventory.manager.jobs.DBJobInstance;
 import com.osstelecom.db.inventory.manager.operation.DbJobManager;
 import java.util.UUID;
@@ -78,6 +81,8 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
         //
         // the queue is limited to 1000 Events, after that will be blocking...
         //
+        DBJobInstance job = jobManager.createJobInstance();
+        event.setRelatedJob(job);
         return eventQueue.offer(event);
     }
 
@@ -88,8 +93,23 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
      * @param genericEvent
      * @return
      */
-    public synchronized boolean notifyGenericEvent(Object genericEvent) {
+    public synchronized boolean notifyGenericEvent(BasicEvent genericEvent) {
+        DBJobInstance job = jobManager.createJobInstance();
+        genericEvent.setRelatedJob(job);
         return eventQueue.offer(genericEvent);
+    }
+
+    /**
+     * Trata os eventos genéricos que não estão ligados updateEvent recursos,
+     *
+     * @Todo: pensar se faz sentido migrar para uma fila separada.
+     * @param genericEvent
+     * @return
+     */
+    public synchronized boolean notifyGenericEvent(BasicUpdateEvent updateEvent) {
+        DBJobInstance job = jobManager.createJobInstance();
+        updateEvent.setRelatedJob(job);
+        return eventQueue.offer(updateEvent);
     }
 
     /**
@@ -110,21 +130,27 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
     @Override
     public void run() {
         while (running) {
-            try {                
+            try {
                 Object event = eventQueue.poll(5, TimeUnit.SECONDS);
                 if (event != null) {
                     //
                     // Precisa Notificar o Job Manager que uma Job de Atualização está em curso
                     //
-                    DBJobInstance job = jobManager.createJobInstance();
-                    jobManager.notifyJobStart(job);
+                    if (event instanceof IEvent) {
+                        DBJobInstance job = ((IEvent) event).getRelatedJob();
+                        jobManager.notifyJobStart(job);
+                    }
+
                     String eventProcessindInstanceId = UUID.randomUUID().toString();
                     Long start = System.currentTimeMillis();
                     eventBus.post(event);
                     Long end = System.currentTimeMillis();
                     Long took = end - start;
                     logger.debug("End Processing Event: [{}] Done ID:[{}] Took:[{}]ms Queue Size:[{}]", event.getClass().getCanonicalName(), eventProcessindInstanceId, took, eventQueue.size());
-                    jobManager.notifyJobEnd(job);
+                    if (event instanceof IEvent) {
+                        DBJobInstance job = ((IEvent) event).getRelatedJob();
+                        jobManager.notifyJobEnd(job);
+                    }
                 }
             } catch (InterruptedException ex) {
                 logger.error("Error on Processing Event: [{}]", ex.getMessage());

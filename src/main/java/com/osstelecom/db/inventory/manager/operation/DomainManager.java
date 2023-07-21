@@ -99,7 +99,7 @@ public class DomainManager extends Manager {
     @Autowired
     private CircuitResourceDao circuitResourceDao;
 
-    private Map<String, Domain> updatingDomains = new ConcurrentHashMap<>();
+    private final Map<String, Domain> updatingDomains = new ConcurrentHashMap<>();
 
     private Logger logger = LoggerFactory.getLogger(DomainManager.class);
 
@@ -113,6 +113,11 @@ public class DomainManager extends Manager {
 
     }
 
+    /**
+     * Faz a leitura dos domains no arango
+     *
+     * @throws ArangoDaoException
+     */
     private void loadDomainsFromDb() throws ArangoDaoException {
         this.domainDao.getDomains().forEach(d -> {
             logger.debug("\tFound Domain: [{}] Atomic ID:[{}]", d.getDomainName(), d.getAtomicId());
@@ -161,6 +166,14 @@ public class DomainManager extends Manager {
         return domain;
     }
 
+    /**
+     * Remove um domain, apaga tudo viu
+     *
+     * @param domain
+     * @return
+     * @throws DomainNotFoundException
+     * @throws ArangoDaoException
+     */
     public Domain deleteDomain(Domain domain) throws DomainNotFoundException, ArangoDaoException {
         try {
             lockManager.lock();
@@ -298,8 +311,12 @@ public class DomainManager extends Manager {
         return result;
     }
 
-   
-
+    /**
+     * Atualia os dados de um domain
+     *
+     * @param domain
+     * @return
+     */
     public Domain updateDomain(Domain domain) {
         DocumentUpdateEntity<Domain> result = this.domainDao.updateDomain(domain);
         this.domains.replace(domain.getDomainName(), domain);
@@ -321,7 +338,9 @@ public class DomainManager extends Manager {
 
     /**
      * Computes if the the graph topology is fully connected, will return
-     * isolated nodes
+     * isolated nodes,
+     *
+     * @todo: Refactor remove from here,
      *
      * @param connections
      * @param aPoint
@@ -397,6 +416,12 @@ public class DomainManager extends Manager {
         return result;
     }
 
+    /**
+     *
+     * @todo: Refactor remove from here,
+     * @param connections
+     * @param filter
+     */
     public void findWeakLinks(List<ResourceConnection> connections, FilterDTO filter) {
         //
         // Valida se temos dados de conexões...
@@ -443,11 +468,24 @@ public class DomainManager extends Manager {
         }
     }
 
+    /**
+     * Remove from here!
+     *
+     * @param name
+     * @param id
+     * @param topology
+     * @return
+     */
     private INetworkNode createNode(String name, Long id, ITopology topology) {
         INetworkNode node = new DefaultNode(name, id.intValue(), topology);
         return node;
     }
 
+    /**
+     * Get the domain name from the full collection name;
+     * @param id
+     * @return 
+     */
     public String getDomainNameFromId(String id) {
         String[] payLoad = id.split("/");
         String collectionName = payLoad[0];
@@ -455,136 +493,4 @@ public class DomainManager extends Manager {
         return payLoad[0];
     }
 
-
-    
-    // public void test(String filter, Integer threads) {
-    // String aql = "for doc in inventory_connections "
-    // + " filter doc.from.name like @filter"
-    // + " or doc.to.name like @filter return doc";
-    // HashMap<String, Object> bindings = new HashMap<>();
-    // bindings.put("filter", filter);
-    // ArangoCursor<ResourceConnection> connections =
-    // arangoDao.filterConnectionByAQL(aql, bindings);
-    // DefaultTopology topology = new DefaultTopology();
-    // AtomicLong id = new AtomicLong(0L);
-    //// INetworkNode saida = createNode("OUTPUT", id.incrementAndGet(), topology);
-    //// saida.setEndPoint(true);
-    //
-    // connections.forEachRemaining(connection -> {
-    // if (connection.getFrom().getName().contains("m-br") &&
-    // connection.getTo().getName().contains("m-br")) {
-    // INetworkNode from = topology.getNodeByName(connection.getFrom().getName());
-    // INetworkNode to = topology.getNodeByName(connection.getTo().getName());
-    //
-    // if (from == null) {
-    // from = createNode(connection.getFrom().getName(), id.incrementAndGet(),
-    // topology);
-    // }
-    //
-    // if (to == null) {
-    // to = createNode(connection.getTo().getName(), id.incrementAndGet(),
-    // topology);
-    // }
-    //
-    // if (from.getName().contains("gwc")) {
-    //// topology.addConnection(from, saida);
-    // from.setEndPoint(true);
-    // } else {
-    // from.setEndPoint(false);
-    // from.addAttribute("erbCount", 0);
-    // }
-    //
-    // if (to.getName().contains("gwc")) {
-    // to.setEndPoint(true);
-    //// topology.addConnection(to, saida);
-    // } else {
-    // to.setEndPoint(false);
-    // to.addAttribute("erbCount", 0);
-    // }
-    //
-    // if (from.getConnectionRelated(to).isEmpty()) {
-    // INetworkConnection topologyConnection = topology.addConnection(from, to);
-    // }
-    // } else if (connection.getFrom().getName().contains("m-br")
-    // || connection.getTo().getName().contains("m-br")) {
-    // logger.debug("Connection From: [" + connection.getFrom().getName() + "] TO:["
-    // + connection.getTo().getName() + "]");
-    // BasicResource resource = null;
-    // Boolean goAhead = true;
-    // if (connection.getFrom().getName().contains("m-br")) {
-    // resource = connection.getFrom();
-    //// if (!connection.getTo().getName().contains("erb")) {
-    //// goAhead = false;
-    //// }
-    // } else {
-    // resource = connection.getTo();
-    //// if (!connection.getFrom().getName().contains("erb")) {
-    //// goAhead = false;
-    //// }
-    // }
-    //
-    // if (goAhead) {
-    // INetworkNode node = topology.getNodeByName(resource.getName());
-    // if (node == null) {
-    // node = createNode(resource.getName(), id.incrementAndGet(), topology);
-    // node.addAttribute("erbCount", 0);
-    // }
-    // if (node.getAttribute("erbCount") == null) {
-    // node.addAttribute("erbCount", 0);
-    // }
-    // Integer count = (Integer) node.getAttribute("erbCount");
-    // count++;
-    // node.addAttribute("erbCount", count);
-    // }
-    //
-    // }
-    // });
-    // logger.debug("-------------------------------------------------------------");
-    // logger.debug("Topology Loaded! ");
-    // logger.debug("Topology Size:");
-    // logger.debug(" Nodes:" + topology.getNodes().size());
-    // logger.debug(" Connections:" + topology.getConnections().size());
-    // logger.debug(" EndPoints:" + topology.getEndPoints().size());
-    // for (INetworkNode node : topology.getEndPoints()) {
-    // logger.debug(" " + node.getName());
-    // }
-    //
-    // Long start = System.currentTimeMillis();
-    // logger.debug("-------------------------------------------------------------");
-    // logger.debug("Weak Nodes With 1 Connection or LESS:");
-    // logger.debug("-------------------------------------------------------------");
-    // List<INetworkNode> weak = null;
-    // if (threads > 1) {
-    // weak = topology.getImpactManager().getWeakNodes(1, false, threads, false);
-    // } else {
-    // weak = topology.getImpactManager().getWeakNodes(1, false, threads, false);
-    // }
-    //
-    // logger.debug("Found " + weak.size() + " Weak Nodes");
-    // for (INetworkNode n : weak) {
-    // logger.debug(" ::Weak " + n.getName() + " Connections size:" +
-    // n.getEndpointConnectionsCount() + " Impact Count:" +
-    // n.getImpactedNodes().size() + " ERBS:" + n.getAttribute("erbCount"));
-    // if (!n.getImpactedNodes().isEmpty()) {
-    // n.getImpactedNodes().forEach((k, v) -> {
-    // logger.debug(" ::Node " + n.getName() + " Impacts:" + v.getName() + " ERBS: "
-    // + v.getAttribute("erbCount"));
-    // });
-    //
-    // }
-    // }
-    //
-    // Long end = System.currentTimeMillis();
-    // Long took = end - start;
-    // logger.debug("Process took: " + took + " ms With:" + threads + " Threads");
-    // try {
-    // connections.close();
-    // } catch (IOException ex) {
-    // System.out.println("OOOOOOO Deu RUIm!");
-    // }
-    // //
-    // // Uma vez usados todos os recursos, destroy tudo...
-    // //
-    // topology.destroyTopology();
-    // }
 }

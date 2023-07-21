@@ -806,19 +806,36 @@ public class ServiceManager extends Manager {
                             service.setOperationalStatus("Down");
                         }
                     } else {
+
                         /**
-                         * Tem algum circuito funcionando, se estava quebrado,
-                         * normaliza, também avalia se tem algum circuito fora,
-                         * e se tiver marca como degradado
+                         * Se não tem nenum circuito quebrado avalia se ainda
+                         * continua quebrado...
                          */
-                        if (service.getBroken()) {
-                            service.setBroken(false);
-                            service.setOperationalStatus("Up");
-                            if (!brokenCircuits.isEmpty()) {
+                        if (brokenCircuits.isEmpty()) {
+                            /**
+                             * Tem algum circuito funcionando, se estava
+                             * quebrado, normaliza, também avalia se tem algum
+                             * circuito fora, e se tiver marca como degradado
+                             */
+                            if (service.getBroken()) {
+                                service.setBroken(false);
+                                service.setOperationalStatus("Up");
+                                if (!brokenCircuits.isEmpty()) {
+                                    service.setDegrated(true);
+                                } else {
+                                    service.setDegrated(false);
+                                    
+                                }
+                            }
+                        } else {
+                            if (!workingCircuits.isEmpty()) {
+                                /**
+                                 * Tem um circuito quebrado, então vai ser
+                                 * degradada, porque tem circuito funcionando e
+                                 * tem circuito quebrada.
+                                 */
                                 service.setDegrated(true);
-                            } else {
-                                service.setDegrated(false);
-                                
+                                service.setBroken(false);
                             }
                         }
                         
@@ -834,6 +851,14 @@ public class ServiceManager extends Manager {
                         service.setOperationalStatus("Down");
                     }
                     
+                }
+
+                /**
+                 * Por fim avalia um cenário de normalização
+                 */
+                if (brokenCircuits.isEmpty() && !workingCircuits.isEmpty()) {
+                    service.setBroken(false);
+                    service.setDegrated(false);
                 }
             }
             
@@ -1107,6 +1132,7 @@ public class ServiceManager extends Manager {
             
         }
     }
+
     /**
      * Find a Service Instance
      *

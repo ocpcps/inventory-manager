@@ -36,7 +36,6 @@ import com.osstelecom.db.inventory.visualization.request.GetConnectionsByCircuit
 import com.osstelecom.db.inventory.visualization.request.GetConnectionsByServiceRequest;
 import com.osstelecom.db.inventory.visualization.request.GetDomainTopologyRequest;
 import com.osstelecom.db.inventory.visualization.request.GetServiceByConnectionTopologyRequest;
-import com.osstelecom.db.inventory.visualization.request.GetServiceByResourceTopologyRequest;
 import com.osstelecom.db.inventory.visualization.request.GetStructureTopologyDependencyRequest;
 import com.osstelecom.db.inventory.visualization.response.ThreeJsViewResponse;
 import com.osstelecom.db.inventory.visualization.session.FilterViewSession;
@@ -107,13 +106,11 @@ public class GraphViewApi extends BaseApi {
         return this.viewSession.getResourceStrucureDependency(request);
     }
 
-    
-
     @GetMapping(path = "{domain}/resource/{resourceKey}/services", produces = "application/json")
     public ThreeJsViewResponse getServicesByResourceId(@PathVariable("domain") String domain,
-            @PathVariable("resourceKey") String resourceKey) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException, InvalidGraphException, IllegalStateException, IOException { 
-            FindManagedResourceRequest findRequest = new FindManagedResourceRequest(resourceKey, domain);
-            return this.viewSession.getServiceByResource(findRequest);
+            @PathVariable("resourceKey") String resourceKey) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException, InvalidGraphException, IllegalStateException, IOException {
+        FindManagedResourceRequest findRequest = new FindManagedResourceRequest(resourceKey, domain);
+        return this.viewSession.getServiceByResource(findRequest);
 
     }
 
@@ -145,6 +142,19 @@ public class GraphViewApi extends BaseApi {
         return this.viewSession.expandNodeById(request);
     }
 
+    /**
+     * Expand um circuito em todas as direções
+     *
+     * @param domain
+     * @param circuitKey
+     * @param httpRequest
+     * @return
+     * @throws DomainNotFoundException
+     * @throws ArangoDaoException
+     * @throws ResourceNotFoundException
+     * @throws InvalidRequestException
+     * @throws InvalidGraphException
+     */
     @GetMapping(path = "{domain}/circuit/{circuitKey}/expand", produces = "application/json")
     public ThreeJsViewResponse expandCircuitById(@PathVariable("domain") String domain,
             @PathVariable("circuitKey") String circuitKey,
@@ -182,27 +192,52 @@ public class GraphViewApi extends BaseApi {
         return this.viewSession.getCircuitsByConnectionId(request);
     }
 
+    /**
+     * Obtem as lista de serviços que são suportadas pela conexão
+     *
+     * @param domain
+     * @param connectionKey
+     * @return
+     * @throws DomainNotFoundException
+     * @throws ArangoDaoException
+     * @throws ResourceNotFoundException
+     * @throws InvalidRequestException
+     * @throws InvalidGraphException
+     */
     @GetMapping(path = "{domain}/connection/{connectionKey}/services", produces = "application/json")
     public ThreeJsViewResponse getServicesByConnectionId(@PathVariable("domain") String domain,
             @PathVariable("connectionKey") String connectionKey) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException, InvalidGraphException {
-            GetServiceByConnectionTopologyRequest request = new GetServiceByConnectionTopologyRequest();
-            request.setPayLoad(new ResourceConnection());
-            request.getPayLoad().setKey(connectionKey);
-            request.setRequestDomain(domain);
-            return this.viewSession.getGraphServicesByConnection(request);
+        GetServiceByConnectionTopologyRequest request = new GetServiceByConnectionTopologyRequest();
+        request.setPayLoad(new ResourceConnection());
+        request.getPayLoad().setKey(connectionKey);
+        request.setRequestDomain(domain);
+        return this.viewSession.getGraphServicesByConnection(request);
 
     }
 
+    /**
+     * Obtem os nós de um serviço
+     *
+     * @param domain
+     * @param serviceKey
+     * @param httpRequest
+     * @return
+     * @throws DomainNotFoundException
+     * @throws ArangoDaoException
+     * @throws ResourceNotFoundException
+     * @throws InvalidRequestException
+     * @throws InvalidGraphException
+     */
     @GetMapping(path = "{domain}/services/{serviceKey}", produces = "application/json")
     public ThreeJsViewResponse getNodesByServices(@PathVariable("domain") String domain,
             @PathVariable("serviceKey") String serviceKey, HttpServletRequest httpRequest) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException, InvalidGraphException {
-            GetServiceRequest request = new GetServiceRequest();
-            this.setUserDetails(request);
-            request.setRequestDomain(domain);
-            request.setPayLoad(new ServiceResource(serviceKey));
-    
-            httpRequest.setAttribute("request", request);
-            return this.viewSession.getGraphNodesByService(request);
+        GetServiceRequest request = new GetServiceRequest();
+        this.setUserDetails(request);
+        request.setRequestDomain(domain);
+        request.setPayLoad(new ServiceResource(serviceKey));
+
+        httpRequest.setAttribute("request", request);
+        return this.viewSession.getGraphNodesByService(request);
 
     }
 
@@ -229,7 +264,20 @@ public class GraphViewApi extends BaseApi {
         httpRequest.setAttribute("request", request);
         return this.viewSession.getDomainTopologyByFilter(request);
     }
-    
+
+    /**
+     * expand um circuito por serviço
+     *
+     * @param domain
+     * @param serviceKey
+     * @param httpRequest
+     * @return
+     * @throws DomainNotFoundException
+     * @throws ArangoDaoException
+     * @throws ResourceNotFoundException
+     * @throws InvalidRequestException
+     * @throws InvalidGraphException
+     */
     @GetMapping(path = "{domain}/circuit/{circuitKey}/service", produces = "application/json")
     public ThreeJsViewResponse expandCircuitByService(@PathVariable("domain") String domain,
             @PathVariable("serviceKey") String serviceKey,

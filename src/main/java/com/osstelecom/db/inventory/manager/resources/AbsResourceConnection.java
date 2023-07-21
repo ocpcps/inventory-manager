@@ -17,7 +17,8 @@
  */
 package com.osstelecom.db.inventory.manager.resources;
 
-import com.arangodb.entity.DocumentField;
+import com.arangodb.serde.InternalFrom;
+import com.arangodb.serde.InternalTo;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,9 +39,9 @@ public class AbsResourceConnection<T extends BasicResource> extends AbsRelatedRe
     private Boolean propagateOperStatus;
     private Boolean bidirectionalConsuption;
     private Boolean bidirectionCapacity;
-    @DocumentField(DocumentField.Type.FROM)
+    @InternalFrom
     private String _fromKey;
-    @DocumentField(DocumentField.Type.TO)
+    @InternalTo
     private String _toKey;
 
     private List<String> relatedNodes = new ArrayList<>();
@@ -150,7 +151,7 @@ public class AbsResourceConnection<T extends BasicResource> extends AbsRelatedRe
 
     /**
      * @param bidirectionalConsuptions the bidirectionalConsuptions toResource
-     *                                 set
+     * set
      */
     public void setBidirectionalConsuptions(Boolean bidirectionalConsuption) {
         this.bidirectionalConsuption = bidirectionalConsuption;

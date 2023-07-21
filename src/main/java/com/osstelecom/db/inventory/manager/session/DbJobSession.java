@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Lucas Nishimura <lucas.nishimura@gmail.com>
+ * Copyright (C) 2023 Lucas Nishimura <lucas.nishimura@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -15,19 +15,26 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package com.osstelecom.db.inventory.manager.events;
+package com.osstelecom.db.inventory.manager.session;
 
-import com.osstelecom.db.inventory.manager.resources.ConsumableMetric;
+import com.osstelecom.db.inventory.manager.operation.DbJobManager;
+import com.osstelecom.db.inventory.manager.response.GetRunningDbJobsResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 /**
- * @todo: Verificar
+ * :) Gerencia as Jobs do banco
+ *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
- * @created 05.06.2022
+ * @created 19.07.2023
  */
-public class ConsumableMetricUpdatedEvent extends BasicUpdateEvent<ConsumableMetric> {
+@Service
+public class DbJobSession {
 
-    public ConsumableMetricUpdatedEvent(ConsumableMetric oldMetric, ConsumableMetric newMetric) {
-        super(oldMetric, newMetric);
+    @Autowired
+    private DbJobManager jobManager;
+
+    public GetRunningDbJobsResponse getRunningJobs() {
+        return new GetRunningDbJobsResponse(this.jobManager.getRunningJobs());
     }
-
 }

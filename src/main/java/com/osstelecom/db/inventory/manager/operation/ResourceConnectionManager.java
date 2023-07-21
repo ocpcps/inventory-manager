@@ -510,8 +510,10 @@ public class ResourceConnectionManager extends Manager {
 
                     }
 
+                    
+                    
                     //
-                    // Reflete o estado da conexão
+                    // Reflete o estado da conexão, ou seja se o recurso estiver down, a conexão cai também
                     //
                     if (!connection.getOperationalStatus().equals(updatedResource.getOperationalStatus())) {
                         connection.setOperationalStatus(updatedResource.getOperationalStatus());

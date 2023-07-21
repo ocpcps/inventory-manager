@@ -219,8 +219,8 @@ public class LocationConnectionDao extends AbstractArangoDao<LocationConnection>
     @Override
     public DocumentDeleteEntity<LocationConnection> deleteResource(LocationConnection resource) throws ArangoDaoException {
         try {
-            return this.getDb().collection(resource.getDomain().getConnections()).deleteDocument(resource.getKey(),
-                    LocationConnection.class, new DocumentDeleteOptions().returnOld(true));
+            return this.getDb().collection(resource.getDomain().getConnections()).deleteDocument(resource.getKey(), new DocumentDeleteOptions().returnOld(true),
+                    LocationConnection.class);
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         } finally {
@@ -307,7 +307,7 @@ public class LocationConnectionDao extends AbstractArangoDao<LocationConnection>
         String aql = "RETURN COLLECTION_COUNT(@d) ";
         FilterDTO filter = new FilterDTO(aql);
         filter.getBindings().put("d", domain.getConnections());
-        try (ArangoCursor<Long> cursor = this.getDb().query(aql, filter.getBindings(), Long.class)) {
+        try (ArangoCursor<Long> cursor = this.getDb().query(aql, Long.class, filter.getBindings())) {
             Long longValue;
             try (GraphList<Long> result = new GraphList<>(cursor)) {
                 longValue = result.getOne();

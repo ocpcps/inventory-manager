@@ -146,6 +146,16 @@ public class CircuitResourceManager extends Manager {
         String timerId = startTimer("findCircuitResource");
         try {
             lockManager.lock();
+
+            //
+            // Arruma o ID :)
+            //
+            if (circuit.getId() != null) {
+                if (!circuit.getId().contains("/")) {
+                    circuit.setId(circuit.getDomain().getCircuits() + "/" + circuit.getId());
+                }
+            }
+
             return this.circuitResourceDao.findResource(circuit);
         } finally {
             if (lockManager.isLocked()) {
