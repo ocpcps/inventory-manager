@@ -113,6 +113,9 @@ public class FilterProjectionSession {
             JsonNode jsonNode = objectMapper.readTree(json);
             JsonNode result;
 
+            //
+            // Valida se é array
+            //
             if (jsonNode.isArray()) {
                 ArrayNode arrayNode = objectMapper.createArrayNode();
                 for (int i = 0; i < jsonNode.size(); i++) {
