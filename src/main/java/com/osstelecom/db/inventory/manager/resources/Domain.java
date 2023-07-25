@@ -19,6 +19,7 @@ package com.osstelecom.db.inventory.manager.resources;
 
 import com.arangodb.serde.InternalKey;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Date;
 
@@ -31,6 +32,7 @@ import java.util.Date;
 public class Domain {
 
     @InternalKey
+    @JsonProperty(value = "domainName")
     @Schema(example = "network")
     private String domainName;
     @Schema(example = "network_connections")
@@ -89,7 +91,7 @@ public class Domain {
         this.connections = connections;
     }
 
-     /**
+    /**
      * @return the metrics
      */
     public String getMetrics() {
