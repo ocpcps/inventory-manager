@@ -20,6 +20,7 @@ import com.arangodb.serde.InternalId;
 import com.arangodb.serde.InternalKey;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.osstelecom.db.inventory.manager.resources.exception.MetricConstraintException;
 
 /**
@@ -31,8 +32,10 @@ import com.osstelecom.db.inventory.manager.resources.exception.MetricConstraintE
 public class ConsumableMetric {
 
     @InternalId
+    @JsonProperty(value = "id")
     private String id;
     @InternalKey
+    @JsonProperty(value = "key")
     private String key;
 
     private Domain domain;

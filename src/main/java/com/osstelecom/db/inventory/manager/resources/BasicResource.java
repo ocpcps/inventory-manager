@@ -22,6 +22,7 @@ import com.arangodb.serde.InternalRev;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.osstelecom.db.inventory.manager.resources.exception.ConnectionAlreadyExistsException;
 import com.osstelecom.db.inventory.manager.resources.exception.ConnectionNotFoundException;
 import com.osstelecom.db.inventory.manager.resources.exception.MetricConstraintException;
@@ -95,8 +96,10 @@ public class BasicResource {
     private String structureId;
     private ArrayList<String> tags;
     @InternalKey
+    @JsonProperty(value = "key")
     private String key;
     @InternalId
+    @JsonProperty(value = "id")
     private String id;
 
     /**

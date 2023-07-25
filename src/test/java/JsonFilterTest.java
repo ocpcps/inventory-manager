@@ -743,7 +743,31 @@ public class JsonFilterTest {
                 + "    \"cacheMisses\": 0\n"
                 + "  }\n"
                 + "}";
-        List<String> fields = Arrays.asList("payLoad.domain.domainName","payLoad.attributes.*");
+
+        String json2 = "[\n"
+                + "   {\n"
+                + "      \"_id\":\"dwdm_nodes/21c51eed-dc7c-430a-bce0-81cad079ea1d\",\n"
+                + "      \"_key\":\"21c51eed-dc7c-430a-bce0-81cad079ea1d\",\n"
+                + "      \"_rev\":\"_gR80I7y---\",\n"
+                + "      \"adminStatus\":\"Up\",\n"
+                + "      \"atomId\":3207,\n"
+                + "      \"attachments\":{\n"
+                + "         \n"
+                + "      },\n"
+                + "      \"attributeSchemaName\":\"resource.dwdm\",\n"
+                + "      \"attributes\":{\n"
+                + "         \"id_equip\":9214,\n"
+                + "         \"vendor\":\"Ciena\",\n"
+                + "         \"siglaSite\":\"PNRMS\",\n"
+                + "         \"enderecoIP\":\"10.113.133.22/27\",\n"
+                + "         \"enderecoIP2\":\"10.164.118.151/27\",\n"
+                + "         \"funcaoEnderecoIP\":\"Gerência\",\n"
+                + "         \"funcaoEnderecoIP2\":\"Gerência\",\n"
+                + "         \"origem\":\"smtx\"\n"
+                + "      }\n"
+                + "   }\n"
+                + "]";
+        List<String> fields = Arrays.asList("$root.payLoad.attributes.*");
         String filteredJson = JsonFilterTest.filterJson(yourJsonString, fields);
         System.out.println(filteredJson);
     }
@@ -754,7 +778,20 @@ public class JsonFilterTest {
 
         try {
             JsonNode jsonNode = objectMapper.readTree(json);
-            JsonNode result = filter(jsonNode, fieldSet, "", objectMapper);
+            JsonNode result;
+
+            if (jsonNode.isArray()) {
+                ArrayNode arrayNode = objectMapper.createArrayNode();
+                for (int i = 0; i < jsonNode.size(); i++) {
+                    JsonNode child = filter(jsonNode.get(i), fieldSet, "$root.[*]", objectMapper);
+                    if (child != null && !child.isEmpty(objectMapper.getSerializerProvider())) {
+                        arrayNode.add(child);
+                    }
+                }
+                result = arrayNode;
+            } else {
+                result = filter(jsonNode, fieldSet, "$root", objectMapper);
+            }
 
             return result != null ? result.toString() : null;
         } catch (IOException e) {
@@ -766,7 +803,7 @@ public class JsonFilterTest {
         if (jsonNode.isObject()) {
             ObjectNode objectNode = objectMapper.createObjectNode();
             jsonNode.fields().forEachRemaining(field -> {
-                String updatedPath = currentPath.isEmpty() ? field.getKey() : currentPath + "." + field.getKey();
+                String updatedPath = currentPath + "." + field.getKey();
                 if (fields.contains(updatedPath) || anyStartsWith(fields, updatedPath) || isWildcardMatch(fields, currentPath)) {
                     JsonNode child = filter(field.getValue(), fields, updatedPath, objectMapper);
                     if (child != null) {

@@ -111,7 +111,23 @@ public class FilterProjectionSession {
 
         try {
             JsonNode jsonNode = objectMapper.readTree(json);
-            JsonNode result = filter(jsonNode, fieldSet, "", objectMapper, uid);
+            JsonNode result;
+
+            //
+            // Valida se é array
+            //
+            if (jsonNode.isArray()) {
+                ArrayNode arrayNode = objectMapper.createArrayNode();
+                for (int i = 0; i < jsonNode.size(); i++) {
+                    JsonNode child = filter(jsonNode.get(i), fieldSet, "$root.[*]", objectMapper, uid);
+                    if (child != null && !child.isEmpty(objectMapper.getSerializerProvider())) {
+                        arrayNode.add(child);
+                    }
+                }
+                result = arrayNode;
+            } else {
+                result = filter(jsonNode, fieldSet, "$root", objectMapper, uid);
+            }
             this.objects.get(uid).add(jsonNode);
             this.objects.get(uid).add(result);
             return result != null ? result.toString() : null;
@@ -120,40 +136,22 @@ public class FilterProjectionSession {
         }
     }
 
+    /**
+     * Método publico que expõe o json filtrado, por conta do objeto poder
+     * começar com [] introduzi o $root como como root
+     *
+     * @param json
+     * @param fields
+     * @return
+     */
     public String filterJson(String json, List<String> fields) {
-        
-        if(fields == null || fields.isEmpty())
-            return json;
-        
-        String uid = utils.getRequestId();
-        String response = "";
-        try {
 
-            this.objects.put(uid, new ArrayList<>());        
-            response = filterJson(json, fields, uid);
-        } catch (Exception ex) {
-            //
-            // Omite O erro
-            //
-            logger.error("Failed to Apply Filter", ex);
-        } finally {
-            ArrayList<Object> objectsUsed = this.objects.remove(uid);
-            if (objectsUsed != null) {
-                if (!objectsUsed.isEmpty()) {
-                    logger.debug("Releasing [{}] from Filter Buffer IN UID:[{}]", objectsUsed.size(), uid);
-                    while (!objectsUsed.isEmpty()) {
-                        Object o = objectsUsed.remove(0);
-                        o = null;
-                    }
-                } else {
-                    logger.warn("UID:[{}] Has No Objects Attached", uid);
-                }
-                objectsUsed = null;
-            } else {
-                logger.warn("UID:[{}] Has No Map Attached", uid);
-            }
+        if (fields == null || fields.isEmpty()) {
+            return json;
         }
-        return response;
+
+        String uid = utils.getRequestId();
+        return this.filterJson(json, fields, uid);
     }
 
     private JsonNode filter(JsonNode jsonNode, Set<String> fields, String currentPath, ObjectMapper objectMapper, String uid) {
