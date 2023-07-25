@@ -32,9 +32,12 @@ import com.osstelecom.db.inventory.manager.resources.exception.MetricConstraintE
 public class ConsumableMetric {
 
     @InternalId
+    private String _id;
+
     @JsonProperty(value = "id")
     private String id;
     @InternalKey
+    private String _key;
     @JsonProperty(value = "key")
     private String key;
 
@@ -62,6 +65,7 @@ public class ConsumableMetric {
      */
     public void setId(String id) {
         this.id = id;
+        this._id = id;
     }
 
     /**
@@ -69,6 +73,7 @@ public class ConsumableMetric {
      */
     public void setKey(String key) {
         this.key = key;
+        this._key = key;
     }
 
     /**
