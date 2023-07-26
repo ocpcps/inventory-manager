@@ -44,6 +44,8 @@ public class ArangoDBStartup {
                 .host(arangoDbConfiguration.getHost(), arangoDbConfiguration.getPort())
                 .user(arangoDbConfiguration.getUser())
                 .password(arangoDbConfiguration.getPassword())
+                .maxConnections(32)
+                .connectionTtl(300L)
                 .build();
         ArangoDatabase database = graphDb.db(arangoDbConfiguration.getDatabaseName());
 

@@ -17,7 +17,7 @@
  */
 package com.osstelecom.db.inventory.manager.response;
 
-import com.arangodb.entity.CursorStats;
+import com.arangodb.entity.CursorEntity.Stats;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.osstelecom.db.inventory.manager.resources.GraphList;
@@ -37,7 +37,7 @@ public abstract class BasicResponse<T> implements IResponse<T> {
     private T payLoad;
     private Long size;
     private String className;
-    private CursorStats arangoStats;
+    private Stats arangoStats;
 
     public String getClassName() {
         if (this.className == null) {
@@ -94,11 +94,11 @@ public abstract class BasicResponse<T> implements IResponse<T> {
         this.size = size;
     }
 
-    public CursorStats getArangoStats() {
+    public Stats getArangoStats() {
         return arangoStats;
     }
 
-    public void setArangoStats(CursorStats arangoStats) {
+    public void setArangoStats(Stats arangoStats) {
         this.arangoStats = arangoStats;
     }
 

@@ -127,7 +127,7 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
             });
 
             GraphList<T> result = new GraphList<>(
-                    db.query(aql, type, bindVars, new AqlQueryOptions().fullCount(true).count(true)));
+                    db.query(aql, bindVars, new AqlQueryOptions().fullCount(true).count(true), type));
 
             if (result.isEmpty()) {
                 ResourceNotFoundException ex = new ResourceNotFoundException();
@@ -156,7 +156,7 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
             return result;
         } else {
             GraphList<T> result = new GraphList<>(
-                    db.query(aql, type, new AqlQueryOptions().fullCount(true).count(true)));
+                    db.query(aql, new AqlQueryOptions().fullCount(true).count(true), type));
             if (result.isEmpty()) {
                 ResourceNotFoundException ex = new ResourceNotFoundException();
                 //
@@ -183,7 +183,7 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
             });
         }
 
-        ArangoCursor<String> result = this.getDb().query(aql, String.class, bindVars, new AqlQueryOptions().fullCount(true).count(true));
+        ArangoCursor<String> result = this.getDb().query(aql, bindVars, new AqlQueryOptions().fullCount(true).count(true), String.class);
         if (result.getCount() > 0) {
             buffer = buffer.concat(result.stream().collect(Collectors.joining(", ")));
             try {
@@ -251,8 +251,8 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
                 logger.info("\t  [@{}]=[{}]", k, v);
             });
             GraphList<T> result = new GraphList<>(
-                    db.query(filter.getAqlFilter(), type, filter.getBindings(),
-                            new AqlQueryOptions().fullCount(true).count(true)));
+                    db.query(filter.getAqlFilter(), filter.getBindings(),
+                            new AqlQueryOptions().fullCount(true).count(true), type));
 
             if (result.isEmpty()) {
                 ResourceNotFoundException ex = new ResourceNotFoundException();
@@ -284,10 +284,11 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
         } else {
             /**
              * Alterado em 21/07/2023 para fechar o cursor em caso de não
-             * encontrar nada e também para lançar a exception ResourceNotFoundException
+             * encontrar nada e também para lançar a exception
+             * ResourceNotFoundException
              */
             GraphList<T> result = new GraphList<>(
-                    db.query(filter.getAqlFilter(), type, new AqlQueryOptions().fullCount(true).count(true)));
+                    db.query(filter.getAqlFilter(), new AqlQueryOptions().fullCount(true).count(true), type));
             if (result.isEmpty()) {
                 try {
                     result.close();

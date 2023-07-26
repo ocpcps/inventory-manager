@@ -16,11 +16,9 @@
  */
 package com.osstelecom.db.inventory.manager.resources;
 
-import com.arangodb.serde.InternalId;
-import com.arangodb.serde.InternalKey;
+import com.arangodb.entity.DocumentField;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.osstelecom.db.inventory.manager.resources.exception.MetricConstraintException;
 
 /**
@@ -31,17 +29,12 @@ import com.osstelecom.db.inventory.manager.resources.exception.MetricConstraintE
 @JsonInclude(Include.NON_NULL)
 public class ConsumableMetric {
 
-    @InternalId
-    private String _id;
-
-    @JsonProperty(value = "id")
+    @DocumentField(DocumentField.Type.ID)
     private String id;
-    @InternalKey
-    private String _key;
-    @JsonProperty(value = "key")
+    @DocumentField(DocumentField.Type.KEY)
     private String key;
 
-    private Domain domain;
+    private Domain domain;    
     private String domainName;
 
     private String metricName;
@@ -65,7 +58,6 @@ public class ConsumableMetric {
      */
     public void setId(String id) {
         this.id = id;
-        this._id = id;
     }
 
     /**
@@ -73,7 +65,6 @@ public class ConsumableMetric {
      */
     public void setKey(String key) {
         this.key = key;
-        this._key = key;
     }
 
     /**
@@ -88,7 +79,7 @@ public class ConsumableMetric {
      */
     public void setDomain(Domain domain) {
         this.domain = domain;
-        if (domain != null) {
+        if(domain != null){
             domainName = domain.getDomainName();
         }
     }

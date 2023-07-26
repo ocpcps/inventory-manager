@@ -18,8 +18,7 @@
 package com.osstelecom.db.inventory.manager.resources;
 
 import com.arangodb.ArangoCursor;
-
-import com.arangodb.entity.CursorStats;
+import com.arangodb.entity.CursorEntity.Stats;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -63,18 +62,18 @@ public class GraphList<T> implements AutoCloseable {
 
     public boolean isEmpty() {
         if (this.cursor != null) {
-            if (!this.closedCursor) {
+        if (!this.closedCursor) {
                 if (this.cursor.getCount() != null) {
-                    return this.cursor.getCount() <= 0;
-                } else {
+            return this.cursor.getCount() <= 0;
+        } else {
                     return true;
                 }
             } else {
-                //
-                // Could lead to bad behavior...
-                //
-                return false;
-            }
+            //
+            // Could lead to bad behavior...
+            //
+            return false;
+        }
         } else {
             return true;
         }
@@ -148,7 +147,7 @@ public class GraphList<T> implements AutoCloseable {
         return null;
     }
 
-    public CursorStats getStats() {
+    public Stats getStats() {
         return this.cursor.getStats();
     }
 }

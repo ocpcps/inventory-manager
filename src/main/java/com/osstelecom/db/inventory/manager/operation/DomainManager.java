@@ -122,7 +122,28 @@ public class DomainManager extends Manager {
         this.domainDao.getDomains().forEach(d -> {
             logger.debug("\tFound Domain: [{}] Atomic ID:[{}]", d.getDomainName(), d.getAtomicId());
             if (!this.domains.containsKey(d.getDomainName())) {
-                this.domains.put(d.getDomainName(), d);
+                //
+                // Valida se todos os objetos do Domain existem
+                //
+                Boolean hasErrors = true;
+                if (this.domainDao.checkIfCollectionExists(d.getNodes())) {
+                    if (this.domainDao.checkIfCollectionExists(d.getConnections())) {
+                        if (this.domainDao.checkIfCollectionExists(d.getCircuits())) {
+                            if (this.domainDao.checkIfCollectionExists(d.getServices())) {
+                                this.domains.put(d.getDomainName(), d);
+                                hasErrors = false;
+                            }
+                        }
+                    }
+                }
+                if (hasErrors) {
+                    //
+                    // Marca o domain como inválido para não fazer mais
+                    //
+                    d.setValid(false);
+                    this.updateDomain(d);
+                }
+
             }
         });
     }
@@ -483,8 +504,9 @@ public class DomainManager extends Manager {
 
     /**
      * Get the domain name from the full collection name;
+     *
      * @param id
-     * @return 
+     * @return
      */
     public String getDomainNameFromId(String id) {
         String[] payLoad = id.split("/");

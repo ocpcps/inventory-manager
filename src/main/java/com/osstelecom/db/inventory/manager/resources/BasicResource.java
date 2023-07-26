@@ -16,13 +16,10 @@
  */
 package com.osstelecom.db.inventory.manager.resources;
 
-import com.arangodb.serde.InternalId;
-import com.arangodb.serde.InternalKey;
-import com.arangodb.serde.InternalRev;
+import com.arangodb.entity.DocumentField;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.osstelecom.db.inventory.manager.resources.exception.ConnectionAlreadyExistsException;
 import com.osstelecom.db.inventory.manager.resources.exception.ConnectionNotFoundException;
 import com.osstelecom.db.inventory.manager.resources.exception.MetricConstraintException;
@@ -68,7 +65,7 @@ public class BasicResource {
     private Boolean isLeaf;
     private Boolean isConsumable;
     private Boolean isConsumer = false; //revisar
-
+    
     private ConsumableMetric consumableMetric;
     private ConsumableMetric consumerMetric;
 
@@ -95,19 +92,9 @@ public class BasicResource {
     private String node;
     private String structureId;
     private ArrayList<String> tags;
-
-    //
-    // A vida é triste e o arango é um inferno as vezes..
-    //
-    @InternalKey
-    private String _key;
-    @InternalId
-    private String _id;
-
-    @JsonProperty(value = "key")
+    @DocumentField(DocumentField.Type.KEY)
     private String key;
-
-    @JsonProperty(value = "id")
+    @DocumentField(DocumentField.Type.ID)
     private String id;
 
     /**
@@ -140,7 +127,7 @@ public class BasicResource {
 
     private Long atomId = 0L;
     private ResourceSchemaModel schemaModel;
-    @InternalRev
+    @DocumentField(DocumentField.Type.REV)
     private String revisionId;
 
     private List<String> eventSourceIds = new ArrayList<>();
@@ -531,6 +518,20 @@ public class BasicResource {
     }
 
     /**
+     * @return the _id
+     */
+    public String getKey() {
+        return this.key;
+    }
+
+    /**
+     * @param _id the _id to set
+     */
+    public void setKey(String key) {
+        this.key = key;
+    }
+
+    /**
      * @return the attributes
      */
     public Map<String, Object> getAttributes() {
@@ -765,32 +766,18 @@ public class BasicResource {
         this.node = node;
     }
 
-    public String getKey() {
-        return _key;
-    }
-
     /**
-     * Set the Key, é assim por causa do driver do arango
-     *
-     * @param _key
+     * @return the id
      */
-    public void setKey(String _key) {
-        this._key = _key;
-        this.key = this._key;
-    }
-
-    /**
-     * Set the ID, é assim por causa do driver do arango
-     *
-     * @param _key
-     */
-    public void setId(String _id) {
-        this._id = _id;
-        this.id = this._id;
-    }
-
     public String getId() {
-        return _id;
+        return id;
+    }
+
+    /**
+     * @param id the id to set
+     */
+    public void setId(String id) {
+        this.id = id;
     }
 
     /**
@@ -881,5 +868,5 @@ public class BasicResource {
     public void setEventSourceIds(List<String> eventSourceIds) {
         this.eventSourceIds = eventSourceIds;
     }
-
+    
 }

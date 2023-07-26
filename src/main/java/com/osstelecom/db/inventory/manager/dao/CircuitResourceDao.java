@@ -193,7 +193,7 @@ public class CircuitResourceDao extends AbstractArangoDao<CircuitResource> {
     @Override
     public DocumentDeleteEntity<CircuitResource> deleteResource(CircuitResource resource) throws ArangoDaoException {
         try {
-            return this.getDb().collection(resource.getDomain().getCircuits()).deleteDocument(resource.getKey(), new DocumentDeleteOptions().returnOld(true), CircuitResource.class);
+            return this.getDb().collection(resource.getDomain().getCircuits()).deleteDocument(resource.getKey(), CircuitResource.class, new DocumentDeleteOptions().returnOld(true));
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         } finally {
@@ -399,7 +399,7 @@ public class CircuitResourceDao extends AbstractArangoDao<CircuitResource> {
         String aql = "RETURN COLLECTION_COUNT(@d) ";
         FilterDTO filter = new FilterDTO(aql);
         filter.getBindings().put("d", domain.getCircuits());
-        try (ArangoCursor<Long> cursor = this.getDb().query(aql, Long.class, filter.getBindings())) {
+        try (ArangoCursor<Long> cursor = this.getDb().query(aql, filter.getBindings(), Long.class)) {
             Long longValue;
             try (GraphList<Long> result = new GraphList<>(cursor)) {
                 longValue = result.getOne();
