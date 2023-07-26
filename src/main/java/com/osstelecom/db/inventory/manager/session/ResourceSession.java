@@ -28,6 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.arangodb.entity.DocumentUpdateEntity;
+import com.osstelecom.db.inventory.manager.dto.BatchAttributeUpdateDTO;
 import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.AttributeNotFoundException;
@@ -75,7 +76,9 @@ import com.osstelecom.db.inventory.manager.response.PatchManagedResourceResponse
 import com.osstelecom.db.inventory.manager.response.PatchResourceConnectionResponse;
 import com.osstelecom.db.inventory.manager.response.TypedListResponse;
 
-import ch.qos.logback.core.filter.Filter;
+import com.osstelecom.db.inventory.manager.request.UpdateBatchAttributeRequest;
+import com.osstelecom.db.inventory.manager.response.UpdateBatchAttributeResponse;
+import java.io.IOException;
 
 /**
  *
@@ -692,10 +695,10 @@ public class ResourceSession {
         filter.addObject("connections");
         return this.findResourceConnectionByFilter(filter);
     }
-    
+
     public String findManagedResource(FilterRequest filter) {
         FilterDTO filterDTO = filter.getPayLoad();
-       
+
         String json = this.manager.findManagedResource(filterDTO.getAqlFilter(), filterDTO.getBindings());
         return this.filterProjectionSession.filterJson(json, filterDTO.getFields());
     }
@@ -1007,4 +1010,67 @@ public class ResourceSession {
         return new FindResourceConnectionResponse(this.findResourceConnection(request.getPayLoad()));
     }
 
+    /**
+     * Faz um batch update de atributos, utilizado para atualizar massivamente
+     * atributos, ainda não exposto na API
+     *
+     * @param request
+     * @return
+     * @throws InvalidRequestException
+     * @throws DomainNotFoundException
+     * @throws ResourceNotFoundException
+     * @throws ArangoDaoException
+     * @throws GenericException
+     */
+    public UpdateBatchAttributeResponse updateBatchAttribute(UpdateBatchAttributeRequest request) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, GenericException {
+        BatchAttributeUpdateDTO updateRequestDTO = request.getPayLoad();
+        FilterDTO filter = request.getPayLoad().getFilter();
+        if (filter != null) {
+            //
+            //  Vamos tentar resolver os filtros
+            //
+            try (GraphList<ManagedResource> nodesGraph = managedResourceManager.getNodesByFilter(filter, request.getRequestDomain())) {
+
+                /**
+                 * Seta o total de objetos a serem atualizados
+                 */
+                updateRequestDTO.setTotalObjects(nodesGraph.size());
+
+                //
+                // Agora começa o merge, esse carinha aqui conhece todo o resultado a ser atualizado
+                //
+                nodesGraph.forEach(resource -> {
+                    if (request.getPayLoad().getAttributes() != null
+                            && !request.getPayLoad().getAttributes().isEmpty()) {
+                        //
+                        // Faz o merge com os novos valores
+                        //
+                        resource.getAttributes().putAll(request.getPayLoad().getAttributes());
+                        try {
+                            this.managedResourceManager.update(resource);
+                            updateRequestDTO.addUpdatedObject();
+                        } catch (InvalidRequestException | ArangoDaoException | AttributeConstraintViolationException
+                                | AttributeNotFoundException | GenericException
+                                | ResourceNotFoundException | SchemaNotFoundException | ScriptRuleException ex) {
+                            //
+                            // Aconteceu um erro durante o processo de update... o que fazer
+                            //
+                            updateRequestDTO.addError();
+                        }
+
+                    }
+                });
+
+            } catch (IOException ex) {
+                //
+                // Esta exception vem da implementação do Closeable, por horas vamos omitir aqui e transformar em uma generic
+                //
+                throw new GenericException("Failed to Close Cursor", ex);
+            }
+
+        } else {
+            throw new InvalidRequestException("Please provide a valid Filter");
+        }
+        return new UpdateBatchAttributeResponse(updateRequestDTO);
+    }
 }

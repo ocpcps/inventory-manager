@@ -267,6 +267,7 @@ public class DomainDao {
      * Atualiza o Domain
      *
      * @param domain
+     * @return
      */
     public DocumentUpdateEntity<Domain> updateDomain(Domain domain) {
         logger.debug("Persinting Domain info...:{}", domain.getDomainName());
