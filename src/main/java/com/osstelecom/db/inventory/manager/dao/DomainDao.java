@@ -216,6 +216,11 @@ public class DomainDao {
             domainRequestDTO.setCircuits(circuits.getName());
             domainRequestDTO.setMetrics(metrics.getName());
             domainRequestDTO.setDomainName(domainName);
+            /**
+             * Introduzido para validar o dominio
+             */
+
+            domainRequestDTO.setValid(true);
 
             this.domainsCollection.insertDocument(domainRequestDTO);
 
@@ -239,9 +244,15 @@ public class DomainDao {
     public List<Domain> getDomains() throws ArangoDaoException {
         try {
             logger.debug("Domains Size is: {}", this.domainsCollection.count().getCount());
-            ArangoCursor<Domain> cursor = arangoDatabase.query("FOR doc IN domains filter doc.valid == true RETURN doc", Domain.class);
-            List<Domain> result = cursor.asListRemaining();
-            cursor.close();
+            List<Domain> result;
+            /**
+             * Se usar o arango cursos sempre utilizar com Try-With-Resources,
+             * pois assim garantimos o fechamento do cursor
+             *
+             */
+            try (ArangoCursor<Domain> cursor = arangoDatabase.query("FOR doc IN domains filter doc.valid == true RETURN doc", Domain.class)) {
+                result = cursor.asListRemaining();
+            }
             return result;
         } catch (IOException ex) {
             throw new ArangoDaoException(ex);
