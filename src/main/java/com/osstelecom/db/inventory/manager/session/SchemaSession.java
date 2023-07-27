@@ -118,6 +118,43 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
     }
 
     /**
+     * Este método cuida de realizar uma reconciliação Geral na base do
+     * netcompass, o problema é que e pode levar alguns dias. Dependendo do
+     * tamanho. Não recomendo a execução frequente deste, mas depois que eu vi o
+     * Roger atualizando o DB do Arango direto isso pode ser necessário.
+     *
+     * @throws SchemaNotFoundException
+     * @throws GenericException
+     */
+    public void reconcileSchemas() throws SchemaNotFoundException, GenericException {
+
+        /**
+         * Pegamos só o raiz de cada arvore.
+         */
+        ResourceSchemaModel defaultResource = this.loadSchema("resource.default");
+        this.notifyUpdateEvent(defaultResource);
+
+        /**
+         * Pegamos agora as connections
+         */
+        ResourceSchemaModel defaultConnection = this.loadSchema("connection.default");
+        this.notifyUpdateEvent(defaultConnection);
+
+        /**
+         * Agora os circuitos
+         */
+        ResourceSchemaModel defaultCircuit = this.loadSchema("circuit.default");
+        this.notifyUpdateEvent(defaultCircuit);
+
+        /**
+         * Agora os serviços
+         */
+        ResourceSchemaModel defaultService = this.loadSchema("service.default");
+        this.notifyUpdateEvent(defaultService);
+
+    }
+
+    /**
      * Carrega um schema
      *
      * @param schemaName nome do schema a ser carregado
