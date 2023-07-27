@@ -151,6 +151,7 @@ public class FilterProjectionSession {
         }
 
         String uid = utils.getRequestId();
+         this.objects.put(uid, new ArrayList<>());
         return this.filterJson(json, fields, uid);
     }
 
