@@ -171,10 +171,20 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
 
     }
 
-    public String runNativeQuery(String aql, Map<String, Object> bindVars) {
+    public String runNativeQuery(FilterDTO filter) {
+        String aql = filter.getAqlFilter();
+        Map<String, Object> bindVars = filter.getBindings();
+
         Long start = System.currentTimeMillis();
         String uid = UUID.randomUUID().toString();
         String buffer = "[";
+
+        if (filter.getOffSet() >= 0L) {
+            filter.getBindings().put("offset", filter.getOffSet());
+        }
+        if (filter.getLimit() >= 0L) {
+            filter.getBindings().put("limit", filter.getLimit());
+        }
 
         logger.info("(native-query) - [{}] - RUNNING: AQL:[{}]", uid, aql);
         if (bindVars != null) {
@@ -183,7 +193,8 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
             });
         }
 
-        ArangoCursor<String> result = this.getDb().query(aql, bindVars, new AqlQueryOptions().fullCount(true).count(true), String.class);
+        ArangoCursor<String> result = this.getDb().query(aql, bindVars,
+                new AqlQueryOptions().fullCount(true).count(true), String.class);
         if (result.getCount() > 0) {
             buffer = buffer.concat(result.stream().collect(Collectors.joining(", ")));
             try {
