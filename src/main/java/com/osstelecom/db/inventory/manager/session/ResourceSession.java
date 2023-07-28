@@ -699,7 +699,7 @@ public class ResourceSession {
     public String findManagedResource(FilterRequest filter) {
         FilterDTO filterDTO = filter.getPayLoad();
 
-        String json = this.manager.findManagedResource(filterDTO.getAqlFilter(), filterDTO.getBindings());
+        String json = this.manager.findManagedResource(filterDTO);
         return this.filterProjectionSession.filterJson(json, filterDTO.getFields());
     }
 
