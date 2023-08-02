@@ -37,7 +37,6 @@ import com.osstelecom.db.inventory.manager.exception.SchemaNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.ScriptRuleException;
 import com.osstelecom.db.inventory.manager.operation.CircuitResourceManager;
 import com.osstelecom.db.inventory.manager.operation.DomainManager;
-import com.osstelecom.db.inventory.manager.operation.GraphManager;
 import com.osstelecom.db.inventory.manager.operation.ManagedResourceManager;
 import com.osstelecom.db.inventory.manager.operation.ResourceConnectionManager;
 import com.osstelecom.db.inventory.manager.operation.ServiceManager;
@@ -87,9 +86,6 @@ public class CircuitSession {
 
     @Autowired
     private ServiceManager serviceManager;
-    
-    @Autowired
-    private GraphManager graphManager;
 
     private Logger logger = LoggerFactory.getLogger(CircuitSession.class);
 
@@ -388,7 +384,7 @@ public class CircuitSession {
 
             }
 
-            List<String> brokenNodes = this.graphManager.checkBrokenGraph(circuitDto.getPaths(), circuit.getaPoint());
+            List<String> brokenNodes = this.domainManager.checkBrokenGraph(circuitDto.getPaths(), circuit.getaPoint());
 
             if (!brokenNodes.isEmpty()) {
                 //
@@ -445,8 +441,6 @@ public class CircuitSession {
             circuit.setDomainName(domain.getDomainName());
 
         }
-        
-        
         circuit.setDomain(domainManager.getDomain(circuit.getDomainName()));
         circuit = circuitResourceManager.findCircuitResource(circuit);
         request.getPayLoad().setCircuit(circuit);
