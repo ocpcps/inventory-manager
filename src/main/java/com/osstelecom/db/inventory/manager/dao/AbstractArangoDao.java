@@ -193,8 +193,7 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
             });
         }
 
-        ArangoCursor<String> result = this.getDb().query(aql, bindVars,
-                new AqlQueryOptions().fullCount(true).count(true), String.class);
+        ArangoCursor<String> result = this.getDb().query(aql, bindVars, new AqlQueryOptions().fullCount(true).count(true), String.class);
         if (result.getCount() > 0) {
             buffer = buffer.concat(result.stream().collect(Collectors.joining(", ")));
             try {
