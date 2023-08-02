@@ -17,19 +17,22 @@
  */
 package com.osstelecom.db.inventory.manager.request;
 
+import com.osstelecom.db.inventory.manager.dto.CircuitPathDTO;
+
 /**
  *
  * @author Lucas Nishimura <lucas.nishimura@gmail.com>
  * @created 05.01.2022
  */
 public class GetCircuitPathRequest extends CreateCircuitPathRequest {
-
+    
     private String circuitId;
     private String domainName;
-
+    
     public GetCircuitPathRequest(String circuitId, String domainName) {
         this.circuitId = circuitId;
         this.domainName = domainName;
+        this.setPayLoad(new CircuitPathDTO(domainName));
     }
 
     /**
