@@ -189,8 +189,8 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
     @Override
     public DocumentDeleteEntity<ManagedResource> deleteResource(ManagedResource resource) throws ArangoDaoException {
         try {
-            return this.getDb().collection(resource.getDomain().getNodes()).deleteDocument(resource.getKey(),
-                    new DocumentDeleteOptions().returnOld(true), ManagedResource.class);
+            return this.getDb().collection(resource.getDomain().getNodes()).deleteDocument(resource.getKey(), ManagedResource.class,
+                    new DocumentDeleteOptions().returnOld(true));
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         } finally {
@@ -279,7 +279,7 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
         String aql = "RETURN COLLECTION_COUNT(@d) ";
         FilterDTO filter = new FilterDTO(aql);
         filter.getBindings().put("d", domain.getNodes());
-        try (ArangoCursor<Long> cursor = this.getDb().query(aql,Long.class, filter.getBindings())) {
+        try (ArangoCursor<Long> cursor = this.getDb().query(aql, filter.getBindings(),Long.class)) {
             Long longValue;
             try (GraphList<Long> result = new GraphList<>(cursor)) {
                 longValue = result.getOne();
@@ -297,7 +297,7 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
         aql += "FILTER v.attributeSchemaName == '" + attributeSchemaName + "' and v.attributes." + attributeName + " != null ";
         aql += "RETURN distinct v ";
         return new GraphList<>(
-                getDb().query(aql, BasicResource.class, new HashMap<>(), new AqlQueryOptions().fullCount(true).count(true)));
+                getDb().query(aql, new HashMap<>(), new AqlQueryOptions().fullCount(true).count(true), BasicResource.class));
     }
 
     public GraphList<BasicResource> findChildrenByAttributeSchemaName(String from, String domain, String attributeSchemaName) {
@@ -305,7 +305,7 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
         aql += "FILTER v.attributeSchemaName == '" + attributeSchemaName + "' ";
         aql += "RETURN distinct v ";
         return new GraphList<>(
-                getDb().query(aql, BasicResource.class, new HashMap<>(), new AqlQueryOptions().fullCount(true).count(true)));
+                getDb().query(aql, new HashMap<>(), new AqlQueryOptions().fullCount(true).count(true), BasicResource.class));
     }
 
 }

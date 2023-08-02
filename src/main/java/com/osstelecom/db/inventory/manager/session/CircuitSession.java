@@ -71,22 +71,22 @@ import java.util.Map;
  */
 @Service
 public class CircuitSession {
-
+    
     @Autowired
     private DomainManager domainManager;
-
+    
     @Autowired
     private CircuitResourceManager circuitResourceManager;
-
+    
     @Autowired
     private ResourceConnectionManager resourceConnectionManager;
-
+    
     @Autowired
     private ManagedResourceManager managedResourceManager;
-
+    
     @Autowired
     private ServiceManager serviceManager;
-
+    
     private Logger logger = LoggerFactory.getLogger(CircuitSession.class);
 
     /**
@@ -108,11 +108,11 @@ public class CircuitSession {
             throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, IOException,
             InvalidRequestException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException,
             ScriptRuleException {
-
+        
         if (request == null || request.getPayLoad() == null) {
             throw new InvalidRequestException("Please provide data in the request and payLoad");
         }
-
+        
         CircuitResource requestedCircuit = request.getPayLoad();
 
         //
@@ -137,31 +137,31 @@ public class CircuitSession {
         // Obtem a referencia do DB
         //
         CircuitResource fromDbCircuit = this.circuitResourceManager.findCircuitResource(requestedCircuit);
-
+        
         if (requestedCircuit.getName() != null) {
             fromDbCircuit.setName(requestedCircuit.getName());
         }
-
+        
         if (requestedCircuit.getNodeAddress() != null) {
             fromDbCircuit.setNodeAddress(requestedCircuit.getNodeAddress());
         }
-
+        
         if (requestedCircuit.getClassName() != null) {
             fromDbCircuit.setClassName(requestedCircuit.getClassName());
         }
-
+        
         if (requestedCircuit.getOperationalStatus() != null) {
             fromDbCircuit.setOperationalStatus(requestedCircuit.getOperationalStatus());
         }
-
+        
         if (requestedCircuit.getAdminStatus() != null) {
             fromDbCircuit.setAdminStatus(requestedCircuit.getAdminStatus());
         }
-
+        
         if (requestedCircuit.getBusinessStatus() != null) {
             fromDbCircuit.setBusinessStatus(requestedCircuit.getBusinessStatus());
         }
-
+        
         if (requestedCircuit.getDescription() != null) {
             fromDbCircuit.setDescription(requestedCircuit.getDescription());
         }
@@ -179,7 +179,7 @@ public class CircuitSession {
                     request.getPayLoad().getzPoint().setDomain(domainManager.getDomain(request.getRequestDomain()));
                     fromDbCircuit.setzPoint(requestedCircuit.getzPoint());
                 }
-
+                
             }
         }
 
@@ -196,9 +196,9 @@ public class CircuitSession {
                     request.getPayLoad().getaPoint().setDomain(domainManager.getDomain(request.getRequestDomain()));
                     fromDbCircuit.setaPoint(requestedCircuit.getaPoint());
                 }
-
+                
             }
-
+            
         }
 
         //
@@ -210,7 +210,7 @@ public class CircuitSession {
         // The "To" Circuit Destination
         //
         ManagedResource zPoint = managedResourceManager.findManagedResource(request.getPayLoad().getzPoint());
-
+        
         fromDbCircuit.setaPoint(aPoint);
         fromDbCircuit.setzPoint(zPoint);
 
@@ -243,7 +243,7 @@ public class CircuitSession {
                 }
             });
         }
-
+        
         return new PatchCircuitResourceResponse(this.circuitResourceManager.updateCircuitResource(fromDbCircuit));
     }
 
@@ -263,7 +263,7 @@ public class CircuitSession {
             throws ResourceNotFoundException, GenericException, SchemaNotFoundException,
             AttributeConstraintViolationException, ScriptRuleException, DomainNotFoundException, ArangoDaoException,
             InvalidRequestException {
-
+        
         if (request.getPayLoad().getaPoint().getDomain() == null) {
             if (request.getPayLoad().getaPoint().getDomainName() != null) {
                 request.getPayLoad().getaPoint()
@@ -271,7 +271,7 @@ public class CircuitSession {
             } else {
                 request.getPayLoad().getaPoint().setDomain(domainManager.getDomain(request.getRequestDomain()));
             }
-
+            
         }
         if (request.getPayLoad().getzPoint().getDomain() == null) {
             if (request.getPayLoad().getzPoint().getDomainName() != null) {
@@ -280,7 +280,7 @@ public class CircuitSession {
             } else {
                 request.getPayLoad().getzPoint().setDomain(domainManager.getDomain(request.getRequestDomain()));
             }
-
+            
         }
         //
         // Default to UP
@@ -288,7 +288,7 @@ public class CircuitSession {
         if (request.getPayLoad().getOperationalStatus() == null) {
             request.getPayLoad().setOperationalStatus("Up");
         }
-
+        
         if (request.getPayLoad().getNodeAddress() == null) {
             request.getPayLoad().setNodeAddress(request.getPayLoad().getName());
         }
@@ -302,18 +302,18 @@ public class CircuitSession {
         // The "To" Circuit Destination
         //
         ManagedResource zPoint = managedResourceManager.findManagedResource(request.getPayLoad().getzPoint());
-
+        
         CircuitResource circuit = request.getPayLoad();
         if (circuit.getAttributeSchemaName() == null) {
             circuit.setAttributeSchemaName("circuit.default");
         } else if (circuit.getAttributeSchemaName().equals("default")) {
             circuit.setAttributeSchemaName("circuit.default");
         }
-
+        
         if (circuit.getClassName() == null) {
             circuit.setClassName("circuit.Default");
         }
-
+        
         circuit.setaPoint(aPoint);
         circuit.setzPoint(zPoint);
         circuit.setDomain(domainManager.getDomain(request.getRequestDomain()));
@@ -341,12 +341,12 @@ public class CircuitSession {
             throw new InvalidRequestException("Please provide a domain");
         }
         if (request.getCircuitId() == null) {
-
+            
             throw new InvalidRequestException("Please provide a CircuidID (_key)");
         }
-        CircuitResource circuit = new CircuitResource(domainManager.getDomain(request.getRequestDomain()),request.getCircuitId());
-      
-
+        CircuitResource circuit = new CircuitResource(domainManager.getDomain(request.getRequestDomain()), request.getCircuitId());
+        request.getPayLoad().setCircuit(circuit);
+        
         return this.findCircuitPath(request);
     }
 
@@ -368,10 +368,10 @@ public class CircuitSession {
         circuit = circuitResourceManager.findCircuitResource(circuitDto.getCircuit());
         circuitDto.setCircuit(circuit);
         circuitDto.setPaths(circuitResourceManager.findCircuitPaths(circuit).toList());
-
+        
         logger.debug("Found [{}] Paths for Circuit: [{}/{}] Class: ({})", circuitDto.getPaths().size(),
                 circuit.getNodeAddress(), circuit.getDomainName(), circuit.getClassName());
-
+        
         if (!circuitDto.getPaths().isEmpty()) {
             for (ResourceConnection connection : circuitDto.getPaths()) {
 
@@ -381,7 +381,7 @@ public class CircuitSession {
                 if (!connection.getOperationalStatus().equalsIgnoreCase("Up")) {
                     circuit.setDegrated(true);
                 }
-
+                
             }
 
             List<String> brokenNodes = this.domainManager.checkBrokenGraph(circuitDto.getPaths(), circuit.getaPoint());
@@ -397,12 +397,12 @@ public class CircuitSession {
                 }
                 circuit.setBrokenResources(brokenNodes);
             }
-
+            
         }
         GetCircuitPathResponse response = new GetCircuitPathResponse(circuitDto);
         return response;
     }
-
+    
     public CircuitResource findCircuitResource(CircuitResource resource)
             throws ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
         return this.circuitResourceManager.findCircuitResource(resource);
@@ -434,13 +434,13 @@ public class CircuitSession {
             throw new InvalidRequestException("Circuit is null, please check if circuit is provided")
                     .addDetails("circuit", "missing");
         }
-
+        
         CircuitResource circuit = request.getPayLoad().getCircuit();
-
+        
         if (circuit.getDomainName() == null) {
             circuit.setDomainName(domain.getDomainName());
-
         }
+        
         circuit.setDomain(domainManager.getDomain(circuit.getDomainName()));
         circuit = circuitResourceManager.findCircuitResource(circuit);
         request.getPayLoad().setCircuit(circuit);
@@ -448,7 +448,7 @@ public class CircuitSession {
             List<ResourceConnection> resolved = new ArrayList<>();
             logger.debug("Paths Size: {}", request.getPayLoad().getPaths().size());
             for (ResourceConnection requestedPath : request.getPayLoad().getPaths()) {
-
+                
                 if (requestedPath.getDomainName() == null) {
                     requestedPath.setDomain(domain);
                     requestedPath.setDomainName(domain.getDomainName());
@@ -478,17 +478,17 @@ public class CircuitSession {
                                 && requestedPath.getFromResource().getDomainName() == null) {
                             requestedPath.getFromResource().setDomainName(domain.getDomainName());
                         }
-
+                        
                         if (requestedPath.getToResource() != null
                                 && requestedPath.getToResource().getDomainName() == null) {
                             requestedPath.getToResource().setDomainName(domain.getDomainName());
                         }
-
+                        
                     }
                 } else {
                     requestedPath.setDomain(domain);
                 }
-
+                
                 ResourceConnection b = resourceConnectionManager.findResourceConnection(requestedPath);
                 if (!b.getCircuits().contains(circuit.getId())) {
                     //
@@ -507,7 +507,7 @@ public class CircuitSession {
                     circuit.getCircuitPath().add(b.getId());
                 }
                 resolved.add(b);
-
+                
             }
             //
             // Melhorar esta validação!
@@ -526,7 +526,8 @@ public class CircuitSession {
                 resolved = resourceConnectionManager.updateResourceConnections(resolved, circuit.getDomain());
                 request.getPayLoad().getPaths().clear();
                 request.getPayLoad().getPaths().addAll(resolved);
-                circuit = circuitResourceManager.updateCircuitResource(circuit);
+                circuit = circuitResourceManager.updateCircuitPath(circuit);
+                
             } else {
                 //
                 // Aqui temos um problema que precisamos ver se precisamos tratar.
@@ -538,7 +539,7 @@ public class CircuitSession {
         }
         return r;
     }
-
+    
     public FilterResponse findCircuitByFilter(FilterRequest filter)
             throws InvalidRequestException, ArangoDaoException, DomainNotFoundException, ResourceNotFoundException {
         FilterResponse response = new FilterResponse(filter.getPayLoad());
@@ -553,7 +554,7 @@ public class CircuitSession {
                 }
             }
         }
-
+        
         if (filter.getPayLoad().getObjects().contains("circuit")
                 || filter.getPayLoad().getObjects().contains("circuits")) {
             Domain domain = domainManager.getDomain(filter.getRequestDomain());
@@ -565,10 +566,10 @@ public class CircuitSession {
         } else {
             throw new InvalidRequestException("Filter object does not have circuit");
         }
-
+        
         return response;
     }
-
+    
     public GraphList<CircuitResource> findCircuitResourceByFilter(FilterDTO filter)
             throws ResourceNotFoundException, ArangoDaoException, InvalidRequestException, DomainNotFoundException {
         if (filter.getObjects().contains("circuit") || filter.getObjects().contains("circuits")) {
@@ -580,7 +581,7 @@ public class CircuitSession {
                     .addDetails("filter", filter);
         }
     }
-
+    
     public GetCircuitResponse findCircuitById(GetCircuitPathRequest req)
             throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
         Domain domain = this.domainManager.getDomain(req.getDomainName());
@@ -603,15 +604,15 @@ public class CircuitSession {
         Domain domain = this.domainManager.getDomain(req.getRequestDomain());
         CircuitResource circuit = req.getPayLoad();
         circuit.setDomain(domain);
-
+        
         if (circuit.getKey() == null && circuit.getId() == null) {
             throw new InvalidRequestException("Please provice CircuitID or CircuitKey");
         }
-
+        
         if (circuit.getId() != null && !circuit.getId().contains("/")) {
             circuit.setId(domain.getCircuits() + "/" + circuit.getId());
         }
-
+        
         if (circuit.getKey() != null && circuit.getId() == null) {
             circuit.setId(domain.getCircuits() + "/" + circuit.getKey());
         }
@@ -621,9 +622,9 @@ public class CircuitSession {
         // podemos deletar..
         //
         FilterDTO filter = new FilterDTO("@circuitId in doc.circuits[*]._id");
-
+        
         filter.getBindings().put("circuitId", circuit.getId());
-
+        
         try {
             GraphList<ServiceResource> result = this.serviceManager.findServiceByFilter(filter, domain);
             //
@@ -638,6 +639,6 @@ public class CircuitSession {
             circuit = this.circuitResourceManager.deleteCircuitResource(circuit);
             return new DeleteCircuitResponse(circuit);
         }
-
+        
     }
 }

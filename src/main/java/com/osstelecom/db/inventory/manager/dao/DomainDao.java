@@ -46,6 +46,7 @@ import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.DomainAlreadyExistsException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.resources.Domain;
+import java.io.IOException;
 
 /**
  * Manages The ArangoDB Connection
@@ -57,22 +58,22 @@ import com.osstelecom.db.inventory.manager.resources.Domain;
  */
 @Component
 public class DomainDao {
-    
+
     protected Logger logger = LoggerFactory.getLogger(DomainDao.class);
-    
+
     @Autowired
     private ConfigurationManager configurationManager;
-    
+
     private ArangoCollection domainsCollection;
-    
+
     @Autowired
     private ArangoDatabase arangoDatabase;
-    
+
     @EventListener(ApplicationReadyEvent.class)
     private void start() {
         InventoryConfiguration inventoryConfiguration = configurationManager.loadConfiguration();
         ArangoDBConfiguration arangoDbConfiguration = inventoryConfiguration.getGraphDbConfiguration();
-        
+
         this.domainsCollection = arangoDatabase.collection(arangoDbConfiguration.getDomainsCollection());
         if (!domainsCollection.exists()) {
             domainsCollection.create(new CollectionCreateOptions().type(CollectionType.DOCUMENT));
@@ -118,17 +119,17 @@ public class DomainDao {
     public Domain createDomain(Domain domainRequestDTO) throws DomainAlreadyExistsException {
         InventoryConfiguration inventoryConfiguration = configurationManager.loadConfiguration();
         ArangoDBConfiguration arangoDbConfiguration = inventoryConfiguration.getGraphDbConfiguration();
-        
+
         String domainName = domainRequestDTO.getDomainName();
-        
+
         logger.debug("Creating New Domain: {}", domainName);
-        
+
         if (!this.domainsCollection.documentExists(domainName).booleanValue()) {
             CollectionEntity nodes = arangoDatabase
                     .createCollection(domainName
                             + arangoDbConfiguration.getNodeSufix(),
                             new CollectionCreateOptions().type(CollectionType.DOCUMENT));
-            
+
             arangoDatabase.collection(domainName
                     + arangoDbConfiguration.getNodeSufix())
                     .ensurePersistentIndex(
@@ -144,21 +145,21 @@ public class DomainDao {
                             .getNodeSufix())
                     .ensurePersistentIndex(Arrays.asList("nodeAddress", "className", "domainName"),
                             new PersistentIndexOptions().name("NodeSEARCHIDX"));
-            
+
             CollectionEntity connections = arangoDatabase
                     .createCollection(domainName
                             + inventoryConfiguration.getGraphDbConfiguration()
                                     .getNodeConnectionSufix(),
                             new CollectionCreateOptions().type(CollectionType.EDGES));
-            
+
             arangoDatabase.collection(connections.getName()).ensurePersistentIndex(
                     Arrays.asList("name", "nodeAddress", "className", "domain._key"),
                     new PersistentIndexOptions().unique(true).name("ConnectionUNIQIDX"));
-            
+
             arangoDatabase.collection(connections.getName()).ensurePersistentIndex(
                     Arrays.asList("circuits[*]"),
                     new PersistentIndexOptions().unique(false).name("circuitsIDX"));
-            
+
             arangoDatabase.collection(connections.getName())
                     .ensurePersistentIndex(
                             Arrays.asList("className", "domainName",
@@ -169,45 +170,45 @@ public class DomainDao {
                                     "toResource.className",
                                     "toResource.domainName"),
                             new PersistentIndexOptions().unique(false).name("searchIDX"));
-            
+
             CollectionEntity services = arangoDatabase
                     .createCollection(domainName
                             + arangoDbConfiguration.getServiceSufix(),
                             new CollectionCreateOptions().type(CollectionType.DOCUMENT));
-            
+
             arangoDatabase.collection(services.getName()).ensurePersistentIndex(
                     Arrays.asList("name", "nodeAddress", "className", "domain._key"),
                     new PersistentIndexOptions().unique(true).name("ServiceUNIQIDX"));
-            
+
             CollectionEntity circuits = arangoDatabase
                     .createCollection(domainName
                             + arangoDbConfiguration.getCircuitsSufix(),
                             new CollectionCreateOptions().type(CollectionType.DOCUMENT));
-            
+
             arangoDatabase.collection(circuits.getName()).ensurePersistentIndex(
                     Arrays.asList("name", "aPoint.nodeAddress", "aPoint.className",
                             "aPoint.domain._key",
                             "zPoint.nodeAddress", "zPoint.className", "zPoint.domain._key",
                             "className", "domain._key"),
                     new PersistentIndexOptions().unique(true).name("CircuitUNIQIDX"));
-            
+
             arangoDatabase.collection(circuits.getName()).ensurePersistentIndex(
                     Arrays.asList("nodeAddress", "className", "domainName"),
                     new PersistentIndexOptions().unique(false).name("searchIDX1"));
-            
+
             CollectionEntity metrics = arangoDatabase
                     .createCollection(domainName
                             + arangoDbConfiguration.getMetricSufix(),
                             new CollectionCreateOptions().type(CollectionType.DOCUMENT));
-            
+
             arangoDatabase.collection(metrics.getName()).ensurePersistentIndex(
                     Arrays.asList("metricName", "domain._key"),
                     new PersistentIndexOptions().unique(true).name("MetricUNIQIDX"));
-            
+
             GraphEntity connectionLayer = createGraph(
                     domainName + arangoDbConfiguration.getConnectionLayerSufix(),
                     connections.getName(), nodes.getName(), services.getName(), circuits.getName());
-            
+
             domainRequestDTO.setServices(services.getName());
             domainRequestDTO.setConnectionLayer(connectionLayer.getName());
             domainRequestDTO.setConnections(connections.getName());
@@ -215,15 +216,20 @@ public class DomainDao {
             domainRequestDTO.setCircuits(circuits.getName());
             domainRequestDTO.setMetrics(metrics.getName());
             domainRequestDTO.setDomainName(domainName);
-            
+            /**
+             * Introduzido para validar o dominio
+             */
+
+            domainRequestDTO.setValid(true);
+
             this.domainsCollection.insertDocument(domainRequestDTO);
-            
+
             logger.debug("Created Domain: {} With: NODES: {} EDGES: {} GRAPH: {}", domainName,
                     domainName + arangoDbConfiguration.getNodeSufix(), domainName
                     + arangoDbConfiguration.getNodeConnectionSufix(),
                     domainName
                     + arangoDbConfiguration.getConnectionLayerSufix());
-            
+
             return domainRequestDTO;
         } else {
             throw new DomainAlreadyExistsException("Domain with Name: [" + domainName + "] already exists");
@@ -236,9 +242,25 @@ public class DomainDao {
      * @return
      */
     public List<Domain> getDomains() throws ArangoDaoException {
-        logger.debug("Domains Size is: {}", this.domainsCollection.count().getCount());
-        ArangoCursor<Domain> cursor = arangoDatabase.query("FOR doc IN domains RETURN doc", Domain.class);
-        return cursor.asListRemaining();
+        try {
+            logger.debug("Domains Size is: {}", this.domainsCollection.count().getCount());
+            List<Domain> result;
+            /**
+             * Se usar o arango cursos sempre utilizar com Try-With-Resources,
+             * pois assim garantimos o fechamento do cursor
+             *
+             */
+            try (ArangoCursor<Domain> cursor = arangoDatabase.query("FOR doc IN domains filter doc.valid == true RETURN doc", Domain.class)) {
+                result = cursor.asListRemaining();
+            }
+            return result;
+        } catch (IOException ex) {
+            throw new ArangoDaoException(ex);
+        }
+    }
+
+    public Boolean checkIfCollectionExists(String collectionName) {
+        return this.arangoDatabase.collection(collectionName).exists();
     }
 
     /**
@@ -249,7 +271,7 @@ public class DomainDao {
     public DocumentUpdateEntity<Domain> updateDomain(Domain domain) {
         logger.debug("Persinting Domain info...:{}", domain.getDomainName());
         DocumentUpdateEntity<Domain> result = this.domainsCollection.updateDocument(domain.getDomainName(), domain, new DocumentUpdateOptions().mergeObjects(true).returnNew(true).returnOld(true));
-        
+
         return result;
     }
 
@@ -269,8 +291,8 @@ public class DomainDao {
                 .from(nodesDocument, serviceDocument, circuitDocument)
                 .to(nodesDocument, serviceDocument, circuitDocument);
         Collection<EdgeDefinition> edgeDefinitions = Arrays.asList(edgeDefiniton);
-        
+
         return arangoDatabase.createGraph(graphName, edgeDefinitions);
     }
-    
+
 };

@@ -221,8 +221,8 @@ public class ResourceConnectionDao extends AbstractArangoDao<ResourceConnection>
     @Override
     public DocumentDeleteEntity<ResourceConnection> deleteResource(ResourceConnection resource) throws ArangoDaoException {
         try {
-            return this.getDb().collection(resource.getDomain().getConnections()).deleteDocument(resource.getKey(),
-                    new DocumentDeleteOptions().returnOld(true), ResourceConnection.class);
+            return this.getDb().collection(resource.getDomain().getConnections()).deleteDocument(resource.getKey(), ResourceConnection.class,
+                    new DocumentDeleteOptions().returnOld(true));
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         } finally {
@@ -337,8 +337,8 @@ public class ResourceConnectionDao extends AbstractArangoDao<ResourceConnection>
             logger.info("\t  [@{}]=[{}]", k, v);
 
         });
-        ArangoCursor<ResourceConnection> cursor = this.getDb().query(aql, ResourceConnection.class, bindVars,
-                new AqlQueryOptions().count(true).batchSize(5000));
+        ArangoCursor<ResourceConnection> cursor = this.getDb().query(aql,  bindVars,
+                new AqlQueryOptions().count(true).batchSize(5000),ResourceConnection.class);
         return new GraphList<>(cursor);
     }
 
@@ -347,7 +347,7 @@ public class ResourceConnectionDao extends AbstractArangoDao<ResourceConnection>
         String aql = "RETURN COLLECTION_COUNT(@d) ";
         FilterDTO filter = new FilterDTO(aql);
         filter.getBindings().put("d", domain.getConnections());
-        try (ArangoCursor<Long> cursor = this.getDb().query(aql, Long.class, filter.getBindings())) {
+        try (ArangoCursor<Long> cursor = this.getDb().query(aql, filter.getBindings(), Long.class)) {
             Long longValue;
             try (GraphList<Long> result = new GraphList<>(cursor)) {
                 longValue = result.getOne();

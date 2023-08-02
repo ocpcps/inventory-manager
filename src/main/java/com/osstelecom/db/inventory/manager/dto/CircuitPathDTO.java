@@ -34,6 +34,13 @@ public class CircuitPathDTO {
     private List<ResourceConnection> paths = new ArrayList<>();
     private List<String> hops;
 
+    public CircuitPathDTO() {
+    }
+
+    public CircuitPathDTO(String domainName) {
+        this.domainName = domainName;
+    }
+
     /**
      * @return the circuit
      */

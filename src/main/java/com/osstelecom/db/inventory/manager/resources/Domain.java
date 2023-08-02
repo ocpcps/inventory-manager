@@ -17,7 +17,7 @@
  */
 package com.osstelecom.db.inventory.manager.resources;
 
-import com.arangodb.serde.InternalKey;
+import com.arangodb.entity.DocumentField;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Date;
@@ -30,7 +30,7 @@ import java.util.Date;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Domain {
 
-    @InternalKey
+    @DocumentField(DocumentField.Type.KEY)
     @Schema(example = "network")
     private String domainName;
     @Schema(example = "network_connections")
@@ -61,6 +61,8 @@ public class Domain {
     @Schema(example = "2023-04-18T23:20:00.000Z")
     private Date lastUpdate;
 
+    private Boolean valid;
+
     /**
      * @return the domainName
      */
@@ -89,7 +91,7 @@ public class Domain {
         this.connections = connections;
     }
 
-     /**
+    /**
      * @return the metrics
      */
     public String getMetrics() {
@@ -315,6 +317,20 @@ public class Domain {
      */
     public void setLastUpdate(Date lastUpdate) {
         this.lastUpdate = lastUpdate;
+    }
+
+    /**
+     * @return the valid
+     */
+    public Boolean getValid() {
+        return valid;
+    }
+
+    /**
+     * @param valid the valid to set
+     */
+    public void setValid(Boolean valid) {
+        this.valid = valid;
     }
 
 }

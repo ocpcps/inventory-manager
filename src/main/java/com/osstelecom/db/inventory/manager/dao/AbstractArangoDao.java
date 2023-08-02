@@ -43,6 +43,7 @@ import com.osstelecom.db.inventory.manager.resources.BasicResource;
 import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.GraphList;
 import java.util.UUID;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 /**
@@ -126,7 +127,7 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
             });
 
             GraphList<T> result = new GraphList<>(
-                    db.query(aql, type, bindVars, new AqlQueryOptions().fullCount(true).count(true)));
+                    db.query(aql, bindVars, new AqlQueryOptions().fullCount(true).count(true), type));
 
             if (result.isEmpty()) {
                 ResourceNotFoundException ex = new ResourceNotFoundException();
@@ -155,7 +156,7 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
             return result;
         } else {
             GraphList<T> result = new GraphList<>(
-                    db.query(aql,type, new AqlQueryOptions().fullCount(true).count(true)));
+                    db.query(aql, new AqlQueryOptions().fullCount(true).count(true), type));
             if (result.isEmpty()) {
                 ResourceNotFoundException ex = new ResourceNotFoundException();
                 //
@@ -170,10 +171,20 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
 
     }
 
-    public String runNativeQuery(String aql, Map<String, Object> bindVars) {
+    public String runNativeQuery(FilterDTO filter) {
+        String aql = filter.getAqlFilter();
+        Map<String, Object> bindVars = filter.getBindings();
+
         Long start = System.currentTimeMillis();
         String uid = UUID.randomUUID().toString();
         String buffer = "[";
+
+        if (filter.getOffSet() >= 0L) {
+            filter.getBindings().put("offset", filter.getOffSet());
+        }
+        if (filter.getLimit() >= 0L) {
+            filter.getBindings().put("limit", filter.getLimit());
+        }
 
         logger.info("(native-query) - [{}] - RUNNING: AQL:[{}]", uid, aql);
         if (bindVars != null) {
@@ -182,14 +193,15 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
             });
         }
 
-        ArangoCursor<String> result = this.getDb().query(aql, String.class,bindVars, new AqlQueryOptions().fullCount(true).count(true));
+        ArangoCursor<String> result = this.getDb().query(aql, bindVars,
+                new AqlQueryOptions().fullCount(true).count(true), String.class);
         if (result.getCount() > 0) {
             buffer = buffer.concat(result.stream().collect(Collectors.joining(", ")));
             try {
                 result.close();
             } catch (Exception e) {
                 logger.error("close cursor error when empty response", e);
-            }                
+            }
         }
 
         Long end = System.currentTimeMillis();
@@ -202,7 +214,7 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
         } else {
             logger.info("(query) - [{}] - Took: [{}] ms", uid, took);
         }
-        
+
         buffer = buffer.concat("]");
         return buffer;
     }
@@ -250,8 +262,8 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
                 logger.info("\t  [@{}]=[{}]", k, v);
             });
             GraphList<T> result = new GraphList<>(
-                    db.query(filter.getAqlFilter(),type, filter.getBindings(),
-                            new AqlQueryOptions().fullCount(true).count(true)));
+                    db.query(filter.getAqlFilter(), filter.getBindings(),
+                            new AqlQueryOptions().fullCount(true).count(true), type));
 
             if (result.isEmpty()) {
                 ResourceNotFoundException ex = new ResourceNotFoundException();
@@ -281,8 +293,21 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
             }
             return result;
         } else {
+            /**
+             * Alterado em 21/07/2023 para fechar o cursor em caso de não
+             * encontrar nada e também para lançar a exception
+             * ResourceNotFoundException
+             */
             GraphList<T> result = new GraphList<>(
-                    db.query(filter.getAqlFilter(),type, new AqlQueryOptions().fullCount(true).count(true)));
+                    db.query(filter.getAqlFilter(), new AqlQueryOptions().fullCount(true).count(true), type));
+            if (result.isEmpty()) {
+                try {
+                    result.close();
+                } catch (IOException ex) {
+                    logger.error("Failed to close Cursor");
+                }
+                throw new ResourceNotFoundException().addDetails("AQL", filter.getAqlFilter());
+            }
             return result;
         }
     }
