@@ -62,8 +62,6 @@ import com.osstelecom.db.inventory.manager.response.GetCircuitPathResponse;
 import com.osstelecom.db.inventory.manager.response.GetCircuitResponse;
 import com.osstelecom.db.inventory.manager.response.PatchCircuitResourceResponse;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  *

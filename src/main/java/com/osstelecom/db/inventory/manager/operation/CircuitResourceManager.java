@@ -70,9 +70,6 @@ public class CircuitResourceManager extends Manager {
     @Autowired
     private GraphDao graphDao;
 
-    @Autowired
-    private GraphManager graphManager;
-
     private Logger logger = LoggerFactory.getLogger(CircuitResourceManager.class);
 
     public CircuitResource deleteCircuitResource(CircuitResource circuitResource) throws ArangoDaoException {
@@ -415,7 +412,7 @@ public class CircuitResourceManager extends Manager {
             //
             // Checks the current state of the circuit
             //
-            List<String> brokenNodes = this.graphManager.checkBrokenGraph(connections, circuit.getaPoint());
+            List<String> brokenNodes = this.domainManager.checkBrokenGraph(connections, circuit.getaPoint());
 
             //
             //
