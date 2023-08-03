@@ -502,6 +502,11 @@ public class ResourceSession {
      * @throws AttributeConstraintViolationException
      * @throws GenericException
      * @throws ScriptRuleException
+     * @throws com.osstelecom.db.inventory.manager.exception.InvalidRequestException
+     * @throws com.osstelecom.db.inventory.manager.exception.DomainNotFoundException
+     * @throws com.osstelecom.db.inventory.manager.exception.ArangoDaoException
+     * @throws com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException
+     * @throws com.osstelecom.db.inventory.manager.exception.AttributeNotFoundException
      */
     public CreateManagedResourceResponse createManagedResource(CreateManagedResourceRequest request)
             throws SchemaNotFoundException, AttributeConstraintViolationException, GenericException,

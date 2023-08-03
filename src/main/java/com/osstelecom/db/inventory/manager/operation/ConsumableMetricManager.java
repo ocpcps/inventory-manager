@@ -33,6 +33,8 @@ import com.osstelecom.db.inventory.manager.resources.GraphList;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import com.osstelecom.db.inventory.manager.resources.exception.MetricConstraintException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class ConsumableMetricManager extends Manager {
@@ -48,6 +50,8 @@ public class ConsumableMetricManager extends Manager {
 
     @Autowired
     private ManagedResourceDao managedResourceDao;
+
+    private Logger logger = LoggerFactory.getLogger(ConsumableMetricManager.class);
 
     @EventListener(ApplicationReadyEvent.class)
     private void onStartUp() {
@@ -247,8 +251,11 @@ public class ConsumableMetricManager extends Manager {
                         managedResourceDao.updateResource(resource);
                     }
                 } catch (MetricConstraintException | InvalidRequestException | ResourceNotFoundException
-                        | ArangoDaoException e) {
-                    e.printStackTrace();
+                        | ArangoDaoException ex) {
+                    /**
+                     * Aqui
+                     */
+                    logger.error("Failed to  Process Consumable Metric Calculation:", ex);
                 }
             }
 
@@ -267,8 +274,8 @@ public class ConsumableMetricManager extends Manager {
                         managedResourceDao.updateResource(resource);
                     }
                 } catch (MetricConstraintException | InvalidRequestException | ResourceNotFoundException
-                        | ArangoDaoException e) {
-                    e.printStackTrace();
+                        | ArangoDaoException ex) {
+                    logger.error("Failed to  Process Consumable Metric Calculation:", ex);
                 }
             }
         } finally {
@@ -278,8 +285,8 @@ public class ConsumableMetricManager extends Manager {
 
     private Map<String, Double> processConsumerMetric(BasicResource fromResource) {
         String timerId = startTimer("onResourceConnectionUpdatedEvent");
+        Map<String, Double> result = new HashMap<>();
         try {
-            Map<String, Double> result = new HashMap<>();
 
             GraphList<BasicResource> consumerChilds = this.consumableMetricDao
                     .findChildsWithMetrics(fromResource);
@@ -308,10 +315,16 @@ public class ConsumableMetricManager extends Manager {
                     result.put(metricName, fromResource.getConsumerMetric().getMetricValue());
                 }
             }
-            return result;
+
+        } catch (Exception ex) {
+            logger.error("Failed to  Process Consumer Metric Calculation:", ex);
         } finally {
             endTimer(timerId);
         }
+        /**
+         * Pode chegar vazio se der erro
+         */
+        return result;
     }
 
     private Double calculateParent(Double parentValue, Double childValue,
