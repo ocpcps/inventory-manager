@@ -37,9 +37,22 @@ public class GraphList<T> implements AutoCloseable {
 
     private final ArangoCursor<T> cursor;
     private boolean closedCursor = false;
+    private Long startTime = 0L;
+    private Long endTime = 0L;
+    private Long tookTime = 0L;
+    private Long totalRecordsFetched = 0L;
+
+    public Boolean isClosed() {
+        return this.closedCursor;
+    }
 
     public GraphList(ArangoCursor<T> cursor) {
         this.cursor = cursor;
+    }
+
+    public GraphList(ArangoCursor<T> cursor, Long startTime) {
+        this.cursor = cursor;
+        this.startTime = startTime;
     }
 
     /**
@@ -53,8 +66,8 @@ public class GraphList<T> implements AutoCloseable {
 
             this.cursor.stream().parallel().forEachOrdered(action::accept);
 
-            this.cursor.close();
-            this.closedCursor = true;
+            this.close();
+
         } else {
             throw new IllegalStateException("Cursor Closed");
         }
@@ -62,18 +75,18 @@ public class GraphList<T> implements AutoCloseable {
 
     public boolean isEmpty() {
         if (this.cursor != null) {
-        if (!this.closedCursor) {
+            if (!this.closedCursor) {
                 if (this.cursor.getCount() != null) {
-            return this.cursor.getCount() <= 0;
-        } else {
+                    return this.cursor.getCount() <= 0;
+                } else {
                     return true;
                 }
             } else {
-            //
-            // Could lead to bad behavior...
-            //
-            return false;
-        }
+                //
+                // Could lead to bad behavior...
+                //
+                return false;
+            }
         } else {
             return true;
         }
@@ -93,8 +106,7 @@ public class GraphList<T> implements AutoCloseable {
                 //
                 // make sure the cursor is closed
                 //
-                this.cursor.close();
-                this.closedCursor = true;
+                this.close();
             }
         } else {
             throw new IllegalStateException("Cursor Closed");
@@ -122,7 +134,12 @@ public class GraphList<T> implements AutoCloseable {
     @Override
     public void close() throws IOException {
         if (!this.closedCursor) {
+            this.totalRecordsFetched = this.size();
             this.cursor.close();
+            this.endTime = System.currentTimeMillis();
+            if (this.endTime > 0L && this.startTime > 0L) {
+                this.tookTime = this.endTime = this.startTime;
+            }
         }
     }
 
@@ -149,5 +166,30 @@ public class GraphList<T> implements AutoCloseable {
 
     public Stats getStats() {
         return this.cursor.getStats();
+    }
+
+    /**
+     * Só funciona depois que o cursor é processado
+     *
+     * @return
+     */
+    public Long getFetchTime() {
+        return this.tookTime;
+    }
+
+    /**
+     * Só funciona depois que o cursor é processado
+     *
+     * @return
+     */
+    public Long getTotalFetch() {
+        return this.totalRecordsFetched;
+    }
+
+    /**
+     * @param startTime the startTime to set
+     */
+    public void setStartTime(Long startTime) {
+        this.startTime = startTime;
     }
 }

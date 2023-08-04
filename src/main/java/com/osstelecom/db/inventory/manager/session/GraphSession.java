@@ -19,10 +19,13 @@ package com.osstelecom.db.inventory.manager.session;
 
 import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
+import com.osstelecom.db.inventory.manager.operation.DbJobManager;
 import com.osstelecom.db.inventory.manager.operation.GraphManager;
 import com.osstelecom.db.inventory.manager.resources.GraphList;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -37,10 +40,18 @@ public class GraphSession {
     @Autowired
     private GraphManager graphManager;
 
+    private Logger logger = LoggerFactory.getLogger(GraphSession.class);
+
     public GraphList<ResourceConnection> expandNode(ManagedResource resource, String direction, Integer depth)
             throws ResourceNotFoundException, InvalidRequestException {
-        if (depth > 64)
-            throw new InvalidRequestException("Depth cannot be greater than 64");
+        logger.debug("Expanding Node:[{}] Direction:[{}] Depth:[{}]", resource.getId(), direction, depth);
+
+        /**
+         * Performance Saving
+         */
+        if (depth > 5) {
+            throw new InvalidRequestException("Depth cannot be greater than 5");
+        }
 
         return this.graphManager.expandNode(resource, direction, depth);
     }

@@ -58,9 +58,9 @@ public class SchemaApi extends BaseApi {
     private SchemaSession schemaSession;
 
     @AuthenticatedCall(role = {"user"})
-    @GetMapping(produces = "application/json")
-    public ListSchemasResponse listSchemas() throws SchemaNotFoundException, GenericException {
-        return schemaSession.listSchemas();
+    @GetMapping(path = "/detail/{filter}", produces = "application/json")
+    public ListSchemasResponse listSchemas(@PathVariable("filter") String filter) throws SchemaNotFoundException, GenericException {
+        return schemaSession.listSchemas(filter);
     }
 
     /**

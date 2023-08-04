@@ -223,8 +223,14 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
         return result;
     }
 
-    public ListSchemasResponse listSchemas() throws SchemaNotFoundException, GenericException {
-        return new ListSchemasResponse(this.loadSchemaFromDisk());
+    public ListSchemasResponse listSchemas(String filter) throws SchemaNotFoundException, GenericException {
+        List<ResourceSchemaModel> result = this.loadSchemaFromDisk();
+        if (filter.equals("*")) {
+            return new ListSchemasResponse(result);
+        } else {
+            result.removeIf(a -> !a.getSchemaName().contains(filter));
+            return new ListSchemasResponse(result);
+        }
     }
 
     /**

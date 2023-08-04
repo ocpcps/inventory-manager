@@ -35,6 +35,16 @@ public class DBJobInstance {
     private DbJobStage currentJobStage;
     private ConcurrentHashMap<String, DbJobStage> jobStages;
 
+    public void startJob() {
+        this.setJobStarted(new Date());
+    }
+
+    public void endJob() {
+        if (this.jobStarted!=null){
+            this.setJobEnded(new Date());
+        }
+    }
+
     public DBJobInstance(String jobId) {
         this.jobId = jobId;
     }

@@ -23,6 +23,8 @@ import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
+import com.osstelecom.db.inventory.manager.jobs.DBJobInstance;
+import com.osstelecom.db.inventory.manager.operation.DbJobManager;
 import com.osstelecom.db.inventory.manager.operation.DomainManager;
 import com.osstelecom.db.inventory.manager.request.FilterRequest;
 import com.osstelecom.db.inventory.manager.request.FindManagedResourceRequest;
@@ -87,6 +89,9 @@ public class FilterViewSession {
 
     @Autowired
     private DomainManager domainManager;
+
+    @Autowired
+    private DbJobManager dbJobManager;
 
     @Autowired
     private ResourceConnectionDao resourceConnectionDao;
@@ -275,6 +280,8 @@ public class FilterViewSession {
      */
     public ThreeJsViewResponse expandNodeById(ExpandNodeRequest request) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException, InvalidGraphException {
         Domain domain = this.domainManager.getDomain(request.getRequestDomain());
+        DBJobInstance job = dbJobManager.createJobInstance();
+        dbJobManager.notifyJobStart(job);
         ManagedResource resource = new ManagedResource(domain, request.getPayLoad().getNodeId());
         //
         // Recupera a referencia do resource do DB
@@ -282,8 +289,9 @@ public class FilterViewSession {
         resource = this.resourceSession.findManagedResource(resource);
 
         GraphList<ResourceConnection> result = this.graphSession.expandNode(resource, request.getPayLoad().getDirection(), request.getPayLoad().getDepth());
-
-        return new ThreeJsViewResponse(new ThreeJSViewDTO(result).validate());
+        ThreeJsViewResponse response = new ThreeJsViewResponse(new ThreeJSViewDTO(result).validate());
+        dbJobManager.notifyJobEnd(job);
+        return response;
     }
 
     /**

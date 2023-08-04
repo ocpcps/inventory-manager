@@ -108,9 +108,11 @@ public class GraphDao {
             bindVars.put("depth", depth);
             bindVars.put("resourceId", resource.getId());
             bindVars.put("graphName", resource.getDomain().getConnectionLayer());
+            Long start = System.currentTimeMillis();
             ArangoCursor<ResourceConnection> cursor = this.arangoDatabase.query(aql, bindVars, new AqlQueryOptions().fullCount(true).count(true).batchSize(5000), ResourceConnection.class);
 
-            GraphList<ResourceConnection> result = new GraphList<>(cursor);
+            GraphList<ResourceConnection> result = new GraphList<>(cursor, start);
+
             if (result.isEmpty()) {
                 throw new ResourceNotFoundException("No Resources found for expand")
                         .addDetails("resource", resource)
@@ -121,6 +123,9 @@ public class GraphDao {
                         .addDetails("bindVars", bindVars);
 
             }
+            Long end = System.currentTimeMillis();
+            Long took = end - start;
+            logger.debug("Query Took:[{}] ms To Get :[{}] Results", took, result.size());
             return result;
         } else {
             throw new InvalidRequestException("Direction must be : [OUTBOUND|INBOUND|ANY] Received: [" + direction + "]");

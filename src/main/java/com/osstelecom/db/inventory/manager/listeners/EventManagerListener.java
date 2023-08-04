@@ -43,7 +43,7 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @created 10.04.2022
  */
 @Service
-public class EventManagerListener implements SubscriberExceptionHandler, Runnable {
+public class EventManagerListener implements SubscriberExceptionHandler, Runnable, IEventListener {
 
     private EventBus eventBus = new EventBus(this);
 
@@ -66,16 +66,18 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
         this.eventBus.register(this);
     }
 
+    @Override
     public void registerListener(Object listener) {
         this.eventBus.register(listener);
-
     }
 
     /**
      * Recebe a notificação de um evento e envia para o EventBus
      *
      * @param event
+     * @return
      */
+    @Override
     public synchronized boolean notifyResourceEvent(BasicResourceEvent event) {
 
         //
@@ -93,6 +95,7 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
      * @param genericEvent
      * @return
      */
+    @Override
     public synchronized boolean notifyGenericEvent(BasicEvent genericEvent) {
         DBJobInstance job = jobManager.createJobInstance();
         genericEvent.setRelatedJob(job);
@@ -102,10 +105,12 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
     /**
      * Trata os eventos genéricos que não estão ligados updateEvent recursos,
      *
+     * @param updateEvent
      * @Todo: pensar se faz sentido migrar para uma fila separada.
      * @param genericEvent
      * @return
      */
+    @Override
     public synchronized boolean notifyGenericEvent(BasicUpdateEvent updateEvent) {
         DBJobInstance job = jobManager.createJobInstance();
         updateEvent.setRelatedJob(job);

@@ -149,6 +149,11 @@ public class ThreeJSViewDTO {
                     }
                     links.add(new ThreeJSLinkDTO(connection));
                 });
+                if (connections.isClosed()) {
+                    /**
+                     * Aqui é possível receber as stats
+                     */
+                }
             } catch (IOException ex) {
             }
         }
@@ -187,7 +192,7 @@ public class ThreeJSViewDTO {
      * Monta o grafo, com links e nó a partir dos resource connection
      *
      * @param connections
-     * @param addNodes    - se for true, ele vai adicionar os nós automaticamente
+     * @param addNodes - se for true, ele vai adicionar os nós automaticamente
      */
     public void setLinksByGraph(GraphList<ResourceConnection> connections, boolean addNodes) {
         this.links.clear();
