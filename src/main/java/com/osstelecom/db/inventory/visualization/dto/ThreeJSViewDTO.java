@@ -107,19 +107,12 @@ public class ThreeJSViewDTO {
     }
 
     public ThreeJSViewDTO(FilterResponse filter) {
-
-        if (filter.getPayLoad().getNodes() != null) {
-            // filter.getPayLoad().getNodes().forEach(node -> {
-            // this.nodes.add(new ThreeJsNodeDTO(node.getKey(), node.getName(), "",
-            // node.getDomainName()));
-            // });
-        }
-
         if (filter.getPayLoad().getConnections() != null) {
             filter.getPayLoad().getConnections().forEach(connection -> {
 
                 ThreeJsNodeDTO fromNode = new ThreeJsNodeDTO(connection.getFromResource());
                 ThreeJsNodeDTO toNode = new ThreeJsNodeDTO(connection.getToResource());
+
                 nodes.add(fromNode);
                 this.nodeMap.put(fromNode.getId(), fromNode);
                 nodes.add(toNode);
@@ -165,6 +158,7 @@ public class ThreeJSViewDTO {
     public void setNodesByGraph(GraphList<ManagedResource> resources) {
         nodes.clear();
         this.nodeMap.clear();
+
         try {
             resources.forEach(resource -> {
                 ThreeJsNodeDTO node = new ThreeJsNodeDTO(resource);
@@ -176,7 +170,7 @@ public class ThreeJSViewDTO {
 
     }
 
-    private void addNode(ThreeJsNodeDTO node) {
+    public void addNode(ThreeJsNodeDTO node) {
         if (!this.nodes.contains(node)) {
             this.nodeMap.put(node.getId(), node);
             nodes.add(node);
@@ -194,11 +188,11 @@ public class ThreeJSViewDTO {
         try {
             connections.forEach(connection -> {
                 if (addNodes) {
-                    if (!this.nodeMap.containsKey(connection.getFromKey())) {
+                    if (!this.nodeMap.containsKey(connection.getFromResource().getKey())) {
                         ThreeJsNodeDTO node = new ThreeJsNodeDTO(connection.getFromResource());
                         this.addNode(node);
                     }
-                    if (!this.nodeMap.containsKey(connection.getToKey())) {
+                    if (!this.nodeMap.containsKey(connection.getToResource().getKey())) {
                         ThreeJsNodeDTO node = new ThreeJsNodeDTO(connection.getToResource());
                         this.addNode(node);
                     }
