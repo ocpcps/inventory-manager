@@ -708,6 +708,7 @@ public class ResourceSession {
             if (filter.getObjects().contains("nodes") || filter.getObjects().contains("node")) {
                 GraphList<ManagedResource> nodesGraph = this.managedResourceManager.getNodesByFilter(filter,
                         filter.getDomainName());
+
                 return nodesGraph;
             } else {
                 throw new InvalidRequestException("Filter Object is now known")
@@ -782,7 +783,8 @@ public class ResourceSession {
         return this.filterProjectionSession.filterJson(json, filterDTO.getFields());
     }
 
-    public ManagedResource findManagedResource(ManagedResource resource) throws ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
+    public ManagedResource findManagedResource(ManagedResource resource)
+            throws ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
         return this.manager.findManagedResource(resource);
     }
 
@@ -1101,14 +1103,17 @@ public class ResourceSession {
      * @throws ArangoDaoException
      * @throws GenericException
      */
-    public UpdateBatchAttributeResponse updateBatchAttribute(UpdateBatchAttributeRequest request) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, GenericException {
+    public UpdateBatchAttributeResponse updateBatchAttribute(UpdateBatchAttributeRequest request)
+            throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException,
+            GenericException {
         BatchAttributeUpdateDTO updateRequestDTO = request.getPayLoad();
         FilterDTO filter = request.getPayLoad().getFilter();
         if (filter != null) {
             //
-            //  Vamos tentar resolver os filtros
+            // Vamos tentar resolver os filtros
             //
-            try (GraphList<ManagedResource> nodesGraph = managedResourceManager.getNodesByFilter(filter, request.getRequestDomain())) {
+            try (GraphList<ManagedResource> nodesGraph = managedResourceManager.getNodesByFilter(filter,
+                    request.getRequestDomain())) {
 
                 /**
                  * Seta o total de objetos a serem atualizados
@@ -1116,7 +1121,8 @@ public class ResourceSession {
                 updateRequestDTO.setTotalObjects(nodesGraph.size());
 
                 //
-                // Agora começa o merge, esse carinha aqui conhece todo o resultado a ser atualizado
+                // Agora começa o merge, esse carinha aqui conhece todo o resultado a ser
+                // atualizado
                 //
                 nodesGraph.forEach(resource -> {
                     if (request.getPayLoad().getAttributes() != null
@@ -1142,7 +1148,8 @@ public class ResourceSession {
 
             } catch (IOException ex) {
                 //
-                // Esta exception vem da implementação do Closeable, por horas vamos omitir aqui e transformar em uma generic
+                // Esta exception vem da implementação do Closeable, por horas vamos omitir aqui
+                // e transformar em uma generic
                 //
                 throw new GenericException("Failed to Close Cursor", ex);
             }
