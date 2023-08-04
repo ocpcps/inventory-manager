@@ -18,6 +18,7 @@
 package com.osstelecom.db.inventory.visualization.dto;
 
 import com.osstelecom.db.inventory.manager.resources.BasicResource;
+
 import java.util.Objects;
 
 /**
@@ -31,6 +32,8 @@ public class ThreeJsNodeDTO extends BaseGraphDTO {
     private final String name;
     private final String group;
     private final Boolean isLeaf;
+    private final String graphItemColor;
+    // private final String graphItemColor;
 
     @Override
     public int hashCode() {
@@ -66,8 +69,6 @@ public class ThreeJsNodeDTO extends BaseGraphDTO {
         return Objects.equals(this.domain, other.domain);
     }
 
-    
-
     public ThreeJsNodeDTO(BasicResource res) {
         this.id = res.getKey();
         this.name = res.getName();
@@ -75,7 +76,9 @@ public class ThreeJsNodeDTO extends BaseGraphDTO {
         this.domain = res.getDomainName();
         this.operStatus = res.getOperationalStatus();
         this.isLeaf = res.getIsLeaf();
+        this.graphItemColor = res.getSchemaModel().getGraphItemColor();
     }
+
     private final String domain;
 
     public String getId() {
@@ -92,6 +95,10 @@ public class ThreeJsNodeDTO extends BaseGraphDTO {
 
     public String getDomain() {
         return domain;
+    }
+
+    public String getGraphItemColor() {
+        return graphItemColor;
     }
 
 }
