@@ -431,14 +431,34 @@ public class ResourceSession {
     }
 
     /**
-     * Obtem o managed Resource By ID
+     * Este método é usado para encontrar um recurso gerenciado pelo seu ID. Ele
+     * recebe um objeto FindManagedResourceRequest como parâmetro.
      *
-     * @param request
-     * @return
-     * @throws InvalidRequestException
-     * @throws DomainNotFoundException
-     * @throws ResourceNotFoundException
-     * @throws ArangoDaoException
+     * @param request um objeto FindManagedResourceRequest que contém o ID do
+     * recurso e o domínio do recurso.
+     * @return um objeto FindManagedResourceResponse que contém o recurso
+     * gerenciado encontrado.
+     * @throws InvalidRequestException se o ID do recurso ou o domínio estiverem
+     * vazios ou nulos.
+     * @throws DomainNotFoundException se o domínio fornecido não for
+     * encontrado.
+     * @throws ResourceNotFoundException se o recurso com o ID fornecido não for
+     * encontrado.
+     * @throws ArangoDaoException se ocorrer um erro ao interagir com o banco de
+     * dados ArangoDB.
+     *
+     * O método primeiro verifica se o ID do recurso fornecido no objeto de
+     * solicitação é nulo. Se for nulo, ele verifica se o domínio também é nulo.
+     * Se ambos forem nulos, ele lança uma exceção InvalidRequestException. Se
+     * apenas o ID do recurso for nulo, ele tenta encontrar o domínio e, em
+     * seguida, encontrar o recurso gerenciado usando o domínio e o ID do
+     * recurso. Se o ID do recurso não for nulo, ele tenta encontrar o domínio
+     * e, em seguida, encontrar o recurso gerenciado usando o domínio e o ID do
+     * recurso. Em ambos os casos, se o domínio não for encontrado, ele lança
+     * uma exceção DomainNotFoundException. Se o recurso não for encontrado, ele
+     * lança uma exceção ResourceNotFoundException. Se ocorrer um erro ao
+     * interagir com o banco de dados ArangoDB, ele lança uma exceção
+     * ArangoDaoException.
      */
     public FindManagedResourceResponse findManagedResourceById(FindManagedResourceRequest request)
             throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
@@ -467,6 +487,15 @@ public class ResourceSession {
 
     }
 
+    /**
+     *
+     * @param request
+     * @return
+     * @throws DomainNotFoundException
+     * @throws ResourceNotFoundException
+     * @throws ArangoDaoException
+     * @throws InvalidRequestException
+     */
     public TypedListResponse listManagedResources(ListManagedResourceRequest request)
             throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
         FilterDTO filter = new FilterDTO();
@@ -494,19 +523,46 @@ public class ResourceSession {
     }
 
     /**
-     * Cria um recurso gerenciavel
+     * Este método é usado para criar um novo recurso gerenciado. Ele recebe um
+     * objeto CreateManagedResourceRequest como parâmetro.
      *
-     * @param request
-     * @return
-     * @throws SchemaNotFoundException
-     * @throws AttributeConstraintViolationException
-     * @throws GenericException
-     * @throws ScriptRuleException
-     * @throws com.osstelecom.db.inventory.manager.exception.InvalidRequestException
-     * @throws com.osstelecom.db.inventory.manager.exception.DomainNotFoundException
-     * @throws com.osstelecom.db.inventory.manager.exception.ArangoDaoException
-     * @throws com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException
-     * @throws com.osstelecom.db.inventory.manager.exception.AttributeNotFoundException
+     * @param request um objeto CreateManagedResourceRequest que contém o
+     * recurso a ser criado.
+     * @return um objeto CreateManagedResourceResponse que contém o recurso
+     * gerenciado criado.
+     * @throws SchemaNotFoundException se o esquema fornecido no recurso não for
+     * encontrado.
+     * @throws AttributeConstraintViolationException se uma violação de
+     * restrição de atributo ocorrer.
+     * @throws GenericException para erros genéricos.
+     * @throws ScriptRuleException se uma exceção de regra de script ocorrer.
+     * @throws InvalidRequestException se a solicitação for inválida.
+     * @throws DomainNotFoundException se o domínio fornecido não for
+     * encontrado.
+     * @throws ArangoDaoException se ocorrer um erro ao interagir com o banco de
+     * dados ArangoDB.
+     * @throws ResourceNotFoundException se o recurso com o ID fornecido não for
+     * encontrado.
+     * @throws AttributeNotFoundException se o atributo fornecido no recurso não
+     * for encontrado.
+     *
+     * O método primeiro verifica se o objeto de solicitação ou o payload da
+     * solicitação são nulos. Se forem, ele lança uma exceção
+     * InvalidRequestException. Em seguida, ele define o domínio do recurso
+     * usando o domínio fornecido na solicitação. Ele verifica se o domínio do
+     * recurso é nulo e, se for, lança uma exceção DomainNotFoundException. Ele
+     * verifica se o nome do recurso é nulo ou vazio e, se for, tenta definir o
+     * nome do recurso usando o endereço do nó do recurso. Se o endereço do nó
+     * também for nulo ou vazio, ele lança uma exceção InvalidRequestException.
+     * Ele define o esquema de atributos, a classe e os status operacional e
+     * administrativo do recurso se eles não forem fornecidos. Ele verifica se o
+     * endereço do nó do recurso é nulo e, se for, define o endereço do nó
+     * usando o nome do recurso. Ele valida o ID da estrutura do recurso, se
+     * fornecido, e define o ID da estrutura do recurso. Ele define o
+     * proprietário e o autor do recurso usando o ID do usuário fornecido na
+     * solicitação e define a data de inserção do recurso como a data atual.
+     * Finalmente, ele cria o recurso e retorna um objeto
+     * CreateManagedResourceResponse contendo o recurso criado.
      */
     public CreateManagedResourceResponse createManagedResource(CreateManagedResourceRequest request)
             throws SchemaNotFoundException, AttributeConstraintViolationException, GenericException,
@@ -637,6 +693,15 @@ public class ResourceSession {
         return this.filterProjectionSession.filterProjection(filter.getPayLoad(), response);
     }
 
+    /**
+     *
+     * @param filter
+     * @return
+     * @throws InvalidRequestException
+     * @throws ArangoDaoException
+     * @throws DomainNotFoundException
+     * @throws ResourceNotFoundException
+     */
     public GraphList<ManagedResource> findManagedResourceByFilter(FilterDTO filter)
             throws InvalidRequestException, ArangoDaoException, DomainNotFoundException, ResourceNotFoundException {
         if (filter.getObjects() != null) {
@@ -655,6 +720,15 @@ public class ResourceSession {
 
     }
 
+    /**
+     *
+     * @param filter
+     * @return
+     * @throws InvalidRequestException
+     * @throws ArangoDaoException
+     * @throws DomainNotFoundException
+     * @throws ResourceNotFoundException
+     */
     public GraphList<ResourceConnection> findResourceConnectionByFilter(FilterDTO filter)
             throws InvalidRequestException, ArangoDaoException, DomainNotFoundException, ResourceNotFoundException {
         if (filter.getObjects().contains("connections") || filter.getObjects().contains("connection")) {

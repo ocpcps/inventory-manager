@@ -34,6 +34,7 @@ import com.osstelecom.db.inventory.manager.request.PatchResourceSchemaModelReque
 import com.osstelecom.db.inventory.manager.response.CreateResourceSchemaModelResponse;
 import com.osstelecom.db.inventory.manager.response.EmptyOkResponse;
 import com.osstelecom.db.inventory.manager.response.GetSchemasResponse;
+import com.osstelecom.db.inventory.manager.response.ListSchemasResponse;
 import com.osstelecom.db.inventory.manager.response.PatchResourceSchemaModelResponse;
 import com.osstelecom.db.inventory.manager.response.ResourceSchemaResponse;
 import com.osstelecom.db.inventory.manager.response.TypedListResponse;
@@ -55,6 +56,12 @@ public class SchemaApi extends BaseApi {
 
     @Autowired
     private SchemaSession schemaSession;
+
+    @AuthenticatedCall(role = {"user"})
+    @GetMapping(produces = "application/json")
+    public ListSchemasResponse listSchemas() throws SchemaNotFoundException, GenericException {
+        return schemaSession.listSchemas();
+    }
 
     /**
      * Retrieves the schema representation

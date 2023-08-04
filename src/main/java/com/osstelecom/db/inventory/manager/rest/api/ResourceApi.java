@@ -183,6 +183,13 @@ public class ResourceApi extends BaseApi {
         return resourceSession.findManagedResourceByFilter(filter);
     }
 
+    /**
+     *
+     * @param filter
+     * @param domain
+     * @param httpRequest
+     * @return
+     */
     @AuthenticatedCall(role = {"user"})
     @PostMapping(path = {"/{domain}/query", "/{domain}/resource/query"}, produces = "application/json", consumes = "application/json")
     public String queryResourceByFilter(@RequestBody FilterRequest filter, @PathVariable("domain") String domain, HttpServletRequest httpRequest) {
@@ -217,6 +224,22 @@ public class ResourceApi extends BaseApi {
         return this.resourceSession.patchManagedResource(request);
     }
 
+    /**
+     *
+     * @param request
+     * @param domainName
+     * @param httpRequest
+     * @return
+     * @throws DomainNotFoundException
+     * @throws ResourceNotFoundException
+     * @throws ArangoDaoException
+     * @throws InvalidRequestException
+     * @throws AttributeConstraintViolationException
+     * @throws ScriptRuleException
+     * @throws SchemaNotFoundException
+     * @throws GenericException
+     * @throws AttributeNotFoundException
+     */
     @AuthenticatedCall(role = {"user"})
     @PatchMapping(path = "/{domain}/resource", produces = "application/json", consumes = "application/json")
     public PatchManagedResourceResponse patchManagedResource(@RequestBody PatchManagedResourceRequest request, @PathVariable("domain") String domainName, HttpServletRequest httpRequest) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException, ScriptRuleException, SchemaNotFoundException, GenericException, AttributeNotFoundException {
@@ -225,7 +248,5 @@ public class ResourceApi extends BaseApi {
         httpRequest.setAttribute("request", request);
         return this.resourceSession.patchManagedResource(request);
     }
-
-
 
 }

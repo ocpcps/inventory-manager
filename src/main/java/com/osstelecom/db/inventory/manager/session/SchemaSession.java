@@ -57,6 +57,7 @@ import com.osstelecom.db.inventory.manager.resources.model.ResourceAttributeMode
 import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
 import com.osstelecom.db.inventory.manager.response.CreateResourceSchemaModelResponse;
 import com.osstelecom.db.inventory.manager.response.GetSchemasResponse;
+import com.osstelecom.db.inventory.manager.response.ListSchemasResponse;
 import com.osstelecom.db.inventory.manager.response.PatchResourceSchemaModelResponse;
 import com.osstelecom.db.inventory.manager.response.ResourceSchemaResponse;
 import java.util.Date;
@@ -192,14 +193,10 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
         }
     }
 
-    /**
-     * Loads all schemas
-     *
-     * @return
-     */
-    public GetSchemasResponse loadSchemas() throws SchemaNotFoundException, GenericException {
+    private List<ResourceSchemaModel> loadSchemaFromDisk() throws SchemaNotFoundException, GenericException {
+        List<ResourceSchemaModel> result = new ArrayList<>();
         this.schemaDir = configurationManager.loadConfiguration().getSchemaDir();
-        List<String> result = new ArrayList<>();
+
         String schemaDirectory = configurationManager.loadConfiguration().getSchemaDir();
         schemaDirectory = schemaDirectory.replace("\\.", "/");
         DirectoryScanner scanner = new DirectoryScanner();
@@ -219,10 +216,30 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
 
                 schemaFile = schemaFile.replaceAll("\\/", ".").replaceAll("\\.json", "");
                 ResourceSchemaModel schema = this.loadSchemaFromDisk(schemaFile, null);
-                result.add(schema.getSchemaName());
+                result.add(schema);
             }
 
         }
+        return result;
+    }
+
+    public ListSchemasResponse listSchemas() throws SchemaNotFoundException, GenericException {
+        return new ListSchemasResponse(this.loadSchemaFromDisk());
+    }
+
+    /**
+     * Loads all schemas
+     *
+     * @return
+     * @throws
+     * com.osstelecom.db.inventory.manager.exception.SchemaNotFoundException
+     * @throws com.osstelecom.db.inventory.manager.exception.GenericException
+     */
+    public GetSchemasResponse loadSchemas() throws SchemaNotFoundException, GenericException {
+        List<String> result = new ArrayList<>();
+        this.loadSchemaFromDisk().forEach(s -> {
+            result.add(s.getSchemaName());
+        });
 
         return new GetSchemasResponse(result);
     }
@@ -585,7 +602,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                                     resource.getSchemaModel().setIsValid(false);
                                     throw new AttributeConstraintViolationException(
                                             "Value: [" + stringValue + "] does not matches validation regex:["
-                                                    + entry.getValidationRegex() + "]");
+                                            + entry.getValidationRegex() + "]");
                                 }
                             }
 
@@ -616,7 +633,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                                             resource.getSchemaModel().setIsValid(false);
                                             throw new AttributeConstraintViolationException(
                                                     "Value: [" + stringValue + "] does not matches validation regex:["
-                                                            + entry.getValidationRegex() + "]");
+                                                    + entry.getValidationRegex() + "]");
                                         }
                                     }
                                     resource.getAttributes().put(entry.getName(),
@@ -647,7 +664,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                             } else {
                                 throw new AttributeConstraintViolationException(
                                         "Attribute named:[" + name + "] is not discovery attribute for model: ["
-                                                + resource.getSchemaModel().getSchemaName() + "]");
+                                        + resource.getSchemaModel().getSchemaName() + "]");
                             }
                         } else {
                             throw new AttributeConstraintViolationException("Invalid Discovery Attribute named:[" + name
@@ -714,9 +731,9 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                                         if (!model.getAllowedValues().contains(o.toString())) {
                                             throw new AttributeConstraintViolationException(
                                                     "Attribute [" + model.getName() + "] of type:"
-                                                            + model.getVariableType() + " Value : ["
-                                                            + o.toString() + "] is not allowed here Allowed vars are:["
-                                                            + String.join(",", model.getAllowedValues()) + "]");
+                                                    + model.getVariableType() + " Value : ["
+                                                    + o.toString() + "] is not allowed here Allowed vars are:["
+                                                    + String.join(",", model.getAllowedValues()) + "]");
                                         }
                                     }
                                 }
@@ -724,7 +741,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                         } else {
                             throw new AttributeConstraintViolationException(
                                     "Attribute [" + model.getName() + "] of type:" + model.getVariableType()
-                                            + " Is a List, please send a list , not a scalar value");
+                                    + " Is a List, please send a list , not a scalar value");
 
                         }
 
@@ -737,9 +754,9 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                                     //
                                     throw new AttributeConstraintViolationException(
                                             "Attribute [" + model.getName() + "] of type:" + model.getVariableType()
-                                                    + " Value : ["
-                                                    + value + "] is not allowed here Allowed vars are:["
-                                                    + String.join(",", model.getAllowedValues()) + "]");
+                                            + " Value : ["
+                                            + value + "] is not allowed here Allowed vars are:["
+                                            + String.join(",", model.getAllowedValues()) + "]");
 
                                 }
                             }
@@ -838,7 +855,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                         } else {
                             throw new AttributeConstraintViolationException(
                                     "Attribute [" + model.getName() + "] of type:"
-                                            + model.getVariableType() + " Does not accpect value: [" + value + "]");
+                                    + model.getVariableType() + " Does not accpect value: [" + value + "]");
                         }
                     } else {
                         return false;
@@ -879,9 +896,9 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                         } catch (ParseException ex) {
                             throw new AttributeConstraintViolationException(
                                     "Attribute [" + model.getName() + "] of type:"
-                                            + model.getVariableType() + " Cannot Parse Date Value : [" + value
-                                            + "] With Mask: ["
-                                            + configurationManager.loadConfiguration().getDateFormat() + "]",
+                                    + model.getVariableType() + " Cannot Parse Date Value : [" + value
+                                    + "] With Mask: ["
+                                    + configurationManager.loadConfiguration().getDateFormat() + "]",
                                     ex);
                         }
                     }
@@ -905,9 +922,9 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                         } catch (ParseException ex) {
                             throw new AttributeConstraintViolationException(
                                     "Attribute [" + model.getName() + "] of type:"
-                                            + model.getVariableType() + " Cannot Parse Date Time Value : [" + value
-                                            + "] With Mask: ["
-                                            + configurationManager.loadConfiguration().getDateTimeFormat() + "]",
+                                    + model.getVariableType() + " Cannot Parse Date Time Value : [" + value
+                                    + "] With Mask: ["
+                                    + configurationManager.loadConfiguration().getDateTimeFormat() + "]",
                                     ex);
 
                         }

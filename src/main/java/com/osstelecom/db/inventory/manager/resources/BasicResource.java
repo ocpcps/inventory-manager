@@ -32,8 +32,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-//import org.bson.codecs.pojo.annotations.BsonIgnore;
 
+//import org.bson.codecs.pojo.annotations.BsonIgnore;
 /**
  * This is the basic resource of all resources, that can be: Location, Managed,
  * Connection or service.
@@ -53,83 +53,119 @@ public class BasicResource {
      */
     @Schema(example = "network")
     private String domainName;
-
+    @Schema(description = "Data de Instalação do Recurso")
     private Date installationDate;
+    @Schema(description = "Data de Ativação do Recurso")
     private Date activationDate;
+    @Schema(description = "Data de Desativação do Recurso")
     private Date inactivationDate;
+    @Schema(description = "Data de Atualização do Recurso")
     private Date lastModifiedDate;
+    @Schema(description = "Data de Cadastro do Recurso")
     private Date insertedDate;
+    @Schema(description = "Indica se o Recurso foi deletado virtualmente")
     private Boolean deleted;
+    @Schema(description = "Indica se o Recurso Esta travado, com flag de read only")
     private Boolean readOnly;
-
+    @Schema(description = "Indica se o Recurso é 'leaf'")
     private Boolean isLeaf;
+    @Schema(description = "Indica se o Recurso é Consumivel")
     private Boolean isConsumable;
+    @Schema(description = "Indica se o Recurso é Consumidor")
     private Boolean isConsumer = false; //revisar
-    
+
+    @Schema(description = "Define a métrica que pode ser consumida do recurso")
     private ConsumableMetric consumableMetric;
+    @Schema(description = "Define a métrica que consome do recurso")
     private ConsumableMetric consumerMetric;
 
     /**
      * Mandatory
      */
+    @Schema(description = "Define o nome do recurso")
     private String name;
+    @Schema(description = "Descrição do recurso")
     private String description;
 
     /**
      * Mandatory
      */
+    @Schema(description = "Nome único do recurso")
     private String nodeAddress;
+    @Schema(description = "Fornecedor do Recurso")
     private String vendor;
+    @Schema(description = "Versão do Recurso")
     private String version;
+    @Schema(description = "Dono do Recurso")
     private String owner;
+    @Schema(description = "Autor , ou usuário criado")
     private String author;
+    @Schema(description = "Tipo do Recurso")
     private String resourceType;
+    @Schema(description = "Nome do Schema")
     private String attributeSchemaName = null;
+    @Schema(description = "Categoria do Recurso")
     private String category;
+    @Schema(description = "Admin Status , pode ser UP/Down")
     private String adminStatus;
+    @Schema(description = "Oper Status , pode ser UP/Down")
     private String operationalStatus;
+    @Schema(description = "Status de Negócio")
     private String businessStatus;
+    @Schema(description = "nó. depreciado")
+    @Deprecated
     private String node;
+    @Schema(description = "Id da Estrutura a qual este recurso pertence")
     private String structureId;
+    @Schema(description = "Tags do Recurso")
     private ArrayList<String> tags;
     @DocumentField(DocumentField.Type.KEY)
+    @Schema(description = "Chave da Collection, é o ID")
     private String key;
+
+    @Schema(description = "ID do Arango, não é muito útil para o front...")
     @DocumentField(DocumentField.Type.ID)
     private String id;
 
     /**
      * Mandatory
      */
+    @Schema(description = "Nome da Classe do Recurso")
     private String className = null;
 
     //
     // Atributos Offline
     //
+    @Schema(description = "Valores dos atributos do Recurso")
     private Map<String, Object> attributes = new ConcurrentHashMap<>();
 
     //
     // Atributos do discovery
     //
+    @Schema(description = "Valores dos atributos do Recurso obtidos pelo discovery")
     private Map<String, Object> discoveryAttributes = new ConcurrentHashMap<>();
 
     /**
      * Cuidado com os campos a seguir!
      */
     @JsonIgnore
-//    @BsonIgnore
     private Map<String, ResourceConnection> connections = new ConcurrentHashMap<>();
     @JsonIgnore
-//    @BsonIgnore
     private Map<String, ResourceConnection> connectionCache = new ConcurrentHashMap<>();
     @JsonIgnore
-//    @BsonIgnore
     private Map<String, Object> attachments = new ConcurrentHashMap<>();
 
+    @Schema(description = "Atomic ID , utilizado internamente")
     private Long atomId = 0L;
     private ResourceSchemaModel schemaModel;
     @DocumentField(DocumentField.Type.REV)
+    @Schema(description = "Revision ID, pode ser utilizado para identificar mudanças no recurso")
     private String revisionId;
 
+    /**
+     * Utilizado para receber um array de Identifiers do TEMS
+     */
+    @Schema(description = "Identifiers que podem ser utilizado para dar match neste recurso")
     private List<String> eventSourceIds = new ArrayList<>();
 
     public void addTag(String tag) {
@@ -868,5 +904,5 @@ public class BasicResource {
     public void setEventSourceIds(List<String> eventSourceIds) {
         this.eventSourceIds = eventSourceIds;
     }
-    
+
 }
