@@ -42,8 +42,9 @@ import com.osstelecom.db.inventory.manager.response.TypedMapResponse;
 import com.osstelecom.db.inventory.manager.security.model.AuthenticatedCall;
 import com.osstelecom.db.inventory.manager.session.SchemaSession;
 import javax.servlet.http.HttpServletRequest;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.RequestParam;
 
 /**
@@ -62,10 +63,11 @@ public class SchemaApi extends BaseApi {
 
     @AuthenticatedCall(role = {"user"})
     @GetMapping(path = "/detail/{filter}", produces = "application/json")
-    public ListSchemasResponse listSchemas(@RequestParam(
-            value = "page",
-            required = false,
-            defaultValue = "0") int page,
+    public ListSchemasResponse listSchemas(
+            @RequestParam(
+                    value = "page",
+                    required = false,
+                    defaultValue = "0") int page,
             @RequestParam(
                     value = "size",
                     required = false,
@@ -138,7 +140,7 @@ public class SchemaApi extends BaseApi {
         request.getPayLoad().setSchemaName(schemaName);
         this.setUserDetails(request);
         httpRequest.setAttribute("request", request);
-        return schemaSession.patchSchemaModel(request.getPayLoad());
+        return schemaSession.patchSchemaModel(request);
     }
 
     /**
@@ -153,7 +155,7 @@ public class SchemaApi extends BaseApi {
             throws GenericException, SchemaNotFoundException, InvalidRequestException {
         this.setUserDetails(request);
         httpRequest.setAttribute("request", request);
-        return this.schemaSession.createResourceSchemaModel(request.getPayLoad());
+        return this.schemaSession.createResourceSchemaModel(request);
     }
 
     /**

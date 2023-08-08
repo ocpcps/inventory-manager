@@ -17,6 +17,8 @@
  */
 package com.osstelecom.db.inventory.manager.request;
 
+import org.springframework.security.oauth2.jwt.Jwt;
+
 /**
  *
  * @author Lucas Nishimura
@@ -34,6 +36,15 @@ public abstract class BasicRequest<T> implements IRequest<T> {
     private String userName;
     private String userLogin;
     private T payLoad;
+    private Jwt principal;
+
+    public Jwt getPrincipal() {
+        return principal;
+    }
+
+    public void setPrincipal(Jwt principal) {
+        this.principal = principal;
+    }
 
     public String getClassName() {
         if (this.className == null) {
