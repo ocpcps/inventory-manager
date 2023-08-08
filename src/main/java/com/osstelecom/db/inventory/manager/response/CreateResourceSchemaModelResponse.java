@@ -21,7 +21,7 @@ import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 21.07.2022
  */
 public class CreateResourceSchemaModelResponse extends BasicResponse<ResourceSchemaModel> {

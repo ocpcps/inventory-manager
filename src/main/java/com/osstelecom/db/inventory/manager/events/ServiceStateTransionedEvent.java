@@ -23,7 +23,7 @@ import com.osstelecom.db.inventory.manager.resources.ServiceResource;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 12.09.2022
  */
 public class ServiceStateTransionedEvent extends BasicResourceEvent<ServiceResource> {

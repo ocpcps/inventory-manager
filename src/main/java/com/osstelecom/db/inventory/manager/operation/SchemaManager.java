@@ -54,7 +54,7 @@ import org.springframework.stereotype.Service;
  * Praticamente criei para lidar com os updates de Schemas nos dominios e nos
  * recursos
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 13.12.2022
  */
 @Service

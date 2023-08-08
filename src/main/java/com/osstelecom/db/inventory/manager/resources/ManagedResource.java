@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 /**
  * This class represents the Resource that needs to be managed
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 

@@ -21,7 +21,7 @@ import com.osstelecom.db.inventory.manager.resources.ServiceResource;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 18.08.2022
  */
 public class GetServiceResponse extends BasicResponse<ServiceResource> {

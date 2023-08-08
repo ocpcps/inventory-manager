@@ -18,8 +18,9 @@
 package com.osstelecom.db.inventory.manager.dto;
 
 /**
+ * Representa o DTO de Erro da API
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 15.12.2021
  */
 public class ApiErrorDTO {

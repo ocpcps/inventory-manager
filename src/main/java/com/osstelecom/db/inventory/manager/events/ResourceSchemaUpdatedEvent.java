@@ -21,7 +21,7 @@ import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 29.07.2022
  */
 public class ResourceSchemaUpdatedEvent extends BasicEvent<ResourceSchemaModel> {

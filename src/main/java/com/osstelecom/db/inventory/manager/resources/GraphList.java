@@ -30,7 +30,7 @@ import java.util.stream.Stream;
  * This is a list backed by a ArangoDB Cursor. This is usefull to stream
  * operations
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 29.07.2022
  */
 public class GraphList<T> implements AutoCloseable {

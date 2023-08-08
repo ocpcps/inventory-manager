@@ -21,7 +21,7 @@ import com.osstelecom.db.inventory.manager.resources.model.IconModel;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 04.01.2022
  */
 public class CreateIconResponse extends BasicResponse<IconModel> {

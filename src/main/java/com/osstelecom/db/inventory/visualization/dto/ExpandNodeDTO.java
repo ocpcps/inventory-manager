@@ -19,7 +19,7 @@ package com.osstelecom.db.inventory.visualization.dto;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 01.02.2023
  */
 public class ExpandNodeDTO {

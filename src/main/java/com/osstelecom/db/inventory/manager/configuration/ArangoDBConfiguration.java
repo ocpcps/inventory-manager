@@ -18,8 +18,51 @@
 package com.osstelecom.db.inventory.manager.configuration;
 
 /**
+ * Classe ArangoDBConfiguration
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * <p>
+ * Descrição: Classe de configuração para a conexão com o banco de dados
+ * ArangoDB. Esta classe contém as configurações necessárias para a conexão com
+ * o banco de dados, como nome do banco, endereço do host, porta, usuário e
+ * senha.</p>
+ *
+ * <p>
+ * Configurações:
+ * <ul>
+ * <li>databaseName: Nome do banco de dados utilizado pela aplicação.</li>
+ * <li>nodeSufix: Sufixo utilizado para identificar recursos de nó.</li>
+ * <li>serviceSufix: Sufixo utilizado para identificar recursos de serviço.</li>
+ * <li>metricSufix: Sufixo utilizado para identificar recursos de métrica.</li>
+ * <li>nodeConnectionSufix: Sufixo utilizado para identificar conexões de
+ * recurso de nó.</li>
+ * <li>circuitsSufix: Sufixo utilizado para identificar circuitos de
+ * recurso.</li>
+ * <li>serviceConnectionSufix: Sufixo utilizado para identificar conexões de
+ * recurso de serviço.</li>
+ * <li>connectionLayerSufix: Sufixo utilizado para identificar camadas de
+ * conexão.</li>
+ * <li>serviceLayerSufix: Sufixo utilizado para identificar camadas de
+ * serviço.</li>
+ * <li>host: Endereço do host do banco de dados ArangoDB.</li>
+ * <li>port: Porta de comunicação com o banco de dados ArangoDB.</li>
+ * <li>user: Usuário para autenticação no banco de dados ArangoDB.</li>
+ * <li>password: Senha para autenticação no banco de dados ArangoDB.</li>
+ * <li>domainsCollection: Nome da coleção de domínios utilizada no banco de
+ * dados.</li>
+ * </ul>
+ * </p>
+ *
+ * <p>
+ * Exceptions:
+ * <ul>
+ * <li>Não há exceções específicas lançadas por esta classe.</li>
+ * </ul>
+ * </p>
+ *
+ * @version 1.0
+ * @since 15-12-2021
+ *
+ * @author Lucas Nishimura
  * @created 15.12.2021
  */
 public class ArangoDBConfiguration {

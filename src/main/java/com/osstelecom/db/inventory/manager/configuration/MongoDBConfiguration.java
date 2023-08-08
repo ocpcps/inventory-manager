@@ -21,8 +21,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * Não utilizar mais
  * @deprecated 
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 14.12.2021
  */
 public class MongoDBConfiguration {

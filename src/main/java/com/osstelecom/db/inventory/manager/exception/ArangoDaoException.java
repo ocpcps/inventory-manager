@@ -22,7 +22,7 @@ import com.osstelecom.db.inventory.manager.request.IRequest;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 24.05.2022
  */
 public class ArangoDaoException extends BasicException {

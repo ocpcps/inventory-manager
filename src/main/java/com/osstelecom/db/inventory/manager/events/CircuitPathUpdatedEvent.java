@@ -24,7 +24,7 @@ import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 21.07.2023
  */
 public class CircuitPathUpdatedEvent extends BasicResourceEvent<CircuitResource> {

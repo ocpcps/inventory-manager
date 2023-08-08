@@ -53,7 +53,7 @@ import com.osstelecom.db.inventory.manager.session.IconSession;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 18.08.2022
  */
 @RestController

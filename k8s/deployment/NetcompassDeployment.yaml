@@ -17,7 +17,7 @@ spec:
         metadata:
           labels:
             app: netcompass-api
-        image: netcompass-image-stream:latest
+        image: quay.apps.mgmt.telcostack.br.telefonica.com/netcompass/netcompass-server/netcompass-api:latest
         resources:
           requests:
             memory: "24576Mi"

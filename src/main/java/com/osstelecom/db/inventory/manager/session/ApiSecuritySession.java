@@ -24,7 +24,7 @@ import org.springframework.stereotype.Service;
 /**
  * Cuida da autenticação da API
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 12.06.2022
  */
 @Service

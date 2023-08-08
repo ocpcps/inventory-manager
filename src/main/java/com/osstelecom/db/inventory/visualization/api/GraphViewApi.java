@@ -55,7 +55,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 12.01.2023
  */
 @RestController

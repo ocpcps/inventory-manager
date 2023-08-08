@@ -21,7 +21,7 @@ import com.osstelecom.db.inventory.manager.resources.ServiceResource;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 23.02.2023
  */
 public class ThreeJSServiceDTO extends BaseGraphDTO {

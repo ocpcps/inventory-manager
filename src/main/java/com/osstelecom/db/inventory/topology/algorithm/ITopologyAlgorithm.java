@@ -23,7 +23,7 @@ import java.util.Queue;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 24.10.2022
  */
 public interface ITopologyAlgorithm {

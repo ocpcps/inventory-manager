@@ -30,7 +30,7 @@ import com.osstelecom.db.inventory.manager.dto.TimerDTO;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 30.08.2022n
  */
 public abstract class Manager {

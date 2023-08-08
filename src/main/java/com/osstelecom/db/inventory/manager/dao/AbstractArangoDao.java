@@ -43,12 +43,11 @@ import com.osstelecom.db.inventory.manager.resources.BasicResource;
 import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.GraphList;
 import java.util.UUID;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 /**
- *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * Dao Abstrata do Arango DB
+ * @author Lucas Nishimura
  * @param <T>
  * @created 30.08.2022
  */

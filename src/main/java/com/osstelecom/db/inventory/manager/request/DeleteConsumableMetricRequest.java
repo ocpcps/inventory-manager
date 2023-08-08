@@ -21,7 +21,7 @@ import com.osstelecom.db.inventory.manager.resources.ConsumableMetric;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 09.12.2022
  */
 public class DeleteConsumableMetricRequest extends BasicRequest<ConsumableMetric> {

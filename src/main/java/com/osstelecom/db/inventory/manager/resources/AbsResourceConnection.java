@@ -23,7 +23,7 @@ import java.util.List;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 24.02.2023
  */
 public class AbsResourceConnection<T extends BasicResource> extends AbsRelatedResource {

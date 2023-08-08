@@ -21,7 +21,7 @@ import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 03.11.2022
  */
 public class DeleteResourceConnectionResponse extends BasicResponse<ResourceConnection> {

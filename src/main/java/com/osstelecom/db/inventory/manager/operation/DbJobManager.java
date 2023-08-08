@@ -35,7 +35,7 @@ import org.springframework.stereotype.Service;
 /**
  * Gerencia as jobs de update que possam estar rodando no banco
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 26.01.2023
  */
 @Service

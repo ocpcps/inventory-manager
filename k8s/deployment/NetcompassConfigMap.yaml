@@ -16,10 +16,10 @@ data:
         "serviceConnectionSufix": "_srv_connections",
         "connectionLayerSufix": "_connections_layer",
         "serviceLayerSufix": "_services_layer",
-        "host": "netcompass-db-coordinator-service.telefonica-netcompass.svc.cluster.local",
+        "host": "netcompass-db-coordinator-service.netcompass.svc.cluster.local",
         "port": 8529,
         "user": "inventory",
-        "password": "prod@inventory",
+        "password": "dev@inventory",
         "domainsCollection": "domains"
       },
       "schemaDir": "/app/inventory-manager/schema/",

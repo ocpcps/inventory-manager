@@ -39,8 +39,52 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
+ * Classe InventoryManagerApplication
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * <p>
+ * Descrição: Classe principal da aplicação Inventory Manager. Esta classe é
+ * responsável por inicializar e configurar a aplicação.</p>
+ *
+ * <p>
+ * Configurações:
+ * <ul>
+ * <li>Exclui as configurações de autoconfiguração do MongoDB
+ * (MongoAutoConfiguration e MongoDataAutoConfiguration) para evitar conflitos
+ * com o banco de dados da aplicação.</li>
+ * <li>Realiza a varredura de componentes no pacote
+ * "com.osstelecom.db.inventory".</li>
+ * <li>Ativa o agendamento (scheduling) da aplicação.</li>
+ * </ul>
+ * </p>
+ *
+ * <p>
+ * Fluxo:
+ * <ol>
+ * <li>O método main é responsável por inicializar a aplicação Inventory
+ * Manager.</li>
+ * <li>O método onStartup é um event listener que é acionado quando a aplicação
+ * está pronta para ser executada.</li>
+ * <li>O método onShutDown é um event listener que é acionado quando a aplicação
+ * está sendo encerrada.</li>
+ * <li>O método disableSslVerification é responsável por desabilitar a validação
+ * de certificados autoassinados, garantindo que a aplicação aceite conexões SSL
+ * não confiáveis.</li>
+ * </ol>
+ * </p>
+ *
+ * <p>
+ * Exceptions:
+ * <ul>
+ * <li>Não há exceções específicas lançadas por esta classe.</li>
+ * </ul>
+ * </p>
+ *
+ * @version 1.0
+ * @since 14-12-2021
+ * @see SpringBootApplication
+ * @see ComponentScan
+ * @see EnableScheduling
+ * @author Lucas Nishimura
  * @created 14.12.2021
  */
 @SpringBootApplication(exclude = {MongoAutoConfiguration.class, MongoDataAutoConfiguration.class})

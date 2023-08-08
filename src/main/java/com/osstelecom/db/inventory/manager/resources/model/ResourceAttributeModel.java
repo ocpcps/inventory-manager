@@ -23,7 +23,7 @@ import java.util.List;
 /**
  * Classe que representa um Atributo
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ResourceAttributeModel {

@@ -37,8 +37,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.method.HandlerMethod;
 
 /**
- *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * Configurações do OPEN API
+ * @author Lucas Nishimura
  * @created 14.01.2023
  */
 @Configuration

@@ -21,7 +21,7 @@ import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 16.12.2021
  */
 public class CreateResourceConnectionResponse extends BasicResponse<ResourceConnection> {

@@ -18,8 +18,8 @@
 package com.osstelecom.db.inventory.manager.configuration;
 
 /**
- *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * Representa a configuração do microserviço
+ * @author Lucas Nishimura
  * @created 14.12.2021
  */
 public class InventoryConfiguration {

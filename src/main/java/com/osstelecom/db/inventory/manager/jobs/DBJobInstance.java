@@ -24,7 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * Esta classe representa as jobs que podem ser desencadeadas em função das
  * atualizações
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 14.12.2022
  */
 public class DBJobInstance {

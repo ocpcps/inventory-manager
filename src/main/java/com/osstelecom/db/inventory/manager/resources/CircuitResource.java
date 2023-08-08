@@ -24,7 +24,7 @@ import java.util.List;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 04.01.2022
  */
 @JsonInclude(Include.NON_NULL)

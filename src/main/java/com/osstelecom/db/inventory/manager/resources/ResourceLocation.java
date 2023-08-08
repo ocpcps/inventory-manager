@@ -19,7 +19,7 @@ package com.osstelecom.db.inventory.manager.resources;
 /**
  * Representa um local Fisico
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  */
 public class ResourceLocation extends BasicResource {
 

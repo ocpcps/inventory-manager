@@ -46,9 +46,9 @@ import com.osstelecom.db.inventory.manager.resources.ResourceLocation;
 import java.io.IOException;
 
 /**
- * Needs To be created
+ * Representa a dao de um Resource Location
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 03.09.2022
  */
 @Component
@@ -153,7 +153,7 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
         // nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
         try {
             return this.getDb().collection(resource.getDomain().getNodes()).deleteDocument(resource.getId(), ResourceLocation.class, new DocumentDeleteOptions().returnOld(true)
-                   );
+            );
         } catch (Exception ex) {
             throw new ArangoDaoException(ex);
         } finally {

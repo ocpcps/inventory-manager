@@ -23,7 +23,7 @@ import java.io.FileNotFoundException;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 15.12.2021
  */
 public class GenericException extends BasicException {

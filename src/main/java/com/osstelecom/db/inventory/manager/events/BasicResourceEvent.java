@@ -28,7 +28,7 @@ import java.util.Map;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @param <T>
  * @created 10.04.2022
  */

@@ -46,8 +46,9 @@ import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import java.io.IOException;
 
 /**
+ * Representa a Dao de um Resource Connection
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 31.08.2022
  */
 @Component
@@ -337,8 +338,8 @@ public class ResourceConnectionDao extends AbstractArangoDao<ResourceConnection>
             logger.info("\t  [@{}]=[{}]", k, v);
 
         });
-        ArangoCursor<ResourceConnection> cursor = this.getDb().query(aql,  bindVars,
-                new AqlQueryOptions().count(true).batchSize(5000),ResourceConnection.class);
+        ArangoCursor<ResourceConnection> cursor = this.getDb().query(aql, bindVars,
+                new AqlQueryOptions().count(true).batchSize(5000), ResourceConnection.class);
         return new GraphList<>(cursor);
     }
 

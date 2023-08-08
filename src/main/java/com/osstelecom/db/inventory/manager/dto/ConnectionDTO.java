@@ -18,39 +18,88 @@
 package com.osstelecom.db.inventory.manager.dto;
 
 import com.osstelecom.db.inventory.manager.resources.ServiceResource;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
+ * Representa o DTO de uma conexão
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 16.12.2021
  */
 public class ConnectionDTO {
 
+    @Schema(description = "Nome do recurso de origem da conexão")
     private String fromName;
+
+    @Schema(description = "Endereço do nó do recurso de origem da conexão")
     private String fromNodeAddress;
+
+    @Schema(description = "Endereço do nó do recurso de destino da conexão")
     private String toNodeAddress;
+
+    @Schema(description = "Nome da classe do recurso de origem da conexão")
     private String fromClassName;
+
+    @Schema(description = "ID do recurso de origem da conexão")
     private String fromId;
+
+    @Schema(description = "Chave do documento do recurso de origem da conexão na coleção")
     private String fromKey;
+
+    @Schema(description = "ID do recurso de destino da conexão")
     private String toId;
+
+    @Schema(description = "Chave do documento do recurso de destino da conexão na coleção")
     private String toKey;
+
+    @Schema(description = "Nome do recurso de destino da conexão")
     private String toName;
+
+    @Schema(description = "Nome da classe do recurso de destino da conexão")
     private String toClassName;
+
+    @Schema(description = "Nome da conexão")
     private String connectionName;
+
+    @Schema(description = "Endereço do nó da conexão")
     private String nodeAddress;
+
+    @Schema(description = "Classe da conexão")
     private String connectionClass = "connection.default";
+
+    @Schema(description = "Nome da classe")
     private String className = "connection.default";
+
+    @Schema(description = "Nome do schema de atributos")
     private String attributeSchemaName = "connection.default";
+
+    @Schema(description = "Indica se o status operacional deve ser propagado")
     private Boolean propagateOperStatus;
+
+    @Schema(description = "Status operacional da conexão")
     private String operationalStatus = "Up";
+
+    @Schema(description = "Descrição da conexão")
     private String description;
+
+    @Schema(description = "Categoria da conexão")
     private String category;
+
+    @Schema(description = "Status administrativo da conexão")
     private String adminStatus = "Up";
+
+    @Schema(description = "Status de negócio da conexão")
     private String businessStatus = "Up";
+
+    @Schema(description = "Valores dos atributos da conexão")
     private Map<String, Object> attributes = new ConcurrentHashMap<>();
+
+    @Schema(description = "Serviço dependente associado à conexão")
     private ServiceResource dependentService;
+
+    @Schema(description = "Chave da Collection, é o ID da conexão")
     private String key;
 
     public String getKey() {
@@ -350,5 +399,4 @@ public class ConnectionDTO {
         this.businessStatus = businessStatus;
     }
 
-    
 }

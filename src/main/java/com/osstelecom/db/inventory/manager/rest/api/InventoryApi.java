@@ -52,6 +52,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.osstelecom.db.inventory.manager.security.model.AuthenticatedCall;
 import com.osstelecom.db.inventory.manager.session.ResourceLocationSession;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.ArrayList;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
@@ -61,7 +62,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 /**
  * Classe que representa os elementos do Inventário Teste
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 14.12.2021
  */
 @RestController
@@ -189,15 +190,48 @@ public class InventoryApi extends BaseApi {
     }
 
     /**
-     * Cria uma nova conexão
+     * Cria uma nova conexão de recurso com base na solicitação fornecida.
      *
-     * @param request
-     * @param domain
-     * @return
-     * @throws GenericException
+     * <p>
+     * Este endpoint suporta a criação de conexões utilizando:
+     * <ul>
+     * <li>'FromId' e 'ToId' do payload da solicitação.</li>
+     * <li>'FromKey' e 'ToKey' do payload da solicitação.</li>
+     * <li>'FromNodeAddress' e 'ToNodeAddress' do payload da solicitação.</li>
+     * </ul>
+     * </p>
+     *
+     * <p>
+     * Se nenhuma das condições acima for atendida, uma exceção de solicitação
+     * inválida é lançada.</p>
+     *
+     * <p>
+     * É necessário autenticação para acessar este endpoint, e o usuário deve
+     * possuir a função 'user'.</p>
+     *
+     * @param request A solicitação contendo as informações necessárias para
+     * criar a conexão de recurso.
+     * @param domain O domínio no qual a conexão de recurso será criada.
+     * @param httpRequest O objeto HttpServletRequest que contém detalhes da
+     * solicitação.
+     * @return Uma resposta contendo a conexão de recurso criada.
+     * @throws GenericException Para exceções genéricas.
+     * @throws SchemaNotFoundException Se o esquema não for encontrado.
+     * @throws AttributeConstraintViolationException Se houver uma violação de
+     * restrição de atributo.
+     * @throws ScriptRuleException Se houver uma exceção de regra de script.
+     * @throws InvalidRequestException Se a solicitação for inválida.
+     * @throws ResourceNotFoundException Se o recurso não for encontrado.
+     * @throws ConnectionAlreadyExistsException Se a conexão já existir.
+     * @throws MetricConstraintException Se houver uma violação de restrição
+     * métrica.
+     * @throws NoResourcesAvailableException Se não houver recursos disponíveis.
+     * @throws DomainNotFoundException Se o domínio não for encontrado.
+     * @throws ArangoDaoException Para exceções relacionadas ao ArangoDB.
      */
     @AuthenticatedCall(role = {"user"})
     @PutMapping(path = "/{domain}/resource/connection", produces = "application/json", consumes = "application/json")
+    @Schema(description = "Cria uma conexão de recurso com base na solicitação fornecida. Este endpoint suporta a criação de conexões usando 'FromId' e 'ToId', 'FromKey' e 'ToKey', ou 'FromNodeAddress' e 'ToNodeAddress' do payload da solicitação. Se nenhuma dessas condições for atendida, uma exceção de solicitação inválida é lançada. A autenticação é necessária e o usuário deve possuir a função 'user'.")
     public CreateResourceConnectionResponse createResourceConnection(@RequestBody CreateConnectionRequest request, @PathVariable("domain") String domain, HttpServletRequest httpRequest) throws GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, InvalidRequestException, ResourceNotFoundException, ConnectionAlreadyExistsException, MetricConstraintException, NoResourcesAvailableException, DomainNotFoundException, ArangoDaoException {
         try {
             this.setUserDetails(request);

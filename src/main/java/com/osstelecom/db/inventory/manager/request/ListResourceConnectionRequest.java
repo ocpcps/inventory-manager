@@ -21,7 +21,7 @@ import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 17.10.2022
  */
 public class ListResourceConnectionRequest extends BasicRequest<ManagedResource> {

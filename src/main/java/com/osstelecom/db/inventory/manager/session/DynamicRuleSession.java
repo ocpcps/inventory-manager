@@ -41,7 +41,7 @@ import org.springframework.util.StringUtils;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 03.01.2022
  */
 @Service

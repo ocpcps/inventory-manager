@@ -21,7 +21,7 @@ package com.osstelecom.db.inventory.manager.resources;
  * component of a service,However the service now needs to keep a light
  * reference of the children resource.
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  */
 public class ResourceConnection extends AbsResourceConnection<ManagedResource> {
 

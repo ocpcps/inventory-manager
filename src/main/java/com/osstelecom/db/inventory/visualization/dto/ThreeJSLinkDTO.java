@@ -24,7 +24,7 @@ import java.util.Objects;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 12.01.2023
  */
 public class ThreeJSLinkDTO extends BaseGraphDTO {

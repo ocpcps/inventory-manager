@@ -20,7 +20,7 @@ import com.osstelecom.db.inventory.manager.exception.BasicException;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  */
 public class ConnectionAlreadyExistsException extends BasicException {
 

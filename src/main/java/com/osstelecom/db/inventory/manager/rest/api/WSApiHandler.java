@@ -27,7 +27,7 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 18.08.2022
  */
 @Component

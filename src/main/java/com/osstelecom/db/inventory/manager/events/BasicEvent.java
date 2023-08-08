@@ -21,7 +21,7 @@ import com.osstelecom.db.inventory.manager.jobs.DBJobInstance;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 12.07.2023
  */
 public abstract class BasicEvent<T> implements IEvent {

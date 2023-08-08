@@ -23,7 +23,7 @@ import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 05.12.2022
  */
 public class ManagedResourceDeletedEvent extends BasicResourceEvent<ManagedResource> {

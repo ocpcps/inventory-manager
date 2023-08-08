@@ -35,7 +35,7 @@ import org.springframework.stereotype.Service;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 08.11.2022
  */
 @Service

@@ -22,7 +22,7 @@ import org.springframework.stereotype.Component;
 /**
  * Representa Conexão com o DB Mongo
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 14.12.2021
  */
 @Component

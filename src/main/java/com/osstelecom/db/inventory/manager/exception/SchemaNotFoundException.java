@@ -22,7 +22,7 @@ import com.osstelecom.db.inventory.manager.request.IRequest;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 23.12.2021
  */
 public class SchemaNotFoundException extends BasicException {

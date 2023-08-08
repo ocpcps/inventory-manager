@@ -21,7 +21,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 30.01.2023
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)

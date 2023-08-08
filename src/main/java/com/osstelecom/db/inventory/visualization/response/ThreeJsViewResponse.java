@@ -22,7 +22,7 @@ import com.osstelecom.db.inventory.visualization.dto.ThreeJSViewDTO;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 12.01.2023
  */
 public class ThreeJsViewResponse extends BasicResponse<ThreeJSViewDTO> {

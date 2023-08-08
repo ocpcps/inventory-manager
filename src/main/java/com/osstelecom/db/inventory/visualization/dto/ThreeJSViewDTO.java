@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
  * são muito . Então criamos este wrapper para encapsular os dados relevantes
  * para o grafo.
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 12.01.2023
  */
 public class ThreeJSViewDTO {

@@ -22,7 +22,7 @@ import java.util.UUID;
 
 /**
  * Esta classe representa um dos estagios de uma job
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 14.12.2022
  */
 public class DbJobStage {

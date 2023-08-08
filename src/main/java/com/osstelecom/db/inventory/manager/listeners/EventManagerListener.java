@@ -39,7 +39,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 /**
  * Gerencia os eventos do sistema
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 10.04.2022
  */
 @Service

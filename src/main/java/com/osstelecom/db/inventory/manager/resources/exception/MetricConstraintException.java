@@ -21,7 +21,7 @@ import com.osstelecom.db.inventory.manager.exception.IBasicException;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  */
 public class MetricConstraintException extends BasicException {
 

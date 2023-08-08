@@ -36,7 +36,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 /**
  * Cuida das Exceptions...
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 15.12.2021
  */
 @Order(Ordered.HIGHEST_PRECEDENCE)

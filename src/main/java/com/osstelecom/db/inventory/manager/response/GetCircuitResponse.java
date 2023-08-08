@@ -21,7 +21,7 @@ import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 06.12.2022
  */
 public class GetCircuitResponse extends BasicResponse<CircuitResource> {

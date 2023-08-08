@@ -21,7 +21,7 @@ import com.osstelecom.db.inventory.manager.resources.Domain;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 05.06.2022
  */
 public class DomainCreatedEvent extends BasicEvent<Domain> {

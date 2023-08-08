@@ -26,7 +26,7 @@ import org.springframework.security.web.SecurityFilterChain;
 /**
  * Configuração da Autenticação da API
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  */
 @Configuration
 public class SecurityConfiguration {

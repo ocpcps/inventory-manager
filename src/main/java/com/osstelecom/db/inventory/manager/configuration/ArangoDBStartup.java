@@ -29,6 +29,39 @@ import com.arangodb.ArangoDatabase;
 import com.arangodb.entity.CollectionType;
 import com.arangodb.model.CollectionCreateOptions;
 
+/**
+ *
+ * Classe ArangoDBStartup
+ *
+ * <p>
+ * Descrição: Classe de configuração para a inicialização do banco de dados
+ * ArangoDB. Esta classe define um bean para a criação e configuração da conexão
+ * com o banco de dados ArangoDB.</p>
+ * <p>
+ * Configurações:
+ * <ul>
+ * <li>logger: Logger utilizado para realizar o registro de mensagens durante a
+ * inicialização do banco de dados.</li>
+ * </ul>
+ * </p>
+ * <p>
+ * Métodos:
+ * <ul>
+ * <li>arangoDatabase: Método para criar e configurar a conexão com o banco de
+ * dados ArangoDB.</li>
+ * </ul>
+ * </p>
+ * <p>
+ * Exceptions:
+ * <ul>
+ * <li>Não há exceções específicas lançadas por esta classe.</li>
+ * </ul>
+ * </p>
+ *
+ * @version 1.0
+ *
+ *
+ */
 @Configuration
 public class ArangoDBStartup {
 

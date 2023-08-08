@@ -27,7 +27,7 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 21.07.2022
  */
 @SecurityRequirement(name = "SecuredAPI")

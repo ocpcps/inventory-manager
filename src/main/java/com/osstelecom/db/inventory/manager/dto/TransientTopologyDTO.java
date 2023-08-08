@@ -23,7 +23,7 @@ import java.util.List;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 08.11.2022
  */
 public class TransientTopologyDTO {

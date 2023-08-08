@@ -21,7 +21,7 @@ import com.osstelecom.db.inventory.manager.resources.Domain;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 24.03.2022
  */
 public class DomainResponse extends BasicResponse<Domain> {

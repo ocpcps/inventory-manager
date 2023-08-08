@@ -38,7 +38,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * This is the basic resource of all resources, that can be: Location, Managed,
  * Connection or service.
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  */
 @JsonInclude(Include.NON_NULL)
 public class BasicResource {
@@ -118,7 +118,7 @@ public class BasicResource {
     @Schema(description = "Id da Estrutura a qual este recurso pertence")
     private String structureId;
     @Schema(description = "Tags do Recurso")
-    private ArrayList<String> tags;
+    private List<String> tags;
     @DocumentField(DocumentField.Type.KEY)
     @Schema(description = "Chave da Collection, é o ID")
     private String key;
@@ -833,7 +833,7 @@ public class BasicResource {
     /**
      * @return the tags
      */
-    public ArrayList<String> getTags() {
+    public List<String> getTags() {
         return tags;
     }
 

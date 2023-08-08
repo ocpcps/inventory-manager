@@ -21,7 +21,7 @@ import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 26.01.2022
  */
 public class FilterResponse extends BasicResponse<FilterDTO> {

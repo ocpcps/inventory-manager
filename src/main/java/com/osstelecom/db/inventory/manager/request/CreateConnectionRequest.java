@@ -21,7 +21,7 @@ import com.osstelecom.db.inventory.manager.dto.ConnectionDTO;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 16.12.2021
  */
 public class CreateConnectionRequest extends BasicRequest<ConnectionDTO> {

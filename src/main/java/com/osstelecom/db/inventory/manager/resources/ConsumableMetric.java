@@ -24,7 +24,7 @@ import com.osstelecom.db.inventory.manager.resources.exception.MetricConstraintE
 /**
  * Classe que representa uma métrica
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  */
 @JsonInclude(Include.NON_NULL)
 public class ConsumableMetric {

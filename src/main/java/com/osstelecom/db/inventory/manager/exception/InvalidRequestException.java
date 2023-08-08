@@ -22,7 +22,7 @@ import com.osstelecom.db.inventory.manager.request.IRequest;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 15.12.2021
  */
 public class InvalidRequestException extends BasicException {

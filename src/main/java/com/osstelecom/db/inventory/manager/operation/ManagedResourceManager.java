@@ -70,7 +70,7 @@ import com.osstelecom.db.inventory.manager.session.SchemaSession;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 30.08.2022
  */
 @Service
@@ -272,9 +272,9 @@ public class ManagedResourceManager extends Manager {
      *
      * @param resource
      * @return ManagedResource - The resource
-     * @throws DomainNotFoundException
      * @throws ResourceNotFoundException
      * @throws ArangoDaoException
+     * @throws InvalidRequestException
      */
     public ManagedResource findManagedResourceById(ManagedResource resource)
             throws ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
@@ -303,12 +303,16 @@ public class ManagedResourceManager extends Manager {
      * Update a Resource,
      *
      * @param resource
+     * @param fromEvent
      * @return
      * @throws InvalidRequestException
-     * @throws GenericException
+     * @throws ArangoDaoException
+     * @throws AttributeConstraintViolationException
+     * @throws ScriptRuleException
      * @throws SchemaNotFoundException
-     * @throws AttributeNotFoundException
+     * @throws GenericException
      * @throws ResourceNotFoundException
+     * @throws AttributeNotFoundException
      */
     public ManagedResource updateManagedResource(ManagedResource resource, Boolean fromEvent)
             throws InvalidRequestException,
@@ -408,26 +412,26 @@ public class ManagedResourceManager extends Manager {
      * @return
      * @throws ResourceNotFoundException
      * @throws ArangoDaoException
+     * @throws InvalidRequestException
      */
     public GraphList<ManagedResource> findManagedResourcesBySchemaName(ResourceSchemaModel model, Domain domain)
             throws ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
         return this.managedResourceDao.findResourcesBySchemaName(model.getSchemaName(), domain);
     }
 
-    /**
-     * Process the schema update Event, this is very heavy for the system, avoid
-     * this use case.
-     * <p>
-     * Once a schema is updates, all referenced objects must be updated and all
-     * rules has to be rechecked.
-     *
-     * @deprecated 
-     * @param update
-     */
-    public void processSchemaUpdatedEvent(ResourceSchemaUpdatedEvent update) {
-
-    }
-
+//    /**
+//     * Process the schema update Event, this is very heavy for the system, avoid
+//     * this use case.
+//     * <p>
+//     * Once a schema is updates, all referenced objects must be updated and all
+//     * rules has to be rechecked.
+//     *
+//     * @deprecated
+//     * @param update
+//     */
+//    public void processSchemaUpdatedEvent(ResourceSchemaUpdatedEvent update) {
+//
+//    }
     /**
      * Called when a Managed Resource is created
      *
@@ -450,7 +454,7 @@ public class ManagedResourceManager extends Manager {
         // Now, it will search for:
         // Nodes to be updates -> Connections that relies on those nodes
         //
-        this.processSchemaUpdatedEvent(update);
+//        this.processSchemaUpdatedEvent(update);
     }
 
     /**

@@ -22,7 +22,7 @@ import java.util.List;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 06.01.2022
  */
 public class SourceTargetWrapper {

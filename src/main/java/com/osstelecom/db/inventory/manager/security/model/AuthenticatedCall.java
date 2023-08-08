@@ -24,7 +24,7 @@ import java.lang.annotation.Target;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)

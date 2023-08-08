@@ -21,7 +21,7 @@ import com.osstelecom.db.inventory.manager.resources.LocationConnection;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 24.02.2023
  */
 public class CreateLocationConnectionResponse extends BasicResponse<LocationConnection> {

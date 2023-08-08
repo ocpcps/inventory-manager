@@ -23,7 +23,7 @@ import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 10.04.2022
  */
 public class ManagedResourceCreatedEvent extends BasicResourceEvent<ManagedResource> {

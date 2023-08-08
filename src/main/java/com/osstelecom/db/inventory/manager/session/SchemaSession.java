@@ -68,7 +68,7 @@ import org.apache.tools.ant.DirectoryScanner;
  *
  * @Todo:Avaliar a refatoração desta classe para remover a complexidade da
  * mesma.
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 14.12.2021
  */
 @Service
@@ -243,6 +243,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
      */
     public GetSchemasResponse loadSchemas() throws SchemaNotFoundException, GenericException {
         List<String> result = new ArrayList<>();
+
         this.loadSchemaFromDisk().forEach(s -> {
             result.add(s.getSchemaName());
         });
@@ -307,6 +308,15 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
     private ResourceSchemaModel loadSchemaFromDisk(String schemaName, ResourceSchemaModel result)
             throws SchemaNotFoundException, GenericException {
         schemaName = schemaName.replaceAll("\\.", "/");
+
+        ResourceSchemaModel cachedSchema = this.schemaCache.getIfPresent(schemaName);
+        if (cachedSchema != null) {
+            /**
+             * Retorna o cache
+             */
+            return cachedSchema;
+        }
+
         logger.debug("Trying to load Schema from: " + schemaName);
         File f = new File(this.schemaDir + "/" + schemaName + ".json");
 
@@ -509,10 +519,74 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
     }
 
     /**
-     * Validate the attribute typecasting setting the right values and types.
+     * Valida o esquema de recurso fornecido com base em seu modelo de atributo
+     * de esquema (ResourceSchemaModel).
      *
-     * @param resource
-     * @throws AttributeConstraintViolationException
+     * <p>
+     * Este método realiza a validação do esquema de recurso fornecido
+     * (representado por um objeto BasicResource) de acordo com o modelo de
+     * atributo de esquema associado. O processo de validação inclui as
+     * seguintes etapas:</p>
+     *
+     * <ol>
+     * <li>Sanitização das chaves:
+     * <ul>
+     * <li>O método verifica se existem atributos no recurso que não estão
+     * presentes no modelo de atributo de esquema associado.</li>
+     * <li>Quaisquer atributos ausentes são removidos do recurso antes de
+     * prosseguir com a validação.</li>
+     * </ul>
+     * </li>
+     * <li>Verificação de "Allow All":
+     * <ul>
+     * <li>Se a configuração "Allow All" no modelo de atributo de esquema for
+     * definida como "false" ou não estiver presente, o método procederá com a
+     * validação dos atributos definidos no modelo.</li>
+     * <li>Se "Allow All" for definido como "true", o método logará um aviso
+     * indicando que essa configuração está habilitada, mas não executará a
+     * validação dos atributos específicos.</li>
+     * </ul>
+     * </li>
+     * <li>Validação dos atributos obrigatórios:
+     * <ul>
+     * <li>O método verifica se os atributos obrigatórios definidos no modelo de
+     * atributo de esquema estão presentes no recurso.</li>
+     * <li>Caso um atributo obrigatório esteja ausente e não tenha um valor
+     * padrão definido, uma exceção AttributeConstraintViolationException será
+     * lançada.</li>
+     * <li>Se o valor padrão estiver definido para um atributo obrigatório, o
+     * método validará o valor do atributo com base nas restrições
+     * especificadas, como expressões regulares de validação, valores permitidos
+     * e tipos de variável.</li>
+     * </ul>
+     * </li>
+     * <li>Validação dos atributos de descoberta:
+     * <ul>
+     * <li>O método valida os atributos de descoberta (discoveryAttributes) do
+     * recurso com base em seus modelos de atributo de esquema associados.</li>
+     * <li>Somente os atributos de descoberta que são marcados como
+     * "isDiscovery" no modelo de atributo de esquema podem ser usados na
+     * validação.</li>
+     * <li>O método garantirá que os atributos de descoberta estejam associados
+     * a seus modelos de atributo de esquema correspondentes e que os valores
+     * fornecidos sejam do tipo correto, conforme definido nos modelos.</li>
+     * </ul>
+     * </li>
+     * <li>Marcação do modelo de atributo de esquema como válido ou inválido:
+     * <ul>
+     * <li>Após concluir a validação dos atributos, o método atualizará o estado
+     * de validação (isValid) do modelo de atributo de esquema associado ao
+     * recurso com base nos resultados da validação.</li>
+     * </ul>
+     * </li>
+     * </ol>
+     *
+     * @param resource O objeto BasicResource que representa o recurso a ser
+     * validado.
+     * @throws AttributeConstraintViolationException Se houver algum atributo
+     * ausente, inválido ou em violação das restrições especificadas no modelo
+     * de atributo de esquema.
+     *
      */
     public void validateResourceSchema(BasicResource resource) throws AttributeConstraintViolationException {
 
@@ -702,12 +776,79 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
     }
 
     /**
-     * Valid types are String, Number, Boolean,Date,DateTime
+     * Obtém o valor de atributo formatado com base no modelo fornecido
+     * (ResourceAttributeModel).
      *
-     * @param model
-     * @param value
-     * @return
-     * @throws ParseException
+     * <p>
+     * Este método é responsável por obter o valor do atributo formatado com
+     * base nas restrições definidas no modelo de atributo
+     * (ResourceAttributeModel) associado. Ele realiza as seguintes etapas de
+     * validação:</p>
+     *
+     * <ol>
+     * <li>Verificação do valor nulo:
+     * <ul>
+     * <li>Se o valor fornecido for nulo, o método registrará um aviso no log
+     * indicando o nome do atributo (model.getName()).</li>
+     * </ul>
+     * </li>
+     * <li>Definição do valor de "IsList":
+     * <ul>
+     * <li>Se o valor de "IsList" no modelo for nulo, ele será definido como
+     * "false".</li>
+     * </ul>
+     * </li>
+     * <li>Validação dos valores permitidos (AllowedValues):
+     * <ul>
+     * <li>Se a lista de "AllowedValues" no modelo não estiver vazia, o método
+     * verificará se o valor fornecido está contido na lista.</li>
+     * <li>Se "IsList" for verdadeiro, o método iterará sobre cada valor da
+     * lista e verificará se ele está na lista de "AllowedValues". Se não
+     * estiver, uma exceção AttributeConstraintViolationException será
+     * lançada.</li>
+     * <li>Se "IsList" for falso, o método verificará se o valor fornecido está
+     * na lista de "AllowedValues". Se não estiver, uma exceção
+     * AttributeConstraintViolationException será lançada.</li>
+     * </ul>
+     * </li>
+     * <li>Sanitização do tipo de variável (VariableType):
+     * <ul>
+     * <li>Se o tipo de variável no modelo (VariableType) for nulo, o método
+     * registrará um aviso no log indicando o nome do atributo (model.getName())
+     * e definirá o tipo de variável como "String" por padrão.</li>
+     * </ul>
+     * </li>
+     * <li>Formatação de valores baseados no tipo de variável:
+     * <ul>
+     * <li>Se o tipo de variável for "String", o método retornará o valor como
+     * uma String. Se "IsList" for verdadeiro, o valor será retornado como uma
+     * lista de Strings.</li>
+     * <li>Se o tipo de variável for "Number", o método tentará formatar o valor
+     * como um número. Se "IsList" for verdadeiro, o valor será retornado como
+     * uma lista de Longs.</li>
+     * <li>Se o tipo de variável for "Boolean", o método tentará formatar o
+     * valor como um booleano. Se "IsList" for verdadeiro, o valor será
+     * retornado como uma lista de Booleanos.</li>
+     * <li>Se o tipo de variável for "Float", o método tentará formatar o valor
+     * como um número de ponto flutuante. Se "IsList" for verdadeiro, o valor
+     * será retornado como uma lista de Floats.</li>
+     * <li>Se o tipo de variável for "Date" ou "DateTime", o método tentará
+     * formatar o valor como uma data ou data e hora, respectivamente, com base
+     * no formato especificado na configuração.</li>
+     * <li>Se o tipo de variável for "GeoLine", o método retornará o valor como
+     * uma lista de Floats.</li>
+     * <li>Se o tipo de variável não corresponder a nenhum dos tipos acima, uma
+     * exceção AttributeConstraintViolationException será lançada.</li>
+     * </ul>
+     * </li>
+     * </ol>
+     *
+     * @param model O objeto ResourceAttributeModel que representa o modelo de
+     * atributo a ser usado para validação e formatação.
+     * @param value O valor do atributo a ser validado e formatado.
+     * @return O valor formatado do atributo com base no modelo fornecido.
+     * @throws AttributeConstraintViolationException Se o valor não atender às
+     * restrições especificadas no modelo de atributo.
      */
     public Object getAttributeValue(ResourceAttributeModel model, Object value)
             throws AttributeConstraintViolationException {
@@ -956,14 +1097,143 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
     }
 
     /**
-     * Handles the logic to update the ResourceSchemaModel
+     * Realiza um patch no modelo de esquema de recurso.
      *
-     * @param original
-     * @param update
-     * @return
-     * @throws InvalidRequestException
-     * @throws GenericException
-     * @throws SchemaNotFoundException
+     * <p>
+     * Este método é responsável por aplicar um "patch" no modelo de esquema de
+     * recurso. Um patch é uma operação que modifica parcialmente o modelo de
+     * esquema existente com base nas atualizações fornecidas em um novo modelo
+     * (update). O método realiza as seguintes etapas:</p>
+     *
+     * <ol>
+     * <li>Verificação do modelo de atualização:
+     * <ul>
+     * <li>Verifica se o modelo de atualização (update) não é nulo. Se for nulo,
+     * uma exceção InvalidRequestException será lançada com a mensagem
+     * "Attribute Schema Model not found".</li>
+     * </ul>
+     * </li>
+     * <li>Carregamento do modelo original:
+     * <ul>
+     * <li>Carrega o modelo de esquema original com base no nome de esquema
+     * fornecido no modelo de atualização (update.getSchemaName()).</li>
+     * </ul>
+     * </li>
+     * <li>Verificação e validação do nome de esquema:
+     * <ul>
+     * <li>Verifica se o nome de esquema fornecido na atualização não foi
+     * alterado em relação ao modelo original. Se o nome de esquema for
+     * diferente, uma exceção InvalidRequestException será lançada com a
+     * mensagem "Schema Name Cannot Be changed...".</li>
+     * </ul>
+     * </li>
+     * <li>Verificação e atualização do atributo "fromSchema":
+     * <ul>
+     * <li>Verifica se o atributo "fromSchema" fornecido na atualização é
+     * diferente do atributo "fromSchema" do modelo original. Se for diferente,
+     * atualiza o valor do atributo "fromSchema" no modelo original e define o
+     * atributo "attributesChanged" como verdadeiro.</li>
+     * </ul>
+     * </li>
+     * <li>Verificação e atualização do atributo "allowAll":
+     * <ul>
+     * <li>Verifica se o atributo "allowAll" fornecido na atualização é
+     * diferente do atributo "allowAll" do modelo original. Se for diferente,
+     * atualiza o valor do atributo "allowAll" no modelo original.</li>
+     * </ul>
+     * </li>
+     * <li>Verificação e atualização do atributo "graphItemColor":
+     * <ul>
+     * <li>Verifica se o atributo "graphItemColor" fornecido na atualização é
+     * diferente do atributo "graphItemColor" do modelo original. Se for
+     * diferente, atualiza o valor do atributo "graphItemColor" no modelo
+     * original e define o atributo "attributesChanged" como verdadeiro.</li>
+     * </ul>
+     * </li>
+     * <li>Sanitização dos atributos de atualização:
+     * <ul>
+     * <li>Itera sobre cada atributo do modelo de atualização (update) e realiza
+     * as seguintes ações:
+     * <ul>
+     * <li>Verifica se o nome do atributo (k) é uma string válida usando o
+     * método utilSession.isValidStringValue(k). Se não for uma string válida, o
+     * nome do atributo será adicionado à lista "invalidAttributes".</li>
+     * <li>Verifica se o atributo possui um ID (v.getId()) não nulo e não vazio.
+     * Se possuir, adiciona o nome do atributo à lista "removeAttributes".</li>
+     * <li>Define o tipo de variável (v.getVariableType()) para "String" se o
+     * atributo não tiver um tipo de variável especificado.</li>
+     * </ul>
+     * </li>
+     * </ul>
+     * </li>
+     * <li>Verificação de atributos inválidos:
+     * <ul>
+     * <li>Se a lista "invalidAttributes" não estiver vazia, uma exceção
+     * InvalidRequestException será lançada com a mensagem "Invalid Attribute
+     * Names: [lista de atributos inválidos separados por vírgula]".</li>
+     * </ul>
+     * </li>
+     * <li>Remoção de atributos:
+     * <ul>
+     * <li>Remove os atributos da atualização (update) que estão na lista
+     * "removeAttributes".</li>
+     * </ul>
+     * </li>
+     * <li>Atualização dos atributos:
+     * <ul>
+     * <li>Para cada atributo restante no modelo de atualização (update),
+     * realiza as seguintes ações:
+     * <ul>
+     * <li>Se o atributo possui a propriedade "doRemove" definida como
+     * verdadeira, remove o atributo correspondente do modelo original e define
+     * o atributo "attributesChanged" como verdadeiro.</li>
+     * <li>Se o atributo não existe no modelo original, é adicionado ao modelo
+     * original como um novo atributo, e o atributo "attributesChanged" é
+     * definido como verdadeiro.</li>
+     * <li>Se o atributo existe no modelo original, compara os valores do
+     * atributo no modelo de atualização com o modelo original e atualiza os
+     * valores do modelo original com base nas diferenças encontradas.</li>
+     * </ul>
+     * </li>
+     * </ul>
+     * </li>
+     * <li>Atualização do registro de última modificação:
+     * <ul>
+     * <li>Atualiza a data de última modificação (lastUpdate) do modelo original
+     * para a data atual.</li>
+     * </ul>
+     * </li>
+     * <li>Resolução de esquemas parentes relacionados:
+     * <ul>
+     * <li>Chama o método "resolveRelatedParentSchemas" para atualizar esquemas
+     * parentes relacionados.</li>
+     * </ul>
+     * </li>
+     * <li>Verificação de alterações nos atributos:
+     * <ul>
+     * <li>Verifica se houve mudanças nos atributos do modelo original
+     * (original.getAttributesChanged()). Se houver mudanças, grava o modelo
+     * original em disco, limpa o cache do esquema e notifica o Message Bus
+     * sobre a atualização.</li>
+     * </ul>
+     * </li>
+     * <li>Retorno do resultado do patch:
+     * <ul>
+     * <li>Retorna um objeto PatchResourceSchemaModelResponse contendo o modelo
+     * de esquema de recurso após a aplicação do patch.</li>
+     * </ul>
+     * </li>
+     * </ol>
+     *
+     * @param update O modelo de esquema de recurso contendo as atualizações a
+     * serem aplicadas no modelo original.
+     * @return Um objeto PatchResourceSchemaModelResponse contendo o modelo de
+     * esquema de recurso após a aplicação do patch.
+     * @throws InvalidRequestException Se o modelo de atualização (update) for
+     * nulo ou se houver nomes de atributos inválidos.
+     * @throws GenericException Se ocorrer um erro genérico durante o processo
+     * de patch.
+     * @throws SchemaNotFoundException Se o esquema original não for encontrado.
      */
     public PatchResourceSchemaModelResponse patchSchemaModel(ResourceSchemaModel update)
             throws InvalidRequestException, GenericException, SchemaNotFoundException {
@@ -1238,6 +1508,86 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
         return validTypes;
     }
 
+    /**
+     * Resolve os esquemas parentes relacionados ao modelo de esquema de
+     * recurso.
+     *
+     * <p>
+     * Este método é responsável por resolver os esquemas parentes relacionados
+     * ao modelo de esquema de recurso fornecido. Ele realiza as seguintes
+     * etapas:</p>
+     *
+     * <ol>
+     * <li>Extração dos esquemas parentes:
+     * <ul>
+     * <li>Extrai a lista de esquemas parentes do modelo de esquema de recurso
+     * fornecido (newSchemaModel) usando o método
+     * extractParentsFromDefaultExpression(newSchemaModel).</li>
+     * </ul>
+     * </li>
+     * <li>Iteração sobre os esquemas parentes:
+     * <ul>
+     * <li>Para cada esquema parente na lista de esquemas parentes extraídos,
+     * realiza as seguintes ações:
+     * <ul>
+     * <li>Carrega o modelo do esquema parente do disco usando o nome do esquema
+     * parente.</li>
+     * <li>Obtém a lista de esquemas relacionados do esquema parente.</li>
+     * <li>Se a lista de esquemas relacionados for nula, cria uma nova lista
+     * contendo o nome do esquema do modelo de esquema fornecido
+     * (newSchemaModel) e define essa lista como a lista de esquemas
+     * relacionados no esquema parente.</li>
+     * <li>Se a lista de esquemas relacionados não for nula, verifica se ela não
+     * contém o nome do esquema do modelo de esquema fornecido (newSchemaModel).
+     * Se não contiver, adiciona o nome do esquema à lista de esquemas
+     * relacionados.</li>
+     * <li>Grava o modelo do esquema parente atualizado no disco.</li>
+     * </ul>
+     * </li>
+     * </ul>
+     * </li>
+     * <li>Verificação do esquema anterior:
+     * <ul>
+     * <li>Se o modelo de esquema de recurso anterior (oldSchemaModel) não for
+     * nulo, executa as seguintes ações:
+     * <ul>
+     * <li>Extrai a lista de esquemas parentes do modelo de esquema de recurso
+     * anterior usando o método
+     * extractParentsFromDefaultExpression(oldSchemaModel).</li>
+     * <li>Itera sobre cada esquema parente no modelo anterior e verifica se ele
+     * não está presente na lista de esquemas parentes extraídos no modelo
+     * atual. Se não estiver presente, realiza as seguintes ações:
+     * <ul>
+     * <li>Carrega o modelo do esquema parente do disco usando o nome do esquema
+     * parente.</li>
+     * <li>Obtém a lista de esquemas relacionados do esquema parente.</li>
+     * <li>Se a lista de esquemas relacionados for nula ou não contiver o nome
+     * do esquema do modelo de esquema fornecido (newSchemaModel), não faz
+     * nada.</li>
+     * <li>Se a lista de esquemas relacionados contiver o nome do esquema do
+     * modelo de esquema fornecido (newSchemaModel), remove o nome do esquema da
+     * lista de esquemas relacionados.</li>
+     * <li>Grava o modelo do esquema parente atualizado no disco.</li>
+     * </ul>
+     * </li>
+     * </ul>
+     * </li>
+     * </ul>
+     * </li>
+     * </ol>
+     *
+     * @param newSchemaModel O modelo de esquema de recurso atualizado para o
+     * qual os esquemas parentes relacionados devem ser resolvidos.
+     * @param oldSchemaModel O modelo de esquema de recurso anterior, se houver,
+     * para verificar e atualizar as referências aos esquemas parentes
+     * relacionados.
+     * @throws SchemaNotFoundException Se algum dos esquemas parentes não for
+     * encontrado.
+     * @throws GenericException Se ocorrer um erro genérico durante o processo
+     * de resolução dos esquemas parentes relacionados.
+     * @throws InvalidRequestException Se houver um problema com a solicitação,
+     * como um esquema nulo ou inválido.
+     */
     private void resolveRelatedParentSchemas(ResourceSchemaModel newSchemaModel, ResourceSchemaModel oldSchemaModel)
             throws SchemaNotFoundException, GenericException, InvalidRequestException {
         String schemaName = newSchemaModel.getSchemaName();
@@ -1272,6 +1622,53 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
         }
     }
 
+    /**
+     * Extrai os esquemas parentes do modelo de esquema de recurso com base nas
+     * expressões de valor padrão definidas nos atributos.
+     *
+     * <p>
+     * Este método é responsável por percorrer os atributos do modelo de esquema
+     * de recurso fornecido (schemaModel) e extrair os nomes dos esquemas
+     * parentes com base nas expressões de valor padrão definidas em seus
+     * atributos. Ele realiza as seguintes etapas:</p>
+     *
+     * <ol>
+     * <li>Cria uma lista vazia para armazenar os nomes dos esquemas
+     * parentes.</li>
+     * <li>Itera sobre os atributos do modelo de esquema de recurso fornecido
+     * (schemaModel):
+     * <ul>
+     * <li>Obtém o valor padrão (defaultValue) definido no atributo atual.</li>
+     * <li>Verifica se o valor padrão corresponde a uma expressão de referência
+     * a um esquema parente:
+     * <ul>
+     * <li>Verifica se o valor padrão não é nulo e corresponde à expressão de
+     * referência de esquema parente por meio de uma expressão regular
+     * (regex).</li>
+     * <li>A expressão regular usada para correspondência é:
+     * "^\\$\\([\\w]+[\\w+\\.]+[\\.]+[\\w]+\\)$"</li>
+     * </ul>
+     * </li>
+     * <li>Se a expressão de referência ao esquema parente for encontrada:
+     * <ul>
+     * <li>Remove os caracteres especiais "$" e "(" da expressão de
+     * referência.</li>
+     * <li>Obtém o nome do esquema parente a partir do valor extraído após a
+     * última ocorrência do caractere ".".</li>
+     * <li>Adiciona o nome do esquema parente à lista de esquemas parentes.</li>
+     * </ul>
+     * </li>
+     * </ul>
+     * </li>
+     * <li>Retorna a lista de esquemas parentes extraídos.</li>
+     * </ol>
+     *
+     * @param schemaModel O modelo de esquema de recurso a partir do qual os
+     * esquemas parentes devem ser extraídos.
+     * @return Uma lista contendo os nomes dos esquemas parentes extraídos com
+     * base nas expressões de valor padrão definidas nos atributos do modelo de
+     * esquema de recurso fornecido.
+     */
     private List<String> extractParentsFromDefaultExpression(ResourceSchemaModel schemaModel) {
         List<String> parents = new ArrayList<>();
         for (ResourceAttributeModel attrModel : schemaModel.getAttributes().values()) {
@@ -1290,12 +1687,49 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
     }
 
     /**
-     * Save the JSON Model to the disk
+     * Grava o modelo de esquema de recurso (model) no disco como um arquivo
+     * JSON.
      *
-     * @param model
-     * @param overwrite
-     * @throws GenericException
-     * @throws InvalidRequestException
+     * <p>
+     * Este método é responsável por salvar o modelo de esquema de recurso
+     * fornecido (model) como um arquivo JSON no disco. Ele realiza as seguintes
+     * etapas:</p>
+     *
+     * <ol>
+     * <li>Obtém o nome do modelo de esquema de recurso (modelName) para ser
+     * usado na construção do caminho do arquivo no disco.</li>
+     * <li>Converte o nome do modelo para um formato de caminho no disco,
+     * substituindo pontos (.) por barras (/), para criar o caminho
+     * correto.</li>
+     * <li>Cria um objeto de caminho (Path) usando o caminho do diretório
+     * configurado para armazenar os esquemas (schemaDir) e o caminho do modelo
+     * de esquema (modelPathStr) convertido.</li>
+     * <li>Converte o objeto de caminho (Path) para um objeto de arquivo (File)
+     * para verificação.</li>
+     * <li>Verifica se o arquivo já existe e, se não existir ou se a opção de
+     * sobrescrever (overwrite) for definida como true, prossegue com a gravação
+     * no disco.</li>
+     * <li>Cria o diretório pai para o arquivo, se necessário, chamando mkdirs()
+     * no objeto de arquivo (f) para garantir que o caminho de destino esteja
+     * presente.</li>
+     * <li>Desabilita a flag de mudança de atributos (attributesChanged) no
+     * modelo de esquema, pois essa flag não precisa ser salva no disco.</li>
+     * <li>Inicializa um FileWriter para o arquivo de destino e usa a biblioteca
+     * Gson para converter o modelo de esquema (model) em formato JSON.</li>
+     * <li>Fecha o escritor após concluir a gravação do arquivo.</li>
+     * <li>Após a gravação, limpa o cache do esquema para garantir que as
+     * alterações sejam refletidas imediatamente no carregamento futuro.</li>
+     * </ol>
+     *
+     * @param model O modelo de esquema de recurso a ser gravado no disco como
+     * um arquivo JSON.
+     * @param overwrite Um booleano indicando se deve ou não sobrescrever um
+     * arquivo existente, caso o arquivo do modelo já exista no disco.
+     * @throws GenericException Se ocorrer algum erro genérico durante o
+     * processo de gravação do arquivo.
+     * @throws InvalidRequestException Se o modelo de esquema de recurso já
+     * existir no disco e a opção de sobrescrever (overwrite) não estiver
+     * definida como true.
      */
     private void writeModelToDisk(ResourceSchemaModel model, Boolean overwrite)
             throws GenericException, InvalidRequestException {

@@ -46,7 +46,7 @@ import javax.servlet.http.HttpServletRequest;
 /**
  * Handles the Dynamic Schema Mapping and Operations
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 21.07.2022
  * @Changelog: 02-08-2022: Removed GSON fromJson
  */

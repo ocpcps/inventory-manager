@@ -53,7 +53,7 @@ import java.io.IOException;
  *
  * @todo, avaliar se os cursores precisam ser fechados depois de consumidos!
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 14.12.2021
  */
 @Component

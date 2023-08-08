@@ -47,8 +47,9 @@ import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.GraphList;
 
 /**
+ * Representa a dao do Consumable Metric
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 30.08.2022
  */
 @Component

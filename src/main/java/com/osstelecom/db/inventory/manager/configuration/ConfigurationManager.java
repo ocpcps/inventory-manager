@@ -31,9 +31,44 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 /**
- * Gerencia a configuração do Netcompass
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
- * @created 15.12.2021
+ *
+ * Gerencia a configuração do Netcompass.
+ *
+ * <p>
+ * Esta classe é responsável por carregar e criar o arquivo de configuração do
+ * Netcompass. Ela procura por diferentes caminhos para encontrar o arquivo de
+ * configuração e, caso não exista, cria um arquivo de configuração padrão.</p>
+ * <p>
+ * Configurações:
+ * <ul>
+ * <li>gson: Instância da biblioteca Gson para manipulação de JSON.</li>
+ * <li>logger: Logger utilizado para realizar o registro de mensagens durante a
+ * gerência de configuração.</li>
+ * <li>configuration: Objeto InventoryConfiguration que armazena as
+ * configurações carregadas ou criadas.</li>
+ * </ul>
+ * </p>
+ * <p>
+ * Métodos:
+ * <ul>
+ * <li>getConfigurationPaths: Retorna uma lista de caminhos para procurar o
+ * arquivo de configuração, sendo o primeiro caminho o definido por uma variável
+ * de ambiente, caso exista.</li>
+ * <li>loadConfiguration: Carrega ou cria o arquivo de configuração. Se o
+ * arquivo existir, ele é carregado em um objeto InventoryConfiguration. Caso
+ * contrário, um arquivo de configuração padrão é criado e carregado.</li>
+ * </ul>
+ * </p>
+ * <p>
+ * Exceptions:
+ * <ul>
+ * <li>Não há exceções específicas lançadas por esta classe.</li>
+ * </ul>
+ * </p>
+ *
+ * @since 15.12.2021
+ *
+ * @author Lucas Nishimura
  */
 @Component
 public class ConfigurationManager {

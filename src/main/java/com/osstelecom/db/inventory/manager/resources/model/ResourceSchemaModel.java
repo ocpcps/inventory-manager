@@ -24,7 +24,7 @@ import java.util.List;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ResourceSchemaModel {

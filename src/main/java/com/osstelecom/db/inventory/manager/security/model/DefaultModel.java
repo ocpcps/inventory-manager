@@ -19,7 +19,7 @@ package com.osstelecom.db.inventory.manager.security.model;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 14.12.2021
  */
 public class DefaultModel {

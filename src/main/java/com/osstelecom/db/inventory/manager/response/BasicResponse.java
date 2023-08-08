@@ -27,7 +27,7 @@ import java.util.Map;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 15.12.2021
  */
 @JsonInclude(Include.NON_NULL)

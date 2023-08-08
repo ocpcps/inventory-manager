@@ -20,8 +20,9 @@ package com.osstelecom.db.inventory.manager.dto;
 import java.util.HashMap;
 
 /**
+ * DTO para solicitação de Atualizações Massivas
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 26.07.2023
  */
 public class BatchAttributeUpdateDTO {

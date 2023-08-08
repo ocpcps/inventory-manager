@@ -25,7 +25,7 @@ import org.springframework.stereotype.Service;
 /**
  * :) Gerencia as Jobs do banco
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 19.07.2023
  */
 @Service

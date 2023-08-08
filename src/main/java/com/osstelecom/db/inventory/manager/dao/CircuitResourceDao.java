@@ -44,8 +44,9 @@ import com.osstelecom.db.inventory.manager.resources.GraphList;
 import java.io.IOException;
 
 /**
+ * Representa a Dao do Circuito
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 31.08.2022
  */
 @Component

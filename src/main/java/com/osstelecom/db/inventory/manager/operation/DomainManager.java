@@ -71,7 +71,7 @@ import java.util.Date;
  * control de atomicity of all operations, so instead of relying the concurrency
  * control to the persistence layer, we try to figure out it here.
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  */
 @Service
 public class DomainManager extends Manager {

@@ -19,7 +19,7 @@ package com.osstelecom.db.inventory.manager.response;
  */
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  */
 public interface IResponse<T> {
 

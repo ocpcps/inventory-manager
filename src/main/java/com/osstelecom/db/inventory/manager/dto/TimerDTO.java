@@ -19,7 +19,7 @@ package com.osstelecom.db.inventory.manager.dto;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 04.01.2022
  */
 public class TimerDTO {

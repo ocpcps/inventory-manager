@@ -19,7 +19,7 @@ package com.osstelecom.db.inventory.manager.resources;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 20.09.2022
  */
 public abstract class AbsRelatedResource extends BasicResource {

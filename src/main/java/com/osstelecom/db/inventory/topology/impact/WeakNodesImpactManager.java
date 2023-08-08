@@ -33,7 +33,7 @@ import com.osstelecom.db.inventory.topology.algorithm.ITopologyAlgorithm;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 24.10.2022
  */
 public class WeakNodesImpactManager extends DefaultImpactManagerImpl {

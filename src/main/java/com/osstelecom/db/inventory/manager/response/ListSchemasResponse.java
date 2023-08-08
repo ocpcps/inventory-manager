@@ -22,7 +22,7 @@ import java.util.List;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 04.08.2023
  */
 public class ListSchemasResponse extends BasicResponse<List<ResourceSchemaModel>> {

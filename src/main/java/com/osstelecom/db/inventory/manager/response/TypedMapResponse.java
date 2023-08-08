@@ -21,7 +21,7 @@ import java.util.Map;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 21.07.2022
  */
 public class TypedMapResponse extends BasicResponse<Map<?, ?>> {

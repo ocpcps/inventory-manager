@@ -58,7 +58,7 @@ import org.springframework.web.bind.annotation.RestController;
  * @changelog -------------------------------------------------- 25-11-2022:
  * Lucas Nishimura <lucas.nishimura at telefonica.com> Revisado so métodos de
  * insert update delete
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 08.08.2022
  */
 @RestController

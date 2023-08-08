@@ -65,7 +65,7 @@ import java.io.IOException;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 08.08.2022
  */
 @Service

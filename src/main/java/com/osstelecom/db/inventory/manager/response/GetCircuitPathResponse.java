@@ -21,7 +21,7 @@ import com.osstelecom.db.inventory.manager.dto.CircuitPathDTO;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 05.01.2022
  */
 public class GetCircuitPathResponse extends CreateCircuitPathResponse {

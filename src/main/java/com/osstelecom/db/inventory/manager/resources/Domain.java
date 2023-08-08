@@ -24,7 +24,7 @@ import java.util.Date;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 15.12.2021
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)

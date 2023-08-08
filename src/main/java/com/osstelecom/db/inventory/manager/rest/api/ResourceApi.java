@@ -54,11 +54,13 @@ import com.osstelecom.db.inventory.manager.response.PatchManagedResourceResponse
 import com.osstelecom.db.inventory.manager.response.TypedListResponse;
 import com.osstelecom.db.inventory.manager.security.model.AuthenticatedCall;
 import com.osstelecom.db.inventory.manager.session.ResourceSession;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Deals with resource API
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 25.11.2022
  */
 @RestController
@@ -83,6 +85,7 @@ public class ResourceApi extends BaseApi {
      */
     @AuthenticatedCall(role = {"user"})
     @PutMapping(path = "/{domain}/resource", produces = "application/json", consumes = "application/json")
+    @Operation(description = "Cria um novo recurso gerenciado (ManagedResource) no sistema Netcompass. Este método permite aos usuários autenticados com o papel 'user' criar um novo recurso informando as informações relevantes no corpo da requisição (CreateManagedResourceRequest). O recurso será criado no domínio especificado na URL da requisição. Caso ocorra algum erro durante a criação, serão lançadas exceções específicas, tais como SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, InvalidRequestException, DomainNotFoundException, ArangoDaoException, ResourceNotFoundException e AttributeNotFoundException. O método retorna um objeto CreateManagedResourceResponse contendo a resposta da criação do recurso gerenciado.")
     public CreateManagedResourceResponse createManagedResource(@RequestBody CreateManagedResourceRequest request, @PathVariable("domain") String domain, HttpServletRequest httpRequest) throws GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, InvalidRequestException, DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, AttributeNotFoundException {
         try {
             this.setUserDetails(request);
@@ -109,6 +112,7 @@ public class ResourceApi extends BaseApi {
      */
     @AuthenticatedCall(role = {"user"})
     @GetMapping(path = "/{domain}/resource/{resourceId}", produces = "application/json")
+    @Operation(description = "Busca um recurso gerenciado (ManagedResource) pelo seu ID no sistema Netcompass. Este método permite aos usuários realizarem uma consulta pelo ID do recurso (resourceId) no domínio especificado na URL da requisição (domain). Caso o recurso seja encontrado, será retornado um objeto FindManagedResourceResponse contendo as informações do recurso. Caso o recurso não seja encontrado ou ocorra algum erro durante a busca, serão lançadas exceções específicas, tais como InvalidRequestException, DomainNotFoundException, ResourceNotFoundException e ArangoDaoException. Os detalhes da requisição podem ser obtidos através do objeto HttpServletRequest passado como parâmetro. O objeto FindManagedResourceResponse contém os detalhes do recurso encontrado, incluindo atributos, status e informações do domínio associado.")
     public FindManagedResourceResponse findManagedResourceById(@PathVariable("domain") String domain, @PathVariable("resourceId") String resourceId, HttpServletRequest httpRequest) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
         FindManagedResourceRequest findRequest = new FindManagedResourceRequest(resourceId, domain);
         this.setUserDetails(findRequest);
@@ -129,6 +133,7 @@ public class ResourceApi extends BaseApi {
      */
     @AuthenticatedCall(role = {"user"})
     @DeleteMapping(path = "/{domain}/resource/{resourceId}", produces = "application/json")
+    @Operation(description = "Remove um recurso gerenciado (ManagedResource) pelo seu ID no sistema Netcompass. Este método permite aos usuários realizarem a exclusão de um recurso pelo seu ID (resourceId) no domínio especificado na URL da requisição (domain). Caso o recurso seja encontrado e removido com sucesso, será retornado um objeto DeleteManagedResourceResponse contendo informações sobre a operação de exclusão. Caso o recurso não seja encontrado ou ocorra algum erro durante a exclusão, serão lançadas exceções específicas, tais como InvalidRequestException, DomainNotFoundException, ResourceNotFoundException e ArangoDaoException. Os detalhes da requisição podem ser obtidos através do objeto HttpServletRequest passado como parâmetro. O objeto DeleteManagedResourceResponse contém informações sobre a remoção bem-sucedida do recurso, como o status da operação e possíveis mensagens adicionais.")
     public DeleteManagedResourceResponse deleteManagedResourceById(@PathVariable("domain") String domain, @PathVariable("resourceId") String resourceId, HttpServletRequest httpRequest) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
         DeleteManagedResourceRequest deleteRequest = new DeleteManagedResourceRequest(resourceId, domain);
         this.setUserDetails(deleteRequest);
@@ -176,6 +181,7 @@ public class ResourceApi extends BaseApi {
      */
     @AuthenticatedCall(role = {"user"})
     @PostMapping(path = {"/{domain}/filter", "/{domain}/resource/filter"}, produces = "application/json", consumes = "application/json")
+    @Operation(description = "Realiza uma busca por recursos gerenciados (ManagedResource) no sistema Netcompass com base em um filtro específico. Este método permite aos usuários filtrarem os recursos com critérios definidos no objeto FilterRequest passado no corpo da requisição. A busca é realizada no domínio especificado na URL da requisição (domain). O método configura o detalhe do usuário (user details) com base nas informações fornecidas no objeto FilterRequest antes de prosseguir com a busca dos recursos. O objeto FilterResponse contém a resposta da busca, incluindo uma lista de recursos que correspondem ao filtro definido. Caso a busca não retorne resultados ou ocorra algum erro durante o processo, serão lançadas exceções específicas, tais como ArangoDaoException, ResourceNotFoundException, DomainNotFoundException e InvalidRequestException. Os detalhes da requisição podem ser obtidos através do objeto HttpServletRequest passado como parâmetro.")
     public FilterResponse findManagedResourceByFilter(@RequestBody FilterRequest filter, @PathVariable("domain") String domain, HttpServletRequest httpRequest) throws ArangoDaoException, ResourceNotFoundException, DomainNotFoundException, InvalidRequestException {
         this.setUserDetails(filter);
         filter.setRequestDomain(domain);
@@ -192,6 +198,7 @@ public class ResourceApi extends BaseApi {
      */
     @AuthenticatedCall(role = {"user"})
     @PostMapping(path = {"/{domain}/query", "/{domain}/resource/query"}, produces = "application/json", consumes = "application/json")
+    @Operation(description = "Realiza uma consulta por recursos no sistema Netcompass com base em um filtro específico. Este método permite aos usuários realizarem uma consulta de recursos utilizando os critérios definidos no objeto FilterRequest passado no corpo da requisição. A consulta é realizada no domínio especificado na URL da requisição (domain). O método configura o detalhe do usuário (user details) com base nas informações fornecidas no objeto FilterRequest antes de prosseguir com a consulta dos recursos. O resultado da consulta é uma representação no formato de string que pode conter os recursos encontrados ou informações sobre a consulta. Caso a consulta não retorne resultados ou ocorra algum erro durante o processo, nenhuma exceção específica é lançada, e a resposta pode conter mensagens de erro ou informações sobre o resultado da consulta. Os detalhes da requisição podem ser obtidos através do objeto HttpServletRequest passado como parâmetro.")
     public String queryResourceByFilter(@RequestBody FilterRequest filter, @PathVariable("domain") String domain, HttpServletRequest httpRequest) {
         this.setUserDetails(filter);
         filter.setRequestDomain(domain);
@@ -216,6 +223,10 @@ public class ResourceApi extends BaseApi {
      */
     @AuthenticatedCall(role = {"user"})
     @PatchMapping(path = "/{domain}/resource/{resourceId}", produces = "application/json", consumes = "application/json")
+    @Operation(
+            summary = "Realiza uma atualização parcial em um recurso gerenciado (ManagedResource) no sistema Netcompass.",
+            description = "Este método permite aos usuários atualizarem apenas parte das informações de um recurso existente. O recurso a ser atualizado é identificado pelo seu ID (resourceId) no domínio especificado na URL da requisição (domainName). A atualização é baseada nas informações fornecidas no objeto PatchManagedResourceRequest passado no corpo da requisição. O método configura o detalhe do usuário (user details) com base nas informações fornecidas no objeto PatchManagedResourceRequest antes de prosseguir com a atualização do recurso.\n\nCampos Atualizáveis:\n- Name: Nome do recurso.\n- NodeAddress: Endereço do nó.\n- ClassName: Nome da classe do recurso.\n- OperationalStatus: Status operacional do recurso.\n- AdminStatus: Status administrativo do recurso.\n- Attributes: Atributos associados ao recurso.\n- Description: Descrição do recurso.\n- ResourceType: Tipo de recurso.\n- StructureId: ID da estrutura do recurso.\n- Category: Categoria do recurso.\n- BusinessStatus: Status comercial do recurso.\n- DiscoveryAttributes: Atributos de descoberta associados ao recurso.\n- DependentService: Serviço dependente associado ao recurso.\n- ConsumableMetric: Métrica consumível do recurso.\n- ConsumerMetric: Métrica consumidora do recurso.\n\nO objeto PatchManagedResourceResponse contém a resposta da atualização, incluindo as informações atualizadas do recurso após a operação. Caso o recurso não seja encontrado ou ocorra algum erro durante a atualização, serão lançadas exceções específicas, tais como DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException, ScriptRuleException, SchemaNotFoundException, GenericException e AttributeNotFoundException. Os detalhes da requisição podem ser obtidos através do objeto HttpServletRequest passado como parâmetro."
+    )
     public PatchManagedResourceResponse patchManagedResource(@RequestBody PatchManagedResourceRequest request, @PathVariable("domain") String domainName, @PathVariable("resourceId") String resourceId, HttpServletRequest httpRequest) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException, ScriptRuleException, SchemaNotFoundException, GenericException, AttributeNotFoundException {
         this.setUserDetails(request);
         request.setRequestDomain(domainName);
@@ -242,6 +253,10 @@ public class ResourceApi extends BaseApi {
      */
     @AuthenticatedCall(role = {"user"})
     @PatchMapping(path = "/{domain}/resource", produces = "application/json", consumes = "application/json")
+    @Operation(
+            summary = "Realiza uma atualização parcial em um recurso gerenciado (ManagedResource) no sistema Netcompass.",
+            description = "Este método permite aos usuários atualizarem apenas parte das informações de um recurso existente. O recurso a ser atualizado é identificado pelo domínio (domain) especificado na URL da requisição e pelas informações fornecidas no objeto PatchManagedResourceRequest passado no corpo da requisição. O método configura o detalhe do usuário (user details) com base nas informações fornecidas no objeto PatchManagedResourceRequest antes de prosseguir com a atualização do recurso. O objeto PatchManagedResourceResponse contém a resposta da atualização, incluindo as informações atualizadas do recurso após a operação. Caso o recurso não seja encontrado ou ocorra algum erro durante a atualização, serão lançadas exceções específicas, tais como DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException, ScriptRuleException, SchemaNotFoundException, GenericException e AttributeNotFoundException. Os detalhes da requisição podem ser obtidos através do objeto HttpServletRequest passado como parâmetro."
+    )
     public PatchManagedResourceResponse patchManagedResource(@RequestBody PatchManagedResourceRequest request, @PathVariable("domain") String domainName, HttpServletRequest httpRequest) throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException, ScriptRuleException, SchemaNotFoundException, GenericException, AttributeNotFoundException {
         this.setUserDetails(request);
         request.setRequestDomain(domainName);

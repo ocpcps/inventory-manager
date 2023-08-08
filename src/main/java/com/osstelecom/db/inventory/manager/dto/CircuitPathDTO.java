@@ -23,8 +23,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * Representa o DTO do  PATH de um circuito
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 04.01.2022
  */
 public class CircuitPathDTO {

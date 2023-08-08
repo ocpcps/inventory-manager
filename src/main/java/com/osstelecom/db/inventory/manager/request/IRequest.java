@@ -19,7 +19,7 @@ package com.osstelecom.db.inventory.manager.request;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  */
 public interface IRequest<T> {
 

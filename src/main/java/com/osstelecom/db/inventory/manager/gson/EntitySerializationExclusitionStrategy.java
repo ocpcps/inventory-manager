@@ -23,7 +23,7 @@ import java.util.Map;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  */
 public class EntitySerializationExclusitionStrategy implements ExclusionStrategy {
 

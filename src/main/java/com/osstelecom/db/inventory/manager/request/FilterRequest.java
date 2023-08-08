@@ -22,7 +22,7 @@ import com.osstelecom.db.inventory.manager.resources.Domain;
 
 /**
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 26.01.2022
  */
 public class FilterRequest extends BasicRequest<FilterDTO> {

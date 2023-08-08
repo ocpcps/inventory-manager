@@ -37,7 +37,7 @@ import org.springframework.stereotype.Component;
 /**
  * Realiza as operações de travesia de grafo no arangoDB
  *
- * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @author Lucas Nishimura
  * @created 02.02.2023
  */
 @Component
