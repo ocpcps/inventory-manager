@@ -60,8 +60,15 @@ import com.osstelecom.db.inventory.manager.response.GetSchemasResponse;
 import com.osstelecom.db.inventory.manager.response.ListSchemasResponse;
 import com.osstelecom.db.inventory.manager.response.PatchResourceSchemaModelResponse;
 import com.osstelecom.db.inventory.manager.response.ResourceSchemaResponse;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import org.apache.commons.beanutils.BeanComparator;
 import org.apache.tools.ant.DirectoryScanner;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 /**
  * Classe que lida com os atributos do schema
@@ -91,6 +98,8 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
      * Local Cache keeps the Schema for 1 Minute in memory, most of 5k Records
      */
     private Cache<String, ResourceSchemaModel> schemaCache;
+    
+    private Cache<String, List<ResourceSchemaModel>> allSchemasCache;
 
     /**
      * Cuida pro processo de incialização e cria um cache com capacidade de
@@ -103,6 +112,14 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                 .newBuilder()
                 .maximumSize(5000)
                 .removalListener(this)
+                .expireAfterWrite(this.configurationManager
+                        .loadConfiguration()
+                        .getSchemaCacheTTL(), TimeUnit.SECONDS)
+                .build();
+        
+        this.allSchemasCache = CacheBuilder
+                .newBuilder()
+                .maximumSize(5000)
                 .expireAfterWrite(this.configurationManager
                         .loadConfiguration()
                         .getSchemaCacheTTL(), TimeUnit.SECONDS)
@@ -236,13 +253,41 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
         return result;
     }
     
-    public ListSchemasResponse listSchemas(String filter) throws SchemaNotFoundException, GenericException {
-        List<ResourceSchemaModel> result = this.loadSchemaFromDisk();
+    public ListSchemasResponse listSchemas(int page, int size, String sortField, String sortDirection, String filter) throws SchemaNotFoundException, GenericException {
+        /**
+         * Faz uso do Cache
+         */
+        List<ResourceSchemaModel> result = this.allSchemasCache.getIfPresent(filter);
+        if (result == null) {
+            result = this.loadSchemaFromDisk();
+            this.allSchemasCache.put(filter, result);
+        }
+        
+        Pageable pageRequest = PageRequest.of(page, size);
+        
+        int start = (int) pageRequest.getOffset();
+        int end = Math.min((start + pageRequest.getPageSize()), result.size());
+
+        /**
+         * Vamos fazer um sorting :)
+         */
+        Stream<ResourceSchemaModel> stream = result.stream();
+        if (sortField != null) {
+            Comparator<ResourceSchemaModel> comparator = new BeanComparator<>(sortField);
+            if ("desc".equalsIgnoreCase(sortDirection)) {
+                comparator = comparator.reversed();
+            }
+            stream = stream.sorted(comparator);
+        }
+        result = stream.collect(Collectors.toList());
+        
+        List<ResourceSchemaModel> pageContent = result.subList(start, end);
+        
         if (filter.equals("*")) {
-            return new ListSchemasResponse(result);
+            return new ListSchemasResponse(new PageImpl<>(pageContent, pageRequest, result.size()));
         } else {
             result.removeIf(a -> !a.getSchemaName().contains(filter));
-            return new ListSchemasResponse(result);
+            return new ListSchemasResponse(new PageImpl<>(pageContent, pageRequest, result.size()));
         }
     }
 
@@ -387,6 +432,12 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
      * Creates the Schema on the schema directory
      *
      * @param model
+     * @return
+     * @throws com.osstelecom.db.inventory.manager.exception.GenericException
+     * @throws
+     * com.osstelecom.db.inventory.manager.exception.SchemaNotFoundException
+     * @throws
+     * com.osstelecom.db.inventory.manager.exception.InvalidRequestException
      */
     public CreateResourceSchemaModelResponse createResourceSchemaModel(ResourceSchemaModel model)
             throws GenericException, SchemaNotFoundException, InvalidRequestException {

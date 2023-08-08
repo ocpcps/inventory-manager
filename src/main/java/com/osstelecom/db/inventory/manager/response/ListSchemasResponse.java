@@ -19,6 +19,7 @@ package com.osstelecom.db.inventory.manager.response;
 
 import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
 import java.util.List;
+import org.springframework.data.domain.Page;
 
 /**
  *
@@ -26,9 +27,9 @@ import java.util.List;
  * @created 04.08.2023
  */
 public class ListSchemasResponse extends BasicResponse<List<ResourceSchemaModel>> {
-    
-    public ListSchemasResponse(List<ResourceSchemaModel> obj) {
-        super(obj);
+
+    public ListSchemasResponse(Page<ResourceSchemaModel> obj) {
+        super(obj.toList());
     }
-    
+
 }

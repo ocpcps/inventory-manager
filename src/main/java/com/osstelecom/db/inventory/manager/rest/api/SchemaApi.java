@@ -42,6 +42,9 @@ import com.osstelecom.db.inventory.manager.response.TypedMapResponse;
 import com.osstelecom.db.inventory.manager.security.model.AuthenticatedCall;
 import com.osstelecom.db.inventory.manager.session.SchemaSession;
 import javax.servlet.http.HttpServletRequest;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.RequestParam;
 
 /**
  * Handles the Dynamic Schema Mapping and Operations
@@ -59,8 +62,18 @@ public class SchemaApi extends BaseApi {
 
     @AuthenticatedCall(role = {"user"})
     @GetMapping(path = "/detail/{filter}", produces = "application/json")
-    public ListSchemasResponse listSchemas(@PathVariable("filter") String filter) throws SchemaNotFoundException, GenericException {
-        return schemaSession.listSchemas(filter);
+    public ListSchemasResponse listSchemas(@RequestParam(
+            value = "page",
+            required = false,
+            defaultValue = "0") int page,
+            @RequestParam(
+                    value = "size",
+                    required = false,
+                    defaultValue = "10") int size,
+            @RequestParam(value = "sort", required = false, defaultValue = "id") String sort,
+            @RequestParam(value = "direction", required = false, defaultValue = "asc") String sortDirection,
+            @PathVariable("filter") String filter) throws SchemaNotFoundException, GenericException {
+        return schemaSession.listSchemas(page, size, sort, sortDirection, filter);
     }
 
     /**
