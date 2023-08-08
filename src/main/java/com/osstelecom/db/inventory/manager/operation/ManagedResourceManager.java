@@ -544,20 +544,22 @@ public class ManagedResourceManager extends Manager {
             AttributeConstraintViolationException, ScriptRuleException, SchemaNotFoundException, GenericException,
             AttributeNotFoundException {
 
-        ResourceConnection resourceConnection = connectionDeletedEvent.getNewResource();
-        if (!CollectionUtils.isEmpty(resourceConnection.getEventSourceIds())) {
-            if (resourceConnection.getEventSourceIds().contains(resourceConnection.getId())) {
-                return;
+        ResourceConnection resourceConnection = connectionDeletedEvent.getOldResource();
+        if (resourceConnection != null) {
+            if (!CollectionUtils.isEmpty(resourceConnection.getEventSourceIds())) {
+                if (resourceConnection.getEventSourceIds().contains(resourceConnection.getId())) {
+                    return;
+                }
             }
         }
 
-        ManagedResource resource = connectionDeletedEvent.getNewResource().getToResource();
-
-        List<String> sourceIds = new ArrayList<>(resourceConnection.getEventSourceIds());
-        sourceIds.add(resourceConnection.getId());
-        resource.setEventSourceIds(sourceIds);
-
-        this.updateManagedResource(resource, true);
+        ManagedResource resource = connectionDeletedEvent.getOldResource().getToResource();
+        if (resource != null) {
+            List<String> sourceIds = new ArrayList<>(resourceConnection.getEventSourceIds());
+            sourceIds.add(resourceConnection.getId());
+            resource.setEventSourceIds(sourceIds);
+            this.updateManagedResource(resource, true);
+        }
     }
 
     /**
