@@ -225,6 +225,10 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                      */
                     schema.setCreationDate(new Date(0));
                 }
+                
+                if (schema.getLastUpdate() == null) {
+                    schema.setLastUpdate(new Date(0));
+                }
                 result.add(schema);
             }
             
