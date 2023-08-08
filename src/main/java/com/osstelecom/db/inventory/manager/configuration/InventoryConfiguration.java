@@ -40,7 +40,7 @@ public class InventoryConfiguration {
     /**
      * Tempo em segundos do Cache
      */
-    private Integer schemaCacheTTL = 120;
+    private Integer schemaCacheTTL = 300;
     private boolean trackTimers = true;
 
     /**
