@@ -53,6 +53,7 @@ public class DbJobManager extends Manager {
      * @param job
      */
     public void notifyJobStart(DBJobInstance job) {
+        logger.debug("Job:[{}] Started", job.getJobId());
         this.runningJobs.put(job.getJobId(), job);
     }
 

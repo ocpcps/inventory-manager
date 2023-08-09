@@ -125,7 +125,8 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
      */
     @Override
     public void handleException(Throwable thrwbl, SubscriberExceptionContext sec) {
-        logger.error("Subscription Error in EventBUS Please Check Me:", thrwbl);
+        logger.error("Subscription Error in EventBUS Please Check Me:[{}]", thrwbl.getMessage());
+        logger.error("Event BUS Error", thrwbl);
         thrwbl.printStackTrace();
     }
 

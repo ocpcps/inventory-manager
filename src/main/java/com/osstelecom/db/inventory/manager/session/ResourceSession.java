@@ -266,6 +266,25 @@ public class ResourceSession {
                 connection.setInsertedDate(new Date());
             }
 
+            /**
+             * Sanitização do Oper Status
+             */
+            if (connection.getOperationalStatus() == null) {
+                connection.setOperationalStatus("Up");
+            } else {
+                if (connection.getOperationalStatus().trim().equals("")) {
+                    connection.setOperationalStatus("Up");
+                }
+            }
+
+            if (connection.getAdminStatus() == null) {
+                connection.setAdminStatus("Up");
+            } else {
+                if (connection.getAdminStatus().trim().equals("")) {
+                    connection.setAdminStatus("Up");
+                }
+            }
+
             connection = resourceConnectionManager.createResourceConnection(connection);
             CreateResourceConnectionResponse response = new CreateResourceConnectionResponse(connection);
             return response;
@@ -313,6 +332,25 @@ public class ResourceSession {
             connection.setAdminStatus(request.getPayLoad().getAdminStatus());
             connection.setBusinessStatus(request.getPayLoad().getBusinessStatus());
             connection.setCategory(request.getPayLoad().getCategory());
+
+            /**
+             * Sanitização do Oper Status
+             */
+            if (connection.getOperationalStatus() == null) {
+                connection.setOperationalStatus("Up");
+            } else {
+                if (connection.getOperationalStatus().trim().equals("")) {
+                    connection.setOperationalStatus("Up");
+                }
+            }
+
+            if (connection.getAdminStatus() == null) {
+                connection.setAdminStatus("Up");
+            } else {
+                if (connection.getAdminStatus().trim().equals("")) {
+                    connection.setAdminStatus("Up");
+                }
+            }
 
             if (request.getPayLoad().getKey() != null) {
                 //
@@ -371,6 +409,25 @@ public class ResourceSession {
             connection.setAdminStatus(request.getPayLoad().getAdminStatus());
             connection.setBusinessStatus(request.getPayLoad().getBusinessStatus());
             connection.setCategory(request.getPayLoad().getCategory());
+
+            /**
+             * Sanitização do Oper Status
+             */
+            if (connection.getOperationalStatus() == null) {
+                connection.setOperationalStatus("Up");
+            } else {
+                if (connection.getOperationalStatus().trim().equals("")) {
+                    connection.setOperationalStatus("Up");
+                }
+            }
+
+            if (connection.getAdminStatus() == null) {
+                connection.setAdminStatus("Up");
+            } else {
+                if (connection.getAdminStatus().trim().equals("")) {
+                    connection.setAdminStatus("Up");
+                }
+            }
 
             if (request.getPayLoad().getKey() != null) {
                 //
@@ -776,12 +833,23 @@ public class ResourceSession {
             throw new InvalidRequestException("Class Name Has to Start with resource.");
         }
 
+        /**
+         * Sanitização do Oper Status
+         */
         if (resource.getOperationalStatus() == null) {
             resource.setOperationalStatus("Up");
+        } else {
+            if (resource.getOperationalStatus().trim().equals("")) {
+                resource.setOperationalStatus("Up");
+            }
         }
 
         if (resource.getAdminStatus() == null) {
             resource.setAdminStatus("Up");
+        } else {
+            if (resource.getAdminStatus().trim().equals("")) {
+                resource.setAdminStatus("Up");
+            }
         }
 
         //

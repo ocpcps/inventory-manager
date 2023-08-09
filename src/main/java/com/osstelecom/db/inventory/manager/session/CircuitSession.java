@@ -289,10 +289,18 @@ public class CircuitSession {
         //
         if (request.getPayLoad().getOperationalStatus() == null) {
             request.getPayLoad().setOperationalStatus("Up");
+        } else {
+            if (request.getPayLoad().getOperationalStatus().trim().equals("")) {
+                request.getPayLoad().setOperationalStatus("Up");
+            }
         }
 
         if (request.getPayLoad().getNodeAddress() == null) {
             request.getPayLoad().setNodeAddress(request.getPayLoad().getName());
+        } else {
+            if (request.getPayLoad().getNodeAddress().trim().equals("")) {
+                request.getPayLoad().setNodeAddress("Up");
+            }
         }
 
         //

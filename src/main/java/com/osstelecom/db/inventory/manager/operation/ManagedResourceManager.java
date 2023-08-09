@@ -155,6 +155,16 @@ public class ManagedResourceManager extends Manager {
         Boolean useUpsert = false;
         try {
             lockManager.lock();
+
+            //
+            // Mover isso para session...
+            //
+            if (!resource.getOperationalStatus().equals("Up")
+                    && !resource.getOperationalStatus().equals("Down")) {
+                throw new InvalidRequestException(
+                        "Invalid OperationalStatus:[" + resource.getOperationalStatus() + "]");
+            }
+
             //
             // START - Subir as validações para session
             //
@@ -324,7 +334,8 @@ public class ManagedResourceManager extends Manager {
             //
             // Mover isso para session...
             //
-            if (!resource.getOperationalStatus().equals("Up") && !resource.getOperationalStatus().equals("Down")) {
+            if (!resource.getOperationalStatus().equals("Up")
+                    && !resource.getOperationalStatus().equals("Down")) {
                 throw new InvalidRequestException(
                         "Invalid OperationalStatus:[" + resource.getOperationalStatus() + "]");
             }
