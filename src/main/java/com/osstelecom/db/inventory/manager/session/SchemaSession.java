@@ -294,7 +294,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
     }
 
     /**
-     * Loads all schemas
+     * Loads all schemas apenas os nomes
      *
      * @return
      * @throws

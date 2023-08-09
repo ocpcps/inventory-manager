@@ -85,7 +85,33 @@ public class ResourceApi extends BaseApi {
      */
     @AuthenticatedCall(role = {"user"})
     @PutMapping(path = "/{domain}/resource", produces = "application/json", consumes = "application/json")
-    @Operation(description = "Cria um novo recurso gerenciado (ManagedResource) no sistema Netcompass. Este método permite aos usuários autenticados com o papel 'user' criar um novo recurso informando as informações relevantes no corpo da requisição (CreateManagedResourceRequest). O recurso será criado no domínio especificado na URL da requisição. Caso ocorra algum erro durante a criação, serão lançadas exceções específicas, tais como SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, InvalidRequestException, DomainNotFoundException, ArangoDaoException, ResourceNotFoundException e AttributeNotFoundException. O método retorna um objeto CreateManagedResourceResponse contendo a resposta da criação do recurso gerenciado.")
+    @Operation(
+            summary = "Criar Recurso Gerenciado",
+            description = "<p>Cria um recurso gerenciado com base na solicitação fornecida.</p>"
+            + "<h3>Fluxo:</h3>"
+            + "<ol>"
+            + "<li>Valida a requisição e o payload.</li>"
+            + "<li>Define o domínio do recurso.</li>"
+            + "<li>Valida o nome do recurso e atribui um nome se não fornecido.</li>"
+            + "<li>Define esquemas, classes e status padrões se não fornecidos.</li>"
+            + "<li>Valida e define o endereço do nó.</li>"
+            + "<li>Valida e define o ID da estrutura se fornecido.</li>"
+            + "<li>Define o proprietário e a data de inserção.</li>"
+            + "<li>Cria o recurso e retorna a resposta.</li>"
+            + "</ol>"
+            + "<h3>Exceções possíveis:</h3>"
+            + "<ul>"
+            + "<li><b>SchemaNotFoundException:</b> Lançada se o esquema não for encontrado.</li>"
+            + "<li><b>AttributeConstraintViolationException:</b> Lançada em caso de violação nas restrições de atributo.</li>"
+            + "<li><b>GenericException:</b> Exceção geral.</li>"
+            + "<li><b>ScriptRuleException:</b> Lançada em caso de violação nas regras de script.</li>"
+            + "<li><b>InvalidRequestException:</b> Lançada para solicitações nulas ou outros problemas relacionados à solicitação.</li>"
+            + "<li><b>DomainNotFoundException:</b> Lançada se o domínio na solicitação não for encontrado.</li>"
+            + "<li><b>ArangoDaoException:</b> Exceção relacionada às operações do ArangoDB.</li>"
+            + "<li><b>ResourceNotFoundException:</b> Lançada se o recurso não for encontrado.</li>"
+            + "<li><b>AttributeNotFoundException:</b> Lançada se o atributo na solicitação não for encontrado.</li>"
+            + "</ul>"
+    )
     public CreateManagedResourceResponse createManagedResource(@RequestBody CreateManagedResourceRequest request, @PathVariable("domain") String domain, HttpServletRequest httpRequest) throws GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, InvalidRequestException, DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, AttributeNotFoundException {
         try {
             this.setUserDetails(request);

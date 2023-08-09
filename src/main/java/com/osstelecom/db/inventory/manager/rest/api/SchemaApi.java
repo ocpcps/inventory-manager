@@ -41,10 +41,9 @@ import com.osstelecom.db.inventory.manager.response.TypedListResponse;
 import com.osstelecom.db.inventory.manager.response.TypedMapResponse;
 import com.osstelecom.db.inventory.manager.security.model.AuthenticatedCall;
 import com.osstelecom.db.inventory.manager.session.SchemaSession;
+import io.swagger.v3.oas.annotations.Operation;
 import javax.servlet.http.HttpServletRequest;
 
-import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.RequestParam;
 
 /**
@@ -63,6 +62,21 @@ public class SchemaApi extends BaseApi {
 
     @AuthenticatedCall(role = {"user"})
     @GetMapping(path = "/detail/{filter}", produces = "application/json")
+    @Operation(
+            summary = "Lista esquemas de recursos disponíveis",
+            description = "<p>Este endpoint permite aos usuários listar esquemas de recursos armazenados, com opções adicionais para paginação, ordenação e filtragem.</p>"
+            + "<ul>"
+            + "<li><strong>Paginação:</strong> Os esquemas podem ser paginados fornecendo números de página e tamanho de página.</li>"
+            + "<li><strong>Ordenação:</strong> Os esquemas podem ser ordenados com base em um campo específico e direção (ascendente ou descendente).</li>"
+            + "<li><strong>Filtragem:</strong> Os esquemas podem ser filtrados por nome usando um texto de filtro fornecido.</li>"
+            + "</ul>"
+            + "<p><strong>Cache:</strong> Este método faz uso do cache para melhorar o desempenho e reduzir a carga no sistema de arquivos.</p>"
+            + "<p><strong>Exceções:</strong></p>"
+            + "<ul>"
+            + "<li><code>SchemaNotFoundException</code>: Lançada quando um esquema específico não é encontrado.</li>"
+            + "<li><code>GenericException</code>: Exceção genérica lançada para erros não especificados.</li>"
+            + "</ul>"
+    )
     public ListSchemasResponse listSchemas(
             @RequestParam(
                     value = "page",
@@ -86,6 +100,8 @@ public class SchemaApi extends BaseApi {
      */
     @AuthenticatedCall(role = {"user"})
     @GetMapping(produces = "application/json")
+    @Operation(
+            summary = "Lista esquemas de recursos disponíveis, apenas nomes")
     public GetSchemasResponse getSchemasDefinition() throws SchemaNotFoundException, GenericException {
         return schemaSession.loadSchemas();
     }
@@ -98,6 +114,20 @@ public class SchemaApi extends BaseApi {
      */
     @AuthenticatedCall(role = {"user"})
     @GetMapping(path = "/{schema}", produces = "application/json")
+    @Operation(
+            summary = "Carrega um esquema de recurso específico",
+            description = "<p>Este endpoint permite aos usuários carregar um esquema de recurso específico.</p>"
+            + "<p>Primeiro, o método tenta recuperar o esquema do cache interno. Se o esquema for encontrado no cache, ele é retornado imediatamente e uma mensagem de log é gerada indicando o acerto no cache. Caso contrário, o esquema é carregado do disco e, posteriormente, armazenado no cache para consultas futuras.</p>"
+            + "<p><strong>Parâmetros:</strong></p>"
+            + "<ul>"
+            + "<li><strong>schemaName:</strong> O nome do esquema de recurso a ser carregado.</li>"
+            + "</ul>"
+            + "<p><strong>Exceções:</strong></p>"
+            + "<ul>"
+            + "<li><code>SchemaNotFoundException</code>: Lançada se o esquema especificado não for encontrado no disco.</li>"
+            + "<li><code>GenericException</code>: Exceção genérica para outros possíveis erros.</li>"
+            + "</ul>"
+    )
     public ResourceSchemaResponse getSchemaDefinition(@PathVariable("schema") String schema, HttpServletRequest httpRequest)
             throws GenericException, SchemaNotFoundException {
         httpRequest.setAttribute("request", schema);
@@ -134,6 +164,31 @@ public class SchemaApi extends BaseApi {
      */
     @AuthenticatedCall(role = {"user"})
     @PatchMapping(path = "/{schema}", produces = "application/json")
+    @Operation(
+            summary = "Atualiza parcialmente um esquema de recurso existente",
+            description = "<p>Este endpoint permite realizar atualizações parciais em um esquema de recurso existente.</p>"
+            + "<p><strong>Campos atualizáveis:</strong></p>"
+            + "<ul>"
+            + "<li><strong>fromSchema:</strong> A classe pai do esquema. Se houver uma mudança, a classe pai é atualizada.</li>"
+            + "<li><strong>allowAll:</strong> Determina se todas as operações são permitidas.</li>"
+            + "<li><strong>graphItemColor:</strong> Cor do item no gráfico.</li>"
+            + "<li><strong>attributes:</strong> Uma lista de atributos que podem ser removidos, atualizados ou adicionados.</li>"
+            + "</ul>"
+            + "<p><strong>Fluxo de Processamento:</strong></p>"
+            + "<ol>"
+            + "<li>Verificação da carga útil da requisição.</li>"
+            + "<li>Carregamento do esquema original com base no nome do esquema.</li>"
+            + "<li>Atualização de campos individuais e atributos.</li>"
+            + "<li>Persistência do esquema atualizado e limpeza do cache.</li>"
+            + "<li>Envio de notificações sobre a atualização.</li>"
+            + "<li>Retorno do esquema atualizado como resposta.</li>"
+            + "</ol>"
+            + "<p><strong>Exceções:</strong></p>"
+            + "<ul>"
+            + "<li><code>InvalidRequestException</code>: Lançada quando a requisição contém dados inválidos ou insuficientes.</li>"
+            + "<li><code>GenericException</code>: Exceção genérica para outros possíveis erros.</li>"
+            + "<li><code>SchemaNotFoundException</code>: Lançada quando o esquema solicitado não é encontrado.</li>"
+            + "</ul>")
     public PatchResourceSchemaModelResponse patchSchameDefinition(@PathVariable("schema") String schemaName,
             @RequestBody PatchResourceSchemaModelRequest request, HttpServletRequest httpRequest)
             throws GenericException, SchemaNotFoundException, InvalidRequestException {
@@ -151,6 +206,21 @@ public class SchemaApi extends BaseApi {
      */
     @AuthenticatedCall(role = {"user", "operator"})
     @PostMapping(path = "/", produces = "application/json", consumes = "application/json")
+    @Operation(
+            summary = "Cria um novo modelo de esquema de recurso",
+            description = "<p>Este endpoint é responsável por criar um novo modelo de esquema de recurso, garantindo que ele siga certas validações e regras específicas.</p>"
+            + "<ul>"
+            + "<li>Realiza várias validações, incluindo nome do esquema, existência prévia, formatação dos atributos, entre outras.</li>"
+            + "<li>Após as validações, o modelo é salvo no disco.</li>"
+            + "<li>Retorna o modelo de esquema de recurso criado e validado como resposta.</li>"
+            + "</ul>"
+            + "<p><strong>Exceções:</strong></p>"
+            + "<ul>"
+            + "<li><code>GenericException</code>: Exceção genérica não especificada no método.</li>"
+            + "<li><code>SchemaNotFoundException</code>: Lançada quando um esquema específico não é encontrado.</li>"
+            + "<li><code>InvalidRequestException</code>: Lançada quando uma ou mais validações no pedido falham.</li>"
+            + "</ul>"
+    )
     public CreateResourceSchemaModelResponse createSchema(@RequestBody CreateResourceSchemaModelRequest request, HttpServletRequest httpRequest)
             throws GenericException, SchemaNotFoundException, InvalidRequestException {
         this.setUserDetails(request);
