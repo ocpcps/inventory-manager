@@ -96,6 +96,8 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
     @Autowired
     private EventManagerListener eventManager;
 
+    private List<String> allSchemasName = new ArrayList<>();
+
     /**
      * Local Cache keeps the Schema for 1 Minute in memory, most of 5k Records
      */
@@ -302,13 +304,14 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
      * @throws com.osstelecom.db.inventory.manager.exception.GenericException
      */
     public GetSchemasResponse loadSchemas() throws SchemaNotFoundException, GenericException {
-        List<String> result = new ArrayList<>();
 
-        this.loadSchemaFromDisk().forEach(s -> {
-            result.add(s.getSchemaName());
-        });
+        if (allSchemasName.isEmpty()) {
+            this.loadSchemaFromDisk().forEach(s -> {
+                allSchemasName.add(s.getSchemaName());
+            });
+        }
 
-        return new GetSchemasResponse(result);
+        return new GetSchemasResponse(allSchemasName);
     }
 
     /**
@@ -572,7 +575,10 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
      */
     public void clearSchemaCache() {
         logger.debug("Clearing all Cached Schemas..." + this.schemaCache.size());
+        this.allSchemasName.clear();
         this.schemaCache.invalidateAll();
+        this.allSchemasCache.invalidateAll();
+
     }
 
     /**
