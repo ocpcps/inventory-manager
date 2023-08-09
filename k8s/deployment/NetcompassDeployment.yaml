@@ -42,7 +42,7 @@ spec:
           - name: JAR_NAME
             value: inventory-manager-1.0.0-alpha.jar
           - name: SPRING_PROFILES_DEFAULT
-            value: prod
+            value: mvp
       volumes:
         - name: netcompass-app-volume
           persistentVolumeClaim:
