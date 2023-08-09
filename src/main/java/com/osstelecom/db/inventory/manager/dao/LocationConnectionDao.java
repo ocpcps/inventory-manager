@@ -143,7 +143,7 @@ public class LocationConnectionDao extends AbstractArangoDao<LocationConnection>
 
 //            aql += " return doc";
             FilterDTO filter = new FilterDTO(aql, bindVars);
-            GraphList<LocationConnection> result = this.query(filter, LocationConnection.class, this.getDb());
+            GraphList<LocationConnection> result = this.query(filter, LocationConnection.class);
 
             return result.getOne();
         } catch (ResourceNotFoundException | InvalidRequestException ex) {
@@ -241,7 +241,7 @@ public class LocationConnectionDao extends AbstractArangoDao<LocationConnection>
             bindVars.put("attributeSchemaName", attributeSchemaName);
             FilterDTO filter = new FilterDTO(aql, bindVars);
 
-            return this.query(filter, LocationConnection.class, this.getDb());
+            return this.query(filter, LocationConnection.class);
         } catch (InvalidRequestException | ResourceNotFoundException ex) {
             throw ex;
         } catch (Exception ex) {
@@ -257,7 +257,7 @@ public class LocationConnectionDao extends AbstractArangoDao<LocationConnection>
             Map<String, Object> bindVars = new HashMap<>();
             bindVars.put("attributeSchemaName", className);
             FilterDTO filter = new FilterDTO(aql, bindVars);
-            return this.query(filter, LocationConnection.class, this.getDb());
+            return this.query(filter, LocationConnection.class);
         } catch (InvalidRequestException | ResourceNotFoundException ex) {
             throw ex;
         } catch (Exception ex) {
@@ -283,7 +283,7 @@ public class LocationConnectionDao extends AbstractArangoDao<LocationConnection>
 
 //            aql += " return doc";
             filter.setAqlFilter(aql);
-            return this.query(filter, LocationConnection.class, this.getDb());
+            return this.query(filter, LocationConnection.class);
         } catch (InvalidRequestException | ResourceNotFoundException ex) {
             throw ex;
         } catch (Exception ex) {
@@ -318,5 +318,10 @@ public class LocationConnectionDao extends AbstractArangoDao<LocationConnection>
             logger.error("Failed to Get Connection Count:[{}]", ex.getMessage(), ex);
             return -1L;
         }
+    }
+
+    @Override
+    public GraphList<LocationConnection> findAll(Domain domain) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
+        return this.query(FilterDTO.findAllLocationConnections(domain), LocationConnection.class);
     }
 }

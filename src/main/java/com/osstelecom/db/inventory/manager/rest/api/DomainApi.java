@@ -25,7 +25,9 @@ import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.request.CreateDomainRequest;
 import com.osstelecom.db.inventory.manager.request.DeleteDomainRequest;
+import com.osstelecom.db.inventory.manager.request.GetRequest;
 import com.osstelecom.db.inventory.manager.request.UpdateDomainRequest;
+import com.osstelecom.db.inventory.manager.resources.StringResponse;
 import com.osstelecom.db.inventory.manager.response.CreateDomainResponse;
 import com.osstelecom.db.inventory.manager.response.DeleteDomainResponse;
 import com.osstelecom.db.inventory.manager.response.DomainResponse;
@@ -70,6 +72,14 @@ public class DomainApi extends BaseApi {
     @GetMapping(path = "/{domain}", produces = "application/json")
     public DomainResponse getDomain(@PathVariable("domain") String domainName, HttpServletRequest httpRequest) throws DomainNotFoundException, InvalidRequestException, ArangoDaoException, ResourceNotFoundException, IOException {
         return domainSession.getDomain(domainName);
+    }
+
+    @AuthenticatedCall(role = {"user", "operator"})
+    @GetMapping(path = "/{domain}/reconcile", produces = "application/json")
+    public StringResponse reconcileDomain(@PathVariable("domain") String domainName, HttpServletRequest httpRequest) throws DomainNotFoundException, InvalidRequestException, ArangoDaoException, ResourceNotFoundException, IOException {
+        GetRequest req = new GetRequest();
+        req.setRequestDomain(domainName);
+        return domainSession.reconcileDomain(req);
     }
 
     /**

@@ -47,6 +47,7 @@ import java.util.stream.Collectors;
 
 /**
  * Dao Abstrata do Arango DB
+ *
  * @author Lucas Nishimura
  * @param <T>
  * @created 30.08.2022
@@ -79,6 +80,9 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
             throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException;
 
     public abstract GraphList<T> findResourcesByClassName(String className, Domain domain)
+            throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException;
+
+    public abstract GraphList<T> findAll(Domain domain)
             throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException;
 
     public abstract GraphList<T> findResourceByFilter(FilterDTO filter, Domain domain)
@@ -226,7 +230,7 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
      * @return
      * @throws ResourceNotFoundException
      */
-    public GraphList<T> query(FilterDTO filter, Class<T> type, ArangoDatabase db)
+    public GraphList<T> query(FilterDTO filter, Class<T> type)
             throws ResourceNotFoundException, InvalidRequestException {
         Long start = System.currentTimeMillis();
         String uid = UUID.randomUUID().toString();
@@ -261,7 +265,7 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
                 logger.info("\t  [@{}]=[{}]", k, v);
             });
             GraphList<T> result = new GraphList<>(
-                    db.query(filter.getAqlFilter(), filter.getBindings(),
+                    this.arangoDatabase.query(filter.getAqlFilter(), filter.getBindings(),
                             new AqlQueryOptions().fullCount(true).count(true), type));
 
             if (result.isEmpty()) {
@@ -298,7 +302,7 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
              * ResourceNotFoundException
              */
             GraphList<T> result = new GraphList<>(
-                    db.query(filter.getAqlFilter(), new AqlQueryOptions().fullCount(true).count(true), type));
+                    this.arangoDatabase.query(filter.getAqlFilter(), new AqlQueryOptions().fullCount(true).count(true), type));
             if (result.isEmpty()) {
                 try {
                     result.close();

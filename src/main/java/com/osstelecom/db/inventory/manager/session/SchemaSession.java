@@ -275,6 +275,11 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
         /**
          * Vamos fazer um sorting :)
          */
+        if (!filter.equals("*")) {
+            result.removeIf(a -> !a.getSchemaName().contains(filter));
+        }
+        int totalSize = result.size();
+        
         Stream<ResourceSchemaModel> stream = result.stream();
         if (sortField != null) {
             Comparator<ResourceSchemaModel> comparator = new BeanComparator<>(sortField);
@@ -287,12 +292,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
 
         List<ResourceSchemaModel> pageContent = result.subList(start, end);
 
-        if (filter.equals("*")) {
-            return new ListSchemasResponse(new PageImpl<>(pageContent, pageRequest, result.size()));
-        } else {
-            result.removeIf(a -> !a.getSchemaName().contains(filter));
-            return new ListSchemasResponse(new PageImpl<>(pageContent, pageRequest, result.size()));
-        }
+        return new ListSchemasResponse(new PageImpl<>(pageContent, pageRequest, totalSize));
     }
 
     /**

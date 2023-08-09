@@ -19,6 +19,7 @@ package com.osstelecom.db.inventory.manager.dto;
 
 import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 import com.osstelecom.db.inventory.manager.resources.ConsumableMetric;
+import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import com.osstelecom.db.inventory.manager.resources.ServiceResource;
@@ -73,6 +74,45 @@ public class FilterDTO {
 
     public FilterDTO() {
     }
+
+    public static FilterDTO findAllCircuits(Domain domain) {
+        String aql = " for doc in   `" + domain.getCircuits() + "`";
+        FilterDTO filter = new FilterDTO(aql);
+        return filter;
+    }
+
+    public static FilterDTO findAllLocationConnections(Domain domain) {
+        String aql = " for doc in   `" + domain.getConnections() + "`";
+        FilterDTO filter = new FilterDTO(aql);
+        return filter;
+    }
+
+    public static FilterDTO findAllManagedResource(Domain domain) {
+        String aql = " for doc in   `" + domain.getNodes() + "`";
+        FilterDTO filter = new FilterDTO(aql);
+        return filter;
+    }
+
+    public static FilterDTO findAllResourceConnection(Domain domain) {
+        String aql = " for doc in   `" + domain.getConnections() + "`";
+        FilterDTO filter = new FilterDTO(aql);
+        return filter;
+    }
+
+    public static FilterDTO findAllResourceLocation(Domain domain) {
+        String aql = " for doc in   `" + domain.getNodes() + "`";
+        aql += " filter doc.attributeSchemaName like 'location.%'";
+        FilterDTO filter = new FilterDTO(aql);
+        return filter;
+    }
+
+    public static FilterDTO findAllServices(Domain domain) {
+        String aql = " for doc in   `" + domain.getServices() + "`";
+        FilterDTO filter = new FilterDTO(aql);
+        return filter;
+    }
+
+   
 
     public FilterDTO(String aqlFilter) {
         this.aqlFilter = aqlFilter;

@@ -217,7 +217,7 @@ public class ConsumableMetricManager extends Manager {
      */
     @Subscribe
     public void onResourceConnectionUpdatedEvent(ResourceConnectionUpdatedEvent connectionUpdateEvent) {
-        String timerId = startTimer("onResourceConnectionUpdatedEvent");
+        String timerId = startTimer("ConsumableMetricManager.onResourceConnectionUpdatedEvent");
         try {
             ResourceConnection oldConnection = connectionUpdateEvent.getOldResource();
             Map<String, Double> childValues = processConsumerMetric(oldConnection.getFrom());
@@ -232,7 +232,7 @@ public class ConsumableMetricManager extends Manager {
     }
 
     private void processConsumableMetric(BasicResource toResource, Map<String, Double> childValues, Boolean consume) {
-        String timerId = startTimer("processConsumableMetric");
+        String timerId = startTimer("ConsumableMetricManager.processConsumableMetric");
         try {
             GraphList<BasicResource> consumableParents = this.consumableMetricDao
                     .findParentsWithMetrics(toResource);
@@ -284,7 +284,7 @@ public class ConsumableMetricManager extends Manager {
     }
 
     private Map<String, Double> processConsumerMetric(BasicResource fromResource) {
-        String timerId = startTimer("onResourceConnectionUpdatedEvent");
+        String timerId = startTimer("processConsumerMetric");
         Map<String, Double> result = new HashMap<>();
         try {
 

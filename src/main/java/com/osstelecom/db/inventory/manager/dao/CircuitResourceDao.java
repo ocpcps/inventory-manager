@@ -112,7 +112,7 @@ public class CircuitResourceDao extends AbstractArangoDao<CircuitResource> {
 
             FilterDTO filter = new FilterDTO(aql, bindVars);
 
-            GraphList<CircuitResource> result = this.query(filter, CircuitResource.class, this.getDb());
+            GraphList<CircuitResource> result = this.query(filter, CircuitResource.class);
 
             return result.getOne();
         } catch (ResourceNotFoundException | InvalidRequestException ex) {
@@ -211,7 +211,7 @@ public class CircuitResourceDao extends AbstractArangoDao<CircuitResource> {
             Map<String, Object> bindVars = new HashMap<>();
             bindVars.put("attributeSchemaName", attributeSchemaName);
             FilterDTO filter = new FilterDTO(aql, bindVars);
-            return this.query(filter, CircuitResource.class, this.getDb());
+            return this.query(filter, CircuitResource.class);
         } catch (InvalidRequestException | ResourceNotFoundException ex) {
             throw ex;
         } catch (Exception ex) {
@@ -226,7 +226,7 @@ public class CircuitResourceDao extends AbstractArangoDao<CircuitResource> {
             Map<String, Object> bindVars = new HashMap<>();
             bindVars.put("attributeSchemaName", className);
             FilterDTO filter = new FilterDTO(aql, bindVars);
-            return this.query(filter, CircuitResource.class, this.getDb());
+            return this.query(filter, CircuitResource.class);
         } catch (InvalidRequestException | ResourceNotFoundException ex) {
             throw ex;
         } catch (Exception ex) {
@@ -251,7 +251,7 @@ public class CircuitResourceDao extends AbstractArangoDao<CircuitResource> {
 
 //            aql += " return doc";
             filter.setAqlFilter(aql);
-            return this.query(filter, CircuitResource.class, this.getDb());
+            return this.query(filter, CircuitResource.class);
         } catch (ResourceNotFoundException | InvalidRequestException ex) {
             throw ex;
         } catch (Exception ex) {
@@ -410,5 +410,19 @@ public class CircuitResourceDao extends AbstractArangoDao<CircuitResource> {
             logger.error("Failed to Get Circuit Count:[{}]", ex.getMessage(), ex);
             return -1L;
         }
+    }
+
+    /**
+     * Find all circuits
+     *
+     * @param domain
+     * @return
+     * @throws ArangoDaoException
+     * @throws ResourceNotFoundException
+     * @throws InvalidRequestException
+     */
+    @Override
+    public GraphList<CircuitResource> findAll(Domain domain) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
+        return this.query(FilterDTO.findAllCircuits(domain), CircuitResource.class);
     }
 }

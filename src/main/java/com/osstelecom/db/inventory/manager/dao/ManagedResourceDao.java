@@ -107,7 +107,7 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
 
             aql = this.buildAqlFromBindings(aql, bindVars, false);
             FilterDTO filter = new FilterDTO(aql, bindVars);
-            GraphList<ManagedResource> result = this.query(filter, ManagedResource.class, this.getDb());
+            GraphList<ManagedResource> result = this.query(filter, ManagedResource.class);
 
             return result.getOne();
         } catch (ResourceNotFoundException | InvalidRequestException ex) {
@@ -211,7 +211,7 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
 
             bindVars.put("attributeSchemaName", attributeSchemaName);
             FilterDTO filter = new FilterDTO(aql, bindVars);
-            return this.query(filter, ManagedResource.class, this.getDb());
+            return this.query(filter, ManagedResource.class);
         } catch (InvalidRequestException | ResourceNotFoundException ex) {
             throw ex;
         } catch (Exception ex) {
@@ -227,7 +227,7 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
             Map<String, Object> bindVars = new HashMap<>();
             bindVars.put("attributeSchemaName", className);
             FilterDTO filter = new FilterDTO(aql, bindVars);
-            return this.query(filter, ManagedResource.class, this.getDb());
+            return this.query(filter, ManagedResource.class);
         } catch (InvalidRequestException | ResourceNotFoundException ex) {
             throw ex;
         } catch (Exception ex) {
@@ -253,7 +253,7 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
 
             // aql += " return doc";
             filter.setAqlFilter(aql);
-            return this.query(filter, ManagedResource.class, this.getDb());
+            return this.query(filter, ManagedResource.class);
         } catch (InvalidRequestException | ResourceNotFoundException ex) {
             throw ex;
 
@@ -307,6 +307,11 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
         aql += "RETURN distinct v ";
         return new GraphList<>(
                 getDb().query(aql, new HashMap<>(), new AqlQueryOptions().fullCount(true).count(true), BasicResource.class));
+    }
+
+    @Override
+    public GraphList<ManagedResource> findAll(Domain domain) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
+        return this.query(FilterDTO.findAllManagedResource(domain), ManagedResource.class);
     }
 
 }

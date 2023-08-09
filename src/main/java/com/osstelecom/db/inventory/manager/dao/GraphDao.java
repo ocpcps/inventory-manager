@@ -69,7 +69,7 @@ public class GraphDao {
                 + "    for v in  path.edges\n"
                 + "      filter @circuitId  in v.circuits[*] \n"
                 + "        \n"
-                + "       return v";
+                + "       return distinct v";
 
         HashMap<String, Object> bindVars = new HashMap<>();
         bindVars.put("dLimit", circuit.getCircuitPath().size() + 1);

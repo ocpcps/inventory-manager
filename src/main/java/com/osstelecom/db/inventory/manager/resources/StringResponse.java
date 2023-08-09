@@ -15,22 +15,19 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package com.osstelecom.db.inventory.manager.response;
+package com.osstelecom.db.inventory.manager.resources;
 
-import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
-import java.util.List;
-import org.springframework.data.domain.Page;
+import com.osstelecom.db.inventory.manager.response.BasicResponse;
 
 /**
  *
- * @author Lucas Nishimura
- * @created 04.08.2023
+ * @author Lucas Nishimura <lucas.nishimura@gmail.com>
+ * @created 09.08.2023
  */
-public class ListSchemasResponse extends BasicResponse<List<ResourceSchemaModel>> {
-    
-    public ListSchemasResponse(Page<ResourceSchemaModel> obj) {
-        super(obj.toList());
-        this.setSize(obj.getTotalElements());
+public class StringResponse extends BasicResponse<String> {
+
+    public StringResponse(String obj) {
+        super(obj);
     }
-    
+
 }

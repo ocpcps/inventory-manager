@@ -213,6 +213,13 @@ public class CircuitSession {
         //
         ManagedResource zPoint = managedResourceManager.findManagedResource(request.getPayLoad().getzPoint());
 
+        /**
+         * Obviamente! a e z não podem ser o mesmos
+         */
+        if (aPoint.equals(zPoint)) {
+            throw new InvalidRequestException("aPoint and zPoint are equals");
+        }
+        
         fromDbCircuit.setaPoint(aPoint);
         fromDbCircuit.setzPoint(zPoint);
 
@@ -260,6 +267,8 @@ public class CircuitSession {
      * @throws AttributeConstraintViolationException
      * @throws ScriptRuleException
      * @throws DomainNotFoundException
+     * @throws
+     * com.osstelecom.db.inventory.manager.exception.InvalidRequestException
      */
     public CreateCircuitResponse createCircuit(CreateCircuitRequest request)
             throws ResourceNotFoundException, GenericException, SchemaNotFoundException,
@@ -312,6 +321,13 @@ public class CircuitSession {
         // The "To" Circuit Destination
         //
         ManagedResource zPoint = managedResourceManager.findManagedResource(request.getPayLoad().getzPoint());
+
+        /**
+         * Obviamente! a e z não podem ser o mesmos
+         */
+        if (aPoint.equals(zPoint)) {
+            throw new InvalidRequestException("aPoint and zPoint are equals");
+        }
 
         CircuitResource circuit = request.getPayLoad();
         if (circuit.getAttributeSchemaName() == null) {

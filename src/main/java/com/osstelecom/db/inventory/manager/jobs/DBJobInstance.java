@@ -18,6 +18,7 @@
 package com.osstelecom.db.inventory.manager.jobs;
 
 import java.util.Date;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -33,14 +34,14 @@ public class DBJobInstance {
     private Date jobStarted = new Date();
     private Date jobEnded;
     private DbJobStage currentJobStage;
-    private ConcurrentHashMap<String, DbJobStage> jobStages;
+    private Map<String, DbJobStage> jobStages = new ConcurrentHashMap<>();
 
     public void startJob() {
         this.setJobStarted(new Date());
     }
 
     public void endJob() {
-        if (this.jobStarted!=null){
+        if (this.jobStarted != null) {
             this.setJobEnded(new Date());
         }
     }
@@ -94,14 +95,14 @@ public class DBJobInstance {
     /**
      * @return the jobStages
      */
-    public ConcurrentHashMap<String, DbJobStage> getJobStages() {
+    public Map<String, DbJobStage> getJobStages() {
         return jobStages;
     }
 
     /**
      * @param jobStages the jobStages to set
      */
-    public void setJobStages(ConcurrentHashMap<String, DbJobStage> jobStages) {
+    public void setJobStages(Map<String, DbJobStage> jobStages) {
         this.jobStages = jobStages;
     }
 
@@ -125,6 +126,13 @@ public class DBJobInstance {
         stage.setJobStageName(name);
         stage.setJobDescription(description);
         this.jobStages.put(stage.getJobStageId(), stage);
+        return stage;
+    }
+
+    public DbJobStage endJobStage(DbJobStage stage) {
+
+        stage = this.jobStages.remove(stage.getJobStageId());
+        stage.setDoneDate(new Date());
         return stage;
     }
 

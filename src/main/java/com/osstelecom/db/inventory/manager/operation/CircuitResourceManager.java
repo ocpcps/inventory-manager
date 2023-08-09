@@ -282,7 +282,7 @@ public class CircuitResourceManager extends Manager {
      */
     @Subscribe
     public void onResourceConnectionUpdatedEvent(ResourceConnectionUpdatedEvent updatedEvent) throws InvalidRequestException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
-        String timerId = startTimer("onResourceConnectionUpdatedEvent");
+        String timerId = startTimer("CircuitResourceManager.onResourceConnectionUpdatedEvent");
         try {
             ResourceConnection newConnection = updatedEvent.getNewResource();
             ResourceConnection oldConnection = updatedEvent.getOldResource();
@@ -307,7 +307,11 @@ public class CircuitResourceManager extends Manager {
                         }
 
                     }
+                } else {
+                    logger.debug("Connection ID[{}] Has No Circuits Empty", newConnection.getKey());
                 }
+            } else {
+                logger.debug("Connection ID[{}] Has No Circuits Null", newConnection.getKey());
             }
         } finally {
             endTimer(timerId);
@@ -367,12 +371,28 @@ public class CircuitResourceManager extends Manager {
      * @param target
      */
     private void computeCircuitIntegrity(CircuitResource circuit) throws ArangoDaoException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
-        String timerId = startTimer("onManagedResourceUpdatedEvent");
+        String timerId = startTimer("computeCircuitIntegrity");
         try {
+
+            if (circuit.getaPoint().equals(circuit.getzPoint())) {
+                //
+                // This is very wrong... Never we can reach an end here
+                //
+                circuit.setBroken(true);
+                circuit.setOperationalStatus("Down");
+                this.updateCircuitResource(circuit);
+                return;
+            }
+
             //
             // Forks with the logic of checking integrity
             //
             Long start = System.currentTimeMillis();
+            if (circuit.getCircuitPath() != null) {
+                logger.debug("Starting Circuit Computing on:[{}] With:[{}] Paths", circuit.getId(), circuit.getCircuitPath().size());
+            } else {
+                logger.debug("Starting Circuit Computing on:[{}]", circuit.getId());
+            }
             boolean stateChanged = false;
             List<ResourceConnection> connections = this.findCircuitPaths(circuit).toList();
             boolean degratedFlag = false;
@@ -476,6 +496,7 @@ public class CircuitResourceManager extends Manager {
                 this.updateCircuitResource(circuit);
             }
         } finally {
+            logger.debug("Done Circuit Computing on:[{}]", circuit.getId());
             endTimer(timerId);
         }
     }

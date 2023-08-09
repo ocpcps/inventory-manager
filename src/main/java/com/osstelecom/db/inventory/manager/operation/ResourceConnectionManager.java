@@ -382,7 +382,7 @@ public class ResourceConnectionManager extends Manager {
      * @return
      */
     public DocumentUpdateEntity<ResourceConnection> updateResourceConnection(ResourceConnection connection) throws ArangoDaoException, AttributeConstraintViolationException {
-        String timerId = startTimer("updateResourceConnection");
+        String timerId = startTimer("updateResourceConnection", connection.getId());
         try {
             lockManager.lock();
             connection.setLastModifiedDate(new Date());
@@ -472,6 +472,11 @@ public class ResourceConnectionManager extends Manager {
         // Update the related dependencies
         //
         try {
+
+            if (updatedResource.getOperationalStatus().equals("")) {
+                logger.warn("Invalid Operational Status [{}] on ID:[{}]", updatedResource.getOperationalStatus(), updatedResource.getId());
+            }
+
 //            List<String> relatedCircuits = new ArrayList<>();
             //
             // Transcrever para um filtro, que busca os recursos relacionados
@@ -495,8 +500,7 @@ public class ResourceConnectionManager extends Manager {
                     if (connection.getFrom().getKey().equals(updatedResource.getKey())) {
                         //
                         // Update from
-                        //
-
+                        //                        
                         connection.setFrom(updatedResource);
                         //
                         // validando 
@@ -510,8 +514,6 @@ public class ResourceConnectionManager extends Manager {
 
                     }
 
-                    
-                    
                     //
                     // Reflete o estado da conexão, ou seja se o recurso estiver down, a conexão cai também
                     //

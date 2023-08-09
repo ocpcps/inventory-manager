@@ -61,7 +61,7 @@ public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
             aql += " return doc";
             bindVars.put("id", resource.getId());
             FilterDTO filter = new FilterDTO(aql, bindVars);
-            return this.query(filter, ServiceResource.class, this.getDb());
+            return this.query(filter, ServiceResource.class);
         } catch (ResourceNotFoundException | InvalidRequestException ex) {
             //
             // Neste caso queremos saber se não existe nada
@@ -130,7 +130,7 @@ public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
             //
             aql = this.buildAqlFromBindings(aql, bindVars, true);
             FilterDTO filter = new FilterDTO(aql, bindVars);
-            GraphList<ServiceResource> result = this.query(filter, ServiceResource.class, this.getDb());
+            GraphList<ServiceResource> result = this.query(filter, ServiceResource.class);
             if (result.isEmpty()) {
                 ResourceNotFoundException ex = new ResourceNotFoundException("Resource Not Found");
                 //
@@ -226,7 +226,7 @@ public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
 
             bindVars.put("attributeSchemaName", attributeSchemaName);
             FilterDTO filter = new FilterDTO(aql, bindVars);
-            return this.query(filter, ServiceResource.class, this.getDb());
+            return this.query(filter, ServiceResource.class);
         } catch (ResourceNotFoundException | InvalidRequestException ex) {
             //
             // Neste caso queremos saber se não existe nada
@@ -244,7 +244,7 @@ public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
             Map<String, Object> bindVars = new HashMap<>();
             bindVars.put("attributeSchemaName", className);
             FilterDTO filter = new FilterDTO(aql, bindVars);
-            return this.query(filter, ServiceResource.class, this.getDb());
+            return this.query(filter, ServiceResource.class);
         } catch (ResourceNotFoundException | InvalidRequestException ex) {
             //
             // Neste caso queremos saber se não existe nada
@@ -273,7 +273,7 @@ public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
 
 //            aql += " return doc";
             filter.setAqlFilter(aql);
-            return this.query(filter, ServiceResource.class, this.getDb());
+            return this.query(filter, ServiceResource.class);
         } catch (ResourceNotFoundException ex) {
             //
             // Sobe essa excpetion
@@ -302,5 +302,10 @@ public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
             logger.error("Failed to Get Service Count:[{}]", ex.getMessage(), ex);
             return -1L;
         }
+    }
+
+    @Override
+    public GraphList<ServiceResource> findAll(Domain domain) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
+        return this.query(FilterDTO.findAllServices(domain), ServiceResource.class);
     }
 }

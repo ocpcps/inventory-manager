@@ -31,8 +31,10 @@ import com.osstelecom.db.inventory.manager.events.BasicUpdateEvent;
 import com.osstelecom.db.inventory.manager.events.IEvent;
 import com.osstelecom.db.inventory.manager.jobs.DBJobInstance;
 import com.osstelecom.db.inventory.manager.operation.DbJobManager;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -62,6 +64,31 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
             this.running = true;
             thread.setName("EventManagerSession_THREAD");
             thread.start();
+
+            /**
+             * Vamos criar um simples Stats Thread..
+             */
+            new Thread(() -> {
+                while (running) {
+                    if (eventQueue.size() > 950) {
+                        logger.warn("Event Queue Size:[{}]", eventQueue.size());
+                    } else {
+                        logger.debug("Event Queue Size:[{}]", eventQueue.size());
+                    }
+                    List<DBJobInstance> runningJobs = jobManager.getRunningJobs();
+                    if (!runningJobs.isEmpty()) {
+                        runningJobs.forEach(r -> {
+                            logger.debug("Job:[{}] Running Since: {}", r.getJobId(), r.getJobStarted());
+                        });
+                    }
+                    try {
+                        Thread.sleep(10000); // 10 segundos
+                    } catch (InterruptedException ex) {
+                        java.util.logging.Logger.getLogger(EventManagerListener.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+            }).start();
+
         }
         this.eventBus.register(this);
     }
@@ -69,6 +96,7 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
     @Override
     public void registerListener(Object listener) {
         this.eventBus.register(listener);
+        logger.debug("New Event Listener Registered:[{}]", listener.getClass().getCanonicalName());
     }
 
     /**
@@ -135,6 +163,7 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
      */
     @Override
     public void run() {
+        logger.debug("Event Processor Thread Started");
         while (running) {
             try {
                 Object event = eventQueue.poll(5, TimeUnit.SECONDS);
@@ -162,5 +191,6 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
                 logger.error("Error on Processing Event: [{}]", ex.getMessage());
             }
         }
+        logger.warn("Event Processor Thread Ended");
     }
 }

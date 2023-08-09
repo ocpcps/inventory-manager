@@ -54,6 +54,12 @@ public abstract class Manager {
         return uid;
     }
 
+    public String startTimer(String operation, String id) {
+        String uid = UUID.randomUUID().toString();
+        timers.put(uid, new TimerDTO(uid, id, operation, System.currentTimeMillis()));
+        return uid;
+    }
+
     /**
      * Time Util, compute the time, return -1 if invalid
      *
@@ -65,13 +71,21 @@ public abstract class Manager {
             TimerDTO timer = timers.remove(key);
             Long tookTimer = endTimer - timer.getStartTimer();
             if (configurationManager.loadConfiguration().getTrackTimers()) {
-                logger.debug("Timer: [{}] Operation:[{}] Took: {} ms", timer.getKey(), timer.getOperation(), tookTimer);
+                if (timer.getObjectId() != null) {
+                    logger.debug("Timer: [{}] Operation:[{}] on Object:[{}] Took: {} ms (>100ms)", timer.getKey(), timer.getOperation(), timer.getObjectId(), tookTimer);
+                } else {
+                    logger.debug("Timer: [{}] Operation:[{}] Took: {} ms", timer.getKey(), timer.getOperation(), tookTimer);
+                }
             } else {
                 if (tookTimer > 100) {
                     //
                     // Slow Operation Detected
                     //
-                    logger.warn("Timer: [{}] Operation:[{}] Took: {} ms (>100ms)", timer.getKey(), timer.getOperation(), tookTimer);
+                    if (timer.getObjectId() != null) {
+                        logger.warn("Timer: [{}] Operation:[{}] on Object:[{}] Took: {} ms (>100ms)", timer.getKey(), timer.getOperation(), timer.getObjectId(), tookTimer);
+                    } else {
+                        logger.warn("Timer: [{}] Operation:[{}] Took: {} ms (>100ms)", timer.getKey(), timer.getOperation(), tookTimer);
+                    }
                 }
             }
             return tookTimer;

@@ -66,10 +66,14 @@ public class DbJobManager extends Manager {
         if (job.getJobEnded() == null) {
             job.setJobEnded(new Date());
             job = this.runningJobs.remove(job.getJobId());
-            if (job.getJobStarted() != null) {
-                Long took = job.getJobEnded().getTime() - job.getJobStarted().getTime();
-                this.totalJobsDone.incrementAndGet();
-                logger.debug("JOB:[{}] Done: And Took:[{}] ms", job.getJobId(), took);
+            if (job != null) {
+                if (job.getJobStarted() != null) {
+                    Long took = job.getJobEnded().getTime() - job.getJobStarted().getTime();
+                    this.totalJobsDone.incrementAndGet();
+                    logger.debug("JOB:[{}] Done: And Took:[{}] ms", job.getJobId(), took);
+                }
+            } else {
+                logger.warn("JOB:[{}] Not Found", job.getJobId());
             }
         } else {
             logger.warn("JOB:[{}] Already Done", job.getJobId());

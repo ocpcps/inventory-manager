@@ -309,6 +309,10 @@ public class ManagedResourceManager extends Manager {
         return this.managedResourceDao.runNativeQuery(filter);
     }
 
+    public GraphList<ManagedResource> findAll(Domain domain) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
+        return this.managedResourceDao.findAll(domain);
+    }
+
     /**
      * Update a Resource,
      *

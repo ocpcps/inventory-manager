@@ -27,11 +27,19 @@ public class TimerDTO {
     private String key;
     private String operation;
     private Long startTimer;
+    private String objectId;
 
     public TimerDTO(String key, String operation, Long startTimer) {
         this.key = key;
         this.operation = operation;
         this.startTimer = startTimer;
+    }
+
+    public TimerDTO(String key, String objectId, String operation, Long startTimer) {
+        this.key = key;
+        this.operation = operation;
+        this.startTimer = startTimer;
+        this.objectId = objectId;
     }
 
     /**
@@ -74,5 +82,19 @@ public class TimerDTO {
      */
     public void setStartTimer(Long startTimer) {
         this.startTimer = startTimer;
+    }
+
+    /**
+     * @return the objectId
+     */
+    public String getObjectId() {
+        return objectId;
+    }
+
+    /**
+     * @param objectId the objectId to set
+     */
+    public void setObjectId(String objectId) {
+        this.objectId = objectId;
     }
 }

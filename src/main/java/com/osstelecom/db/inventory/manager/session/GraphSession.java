@@ -19,7 +19,6 @@ package com.osstelecom.db.inventory.manager.session;
 
 import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
-import com.osstelecom.db.inventory.manager.operation.DbJobManager;
 import com.osstelecom.db.inventory.manager.operation.GraphManager;
 import com.osstelecom.db.inventory.manager.resources.GraphList;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;

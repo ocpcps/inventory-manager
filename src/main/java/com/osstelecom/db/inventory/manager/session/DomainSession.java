@@ -18,17 +18,29 @@
 package com.osstelecom.db.inventory.manager.session;
 
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
+import com.osstelecom.db.inventory.manager.exception.AttributeNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.DomainAlreadyExistsException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
 import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
+import com.osstelecom.db.inventory.manager.exception.SchemaNotFoundException;
+import com.osstelecom.db.inventory.manager.exception.ScriptRuleException;
+import com.osstelecom.db.inventory.manager.jobs.DBJobInstance;
+import com.osstelecom.db.inventory.manager.jobs.DbJobStage;
+import com.osstelecom.db.inventory.manager.operation.DbJobManager;
 import com.osstelecom.db.inventory.manager.operation.DomainManager;
+import com.osstelecom.db.inventory.manager.operation.ManagedResourceManager;
 
 import com.osstelecom.db.inventory.manager.request.CreateDomainRequest;
 import com.osstelecom.db.inventory.manager.request.DeleteDomainRequest;
+import com.osstelecom.db.inventory.manager.request.GetRequest;
 import com.osstelecom.db.inventory.manager.request.UpdateDomainRequest;
 import com.osstelecom.db.inventory.manager.resources.Domain;
+import com.osstelecom.db.inventory.manager.resources.StringResponse;
+import com.osstelecom.db.inventory.manager.resources.GraphList;
+import com.osstelecom.db.inventory.manager.resources.ManagedResource;
+import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstraintViolationException;
 import com.osstelecom.db.inventory.manager.response.CreateDomainResponse;
 import com.osstelecom.db.inventory.manager.response.DeleteDomainResponse;
 import com.osstelecom.db.inventory.manager.response.DomainResponse;
@@ -36,6 +48,11 @@ import com.osstelecom.db.inventory.manager.response.GetDomainsResponse;
 import com.osstelecom.db.inventory.manager.response.UpdateDomainResponse;
 import java.io.IOException;
 import java.util.Date;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -46,9 +63,19 @@ import org.springframework.stereotype.Service;
  */
 @Service
 public class DomainSession {
-    
+
     @Autowired
     private DomainManager domainManager;
+
+    @Autowired
+    private ManagedResourceManager managedResourceManager;
+
+    @Autowired
+    private DbJobManager jobManager;
+
+    private final Logger logger = LoggerFactory.getLogger(DomainSession.class);
+
+    private Map<String, Boolean> runningReconcilations = new ConcurrentHashMap<>();
 
     /**
      * Deleta um domain, cuidado pois deleta tudo que está dentro do domain
@@ -126,5 +153,64 @@ public class DomainSession {
             return response;
         }
         return new UpdateDomainResponse(domainRequest.getPayLoad());
+    }
+
+    public StringResponse reconcileDomain(GetRequest req) {
+        if (runningReconcilations.containsKey(req.getRequestDomain())) {
+            return new StringResponse("Already Running");
+        } else {
+            logger.debug("Starting Reconciliation Thread");
+            new Thread(() -> {
+                try {
+                    this.reconcileDomain(req.getRequestDomain(), true);
+                } catch (DomainNotFoundException | ArangoDaoException | ResourceNotFoundException | InvalidRequestException ex) {
+                    logger.error("Failed Reconcile", ex);
+                }
+            }, "RECONCILIATION-" + req.getRequestDomain()).start();
+            runningReconcilations.put(req.getRequestDomain(), true);
+            return new StringResponse("Domain:[" + req.getRequestDomain() + "] Reconciliation Started");
+        }
+    }
+
+    /**
+     * If for some reason we had updates direct in the database, we need to fix
+     * all crossed references if withinDomain is true, it will reconcile only in
+     * the specified domain
+     */
+    private void reconcileDomain(String domainName, Boolean withinDomain) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
+        /**
+         * This will Trigger a massive update in the system, use with caution
+         */
+        Domain domain = this.domainManager.getDomain(domainName);
+        /**
+         * Now for each Node, wi will update
+         */
+
+        DBJobInstance job = this.jobManager.createJobInstance();
+
+        try (GraphList<ManagedResource> resources = this.managedResourceManager.findAll(domain)) {
+            job.startJob();
+            DbJobStage updateResourcesStage = job.createJobStage("UPDATE_RESOURCES", domainName);
+            updateResourcesStage.setJobDescription("Update All Resources in The Domain, Forcing Cascade Update");
+            updateResourcesStage.setTotalRecords(resources.size());
+            logger.debug("Found: [{}] Resources to update:", resources.size());
+            resources.forEach(resource -> {
+                try {
+                    this.managedResourceManager.update(resource);
+                    updateResourcesStage.incrementDoneRecords();
+                } catch (ArangoDaoException | InvalidRequestException | AttributeConstraintViolationException | ScriptRuleException | SchemaNotFoundException | GenericException | ResourceNotFoundException | AttributeNotFoundException ex) {
+                    updateResourcesStage.incrementErrors();
+                    logger.error("Failed to Update Resource:[{}]", resource.getId(), ex);
+                }
+
+            });
+            job.endJobStage(updateResourcesStage);
+
+        } catch (IOException ex) {
+            logger.error("Failed to Close list", ex);
+        } finally {
+            job.endJob();
+            runningReconcilations.remove(domainName);
+        }
     }
 }

@@ -32,7 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("inventory/v1")
-public class DbJobApi {
+public class DbJobApi extends BaseApi {
 
     @Autowired
     private DbJobSession jobSession;

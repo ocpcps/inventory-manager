@@ -176,7 +176,7 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
 
             bindVars.put("attributeSchemaName", attributeSchemaName);
             FilterDTO filter = new FilterDTO(aql, bindVars);
-            return this.query(filter, ResourceLocation.class, this.getDb());
+            return this.query(filter, ResourceLocation.class);
         } catch (ResourceNotFoundException | InvalidRequestException ex) {
             throw ex;
         } catch (Exception ex) {
@@ -195,7 +195,7 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
             Map<String, Object> bindVars = new HashMap<>();
             bindVars.put("attributeSchemaName", className);
             FilterDTO filter = new FilterDTO(aql, bindVars);
-            return this.query(filter, ResourceLocation.class, this.getDb());
+            return this.query(filter, ResourceLocation.class);
         } catch (ResourceNotFoundException | InvalidRequestException ex) {
             throw ex;
         } catch (Exception ex) {
@@ -223,7 +223,7 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
             }
 
             // aql += " return doc";
-            return this.query(filter, ResourceLocation.class, this.getDb());
+            return this.query(filter, ResourceLocation.class);
         } catch (ResourceNotFoundException | InvalidRequestException ex) {
             throw ex;
         } catch (Exception ex) {
@@ -296,7 +296,7 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
         });
 
         FilterDTO filter = new FilterDTO(aql, bindVars);
-        GraphList<ResourceLocation> locations = this.query(filter, ResourceLocation.class, this.getDb());
+        GraphList<ResourceLocation> locations = this.query(filter, ResourceLocation.class);
         // List<ResourceLocation> locations = cursor.asListRemaining();
 
         if (!locations.isEmpty()) {
@@ -335,5 +335,10 @@ public class ResourceLocationDao extends AbstractArangoDao<ResourceLocation> {
             logger.error("Failed to Get Location Count:[{}]", ex.getMessage(), ex);
             return -1L;
         }
+    }
+
+    @Override
+    public GraphList<ResourceLocation> findAll(Domain domain) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
+        return this.query(FilterDTO.findAllResourceLocation(domain), ResourceLocation.class);
     }
 }

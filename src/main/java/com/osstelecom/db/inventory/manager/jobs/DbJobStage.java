@@ -22,6 +22,7 @@ import java.util.UUID;
 
 /**
  * Esta classe representa um dos estagios de uma job
+ *
  * @author Lucas Nishimura
  * @created 14.12.2022
  */
@@ -33,8 +34,9 @@ public class DbJobStage {
     private Date startDate;
     private Date doneDate;
     private Double percDone;
-    private Long totalRecords;
-    private Long doneRecords;
+    private Long totalRecords = 0L;
+    private Long doneRecords = 0L;
+    private Long totalErrors = 0L;
 
     public DbJobStage() {
         this.jobStageId = UUID.randomUUID().toString();
@@ -46,8 +48,6 @@ public class DbJobStage {
     public String getJobStageId() {
         return jobStageId;
     }
-
-   
 
     /**
      * @return the jobStageName
@@ -89,6 +89,14 @@ public class DbJobStage {
      */
     public void setTotalRecords(Long totalRecords) {
         this.totalRecords = totalRecords;
+    }
+
+    public Long incrementDoneRecords() {
+        return this.doneRecords++;
+    }
+    
+    public Long incrementErrors() {
+        return this.totalErrors++;
     }
 
     /**
