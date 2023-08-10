@@ -268,13 +268,16 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
         }
 
         /**
-         * Vamos fazer um sorting :)
+         * Vamos fazer um filtro :)
          */
         if (!filter.equals("*")) {
             result.removeIf(a -> !a.getSchemaName().contains(filter));
         }
         int totalSize = result.size();
 
+        /**
+         * Agora vamos ordenar a saída com o campo que o usuário pediu
+         */
         Stream<ResourceSchemaModel> stream = result.stream();
         if (sortField != null) {
             Comparator<ResourceSchemaModel> comparator = new BeanComparator<>(sortField);
