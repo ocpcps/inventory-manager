@@ -44,13 +44,17 @@ public class ResourceSchemaModel {
     private Boolean attributesChanged = false;
     private Boolean isValid = true;
     private String graphItemColor;
-     private Date creationDate;
+    private Date creationDate;
     private Date lastUpdate;
     private HashMap<String, ResourceAttributeModel> attributes = new HashMap<>();
+    /**
+     * Schemas Filho
+     */
     private List<String> childrenSchemas = new ArrayList<>();
+    /**
+     * Schemas que tem relação com este schema
+     */
     private List<String> relatedSchemas = new ArrayList<>();
-
-   
 
     /**
      * @return the schemaName

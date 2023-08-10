@@ -37,6 +37,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.DependsOn;
 
 /**
  * Gerencia os eventos do sistema
@@ -44,7 +45,8 @@ import org.springframework.beans.factory.annotation.Autowired;
  * @author Lucas Nishimura
  * @created 10.04.2022
  */
-@Service
+@Service()
+@DependsOn(value = {"dbJobManager"})
 public class EventManagerListener implements SubscriberExceptionHandler, Runnable, IEventListener {
 
     private EventBus eventBus = new EventBus(this);
@@ -75,11 +77,13 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
                     } else {
                         logger.debug("Event Queue Size:[{}]", eventQueue.size());
                     }
-                    List<DBJobInstance> runningJobs = jobManager.getRunningJobs();
-                    if (!runningJobs.isEmpty()) {
-                        runningJobs.forEach(r -> {
-                            logger.debug("Job:[{}] Running Since: {}", r.getJobId(), r.getJobStarted());
-                        });
+                    if (jobManager != null) {
+                        List<DBJobInstance> runningJobs = jobManager.getRunningJobs();
+                        if (!runningJobs.isEmpty()) {
+                            runningJobs.forEach(r -> {
+                                logger.debug("Job:[{}] Running Since: {}", r.getJobId(), r.getJobStarted());
+                            });
+                        }
                     }
                     try {
                         Thread.sleep(10000); // 10 segundos

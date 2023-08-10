@@ -68,28 +68,28 @@ import java.util.stream.Collectors;
 
 @Service
 public class ServiceManager extends Manager {
-    
+
     @Autowired
     private DynamicRuleSession dynamicRuleSession;
-    
+
     @Autowired
     private SchemaSession schemaSession;
-    
+
     @Autowired
     private ServiceResourceDao serviceDao;
-    
+
     @Autowired
     private EventManagerListener eventManager;
-    
+
     @Autowired
     private CircuitResourceManager circuitResourceManager;
-    
+
     @Autowired
     private DomainManager domainManager;
-    
+
     @Autowired
     private LockManager lockManager;
-    
+
     private Logger logger = LoggerFactory.getLogger(ServiceManager.class);
 
     /**
@@ -106,11 +106,11 @@ public class ServiceManager extends Manager {
             String domainName = this.domainManager.getDomainNameFromId(service.getId());
             Domain domain = this.domainManager.getDomain(domainName);
             service.setDomain(domain);
-            
+
         }
         return this.serviceDao.findResource(service);
     }
-    
+
     public ServiceResource getServiceById(ServiceResource service)
             throws ResourceNotFoundException, ArangoDaoException, DomainNotFoundException {
         String timerId = startTimer("getServiceById");
@@ -126,9 +126,9 @@ public class ServiceManager extends Manager {
                     service.setDomain(this.domainManager.getDomain(service.getDomainName()));
                     service.setId(service.getDomain().getServices() + "/" + service.getId());
                 }
-                
+
             } else {
-                
+
                 String domainName = this.domainManager.getDomainNameFromId(service.getId());
                 service.setDomainName(domainName);
                 service.setDomain(this.domainManager.getDomain(domainName));
@@ -173,10 +173,10 @@ public class ServiceManager extends Manager {
      */
     public ServiceResource createService(ServiceResource service) throws ArangoDaoException {
         String timerId = startTimer("createServiceResource");
-        
+
         try {
             lockManager.lock();
-            
+
             service.setRelatedServices(null);
             //
             // Garante que o Merge Funcione
@@ -191,9 +191,9 @@ public class ServiceManager extends Manager {
             if (service.getOperationalStatus() == null || service.getOperationalStatus().isEmpty()) {
                 service.setOperationalStatus("Up");
             }
-            
+
             service.setAtomId(service.getDomain().addAndGetId());
-            
+
             ResourceSchemaModel schemaModel = schemaSession.loadSchema(service.getAttributeSchemaName());
             service.setSchemaModel(schemaModel);
             schemaSession.validateResourceSchema(service);
@@ -221,7 +221,7 @@ public class ServiceManager extends Manager {
             DocumentCreateEntity<ServiceResource> result = serviceDao.insertResource(service);
             service.setKey(result.getId());
             service.setRevisionId(result.getRev());
-            
+
             this.resolveCircuitServiceLinks(service, null);
             //
             // Aqui criou o managed resource
@@ -239,7 +239,7 @@ public class ServiceManager extends Manager {
             }
             endTimer(timerId);
         }
-        
+
     }
 
     /**
@@ -264,7 +264,7 @@ public class ServiceManager extends Manager {
                     //
 
                     CircuitResource fromDbCircuit = circuitResourceManager.findCircuitResource(circuit);
-                    
+
                     if (!fromDbCircuit.getServices().contains(newService.getId())) {
                         //
                         // Adiciona o ID do serviço no circuito
@@ -273,9 +273,9 @@ public class ServiceManager extends Manager {
                         fromDbCircuit.getServices().add(newService.getId());
                         circuitResourceManager.updateCircuitResource(fromDbCircuit);
                     }
-                    
+
                 }
-                
+
             } else {
                 //
                 // Se a lista de circuitos for vazia precisamos ver se antes não era.
@@ -293,7 +293,7 @@ public class ServiceManager extends Manager {
                         }
                     }
                 }
-                
+
             }
         }
         //
@@ -312,19 +312,19 @@ public class ServiceManager extends Manager {
                 }
             }
         }
-        
+
     }
-    
+
     public GraphList<ServiceResource> findServiceByFilter(FilterDTO filter, Domain domain) throws ArangoDaoException, ResourceNotFoundException {
         return this.serviceDao.findResourceByFilter(filter, domain);
     }
-    
+
     public ServiceResource updateService(ServiceResource service) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
         String timerId = startTimer("updateServiceResource");
         try {
             this.lockManager.lock();
             service.setLastModifiedDate(new Date());
-            
+
             ResourceSchemaModel schemaModel = schemaSession.loadSchema(service.getAttributeSchemaName());
             service.setSchemaModel(schemaModel);
             schemaSession.validateResourceSchema(service);
@@ -338,9 +338,9 @@ public class ServiceManager extends Manager {
             ServiceResource newService = result.getNew();
             ServiceResource oldService = result.getOld();
             this.resolveCircuitServiceLinks(newService, oldService);
-            
+
             this.evaluateServiceStateTransition(result);
-            
+
             ServiceResourceUpdatedEvent event = new ServiceResourceUpdatedEvent(oldService, newService);
             this.eventManager.notifyResourceEvent(event);
             return newService;
@@ -362,7 +362,7 @@ public class ServiceManager extends Manager {
      */
     public ServiceResource resolveService(ServiceResource service)
             throws ResourceNotFoundException, ArangoDaoException, DomainNotFoundException, InvalidRequestException {
-        
+
         List<ServiceResource> resolvedServices = new ArrayList<>();
         if (service.getDependencies() != null && !service.getDependencies().isEmpty()) {
             for (ServiceResource item : service.getDependencies()) {
@@ -389,7 +389,7 @@ public class ServiceManager extends Manager {
             }
         }
         service.setDependencies(resolvedServices);
-        
+
         List<CircuitResource> resolvedCircuits = new ArrayList<>();
         if (service.getCircuits() != null && !service.getCircuits().isEmpty()) {
             for (CircuitResource circuit : service.getCircuits()) {
@@ -408,7 +408,7 @@ public class ServiceManager extends Manager {
             }
         }
         service.setCircuits(resolvedCircuits);
-        
+
         return service;
     }
 
@@ -439,7 +439,7 @@ public class ServiceManager extends Manager {
             if (service.getRelatedResourceConnections() == null) {
                 service.setRelatedResourceConnections(new ArrayList<>());
             }
-            
+
             if (!service.getRelatedResourceConnections().contains(connection.getId())) {
                 service.getRelatedResourceConnections().add(connection.getId());
                 this.evaluateServiceStateTransition(this.serviceDao.updateResource(service));
@@ -468,7 +468,7 @@ public class ServiceManager extends Manager {
             if (service.getRelatedManagedResources() == null) {
                 service.setRelatedManagedResources(new ArrayList<>());
             }
-            
+
             if (!service.getRelatedManagedResources().contains(resource.getId())) {
                 service.getRelatedManagedResources().add(resource.getId());
                 this.evaluateServiceStateTransition(this.serviceDao.updateResource(service));
@@ -500,7 +500,7 @@ public class ServiceManager extends Manager {
                 if (service.getRelatedManagedResources() == null) {
                     service.setRelatedManagedResources(new ArrayList<>());
                 }
-                
+
                 if (!service.getRelatedManagedResources().contains(resource.getId())) {
                     service.getRelatedManagedResources().add(resource.getId());
                     this.evaluateServiceStateTransition(this.serviceDao.updateResource(service));
@@ -509,7 +509,7 @@ public class ServiceManager extends Manager {
                 logger.debug("No Resource to Update");
             }
         } else if (updateEvent.getOldResource() != null && updateEvent.getNewResource() != null) {
-            
+
             if (updateEvent.getOldResource().getDependentService() == null && updateEvent.getNewResource().getDependentService() != null) {
                 logger.debug("Linking Service from Dependency to:[{}]", updateEvent.getNewResource().getDependentService().getId());
 
@@ -518,12 +518,12 @@ public class ServiceManager extends Manager {
                 //
                 ServiceResource service = updateEvent.getNewResource().getDependentService();
                 ManagedResource resource = updateEvent.getNewResource();
-                
+
                 service = this.getService(service);
                 if (service.getRelatedManagedResources() == null) {
                     service.setRelatedManagedResources(new ArrayList<>());
                 }
-                
+
                 if (!service.getRelatedManagedResources().contains(resource.getId())) {
                     service.getRelatedManagedResources().add(resource.getId());
                     this.evaluateServiceStateTransition(this.serviceDao.updateResource(service));
@@ -559,16 +559,16 @@ public class ServiceManager extends Manager {
                     if (newService.getRelatedManagedResources() == null) {
                         newService.setRelatedManagedResources(new ArrayList<>());
                     }
-                    
+
                     if (!newService.getRelatedManagedResources().contains(resource.getId())) {
                         newService.getRelatedManagedResources().add(resource.getId());
                         this.updateService(newService);
                     }
-                    
+
                 } else {
                     logger.debug("Services Are Equal Not Updating...");
                 }
-                
+
             }
         }
     }
@@ -597,14 +597,14 @@ public class ServiceManager extends Manager {
                 if (service.getRelatedResourceConnections() == null) {
                     service.setRelatedResourceConnections(new ArrayList<>());
                 }
-                
+
                 if (!service.getRelatedResourceConnections().contains(resource.getId())) {
                     service.getRelatedResourceConnections().add(resource.getId());
                     this.evaluateServiceStateTransition(this.serviceDao.updateResource(service));
                 }
             }
         } else if (updateEvent.getOldResource() != null && updateEvent.getNewResource() != null) {
-            
+
             if (updateEvent.getOldResource().getDependentService() == null && updateEvent.getNewResource().getDependentService() != null) {
                 logger.debug("Linking Service from Dependency to:[{}]", updateEvent.getNewResource().getDependentService().getId());
 
@@ -613,12 +613,12 @@ public class ServiceManager extends Manager {
                 //
                 ServiceResource service = updateEvent.getNewResource().getDependentService();
                 ResourceConnection resource = updateEvent.getNewResource();
-                
+
                 service = this.getService(service);
                 if (service.getRelatedResourceConnections() == null) {
                     service.setRelatedResourceConnections(new ArrayList<>());
                 }
-                
+
                 if (!service.getRelatedResourceConnections().contains(resource.getId())) {
                     service.getRelatedResourceConnections().add(resource.getId());
                     this.evaluateServiceStateTransition(this.serviceDao.updateResource(service));
@@ -654,16 +654,16 @@ public class ServiceManager extends Manager {
                     if (newService.getRelatedResourceConnections() == null) {
                         newService.setRelatedResourceConnections(new ArrayList<>());
                     }
-                    
+
                     if (!newService.getRelatedResourceConnections().contains(resource.getId())) {
                         newService.getRelatedResourceConnections().add(resource.getId());
                         this.updateService(newService);
                     }
-                    
+
                 } else {
                     logger.debug("Services Are Equal Not Updating...");
                 }
-                
+
             }
         }
     }
@@ -722,7 +722,7 @@ public class ServiceManager extends Manager {
 
                 for (String relatedServiceId : service.getRelatedServices()) {
                     String domainName = this.domainManager.getDomainNameFromId(relatedServiceId);
-                    
+
                     ServiceResource dependentService = new ServiceResource(relatedServiceId);
                     dependentService.setDomainName(domainName);
                     dependentService.setDomain(this.domainManager.getDomain(domainName));
@@ -744,7 +744,7 @@ public class ServiceManager extends Manager {
                         logger.error("Failed to Update Service Dependecies", ex);
                     }
                 }
-                
+
             }
 
             /**
@@ -790,15 +790,15 @@ public class ServiceManager extends Manager {
                 service.setDegrated(service.getCircuits().get(0).getDegrated());
                 service.setBroken(service.getCircuits().get(0).getBroken());
             } else {
-                
+
                 List<CircuitResource> workingCircuits = service.getCircuits()
                         .stream()
                         .filter(c -> !c.getBroken()).collect(Collectors.toList());
-                
+
                 List<CircuitResource> brokenCircuits = service.getCircuits()
                         .stream()
                         .filter(c -> c.getBroken()).collect(Collectors.toList());
-                
+
                 if (workingCircuits != null) {
                     if (workingCircuits.isEmpty()) {
                         if (!service.getBroken()) {
@@ -824,7 +824,7 @@ public class ServiceManager extends Manager {
                                     service.setDegrated(true);
                                 } else {
                                     service.setDegrated(false);
-                                    
+
                                 }
                             }
                         } else {
@@ -838,7 +838,7 @@ public class ServiceManager extends Manager {
                                 service.setBroken(false);
                             }
                         }
-                        
+
                     }
                 } else {
                     /**
@@ -850,7 +850,7 @@ public class ServiceManager extends Manager {
                         service.setDegrated(true);
                         service.setOperationalStatus("Down");
                     }
-                    
+
                 }
 
                 /**
@@ -861,7 +861,7 @@ public class ServiceManager extends Manager {
                     service.setDegrated(false);
                 }
             }
-            
+
             if (service.getBroken()) {
                 service.setDegrated(true);
                 service.setOperationalStatus("Down");
@@ -887,11 +887,11 @@ public class ServiceManager extends Manager {
                 List<ServiceResource> workingServices = service.getDependencies()
                         .stream()
                         .filter(c -> !c.getBroken()).collect(Collectors.toList());
-                
+
                 List<ServiceResource> brokenServices = service.getDependencies()
                         .stream()
                         .filter(c -> c.getBroken()).collect(Collectors.toList());
-                
+
                 if (workingServices != null) {
                     if (workingServices.isEmpty()) {
                         if (!service.getBroken()) {
@@ -899,7 +899,7 @@ public class ServiceManager extends Manager {
                             service.setOperationalStatus("Down");
                         }
                     } else {
-                        
+
                         if (service.getBroken()) {
                             service.setBroken(false);
                             service.setOperationalStatus("Up");
@@ -907,10 +907,10 @@ public class ServiceManager extends Manager {
                                 service.setDegrated(true);
                             } else {
                                 service.setDegrated(false);
-                                
+
                             }
                         }
-                        
+
                     }
                 } else {
                     /**
@@ -921,26 +921,26 @@ public class ServiceManager extends Manager {
                         service.setDegrated(true);
                         service.setOperationalStatus("Down");
                     }
-                    
+
                 }
-                
+
             }
         }
-        
+
     }
-    
+
     @Subscribe
     public void onProcessServiceIntegrityEvent(ProcessServiceIntegrityEvent processEvent)
             throws ArangoDaoException, ResourceNotFoundException {
-        
+
     }
-    
+
     @Subscribe
     public void onServiceResourceUpdatedEvent(ServiceResourceUpdatedEvent processEvent)
             throws ArangoDaoException, IllegalStateException, IOException, ResourceNotFoundException, DomainNotFoundException {
         this.updateServiceCircuitReference(processEvent.getNewResource());
     }
-    
+
     @Subscribe
     public void onServiceResourceCreatedEvent(ServiceResourceCreatedEvent createdEvent) throws ArangoDaoException, ResourceNotFoundException, IOException, DomainNotFoundException {
         if (createdEvent.getNewResource().getDependencies() != null) {
@@ -968,7 +968,7 @@ public class ServiceManager extends Manager {
                         dependency.getRelatedServices().add(createdEvent.getNewResource().getId());
                         servicesToUpdate.add(dependency);
                     }
-                    
+
                 }
                 //
                 // Atualiza na origem a depedencia
@@ -976,10 +976,10 @@ public class ServiceManager extends Manager {
                 for (ServiceResource service : servicesToUpdate) {
                     this.updateServiceCircuitReference(service);
                 }
-                
+
             }
         }
-        
+
     }
 
     /**
@@ -1002,7 +1002,7 @@ public class ServiceManager extends Manager {
                 // Trata o Status Aqui
                 //
                 List<ServiceResource> servicesToUpdate = new ArrayList<>();
-                
+
                 for (String serviceId : event.getNewResource().getServices()) {
                     //
                     // o Circuito só pode impactar serviços do mesmo dominio.
@@ -1014,11 +1014,11 @@ public class ServiceManager extends Manager {
                     //
                     service = this.getServiceById(service);
                     logger.debug("Found Service ID:[{}] to Update Related ManagedResources", service.getId());
-                    
+
                     if (service.getRelatedManagedResources() != null) {
                         logger.debug("\t Service ID:[{}] Has: [{}] Managed Resource Links", service.getId(), service.getRelatedManagedResources().size());
                     }
-                    
+
                     if (service.getRelatedResourceConnections() != null) {
                         logger.debug("\t Service ID:[{}] Has: [{}] Resource Connections Links", service.getId(), service.getRelatedResourceConnections().size());
                     }
@@ -1033,9 +1033,9 @@ public class ServiceManager extends Manager {
                     // Avalia o status dos Circuitos
                     //
                     servicesToUpdate.add(service);
-                    
+
                 }
-                
+
                 for (ServiceResource service : servicesToUpdate) {
                     //
                     // Computa o status Final do serviço
@@ -1047,12 +1047,12 @@ public class ServiceManager extends Manager {
                      * após o calculo ele também atualiza
                      */
                     this.updateServiceCircuitReference(service);
-                    
+
                 }
-                
+
             }
         }
-        
+
     }
 
     /**
@@ -1082,7 +1082,7 @@ public class ServiceManager extends Manager {
             //
             logger.debug("New Link Between Managed Resource:[{}] and Service found:[{}]", resource.getNewResource().getId(), resource.getNewResource().getDependentService().getId());
             this.updateServiceManagedResourceReferenceCreateEvent(resource);
-            
+
         }
     }
 
@@ -1102,13 +1102,13 @@ public class ServiceManager extends Manager {
     }
 
     /**
-     * Recebe as notificações de conexões atualizadas
+     * Recebe as notificações de conexões atualizadas Não está fazendo nada...
      *
      * @param resource
      */
     @Subscribe
     public void onResourceConnectionUpdatedEvent(ResourceConnectionUpdatedEvent updateEvent) throws ResourceNotFoundException, ArangoDaoException, DomainNotFoundException, InvalidRequestException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
-        
+
         this.updateServiceResourceConnectionReferenceUpdateEvent(updateEvent);
 
         //
@@ -1129,7 +1129,7 @@ public class ServiceManager extends Manager {
                 // Trocou o serviço, agora a gente precisa remover a referencia do antigo e atualizar no novo
                 //
             }
-            
+
         }
     }
 

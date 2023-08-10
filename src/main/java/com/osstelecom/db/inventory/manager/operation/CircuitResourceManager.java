@@ -233,7 +233,16 @@ public class CircuitResourceManager extends Manager {
     public GraphList<ResourceConnection> findCircuitPaths(CircuitResource circuit) {
         String timerId = startTimer("findCircuitPaths");
         try {
-            return this.graphDao.findCircuitPaths(circuit);
+            return this.graphDao.findCircuitPaths(circuit, true);
+        } finally {
+            endTimer(timerId);
+        }
+    }
+
+    public GraphList<ResourceConnection> findCircuitPaths(CircuitResource circuit, Boolean useTraversal) {
+        String timerId = startTimer("findCircuitPaths:useTraversal[" + useTraversal + "]");
+        try {
+            return this.graphDao.findCircuitPaths(circuit, useTraversal);
         } finally {
             endTimer(timerId);
         }
@@ -295,6 +304,7 @@ public class CircuitResourceManager extends Manager {
                         //
                         // Trasicionou o estado da conexão.
                         //
+                        logger.debug("Connection:[{}] carries:[{}] circuits", newConnection.getId(), newConnection.getCircuits().size());
                         for (String circuitId : newConnection.getCircuits()) {
                             try {
                                 CircuitResource circuit = this.findCircuitResource(new CircuitResource(newConnection.getDomain(), circuitId));
@@ -374,10 +384,11 @@ public class CircuitResourceManager extends Manager {
         String timerId = startTimer("computeCircuitIntegrity");
         try {
 
-            if (circuit.getaPoint().equals(circuit.getzPoint())) {
+            if (circuit.getaPoint().equals(circuit.getzPoint()) || circuit.getaPoint().getId().equals(circuit.getzPoint().getId())) {
                 //
                 // This is very wrong... Never we can reach an end here
                 //
+                logger.warn("Invalid Circuit Detected [{}], aPoint and zPoint are The same, this generates a circular reference", circuit.getId());
                 circuit.setBroken(true);
                 circuit.setOperationalStatus("Down");
                 this.updateCircuitResource(circuit);
@@ -394,8 +405,16 @@ public class CircuitResourceManager extends Manager {
                 logger.debug("Starting Circuit Computing on:[{}]", circuit.getId());
             }
             boolean stateChanged = false;
-            List<ResourceConnection> connections = this.findCircuitPaths(circuit).toList();
+            /**
+             * Não precisa ser uma travessia!, nos conhecemos o caminhos podemos
+             * usar uma simples query!
+             */
+            List<ResourceConnection> connections = this.findCircuitPaths(circuit, false).toList();
             boolean degratedFlag = false;
+            /**
+             * Varre as conexões para ver se tem alguma down, se tiver já é
+             * degradado
+             */
             for (ResourceConnection connection : connections) {
                 logger.debug("Connection [{}] Status:[{}]", connection.getId(), connection.getOperationalStatus());
                 //
@@ -405,7 +424,6 @@ public class CircuitResourceManager extends Manager {
                     //
                     // Transitou de normal para degradado
                     //
-
                     degratedFlag = true;
                 }
 

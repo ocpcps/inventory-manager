@@ -276,11 +276,9 @@ public class ResourceConnectionManager extends Manager {
                     //
                     // O Uperset virou um update
                     // 
-//                    ResourceConnectionUpdatedEvent event = new ResourceConnectionUpdatedEvent(result);
-//                    eventManager.notifyResourceEvent(event);
+
                 } else {
-//                    ResourceConnectionCreatedEvent event = new ResourceConnectionCreatedEvent(result);
-//                    eventManager.notifyResourceEvent(event);
+
                 }
             } else {
                 //
@@ -477,7 +475,6 @@ public class ResourceConnectionManager extends Manager {
                 logger.warn("Invalid Operational Status [{}] on ID:[{}]", updatedResource.getOperationalStatus(), updatedResource.getId());
             }
 
-//            List<String> relatedCircuits = new ArrayList<>();
             //
             // Transcrever para um filtro, que busca os recursos relacionados
             // Eventualmente irá se tornar um método no CircuitManager
@@ -491,8 +488,16 @@ public class ResourceConnectionManager extends Manager {
             try {
                 this.resourceConnectionDao.findResourceByFilter(new FilterDTO(filter, bindVars), updatedResource.getDomain()).forEach((connection) -> {
 
+                    /**
+                     * Controle para saber se algo útil foi atualizado
+                     */
+                    Boolean updated = false;
                     if (!CollectionUtils.isEmpty(updatedResource.getEventSourceIds())) {
                         if (updatedResource.getEventSourceIds().contains(connection.getId())) {
+                            /**
+                             * Se o evento estiver lá ele vai abortar a
+                             * atualização...
+                             */
                             return;
                         }
                     }
@@ -505,13 +510,14 @@ public class ResourceConnectionManager extends Manager {
                         //
                         // validando 
                         //
+                        updated = true;
 
                     } else if (connection.getTo().getKey().equals(updatedResource.getKey())) {
                         //
                         // Update to
                         //
                         connection.setTo(updatedResource);
-
+                        updated = true;
                     }
 
                     //
@@ -519,17 +525,26 @@ public class ResourceConnectionManager extends Manager {
                     //
                     if (!connection.getOperationalStatus().equals(updatedResource.getOperationalStatus())) {
                         connection.setOperationalStatus(updatedResource.getOperationalStatus());
+                        updated = true;
                     }
 
                     try {
                         List<String> sourceIds = new ArrayList<>(updatedResource.getEventSourceIds());
-                        sourceIds.add(updatedResource.getId());
-                        connection.setEventSourceIds(sourceIds);
+                        if (!sourceIds.contains(updatedResource.getId())) {
+                            sourceIds.add(updatedResource.getId());
+                            connection.setEventSourceIds(sourceIds);
+                            updated = true;
+                        }
 
                         //
                         // Atualiza a conexão
                         //
-                        this.updateResourceConnection(connection); // <- Atualizou a conexão no banco
+                        if (updated) {
+                            /**
+                             * Algo foi atualizado, vamos atualizar a conexão
+                             */
+                            this.updateResourceConnection(connection); // <- Atualizou a conexão no banco
+                        }
 
                     } catch (ArangoDaoException | AttributeConstraintViolationException ex) {
                         logger.error("Failed to Update Circuit: [{}]", connection.getId(), ex);

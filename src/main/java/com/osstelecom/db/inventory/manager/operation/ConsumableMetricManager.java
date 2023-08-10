@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import com.arangodb.entity.DocumentUpdateEntity;
 import com.google.common.eventbus.Subscribe;
+import com.osstelecom.db.inventory.manager.configuration.ConfigurationManager;
 import com.osstelecom.db.inventory.manager.dao.ConsumableMetricDao;
 import com.osstelecom.db.inventory.manager.dao.ManagedResourceDao;
 import com.osstelecom.db.inventory.manager.dto.FilterDTO;
@@ -35,6 +36,7 @@ import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import com.osstelecom.db.inventory.manager.resources.exception.MetricConstraintException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Configuration;
 
 @Service
 public class ConsumableMetricManager extends Manager {
@@ -50,6 +52,9 @@ public class ConsumableMetricManager extends Manager {
 
     @Autowired
     private ManagedResourceDao managedResourceDao;
+
+    @Autowired
+    private ConfigurationManager configuration;
 
     private Logger logger = LoggerFactory.getLogger(ConsumableMetricManager.class);
 
@@ -232,94 +237,99 @@ public class ConsumableMetricManager extends Manager {
     }
 
     private void processConsumableMetric(BasicResource toResource, Map<String, Double> childValues, Boolean consume) {
-        String timerId = startTimer("ConsumableMetricManager.processConsumableMetric");
-        try {
-            GraphList<BasicResource> consumableParents = this.consumableMetricDao
-                    .findParentsWithMetrics(toResource);
-            for (BasicResource parentResource : consumableParents.toList()) {
-                try {
-                    ConsumableMetric parentMetric = parentResource.getConsumableMetric();
-                    Double childValue = childValues.get(parentMetric.getMetricName());
-                    if (childValue != null) {
-                        Double total = calculateParent(parentMetric.getMetricValue(),
-                                childValue, consume);
-                        parentMetric.setMetricValue(total);
+        if (configuration.loadConfiguration().getConsumableMetricsEnabled()) {
+            String timerId = startTimer("ConsumableMetricManager.processConsumableMetric");
+            try {
+                GraphList<BasicResource> consumableParents = this.consumableMetricDao
+                        .findParentsWithMetrics(toResource);
+                for (BasicResource parentResource : consumableParents.toList()) {
+                    try {
+                        ConsumableMetric parentMetric = parentResource.getConsumableMetric();
+                        Double childValue = childValues.get(parentMetric.getMetricName());
+                        if (childValue != null) {
+                            Double total = calculateParent(parentMetric.getMetricValue(),
+                                    childValue, consume);
+                            parentMetric.setMetricValue(total);
 
-                        ManagedResource resource = managedResourceDao
-                                .findResource(new ManagedResource(parentResource.getDomain(), parentResource.getId()));
-                        resource.setConsumableMetric(parentMetric);
-                        managedResourceDao.updateResource(resource);
+                            ManagedResource resource = managedResourceDao
+                                    .findResource(new ManagedResource(parentResource.getDomain(), parentResource.getId()));
+                            resource.setConsumableMetric(parentMetric);
+                            managedResourceDao.updateResource(resource);
+                        }
+                    } catch (MetricConstraintException | InvalidRequestException | ResourceNotFoundException
+                            | ArangoDaoException ex) {
+                        /**
+                         * Aqui
+                         */
+                        logger.error("Failed to  Process Consumable Metric Calculation:", ex);
                     }
-                } catch (MetricConstraintException | InvalidRequestException | ResourceNotFoundException
-                        | ArangoDaoException ex) {
-                    /**
-                     * Aqui
-                     */
-                    logger.error("Failed to  Process Consumable Metric Calculation:", ex);
                 }
-            }
 
-            if (toResource.getConsumableMetric() != null) {
-                try {
-                    ConsumableMetric parentMetric = toResource.getConsumableMetric();
-                    Double childValue = childValues.get(parentMetric.getMetricName());
-                    if (childValue != null) {
-                        Double total = calculateParent(parentMetric.getMetricValue(),
-                                childValue, consume);
-                        parentMetric.setMetricValue(total);
+                if (toResource.getConsumableMetric() != null) {
+                    try {
+                        ConsumableMetric parentMetric = toResource.getConsumableMetric();
+                        Double childValue = childValues.get(parentMetric.getMetricName());
+                        if (childValue != null) {
+                            Double total = calculateParent(parentMetric.getMetricValue(),
+                                    childValue, consume);
+                            parentMetric.setMetricValue(total);
 
-                        ManagedResource resource = managedResourceDao
-                                .findResource(new ManagedResource(toResource.getDomain(), toResource.getId()));
-                        resource.setConsumableMetric(parentMetric);
-                        managedResourceDao.updateResource(resource);
+                            ManagedResource resource = managedResourceDao
+                                    .findResource(new ManagedResource(toResource.getDomain(), toResource.getId()));
+                            resource.setConsumableMetric(parentMetric);
+                            managedResourceDao.updateResource(resource);
+                        }
+                    } catch (MetricConstraintException | InvalidRequestException | ResourceNotFoundException
+                            | ArangoDaoException ex) {
+                        logger.error("Failed to  Process Consumable Metric Calculation:", ex);
                     }
-                } catch (MetricConstraintException | InvalidRequestException | ResourceNotFoundException
-                        | ArangoDaoException ex) {
-                    logger.error("Failed to  Process Consumable Metric Calculation:", ex);
                 }
+            } finally {
+                endTimer(timerId);
             }
-        } finally {
-            endTimer(timerId);
         }
     }
 
     private Map<String, Double> processConsumerMetric(BasicResource fromResource) {
-        String timerId = startTimer("processConsumerMetric");
         Map<String, Double> result = new HashMap<>();
-        try {
+        if (configuration.loadConfiguration().getConsumableMetricsEnabled()) {
+            String timerId = startTimer("processConsumerMetric");
 
-            GraphList<BasicResource> consumerChilds = this.consumableMetricDao
-                    .findChildsWithMetrics(fromResource);
+            try {
 
-            for (BasicResource childResource : consumerChilds.toList()) {
-                String metricName = childResource.getConsumerMetric().getMetricName();
+                GraphList<BasicResource> consumerChilds = this.consumableMetricDao
+                        .findChildsWithMetrics(fromResource);
 
-                if (result.get(metricName) != null) {
-                    BigDecimal total = BigDecimal.valueOf(result.get(metricName));
-                    total = total.add(BigDecimal.valueOf(childResource.getConsumerMetric().getMetricValue()));
-                    result.remove(metricName);
-                    result.put(metricName, total.doubleValue());
-                } else {
-                    result.put(metricName, childResource.getConsumerMetric().getMetricValue());
+                for (BasicResource childResource : consumerChilds.toList()) {
+                    String metricName = childResource.getConsumerMetric().getMetricName();
+
+                    if (result.get(metricName) != null) {
+                        BigDecimal total = BigDecimal.valueOf(result.get(metricName));
+                        total = total.add(BigDecimal.valueOf(childResource.getConsumerMetric().getMetricValue()));
+                        result.remove(metricName);
+                        result.put(metricName, total.doubleValue());
+                    } else {
+                        result.put(metricName, childResource.getConsumerMetric().getMetricValue());
+                    }
                 }
-            }
 
-            if (fromResource.getConsumerMetric() != null) {
-                String metricName = fromResource.getConsumerMetric().getMetricName();
-                if (result.get(metricName) != null) {
-                    BigDecimal total = BigDecimal.valueOf(result.get(metricName));
-                    total = total.add(BigDecimal.valueOf(fromResource.getConsumerMetric().getMetricValue()));
-                    result.remove(metricName);
-                    result.put(metricName, total.doubleValue());
-                } else {
-                    result.put(metricName, fromResource.getConsumerMetric().getMetricValue());
+                if (fromResource.getConsumerMetric() != null) {
+                    String metricName = fromResource.getConsumerMetric().getMetricName();
+                    if (result.get(metricName) != null) {
+                        BigDecimal total = BigDecimal.valueOf(result.get(metricName));
+                        total = total.add(BigDecimal.valueOf(fromResource.getConsumerMetric().getMetricValue()));
+                        result.remove(metricName);
+                        result.put(metricName, total.doubleValue());
+                    } else {
+                        result.put(metricName, fromResource.getConsumerMetric().getMetricValue());
+                    }
                 }
-            }
 
-        } catch (Exception ex) {
-            logger.error("Failed to  Process Consumer Metric Calculation:", ex);
-        } finally {
-            endTimer(timerId);
+            } catch (Exception ex) {
+                logger.error("Failed to  Process Consumer Metric Calculation:", ex);
+            } finally {
+                endTimer(timerId);
+            }
         }
         /**
          * Pode chegar vazio se der erro

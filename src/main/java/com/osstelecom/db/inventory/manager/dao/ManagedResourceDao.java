@@ -301,12 +301,12 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
                 getDb().query(aql, new HashMap<>(), new AqlQueryOptions().fullCount(true).count(true), BasicResource.class));
     }
 
-    public GraphList<BasicResource> findChildrenByAttributeSchemaName(String from, String domain, String attributeSchemaName) {
+    public GraphList<ManagedResource> findChildrenByAttributeSchemaName(String from, String domain, String attributeSchemaName) {
         String aql = "FOR v, e, p IN 1..16 OUTBOUND '" + from + "' GRAPH '" + domain + "_connections_layer' ";
         aql += "FILTER v.attributeSchemaName == '" + attributeSchemaName + "' ";
         aql += "RETURN distinct v ";
         return new GraphList<>(
-                getDb().query(aql, new HashMap<>(), new AqlQueryOptions().fullCount(true).count(true), BasicResource.class));
+                getDb().query(aql, new HashMap<>(), new AqlQueryOptions().fullCount(true).count(true), ManagedResource.class));
     }
 
     @Override

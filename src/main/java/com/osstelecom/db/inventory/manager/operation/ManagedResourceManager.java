@@ -36,6 +36,8 @@ import org.springframework.util.ObjectUtils;
 import com.arangodb.entity.DocumentCreateEntity;
 import com.arangodb.entity.DocumentDeleteEntity;
 import com.arangodb.entity.DocumentUpdateEntity;
+import com.google.common.collect.MapDifference;
+import com.google.common.collect.Maps;
 import com.google.common.eventbus.Subscribe;
 import com.osstelecom.db.inventory.manager.dao.ManagedResourceDao;
 import com.osstelecom.db.inventory.manager.dto.FilterDTO;
@@ -349,8 +351,10 @@ public class ManagedResourceManager extends Manager {
 
             this.schemaSession.validateResourceSchema(resource);
             dynamicRuleSession.evalResource(resource, "U", this); // <--- Pode não ser verdade , se a chave for
-            // duplicada..
 
+            /**
+             * Reseta os atributos recalculando os valores default
+             */
             resource.setAttributes(calculateDefaultValues(schemaModel, resource, fromEvent));
 
             resource.setLastModifiedDate(new Date());
@@ -367,9 +371,8 @@ public class ManagedResourceManager extends Manager {
 
             ManagedResource updatedResource = updatedEntity.getNew();
             updatedResource.setEventSourceIds(eventSourceIds);
-
-            eventManager.notifyResourceEvent(
-                    new ManagedResourceUpdatedEvent(updatedEntity.getOld(), updatedEntity.getNew()));
+            ManagedResourceUpdatedEvent updateEvent = new ManagedResourceUpdatedEvent(updatedEntity.getOld(), updatedEntity.getNew());
+            eventManager.notifyResourceEvent(updateEvent);
             return updatedResource;
         } finally {
             if (lockManager.isLocked()) {
@@ -491,9 +494,37 @@ public class ManagedResourceManager extends Manager {
             AttributeConstraintViolationException, ScriptRuleException, AttributeNotFoundException {
         logger.debug("Managed Resource [{}] Updated: ", updateEvent.getOldResource().getId());
 
-        ManagedResource resource = updateEvent.getNewResource();
-        ResourceSchemaModel schemaModel = schemaSession.loadSchema(resource.getAttributeSchemaName());
-        updateRelatedChildResources(resource.getId(), resource.getDomainName(), schemaModel.getRelatedSchemas());
+        /**
+         *
+         * Foi melhorado, esta abordagem , faz com que qualquer atualização
+         * dispare o recalculo dos schemas, quando as vezes nenhum atributo foi
+         * mudado. isso não é muito intelinte. Coloquei uma validação de
+         * verificação se houve mudança nos atributos
+         *
+         * @Author: Lucas Nishimura
+         * @Since: 09/08/2023
+         *
+         */
+        ManagedResource newResource = updateEvent.getNewResource();
+        ManagedResource oldResource = updateEvent.getOldResource();
+        if (newResource != null && oldResource != null) {
+
+            /**
+             * Ok agora temos o antigo e novo como comparar maps.
+             *
+             * @Todo: Pedir para Akio avaliar se o método compara valores de
+             * listas.
+             */
+            MapDifference<String, Object> diff = Maps.difference(newResource.getAttributes(), oldResource.getAttributes());
+            if (!diff.areEqual()) {
+                ResourceSchemaModel schemaModel = schemaSession.loadSchema(newResource.getAttributeSchemaName());
+                /**
+                 * Passa o id do novo recurso, o que recebeu atualização o
+                 * dominio, e a lista de schamas relacionados, que podem ser pai
+                 */
+                updateRelatedChildResources(newResource.getId(), newResource.getDomainName(), schemaModel.getRelatedSchemas());
+            }
+        }
     }
 
     /**
@@ -531,26 +562,45 @@ public class ManagedResourceManager extends Manager {
         this.updateManagedResource(resource, true);
     }
 
+    /**
+     * Uma conexão foi atualizada
+     *
+     * @param connectionUpdatedEvent
+     * @throws ArangoDaoException
+     * @throws ResourceNotFoundException
+     * @throws InvalidRequestException
+     * @throws AttributeConstraintViolationException
+     * @throws ScriptRuleException
+     * @throws SchemaNotFoundException
+     * @throws GenericException
+     * @throws AttributeNotFoundException
+     */
     @Subscribe
     public void onResourceConnectionUpdatedEvent(ResourceConnectionUpdatedEvent connectionUpdatedEvent)
             throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException,
             AttributeConstraintViolationException, ScriptRuleException, SchemaNotFoundException, GenericException,
             AttributeNotFoundException {
 
-        ManagedResource resource = connectionUpdatedEvent.getNewResource().getToResource();
-
-        ResourceConnection resourceConnection = connectionUpdatedEvent.getNewResource();
-        if (!CollectionUtils.isEmpty(resourceConnection.getEventSourceIds())) {
-            if (resourceConnection.getEventSourceIds().contains(resource.getId())) {
-                return;
-            }
-        }
-
-        List<String> sourceIds = new ArrayList<>(resourceConnection.getEventSourceIds());
-        sourceIds.add(resourceConnection.getId());
-        resource.setEventSourceIds(sourceIds);
-
-        this.updateManagedResource(resource, true);
+        /**
+         * Por horas vamos manter isso desligado. desliguei em 09/08/2023
+         *
+         * @Author Lucas Nishimura
+         */
+//        ManagedResource resource = connectionUpdatedEvent.getNewResource().getToResource();
+//
+//        ResourceConnection resourceConnection = connectionUpdatedEvent.getNewResource();
+//        if (!CollectionUtils.isEmpty(resourceConnection.getEventSourceIds())) {
+//            if (resourceConnection.getEventSourceIds().contains(resource.getId())) {
+//                return;
+//            }
+//        }
+//
+//        List<String> sourceIds = new ArrayList<>(resourceConnection.getEventSourceIds());
+//        if (!sourceIds.contains(resource.getId())) {
+//            sourceIds.add(resourceConnection.getId());
+//            resource.setEventSourceIds(sourceIds);
+//            this.updateManagedResource(resource, true);
+//        }
     }
 
     @Subscribe
@@ -571,9 +621,11 @@ public class ManagedResourceManager extends Manager {
         ManagedResource resource = connectionDeletedEvent.getOldResource().getToResource();
         if (resource != null) {
             List<String> sourceIds = new ArrayList<>(resourceConnection.getEventSourceIds());
-            sourceIds.add(resourceConnection.getId());
-            resource.setEventSourceIds(sourceIds);
-            this.updateManagedResource(resource, true);
+            if (!sourceIds.contains(resource.getId())) {
+                sourceIds.add(resourceConnection.getId());
+                resource.setEventSourceIds(sourceIds);
+                this.updateManagedResource(resource, true);
+            }
         }
     }
 
@@ -707,18 +759,47 @@ public class ManagedResourceManager extends Manager {
         return resource.getAttributes().get(attributeName);
     }
 
+    /**
+     * Processa a atualização dos schemas dinamicos para os filhos se houverem
+     *
+     * @param nodeId
+     * @param domain
+     * @param relatedSchemas
+     * @throws ArangoDaoException
+     * @throws ResourceNotFoundException
+     * @throws InvalidRequestException
+     * @throws AttributeConstraintViolationException
+     * @throws ScriptRuleException
+     * @throws SchemaNotFoundException
+     * @throws GenericException
+     * @throws AttributeNotFoundException
+     */
     private void updateRelatedChildResources(String nodeId, String domain, List<String> relatedSchemas)
             throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException,
             AttributeConstraintViolationException, ScriptRuleException, SchemaNotFoundException, GenericException,
             AttributeNotFoundException {
         if (relatedSchemas != null) {
             for (String relatedSchema : relatedSchemas) {
-                GraphList<BasicResource> result = managedResourceDao.findChildrenByAttributeSchemaName(nodeId, domain,
+                /**
+                 * NodeId é o id do pai que foi atualizado, domain e'o dominio
+                 * dele, e relateSchema é um dos schemas que apontam para alguma
+                 * referencia dele.
+                 */
+                GraphList<ManagedResource> result = managedResourceDao.findChildrenByAttributeSchemaName(nodeId, domain,
                         relatedSchema);
-                for (BasicResource basicResource : result.toList()) {
-                    logger.debug("Request update Child Resource [{}] Updated: ", basicResource.getId());
-                    ManagedResource resource = managedResourceDao
-                            .findResource(new ManagedResource(basicResource.getDomain(), basicResource.getId()));
+                /**
+                 * Se encotrou é porque na lista de filhos do node id, tem algum
+                 * schema dependente....
+                 */
+                for (ManagedResource resource : result.toList()) {
+                    logger.debug("Request update Child Resource [{}] Updated: ", resource.getId());
+//                    ManagedResource resource = managedResourceDao
+//                            .findResource(new ManagedResource(basicResource.getDomain(), basicResource.getId()));
+
+                    /**
+                     * A flag from event, indica que este update está vindo de
+                     * um evento de schema dinamico
+                     */
                     this.updateManagedResource(resource, true);
                 }
             }

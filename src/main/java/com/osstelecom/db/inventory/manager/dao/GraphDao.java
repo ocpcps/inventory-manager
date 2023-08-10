@@ -55,35 +55,55 @@ public class GraphDao {
      * @param circuit
      * @return
      */
-    public GraphList<ResourceConnection> findCircuitPaths(CircuitResource circuit) {
+    public GraphList<ResourceConnection> findCircuitPaths(CircuitResource circuit, Boolean useTraversal) {
         // String aql = "FOR v, e, p IN 1..@dLimit ANY @aPoint " +
         // circuit.getDomain().getConnections() + "\n"
         // + " FILTER v._id == @zPoint "
         // + " AND @circuitId in e.circuits[*] "
         // + " AND e.operationalStatus ==@operStatus "
         // + " for a in p.edges[*] return distinct a";
-        String aql = "FOR path\n"
-                + "  IN 1..@dLimit ANY k_paths\n"
-                + "  @aPoint TO @zPoint\n"
-                + "  GRAPH '" + circuit.getDomain().getConnectionLayer() + "'\n"
-                + "    for v in  path.edges\n"
-                + "      filter @circuitId  in v.circuits[*] \n"
-                + "        \n"
-                + "       return distinct v";
 
-        HashMap<String, Object> bindVars = new HashMap<>();
-        bindVars.put("dLimit", circuit.getCircuitPath().size() + 1);
-        bindVars.put("aPoint", circuit.getaPoint().getId());
-        bindVars.put("zPoint", circuit.getzPoint().getId());
-        bindVars.put("circuitId", circuit.getId());
-        logger.info("(query) RUNNING: AQL:[{}]", aql);
-        bindVars.forEach((k, v) -> {
-            logger.info("\t  [@{}]=[{}]", k, v);
+        if (useTraversal) {
+            String aql = "FOR path\n"
+                    + "  IN 1..@dLimit ANY k_paths\n"
+                    + "  @aPoint TO @zPoint\n"
+                    + "  GRAPH '" + circuit.getDomain().getConnectionLayer() + "'\n"
+                    + "    for v in  path.edges\n"
+                    + "      filter @circuitId  in v.circuits[*] \n"
+                    + "        \n"
+                    + "       return distinct v";
 
-        });
-        ArangoCursor<ResourceConnection> cursor = this.arangoDatabase.query(aql, bindVars,
-                new AqlQueryOptions().fullCount(true).count(true).batchSize(5000), ResourceConnection.class);
-        return new GraphList<>(cursor);
+            HashMap<String, Object> bindVars = new HashMap<>();
+            bindVars.put("dLimit", circuit.getCircuitPath().size() + 1);
+            bindVars.put("aPoint", circuit.getaPoint().getId());
+            bindVars.put("zPoint", circuit.getzPoint().getId());
+            bindVars.put("circuitId", circuit.getId());
+            logger.info("(query) RUNNING: AQL:[{}]", aql);
+            bindVars.forEach((k, v) -> {
+                logger.info("\t  [@{}]=[{}]", k, v);
+
+            });
+            logger.info("(query) - [{}] - RUNNING: AQL:[{}]", "N/A", aql);
+            bindVars.forEach((k, v) -> {
+                logger.info("\t  [@{}]=[{}]", k, v);
+            });
+            ArangoCursor<ResourceConnection> cursor = this.arangoDatabase.query(aql, bindVars,
+                    new AqlQueryOptions().fullCount(true).count(true).batchSize(5000), ResourceConnection.class);
+            return new GraphList<>(cursor);
+        } else {
+            String aql = " for doc in `" + circuit.getDomain().getConnections() + "`"
+                    + "  filter @circuitId  in doc.circuits[*] "
+                    + " return doc";
+            HashMap<String, Object> bindVars = new HashMap<>();
+            bindVars.put("circuitId", circuit.getId());
+            logger.info("(query) - [{}] - RUNNING: AQL:[{}]", "N/A", aql);
+            bindVars.forEach((k, v) -> {
+                logger.info("\t  [@{}]=[{}]", k, v);
+            });
+            ArangoCursor<ResourceConnection> cursor = this.arangoDatabase.query(aql, bindVars,
+                    new AqlQueryOptions().fullCount(true).count(true).batchSize(5000), ResourceConnection.class);
+            return new GraphList<>(cursor);
+        }
     }
 
     /**

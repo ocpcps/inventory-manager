@@ -189,7 +189,7 @@ public class DomainSession {
         DBJobInstance job = this.jobManager.createJobInstance();
 
         try (GraphList<ManagedResource> resources = this.managedResourceManager.findAll(domain)) {
-            job.startJob();
+            jobManager.notifyJobStart(job);
             DbJobStage updateResourcesStage = job.createJobStage("UPDATE_RESOURCES", domainName);
             updateResourcesStage.setJobDescription("Update All Resources in The Domain, Forcing Cascade Update");
             updateResourcesStage.setTotalRecords(resources.size());
@@ -209,7 +209,7 @@ public class DomainSession {
         } catch (IOException ex) {
             logger.error("Failed to Close list", ex);
         } finally {
-            job.endJob();
+            jobManager.notifyJobEnd(job);
             runningReconcilations.remove(domainName);
         }
     }

@@ -19,6 +19,7 @@ package com.osstelecom.db.inventory.manager.configuration;
 
 /**
  * Representa a configuração do microserviço
+ *
  * @author Lucas Nishimura
  * @created 14.12.2021
  */
@@ -32,6 +33,7 @@ public class InventoryConfiguration {
     private String rulesDir = "rules/";
     private String dateFormat = "dd-MM-yyyy";
     private String dateTimeFormat = "dd-MM-yyyy hh:MM:ss";
+    private Boolean consumableMetricsEnabled = false;
     /**
      * Diz se vamos avaliar as regras dinamicas do groovy, Habilitar reduz a
      * performance
@@ -174,5 +176,19 @@ public class InventoryConfiguration {
      */
     public Integer getSchemaCacheTTL() {
         return schemaCacheTTL;
+    }
+
+    /**
+     * @return the consumableMetricsEnabled
+     */
+    public Boolean getConsumableMetricsEnabled() {
+        return consumableMetricsEnabled;
+    }
+
+    /**
+     * @param consumableMetricsEnabled the consumableMetricsEnabled to set
+     */
+    public void setConsumableMetricsEnabled(Boolean consumableMetricsEnabled) {
+        this.consumableMetricsEnabled = consumableMetricsEnabled;
     }
 }

@@ -219,7 +219,7 @@ public class CircuitSession {
         if (aPoint.equals(zPoint)) {
             throw new InvalidRequestException("aPoint and zPoint are equals");
         }
-        
+
         fromDbCircuit.setaPoint(aPoint);
         fromDbCircuit.setzPoint(zPoint);
 
@@ -396,7 +396,7 @@ public class CircuitSession {
         /**
          * Repassa todos os paths para o response, os paths são connections
          */
-        circuitDto.setPaths(circuitResourceManager.findCircuitPaths(circuit).toList());
+        circuitDto.setPaths(circuitResourceManager.findCircuitPaths(circuit, false).toList());
 
         logger.debug("Found [{}] Paths for Circuit: [{}/{}] Class: ({})", circuitDto.getPaths().size(),
                 circuit.getNodeAddress(), circuit.getDomainName(), circuit.getClassName());
