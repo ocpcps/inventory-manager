@@ -267,11 +267,6 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
             this.allSchemasCache.put(filter, result);
         }
 
-        Pageable pageRequest = PageRequest.of(page, size);
-
-        int start = (int) pageRequest.getOffset();
-        int end = Math.min((start + pageRequest.getPageSize()), result.size());
-
         /**
          * Vamos fazer um sorting :)
          */
@@ -279,7 +274,7 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
             result.removeIf(a -> !a.getSchemaName().contains(filter));
         }
         int totalSize = result.size();
-        
+
         Stream<ResourceSchemaModel> stream = result.stream();
         if (sortField != null) {
             Comparator<ResourceSchemaModel> comparator = new BeanComparator<>(sortField);
@@ -289,6 +284,14 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
             stream = stream.sorted(comparator);
         }
         result = stream.collect(Collectors.toList());
+
+        /**
+         * Constroi a paginação depois do filtro
+         */
+        Pageable pageRequest = PageRequest.of(page, size);
+
+        int start = (int) pageRequest.getOffset();
+        int end = Math.min((start + pageRequest.getPageSize()), result.size());
 
         List<ResourceSchemaModel> pageContent = result.subList(start, end);
 
