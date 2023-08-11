@@ -35,8 +35,7 @@ import java.util.Map;
 public abstract class BasicResourceEvent<T extends BasicResource> {
 
     private Date eventDate;
-    private String sourceEventId;
-    private String sourceEventDescription;
+
     private DBJobInstance relatedJob;
 
     private T oldResource;
@@ -76,22 +75,6 @@ public abstract class BasicResourceEvent<T extends BasicResource> {
 
     public void setEventDate(Date eventDate) {
         this.eventDate = eventDate;
-    }
-
-    public String getSourceEventId() {
-        return sourceEventId;
-    }
-
-    public void setSourceEventId(String sourceEventId) {
-        this.sourceEventId = sourceEventId;
-    }
-
-    public String getSourceEventDescription() {
-        return sourceEventDescription;
-    }
-
-    public void setSourceEventDescription(String sourceEventDescription) {
-        this.sourceEventDescription = sourceEventDescription;
     }
 
     protected void setEventDate() {

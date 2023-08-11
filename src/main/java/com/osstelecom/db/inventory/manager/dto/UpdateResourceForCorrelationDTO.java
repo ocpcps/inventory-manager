@@ -17,20 +17,33 @@
  */
 package com.osstelecom.db.inventory.manager.dto;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
+ * Utilizado para Correlação com TEMS
  *
  * @author Lucas Nishimura
  * @created 30.08.2022
  */
-public class UpdateSourceEventDTO {
+public class UpdateResourceForCorrelationDTO {
 
     private String eventName;
     private String eventCategory;
     private String federatedId;
     private Long eventTimeStamp;
+    /**
+     * UP or Down
+     */
+    private String operation;
+    /**
+     * Se maior que zero rever a situação anterior quando vencer;
+     */
+    private Integer ttl;
+    private List<String> correlationIds = new ArrayList<>();
+
     private Map<String, Object> detail = new ConcurrentHashMap<>();
 
     public String getEventName() {
@@ -71,6 +84,48 @@ public class UpdateSourceEventDTO {
 
     public void setDetail(Map<String, Object> detail) {
         this.detail = detail;
+    }
+
+    /**
+     * @return the correlationIds
+     */
+    public List<String> getCorrelationIds() {
+        return correlationIds;
+    }
+
+    /**
+     * @param correlationIds the correlationIds to set
+     */
+    public void setCorrelationIds(List<String> correlationIds) {
+        this.correlationIds = correlationIds;
+    }
+
+    /**
+     * @return the operation
+     */
+    public String getOperation() {
+        return operation;
+    }
+
+    /**
+     * @param operation the operation to set
+     */
+    public void setOperation(String operation) {
+        this.operation = operation;
+    }
+
+    /**
+     * @return the ttl
+     */
+    public Integer getTtl() {
+        return ttl;
+    }
+
+    /**
+     * @param ttl the ttl to set
+     */
+    public void setTtl(Integer ttl) {
+        this.ttl = ttl;
     }
 
 }

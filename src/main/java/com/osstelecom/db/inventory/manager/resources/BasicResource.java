@@ -164,9 +164,16 @@ public class BasicResource {
 
     /**
      * Utilizado para receber um array de Identifiers do TEMS
+     *
+     * @deprecated , pois foi utilizado para outro fim Não utilizar para outro
+     * fim se não o existente
      */
     @Schema(description = "Identifiers que podem ser utilizado para dar match neste recurso")
+    @Deprecated
     private List<String> eventSourceIds = new ArrayList<>();
+
+    @Schema(description = "Lista de Correlations ID's que podem ser utilizados pelo FaultManager/Performance Manager")
+    private List<String> correlationIds = new ArrayList<>();
 
     public void addTag(String tag) {
         if (this.tags == null) {
@@ -903,6 +910,20 @@ public class BasicResource {
 
     public void setEventSourceIds(List<String> eventSourceIds) {
         this.eventSourceIds = eventSourceIds;
+    }
+
+    /**
+     * @return the correlationIds
+     */
+    public List<String> getCorrelationIds() {
+        return correlationIds;
+    }
+
+    /**
+     * @param correlationIds the correlationIds to set
+     */
+    public void setCorrelationIds(List<String> correlationIds) {
+        this.correlationIds = correlationIds;
     }
 
 }
