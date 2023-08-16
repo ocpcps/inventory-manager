@@ -118,6 +118,9 @@ public class CircuitResourceManager extends Manager {
                 result = this.circuitResourceDao.insertResource(circuit);
 
             }
+            /**
+             * Alterado para key em 16/08/2023
+             */
             circuit.setKey(result.getId());
             circuit.setRevisionId(result.getRev());
             //
