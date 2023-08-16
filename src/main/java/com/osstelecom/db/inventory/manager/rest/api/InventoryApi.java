@@ -266,18 +266,18 @@ public class InventoryApi extends BaseApi {
     }
 
     @AuthenticatedCall(role = {"user"})
-    @DeleteMapping(path = "/{domain}/resource/connection/{resourceId}", produces = "application/json")
-    public DeleteResourceConnectionResponse deleteResourceConnectionById(@PathVariable("domain") String domain, @PathVariable("resourceId") String resourceId, HttpServletRequest httpRequest) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
-        DeleteResourceConnectionRequest deleteRequest = new DeleteResourceConnectionRequest(resourceId, domain);
+    @DeleteMapping(path = "/{domain}/resource/connection/{connectionId}", produces = "application/json")
+    public DeleteResourceConnectionResponse deleteResourceConnectionById(@PathVariable("domain") String domain, @PathVariable("connectionId") String connectionId, HttpServletRequest httpRequest) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
+        DeleteResourceConnectionRequest deleteRequest = new DeleteResourceConnectionRequest(connectionId, domain);
         this.setUserDetails(deleteRequest);
         httpRequest.setAttribute("request", deleteRequest);
         return resourceSession.deleteResourceConnection(deleteRequest);
     }
 
     @AuthenticatedCall(role = {"user"})
-    @GetMapping(path = "/{domain}/resource/connection/{resourceId}", produces = "application/json")
-    public FindResourceConnectionResponse findResourceConnectionById(@PathVariable("domain") String domain, @PathVariable("resourceId") String resourceId, HttpServletRequest httpRequest) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
-        FindResourceConnectionRequest findRequest = new FindResourceConnectionRequest(resourceId, domain);
+    @GetMapping(path = "/{domain}/resource/connection/{connectionId}", produces = "application/json")
+    public FindResourceConnectionResponse findResourceConnectionById(@PathVariable("domain") String domain, @PathVariable("connectionId") String connectionId, HttpServletRequest httpRequest) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
+        FindResourceConnectionRequest findRequest = new FindResourceConnectionRequest(connectionId, domain);
         this.setUserDetails(findRequest);
         httpRequest.setAttribute("request", findRequest);
         return resourceSession.findResourceConnectionById(findRequest);
