@@ -119,9 +119,9 @@ public class CircuitResourceManager extends Manager {
 
             }
             /**
-             * Alterado para key em 16/08/2023
+             * Fix
              */
-            circuit.setKey(result.getId());
+            circuit.setKey(result.getKey());
             circuit.setRevisionId(result.getRev());
             //
             // Aqui criou o circuito
