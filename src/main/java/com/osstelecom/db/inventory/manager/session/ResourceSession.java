@@ -1231,7 +1231,8 @@ public class ResourceSession {
                     if (fromDBResource.getAttributes().containsKey(name)) {
                         fromDBResource.getAttributes().replace(name, attribute);
                     } else {
-                        fromDBResource.getAttributes().put(name, attribute);
+//                        fromDBResource.getAttributes().put(name, attribute);
+                        fromDBResource.getAttributes().remove(name);
                     }
                 }
             });

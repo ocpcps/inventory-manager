@@ -355,7 +355,7 @@ public class ManagedResourceManager extends Manager {
             /**
              * Reseta os atributos recalculando os valores default
              */
-            resource.setAttributes(calculateDefaultValues(schemaModel, resource, fromEvent));
+            resource.setAttributes(this.calculateDefaultValues(schemaModel, resource, fromEvent));
 
             resource.setLastModifiedDate(new Date());
             //
@@ -693,13 +693,26 @@ public class ManagedResourceManager extends Manager {
             if (defaultValue != null) {
                 String regex = "^\\$\\([\\w]+[\\w+\\.]+[\\.]+[\\w]+\\)$";
                 if (defaultValue.matches(regex)) {
-                    if (!fromEvent) {
-                        Object resourceValue = managedResource.getAttributes().get(attribute.getKey());
-                        if (resourceValue != null && !ObjectUtils.isEmpty(resourceValue)) {
-                            throw new InvalidRequestException("O valor do Atributo " + attribute.getKey()
-                                    + " não deve ser enviado, pois será calculado pelo expressão do schema");
-                        }
-                    }
+
+                    /**
+                     * Se o usuário enviar um dado, vamos ignorar deixar ele
+                     * mandar e trocar depois pelo valor calculado se houver
+                     */
+//                    if (!fromEvent) {
+//                        /**
+//                         * Compara se o valor atual é diferente do atual se for
+//                         * gera uma exp
+//                         */
+//                        Object resourceValue = managedResource.getAttributes().get(attribute.getKey());
+//                        if (resourceValue != null && !ObjectUtils.isEmpty(resourceValue)) {
+//                            Object value = calculateDefaultAttributeValue(managedResource.getId(),
+//                                    managedResource.getDomain().getDomainName(), attribute.getValue().getDefaultValue());
+//                            if (!resourceValue.equals(value)) {
+//                                throw new InvalidRequestException("O valor do Atributo " + attribute.getKey()
+//                                        + " com valor:[" + resourceValue + "] não deve ser enviado, pois será calculado pelo expressão do schema");
+//                            }
+//                        }
+//                    }
                     // se for uma expressão, sempre recalcula
                     Object value = calculateDefaultAttributeValue(managedResource.getId(),
                             managedResource.getDomain().getDomainName(), attribute.getValue().getDefaultValue());
