@@ -225,10 +225,12 @@ public class DomainSession {
         }
 
         /**
+         * m-br-rs-csl-cax-gwd-02
+         *
          * Vamos reconciliar os circuitos
          */
         try (GraphList<CircuitResource> circuits = this.circuitManager.findAll(domain)) {
-            DbJobStage updateResourcesStage = job.createJobStage("UPDATE_RESOURCES", domainName);
+            DbJobStage updateResourcesStage = job.createJobStage("UPDATE_CIRCUITS", domainName);
             updateResourcesStage.setJobDescription("Update All Circuits in The Domain, Forcing Cascade Update");
             updateResourcesStage.setTotalRecords(circuits.size());
 
@@ -257,6 +259,7 @@ public class DomainSession {
                             for (ResourceConnection dirtyConnection : dirtyConnections) {
                                 ResourceConnection fromDb = this.resourceConnectionManager.findResourceConnection(dirtyConnection);
                                 if (fromDb.getCircuits().contains(circuit.getId())) {
+                                    logger.debug("Removing Dirty Circuit:[{}] From:[{}]", circuit.getId(), fromDb.getId());
                                     fromDb.getCircuits().remove(circuit.getId());
                                     try {
                                         this.resourceConnectionManager.updateResourceConnection(fromDb);
