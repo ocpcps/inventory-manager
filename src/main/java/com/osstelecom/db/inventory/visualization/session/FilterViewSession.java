@@ -238,7 +238,7 @@ public class FilterViewSession {
                 nodeIds.add(node.getKey());
                 viewData.getNodes().add(new ThreeJsNodeDTO(node));
             });
-        } catch (IOException | IllegalStateException ex) {
+        } catch (IllegalStateException ex) {
             logger.error("Failed to Fetch Nodes from Stream", ex);
         }
 
@@ -265,7 +265,7 @@ public class FilterViewSession {
                     }
                 }
             });
-        } catch (IOException | IllegalStateException ex) {
+        } catch (IllegalStateException ex) {
             logger.error("Failed to Fetch Connections from Stream", ex);
         }
 
@@ -296,21 +296,17 @@ public class FilterViewSession {
         GraphList<ManagedResource> nodes = this.resourceSession.findManagedResourceByFilter(request.getPayLoad());
 
         ThreeJSViewDTO view = new ThreeJSViewDTO();
-        try {
-            nodes.forEach(m -> {
-                ResourceSchemaModel schemaModel;
-                try {
-                    schemaModel = schemaSession.loadSchema(m.getAttributeSchemaName());
-                    m.setSchemaModel(schemaModel);
-                } catch (SchemaNotFoundException | GenericException e) {
-                    logger.error(e.getMessage());
-                }
-                ThreeJsNodeDTO node = new ThreeJsNodeDTO(m);
-                view.addNode(node);
-            });
-        } catch (IOException e) {
-            logger.error(e.getMessage());
-        }
+        nodes.forEach(m -> {
+            ResourceSchemaModel schemaModel;
+            try {
+                schemaModel = schemaSession.loadSchema(m.getAttributeSchemaName());
+                m.setSchemaModel(schemaModel);
+            } catch (SchemaNotFoundException | GenericException e) {
+                logger.error(e.getMessage());
+            }
+            ThreeJsNodeDTO node = new ThreeJsNodeDTO(m);
+            view.addNode(node);
+        });
 
         if (view.getNodeCount() > 0) {
             FilterDTO connectionsFilter = new FilterDTO();

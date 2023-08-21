@@ -77,15 +77,12 @@ public class CorrelationSession {
                     filter.getBindings().put("correlationId", correlationId);
                     try {
                         GraphList<ManagedResource> nodes = resourceManager.getNodesByFilter(filter, domain);
-                        try {
-                            nodes.forEach(n -> {
-                                /**
-                                 * Tem nó para atualizar, vai fazer o fetch.
-                                 */
+                        nodes.forEach(n -> {
+                            /**
+                             * Tem nó para atualizar, vai fazer o fetch.
+                             */
 
-                            });
-                        } catch (IOException ex) {
-                        }
+                        });
                     } catch (ResourceNotFoundException ex) {
                         /**
                          * Este erro é esperado visto que pode não ter match,

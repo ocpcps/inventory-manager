@@ -92,9 +92,21 @@ public class DbJobStage {
     }
 
     public Long incrementDoneRecords() {
+        /**
+         * Avalia se tem um total
+         */
+
+        if (this.getTotalRecords() != null && this.getTotalRecords() > 0L) {
+            if (this.doneRecords <= this.getTotalRecords()) {
+                if (this.getDoneRecords() > 0) {
+                    this.percDone = (this.getDoneRecords() / this.getTotalRecords()) * 100D;
+                }
+            }
+        }
         return this.doneRecords++;
+
     }
-    
+
     public Long incrementErrors() {
         return this.totalErrors++;
     }

@@ -97,7 +97,7 @@ public class GraphList<T> implements AutoCloseable {
      *
      * @param action
      */
-    public void forEach(Consumer<? super T> action) throws IOException, IllegalStateException {
+    public void forEach(Consumer<? super T> action) throws  IllegalStateException {
         Objects.requireNonNull(action);
         if (!this.closedCursor) {
             try {
@@ -132,10 +132,14 @@ public class GraphList<T> implements AutoCloseable {
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
         if (!this.closedCursor) {
             this.totalRecordsFetched = this.size();
-            this.cursor.close();
+            try {
+                this.cursor.close();
+            } catch (IOException ex) {
+            }
+            this.closedCursor = true;
             this.endTime = System.currentTimeMillis();
             if (this.endTime > 0L && this.startTime > 0L) {
                 this.tookTime = this.endTime = this.startTime;

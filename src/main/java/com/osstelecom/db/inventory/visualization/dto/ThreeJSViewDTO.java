@@ -73,12 +73,9 @@ public class ThreeJSViewDTO {
 
     public void setCircuitGraph(GraphList<CircuitResource> circuits) {
         this.circuits.clear();
-        try {
-            circuits.forEach(c -> {
-                this.circuits.add(new ThreeJSCircuitDTO(c));
-            });
-        } catch (IOException ex) {
-        }
+        circuits.forEach(c -> {
+            this.circuits.add(new ThreeJSCircuitDTO(c));
+        });
     }
 
     public void setServices(List<ServiceResource> services) {
@@ -128,27 +125,26 @@ public class ThreeJSViewDTO {
         //
 
         if (!connections.isEmpty()) {
-            try {
-                connections.forEach(connection -> {
-                    ThreeJsNodeDTO fromNode = new ThreeJsNodeDTO(connection.getFromResource());
-                    ThreeJsNodeDTO toNode = new ThreeJsNodeDTO(connection.getToResource());
-                    if (!nodes.contains(fromNode)) {
-                        nodes.add(fromNode);
-                        this.nodeMap.put(fromNode.getId(), fromNode);
-                    }
-                    if (!this.nodes.contains(toNode)) {
-                        nodes.add(toNode);
-                        this.nodeMap.put(toNode.getId(), toNode);
-                    }
-                    links.add(new ThreeJSLinkDTO(connection));
-                });
-                if (connections.isClosed()) {
-                    /**
-                     * Aqui é possível receber as stats
-                     */
+
+            connections.forEach(connection -> {
+                ThreeJsNodeDTO fromNode = new ThreeJsNodeDTO(connection.getFromResource());
+                ThreeJsNodeDTO toNode = new ThreeJsNodeDTO(connection.getToResource());
+                if (!nodes.contains(fromNode)) {
+                    nodes.add(fromNode);
+                    this.nodeMap.put(fromNode.getId(), fromNode);
                 }
-            } catch (IOException ex) {
+                if (!this.nodes.contains(toNode)) {
+                    nodes.add(toNode);
+                    this.nodeMap.put(toNode.getId(), toNode);
+                }
+                links.add(new ThreeJSLinkDTO(connection));
+            });
+            if (connections.isClosed()) {
+                /**
+                 * Aqui é possível receber as stats
+                 */
             }
+
         }
     }
 
@@ -169,7 +165,7 @@ public class ThreeJSViewDTO {
                 ThreeJsNodeDTO node = new ThreeJsNodeDTO(resource);
                 this.addNode(node);
             });
-        } catch (IOException | IllegalStateException ex) {
+        } catch (IllegalStateException ex) {
 
         }
 
@@ -210,12 +206,10 @@ public class ThreeJSViewDTO {
                 }
 
             });
-        } catch (IOException | IllegalStateException ex) {
+        } catch (IllegalStateException ex) {
             ex.printStackTrace();
         }
     }
-    
-    
 
     public void setLinksByGraph(GraphList<ResourceConnection> connections) {
         this.setLinksByGraph(connections, false);

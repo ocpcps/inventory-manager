@@ -556,7 +556,7 @@ public class ResourceConnectionManager extends Manager {
                 //
             }
 
-        } catch (IOException | IllegalStateException | InvalidRequestException | ArangoDaoException ex) {
+        } catch (IllegalStateException | InvalidRequestException | ArangoDaoException ex) {
             logger.error("Failed to Update Resource Connection Relation", ex);
 
         } finally {
