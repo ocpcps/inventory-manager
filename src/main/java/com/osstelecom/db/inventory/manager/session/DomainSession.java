@@ -56,7 +56,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.logging.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -175,10 +177,12 @@ public class DomainSession {
             new Thread(() -> {
                 try {
                     this.reconcileDomain(req.getRequestDomain(), true);
-                } catch (DomainNotFoundException | ArangoDaoException | ResourceNotFoundException | InvalidRequestException ex) {
+                } catch (DomainNotFoundException | ArangoDaoException | InvalidRequestException ex) {
                     logger.error("Failed Reconcile", ex);
+                } finally {
+                    logger.debug("Reconciliation Job Completed");
                 }
-            }, "RECONCILIATION-" + req.getRequestDomain()).start();
+            }, "com.osstelecom.db.inventory.manager.session.RECONCILIATION-" + req.getRequestDomain()).start();
             runningReconcilations.put(req.getRequestDomain(), true);
             return new StringResponse("Domain:[" + req.getRequestDomain() + "] Reconciliation Started");
         }
@@ -189,7 +193,7 @@ public class DomainSession {
      * all crossed references if withinDomain is true, it will reconcile only in
      * the specified domain
      */
-    private void reconcileDomain(String domainName, Boolean withinDomain) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
+    private void reconcileDomain(String domainName, Boolean withinDomain) throws DomainNotFoundException, ArangoDaoException, InvalidRequestException {
         /**
          * This will Trigger a massive update in the system, use with caution
          */
@@ -197,94 +201,145 @@ public class DomainSession {
         /**
          * Now for each Node, wi will update
          */
-
         DBJobInstance job = this.jobManager.createJobInstance();
-        jobManager.notifyJobStart(job);
-        try (GraphList<ManagedResource> resources = this.managedResourceManager.findAll(domain)) {
+        try {
+            jobManager.notifyJobStart(job);
+            try (GraphList<ManagedResource> resources = this.managedResourceManager.findAll(domain)) {
 
-            DbJobStage updateResourcesStage = job.createJobStage("UPDATE_RESOURCES", domainName);
-            updateResourcesStage.setJobDescription("Update All Resources in The Domain, Forcing Cascade Update");
-            updateResourcesStage.setTotalRecords(resources.size());
-            logger.debug("Found: [{}] Resources to update:", resources.size());
-            resources.forEach(resource -> {
-                try {
-                    this.managedResourceManager.update(resource);
-                    updateResourcesStage.incrementDoneRecords();
-                } catch (ArangoDaoException | InvalidRequestException | AttributeConstraintViolationException | ScriptRuleException | SchemaNotFoundException | GenericException | ResourceNotFoundException | AttributeNotFoundException ex) {
-                    updateResourcesStage.incrementErrors();
-                    logger.error("Failed to Update Resource:[{}]", resource.getId(), ex);
-                }
+                DbJobStage updateResourcesStage = job.createJobStage("UPDATE_RESOURCES", domainName);
+                updateResourcesStage.setJobDescription("Update All Resources in The Domain, Forcing Cascade Update");
+                updateResourcesStage.setTotalRecords(resources.size());
+                logger.debug("Found: [{}] Resources to update:", resources.size());
+                resources.forEach(resource -> {
+                    try {
+                        this.managedResourceManager.update(resource);
+                        updateResourcesStage.incrementDoneRecords();
+                    } catch (ArangoDaoException | InvalidRequestException | AttributeConstraintViolationException | ScriptRuleException | SchemaNotFoundException | GenericException | ResourceNotFoundException | AttributeNotFoundException ex) {
+                        updateResourcesStage.incrementErrors();
+                        logger.error("Failed to Update Resource:[{}]", resource.getId(), ex);
+                    }
 
-            });
-            job.endJobStage(updateResourcesStage);
+                });
+                job.endJobStage(updateResourcesStage);
 
-        } catch (IOException ex) {
-            logger.error("Failed to Close Resource list", ex);
-        } finally {
-
+            } finally {
+                logger.debug("Reconciliation of Resources is Done.");
+            }
+        } catch (Exception ex) {
+            //
+            // Generic Exception
+            //
+            logger.error("Generic Exception", ex);
         }
 
+        logger.debug("Starting Circuits Reconciliation");
         /**
          * m-br-rs-csl-cax-gwd-02
          *
          * Vamos reconciliar os circuitos
          */
-        try (GraphList<CircuitResource> circuits = this.circuitManager.findAll(domain)) {
-            DbJobStage updateResourcesStage = job.createJobStage("UPDATE_CIRCUITS", domainName);
-            updateResourcesStage.setJobDescription("Update All Circuits in The Domain, Forcing Cascade Update");
-            updateResourcesStage.setTotalRecords(circuits.size());
+        try {
+            try (GraphList<CircuitResource> circuits = this.circuitManager.findAll(domain)) {
 
-            circuits.forEach(circuit -> {
-                try {
-                    FilterDTO filter = new FilterDTO();
-                    filter.setDomainName(circuit.getDomain().getDomainName());
-                    filter.addBinding("circuitId", circuit.getId());
-                    filter.setAqlFilter(" @circuitId in doc.circuits[*]");
-                    filter.addObject("connections");
+                DbJobStage updateResourcesStage = job.createJobStage("UPDATE_CIRCUITS", domainName);
+                updateResourcesStage.setJobDescription("Update All Circuits in The Domain, Forcing Cascade Update");
+                updateResourcesStage.setTotalRecords(circuits.size());
+                if (!circuits.isEmpty()) {
+                    circuits.forEach(circuit -> {
+                        String uuid = UUID.randomUUID().toString();
+                        logger.debug("[{}] Starting Reconciliation Session for:[{}]", uuid, circuit.getId());
+                        try {
+                            if (!circuit.getCircuitPath().isEmpty()) {
+                                FilterDTO filter = new FilterDTO();
+                                filter.setDomainName(circuit.getDomain().getDomainName());
+                                filter.addBinding("circuitId", circuit.getId());
+                                filter.setAqlFilter(" @circuitId in doc.circuits[*]");
+                                filter.addObject("connections");
 
-                    GraphList<ResourceConnection> connections = this.resourceConnectionManager.getConnectionsByFilter(filter, circuit.getDomainName());
-
-                    List<ResourceConnection> dirtyConnections = new ArrayList<>();
-                    try {
-                        connections.forEach(connection -> {
-                            if (!circuit.getCircuitPath().contains(connection.getId())) {
-                                dirtyConnections.add(connection);
-                            }
-                        });
-
-                        if (!dirtyConnections.isEmpty()) {
-                            //
-                            // Se ficou algum sobrando é inconsistencia para gente remover
-                            //
-                            for (ResourceConnection dirtyConnection : dirtyConnections) {
-                                ResourceConnection fromDb = this.resourceConnectionManager.findResourceConnection(dirtyConnection);
-                                if (fromDb.getCircuits().contains(circuit.getId())) {
-                                    logger.debug("Removing Dirty Circuit:[{}] From:[{}]", circuit.getId(), fromDb.getId());
-                                    fromDb.getCircuits().remove(circuit.getId());
+                                try {
+                                    GraphList<ResourceConnection> connections = this.resourceConnectionManager.getConnectionsByFilter(filter, circuit.getDomainName());
+                                    logger.debug("[{}] Reconciliation Found: [{}/{}] Connections for:[{}]", uuid, connections.size(), circuit.getCircuitPath().size(), circuit.getId());
+                                    List<ResourceConnection> dirtyConnections = new ArrayList<>();
                                     try {
-                                        this.resourceConnectionManager.updateResourceConnection(fromDb);
-                                    } catch (ArangoDaoException | AttributeConstraintViolationException ex) {
+                                        connections.forEach(connection -> {
+                                            if (!circuit.getCircuitPath().contains(connection.getId())) {
+                                                logger.debug("[{}] - Connection:[{}] is not on Circuit:[{}]", uuid, connection.getId(), circuit.getId());
+                                                dirtyConnections.add(connection);
+                                            }
+                                        });
+
+                                        if (!dirtyConnections.isEmpty()) {
+                                            logger.debug("[{}] - Dirty Circuit Founds:[{}] in {}", uuid, dirtyConnections.size(), circuit.getId());
+                                            //
+                                            // Se ficou algum sobrando é inconsistencia para gente remover
+                                            //
+                                            for (ResourceConnection dirtyConnection : dirtyConnections) {
+                                                try {
+                                                    ResourceConnection fromDb = this.resourceConnectionManager.findResourceConnection(dirtyConnection);
+                                                    if (fromDb.getCircuits().contains(circuit.getId())) {
+                                                        logger.debug("[{}] - Removing Dirty Circuit:[{}] From:[{}]", uuid, circuit.getId(), fromDb.getId());
+                                                        fromDb.getCircuits().remove(circuit.getId());
+                                                        try {
+                                                            this.resourceConnectionManager.updateResourceConnection(fromDb);
+                                                        } catch (ArangoDaoException | AttributeConstraintViolationException ex) {
+                                                            updateResourcesStage.incrementErrors();
+                                                        }
+                                                    }
+                                                } catch (ArangoDaoException | InvalidRequestException ex) {
+                                                    updateResourcesStage.incrementErrors();
+                                                } catch (ResourceNotFoundException ex) {
+                                                    //
+                                                    // Neste caso a conexão não foi encontrada no circuito
+                                                    //
+                                                    circuit.getCircuitPath().remove(dirtyConnection.getId());
+
+                                                }
+                                            }
+                                            try {
+                                                this.circuitManager.updateCircuitResource(circuit);
+                                            } catch (SchemaNotFoundException | GenericException | AttributeConstraintViolationException | ScriptRuleException ex) {
+                                                logger.error("Failed to Update Circuit", ex);
+                                            }
+                                        } else {
+                                            logger.debug("[{}] - Reconciliation of:[{}] is Done Without Nothing Wrong.", uuid, circuit.getId());
+                                        }
+
+                                    } catch (IllegalStateException ex) {
                                         updateResourcesStage.incrementErrors();
+                                        logger.error("Failed to Fecth Data on Circuit Reconcialiation", ex);
+                                    }
+                                } catch (ResourceNotFoundException ex) {
+                                    //
+                                    // nenhum conexão foi encontrada
+                                    //
+                                    circuit.getCircuitPath().clear();
+                                    try {
+                                        this.circuitManager.updateCircuitResource(circuit);
+                                    } catch (SchemaNotFoundException | ArangoDaoException | AttributeConstraintViolationException | GenericException | ScriptRuleException ex1) {
+                                        //
+                                        // Não muito  o que fazer aqui então vou omitir
+                                        //
                                     }
                                 }
+
                             }
+
+                        } catch (ArangoDaoException | DomainNotFoundException | InvalidRequestException ex) {
+                            updateResourcesStage.incrementErrors();
+                            logger.error("Failed to Update Circuit:[{}]", circuit.getId(), ex);
                         }
-
-                    } catch (IOException | IllegalStateException ex) {
-                        updateResourcesStage.incrementErrors();
-                    }
-
-                } catch (ArangoDaoException | DomainNotFoundException | InvalidRequestException | ResourceNotFoundException ex) {
-                    updateResourcesStage.incrementErrors();
-                    logger.error("Failed to Update Circuit:[{}]", circuit.getId(), ex);
+                    });
+                } else {
+                    logger.warn("No Circuits Found on domain:[{}]", domain.getDomainName());
                 }
-            });
-            job.endJobStage(updateResourcesStage);
-        } catch (IOException ex) {
-            logger.error("Failed to Close Circuits list", ex);
-        } finally {
-            jobManager.notifyJobEnd(job);
-            runningReconcilations.remove(domainName);
+                job.endJobStage(updateResourcesStage);
+
+            } finally {
+                jobManager.notifyJobEnd(job);
+                runningReconcilations.remove(domainName);
+            }
+        } catch (Exception ex) {
+            logger.error("Generic Exception 2", ex);
         }
 
     }
