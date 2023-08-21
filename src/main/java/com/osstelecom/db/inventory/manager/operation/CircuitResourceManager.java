@@ -34,6 +34,7 @@ import com.osstelecom.db.inventory.manager.listeners.EventManagerListener;
 import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.GraphList;
+import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstraintViolationException;
 import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
@@ -71,6 +72,10 @@ public class CircuitResourceManager extends Manager {
     private GraphDao graphDao;
 
     private Logger logger = LoggerFactory.getLogger(CircuitResourceManager.class);
+
+    public GraphList<CircuitResource> findAll(Domain domain) throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
+        return this.circuitResourceDao.findAll(domain);
+    }
 
     public CircuitResource deleteCircuitResource(CircuitResource circuitResource) throws ArangoDaoException {
         DocumentDeleteEntity<CircuitResource> result = this.circuitResourceDao.deleteResource(circuitResource);
