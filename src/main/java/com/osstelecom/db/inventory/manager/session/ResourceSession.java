@@ -1655,12 +1655,6 @@ public class ResourceSession {
                     }
                 });
 
-            } catch (IOException ex) {
-                //
-                // Esta exception vem da implementação do Closeable, por horas vamos omitir aqui
-                // e transformar em uma generic
-                //
-                throw new GenericException("Failed to Close Cursor", ex);
             }
 
         } else {
