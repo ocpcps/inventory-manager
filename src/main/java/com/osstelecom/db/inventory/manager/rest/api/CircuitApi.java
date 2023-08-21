@@ -197,7 +197,7 @@ public class CircuitApi extends BaseApi {
     @AuthenticatedCall(role = {"user"})
     @GetMapping(path = "/{domain}/circuit/{id}/path", produces = "application/json")
     public GetCircuitPathResponse getCircuitPathById(
-            @PathVariable("domain") String domain, @PathVariable("id") String id, HttpServletRequest httpRequest) throws ArangoDaoException, ResourceNotFoundException, DomainNotFoundException, InvalidRequestException {
+            @PathVariable("domain") String domain, @PathVariable("id") String id, HttpServletRequest httpRequest) throws ArangoDaoException, ResourceNotFoundException, DomainNotFoundException, InvalidRequestException, AttributeConstraintViolationException {
         GetCircuitPathRequest req = new GetCircuitPathRequest(id, domain);
         this.setUserDetails(req);
         req.setRequestDomain(domain);

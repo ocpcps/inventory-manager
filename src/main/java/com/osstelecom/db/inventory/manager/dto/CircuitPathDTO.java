@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Representa o DTO do  PATH de um circuito
+ * Representa o DTO do PATH de um circuito
  *
  * @author Lucas Nishimura
  * @created 04.01.2022
@@ -34,6 +34,12 @@ public class CircuitPathDTO {
     private String domainName;
     private List<ResourceConnection> paths = new ArrayList<>();
     private List<String> hops;
+
+    public void addPath(ResourceConnection e) {
+        if (!this.paths.contains(e)) {
+            this.paths.add(e);
+        }
+    }
 
     public CircuitPathDTO() {
     }

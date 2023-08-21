@@ -358,7 +358,7 @@ public class CircuitSession {
      * @throws ArangoDaoException
      * @throws InvalidRequestException
      */
-    public GetCircuitPathResponse findCircuitPathById(GetCircuitPathRequest request) throws ResourceNotFoundException, DomainNotFoundException, ArangoDaoException, InvalidRequestException {
+    public GetCircuitPathResponse findCircuitPathById(GetCircuitPathRequest request) throws ResourceNotFoundException, DomainNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException {
 
         /**
          * Vamos garantir que tenhamos pelo menos o domain e o id do circuito
@@ -384,7 +384,7 @@ public class CircuitSession {
      * @throws ResourceNotFoundException
      */
     public GetCircuitPathResponse findCircuitPath(GetCircuitPathRequest request)
-            throws ResourceNotFoundException, DomainNotFoundException, ArangoDaoException, InvalidRequestException {
+            throws ResourceNotFoundException, DomainNotFoundException, ArangoDaoException, InvalidRequestException, AttributeConstraintViolationException {
         CircuitPathDTO circuitDto = request.getPayLoad();
         CircuitResource circuit = circuitDto.getCircuit();
         circuit.setDomainName(request.getRequestDomain());
@@ -396,8 +396,36 @@ public class CircuitSession {
         /**
          * Repassa todos os paths para o response, os paths são connections
          */
-        circuitDto.setPaths(circuitResourceManager.findCircuitPaths(circuit, false).toList());
 
+        List<ResourceConnection> pathsFound = circuitResourceManager.findCircuitPaths(circuit, false).toList();
+
+        /**
+         * Sanitização dos paths, pois encontramos lixo na referencia cruzada
+         */
+        for (ResourceConnection path : pathsFound) {
+            if (circuit.getCircuitPath().contains(path.getId())) {
+                circuitDto.addPath(path);
+            }
+        }
+
+        pathsFound.removeAll(circuitDto.getPaths());
+
+        if (!pathsFound.isEmpty()) {
+            //
+            // Se ficou algum sobrando é inconsistencia para gente remover
+            //
+            for (ResourceConnection dirtyConnection : pathsFound) {
+                ResourceConnection fromDb = this.resourceConnectionManager.findResourceConnection(dirtyConnection);
+                if (fromDb.getCircuits().contains(circuit.getId())) {
+                    fromDb.getCircuits().remove(circuit.getId());
+                    this.resourceConnectionManager.updateResourceConnection(fromDb);
+                }
+            }
+        }
+
+        /**
+         * Fim da Sanitização dos paths
+         */
         logger.debug("Found [{}] Paths for Circuit: [{}/{}] Class: ({})", circuitDto.getPaths().size(),
                 circuit.getNodeAddress(), circuit.getDomainName(), circuit.getClassName());
 

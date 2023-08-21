@@ -214,6 +214,8 @@ public class ThreeJSViewDTO {
             ex.printStackTrace();
         }
     }
+    
+    
 
     public void setLinksByGraph(GraphList<ResourceConnection> connections) {
         this.setLinksByGraph(connections, false);

@@ -17,6 +17,7 @@
  */
 package com.osstelecom.db.inventory.manager.session;
 
+import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.AttributeNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.DomainAlreadyExistsException;
@@ -28,18 +29,22 @@ import com.osstelecom.db.inventory.manager.exception.SchemaNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.ScriptRuleException;
 import com.osstelecom.db.inventory.manager.jobs.DBJobInstance;
 import com.osstelecom.db.inventory.manager.jobs.DbJobStage;
+import com.osstelecom.db.inventory.manager.operation.CircuitResourceManager;
 import com.osstelecom.db.inventory.manager.operation.DbJobManager;
 import com.osstelecom.db.inventory.manager.operation.DomainManager;
 import com.osstelecom.db.inventory.manager.operation.ManagedResourceManager;
+import com.osstelecom.db.inventory.manager.operation.ResourceConnectionManager;
 
 import com.osstelecom.db.inventory.manager.request.CreateDomainRequest;
 import com.osstelecom.db.inventory.manager.request.DeleteDomainRequest;
 import com.osstelecom.db.inventory.manager.request.GetRequest;
 import com.osstelecom.db.inventory.manager.request.UpdateDomainRequest;
+import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.StringResponse;
 import com.osstelecom.db.inventory.manager.resources.GraphList;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
+import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstraintViolationException;
 import com.osstelecom.db.inventory.manager.response.CreateDomainResponse;
 import com.osstelecom.db.inventory.manager.response.DeleteDomainResponse;
@@ -47,10 +52,11 @@ import com.osstelecom.db.inventory.manager.response.DomainResponse;
 import com.osstelecom.db.inventory.manager.response.GetDomainsResponse;
 import com.osstelecom.db.inventory.manager.response.UpdateDomainResponse;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.logging.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,6 +75,12 @@ public class DomainSession {
 
     @Autowired
     private ManagedResourceManager managedResourceManager;
+
+    @Autowired
+    private CircuitResourceManager circuitManager;
+
+    @Autowired
+    private ResourceConnectionManager resourceConnectionManager;
 
     @Autowired
     private DbJobManager jobManager;
@@ -187,9 +199,9 @@ public class DomainSession {
          */
 
         DBJobInstance job = this.jobManager.createJobInstance();
-
+        jobManager.notifyJobStart(job);
         try (GraphList<ManagedResource> resources = this.managedResourceManager.findAll(domain)) {
-            jobManager.notifyJobStart(job);
+
             DbJobStage updateResourcesStage = job.createJobStage("UPDATE_RESOURCES", domainName);
             updateResourcesStage.setJobDescription("Update All Resources in The Domain, Forcing Cascade Update");
             updateResourcesStage.setTotalRecords(resources.size());
@@ -207,10 +219,70 @@ public class DomainSession {
             job.endJobStage(updateResourcesStage);
 
         } catch (IOException ex) {
-            logger.error("Failed to Close list", ex);
+            logger.error("Failed to Close Resource list", ex);
+        } finally {
+
+        }
+
+        /**
+         * Vamos reconciliar os circuitos
+         */
+        try (GraphList<CircuitResource> circuits = this.circuitManager.findAll(domain)) {
+            DbJobStage updateResourcesStage = job.createJobStage("UPDATE_RESOURCES", domainName);
+            updateResourcesStage.setJobDescription("Update All Circuits in The Domain, Forcing Cascade Update");
+            updateResourcesStage.setTotalRecords(circuits.size());
+
+            circuits.forEach(circuit -> {
+                try {
+                    FilterDTO filter = new FilterDTO();
+                    filter.setDomainName(circuit.getDomain().getDomainName());
+                    filter.addBinding("circuitId", circuit.getId());
+                    filter.setAqlFilter(" @circuitId in doc.circuits[*]");
+                    filter.addObject("connections");
+
+                    GraphList<ResourceConnection> connections = this.resourceConnectionManager.getConnectionsByFilter(filter, circuit.getDomainName());
+
+                    List<ResourceConnection> dirtyConnections = new ArrayList<>();
+                    try {
+                        connections.forEach(connection -> {
+                            if (!circuit.getCircuitPath().contains(connection.getId())) {
+                                dirtyConnections.add(connection);
+                            }
+                        });
+
+                        if (!dirtyConnections.isEmpty()) {
+                            //
+                            // Se ficou algum sobrando é inconsistencia para gente remover
+                            //
+                            for (ResourceConnection dirtyConnection : dirtyConnections) {
+                                ResourceConnection fromDb = this.resourceConnectionManager.findResourceConnection(dirtyConnection);
+                                if (fromDb.getCircuits().contains(circuit.getId())) {
+                                    fromDb.getCircuits().remove(circuit.getId());
+                                    try {
+                                        this.resourceConnectionManager.updateResourceConnection(fromDb);
+                                    } catch (ArangoDaoException | AttributeConstraintViolationException ex) {
+                                        updateResourcesStage.incrementErrors();
+                                    }
+                                }
+                            }
+                        }
+
+                    } catch (IOException | IllegalStateException ex) {
+                        updateResourcesStage.incrementErrors();
+                    }
+
+                } catch (ArangoDaoException | DomainNotFoundException | InvalidRequestException | ResourceNotFoundException ex) {
+                    updateResourcesStage.incrementErrors();
+                    logger.error("Failed to Update Circuit:[{}]", circuit.getId(), ex);
+                }
+            });
+            job.endJobStage(updateResourcesStage);
+        } catch (IOException ex) {
+            logger.error("Failed to Close Circuits list", ex);
         } finally {
             jobManager.notifyJobEnd(job);
             runningReconcilations.remove(domainName);
         }
+
     }
 }
