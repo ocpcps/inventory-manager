@@ -53,41 +53,41 @@ import java.util.stream.Collectors;
  * @created 30.08.2022
  */
 public abstract class AbstractArangoDao<T extends BasicResource> {
-    
+
     @Autowired
     private ArangoDatabase arangoDatabase;
-    
+
     protected Logger logger = LoggerFactory.getLogger(AbstractArangoDao.class);
-    
+
     public abstract T findResource(T resource)
             throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException;
-    
+
     public abstract DocumentCreateEntity<T> insertResource(T resource)
             throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException;
-    
+
     public abstract DocumentCreateEntity<T> upsertResource(T resource)
             throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException;
-    
+
     public abstract DocumentUpdateEntity<T> updateResource(T resource)
             throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException;
-    
+
     public abstract MultiDocumentEntity<DocumentUpdateEntity<T>> updateResources(List<T> resources, Domain domain)
             throws BasicException;
-    
+
     public abstract DocumentDeleteEntity<T> deleteResource(T resource) throws BasicException;
-    
+
     public abstract GraphList<T> findResourcesBySchemaName(String schemaName, Domain domain)
             throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException;
-    
+
     public abstract GraphList<T> findResourcesByClassName(String className, Domain domain)
             throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException;
-    
+
     public abstract GraphList<T> findAll(Domain domain)
             throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException;
-    
+
     public abstract GraphList<T> findResourceByFilter(FilterDTO filter, Domain domain)
             throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException;
-    
+
     protected String buildAqlFromBindings(String aql, Map<String, Object> bindVars, boolean appendReturn) {
         StringBuilder buffer = new StringBuilder(aql);
         bindVars.forEach((k, v) -> {
@@ -128,10 +128,10 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
             bindVars.forEach((k, v) -> {
                 logger.info("\t  [@{}]=[{}]", k, v);
             });
-            
+
             GraphList<T> result = new GraphList<>(
                     db.query(aql, bindVars, new AqlQueryOptions().fullCount(true).count(true), type));
-            
+
             if (result.isEmpty()) {
                 ResourceNotFoundException ex = new ResourceNotFoundException();
                 //
@@ -171,31 +171,31 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
             }
             return result;
         }
-        
+
     }
-    
+
     public String runNativeQuery(FilterDTO filter) {
         String aql = filter.getAqlFilter();
         Map<String, Object> bindVars = filter.getBindings();
-        
+
         Long start = System.currentTimeMillis();
         String uid = UUID.randomUUID().toString();
         String buffer = "[";
-        
+
         if (filter.getOffSet() >= 0L) {
             filter.getBindings().put("offset", filter.getOffSet());
         }
         if (filter.getLimit() >= 0L) {
             filter.getBindings().put("limit", filter.getLimit());
         }
-        
+
         logger.info("(native-query) - [{}] - RUNNING: AQL:[{}]", uid, aql);
         if (bindVars != null) {
             bindVars.forEach((k, v) -> {
                 logger.info("\t  [@{}]=[{}]", k, v);
             });
         }
-        
+
         ArangoCursor<String> result = this.getDb().query(aql, bindVars,
                 new AqlQueryOptions().fullCount(true).count(true), String.class);
         if (result.getCount() > 0) {
@@ -206,7 +206,7 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
                 logger.error("close cursor error when empty response", e);
             }
         }
-        
+
         Long end = System.currentTimeMillis();
         Long took = end - start;
         //
@@ -217,7 +217,7 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
         } else {
             logger.info("(query) - [{}] - Took: [{}] ms", uid, took);
         }
-        
+
         buffer = buffer.concat("]");
         return buffer;
     }
@@ -234,15 +234,11 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
             throws ResourceNotFoundException, InvalidRequestException {
         Long start = System.currentTimeMillis();
         String uid = UUID.randomUUID().toString();
-        
+
         if (filter.getBindings() != null) {
             filter.getBindings().forEach((k, v) -> {
                 logger.info("\t  [@{}]=[{}]", k, v);
             });
-            
-            if (filter.getAqlFilter().toLowerCase().contains("return")) {
-                throw new InvalidRequestException("Please remove Return statement from your filter.");
-            }
 
             //
             // Trata a paginação
@@ -258,16 +254,20 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
                     //
                 }
             }
-            
+
+            logger.info("(query) - [{}] - RUNNING: AQL:[{}]", uid, filter.getAqlFilter() + " [return doc] < -- Only for logging,");
+            if (filter.getAqlFilter().toLowerCase().contains("return")) {
+                throw new InvalidRequestException("Please remove Return statement from your filter.");
+            }
             filter.setAqlFilter(filter.getAqlFilter() + " return doc");
-            logger.info("(query) - [{}] - RUNNING: AQL:[{}]", uid, filter.getAqlFilter());
+
             filter.getBindings().forEach((k, v) -> {
                 logger.info("\t  [@{}]=[{}]", k, v);
             });
             GraphList<T> result = new GraphList<>(
                     this.arangoDatabase.query(filter.getAqlFilter(), filter.getBindings(),
                             new AqlQueryOptions().fullCount(true).count(true).ttl(1800), type));
-            
+
             if (result.isEmpty()) {
                 ResourceNotFoundException ex = new ResourceNotFoundException();
                 //
@@ -278,10 +278,10 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
                 } catch (Exception e) {
                     logger.error("close cursos error when empty response", e);
                 }
-                
+
                 ex.addDetails("AQL", filter.getAqlFilter());
                 ex.addDetails("params", filter.getBindings());
-                
+
                 throw ex;
             }
             Long end = System.currentTimeMillis();
@@ -310,17 +310,17 @@ public abstract class AbstractArangoDao<T extends BasicResource> {
             return result;
         }
     }
-    
+
     public abstract Long getCount(Domain domain) throws IOException, InvalidRequestException;
-    
+
     public ArangoDatabase getDb() {
         return this.arangoDatabase;
     }
-    
+
     public ArangoCollection getCollectionByName(String name) {
         return arangoDatabase.collection(name);
     }
-    
+
     public List<T> getListFromCursorType(ArangoCursor<T> cursor) throws ArangoDaoException {
         List<T> result = new ArrayList<>();
         cursor.forEachRemaining(result::add);

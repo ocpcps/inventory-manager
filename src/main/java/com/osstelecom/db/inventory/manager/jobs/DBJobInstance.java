@@ -33,8 +33,17 @@ public class DBJobInstance {
     private String jobId;
     private Date jobStarted = new Date();
     private Date jobEnded;
+    private String name;
     private DbJobStage currentJobStage;
     private Map<String, DbJobStage> jobStages = new ConcurrentHashMap<>();
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
 
     public void startJob() {
         this.setJobStarted(new Date());

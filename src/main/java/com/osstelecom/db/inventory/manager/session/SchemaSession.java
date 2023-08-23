@@ -1111,20 +1111,25 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
                     sdf.setLenient(false);
                     if (model.getIsList() && value instanceof List) {
                         //
-                        // lista de string
-                        //
+                        // lista de string deveria ser de date!
+                        // @todo arrumar o type cast
                         List list = (List) value;
                         return list;
                     } else {
-                        try {
-                            return sdf.parse(value.toString());
-                        } catch (ParseException ex) {
-                            throw new AttributeConstraintViolationException(
-                                    "Attribute [" + model.getName() + "] of type:"
-                                    + model.getVariableType() + " Cannot Parse Date Value : [" + value
-                                    + "] With Mask: ["
-                                    + configurationManager.loadConfiguration().getDateFormat() + "]",
-                                    ex);
+                        String dateValue = value.toString();
+                        if (!dateValue.trim().equals("")) {
+                            try {
+                                return sdf.parse(value.toString());
+                            } catch (ParseException ex) {
+                                throw new AttributeConstraintViolationException(
+                                        "Attribute [" + model.getName() + "] of type:"
+                                        + model.getVariableType() + " Cannot Parse Date Value : [" + value
+                                        + "] With Mask: ["
+                                        + configurationManager.loadConfiguration().getDateFormat() + "]",
+                                        ex);
+                            }
+                        }else{
+                            return null;
                         }
                     }
                 } else {

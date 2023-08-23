@@ -58,7 +58,7 @@ public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
             String aql = " for doc in   " + resource.getDomain().getServices();
             aql += " filter @id in  doc.dependencies[*]._id";
             aql += " for dep in doc.dependencies ";
-            aql += " return doc";
+//            aql += " return doc";
             bindVars.put("id", resource.getId());
             FilterDTO filter = new FilterDTO(aql, bindVars);
             return this.query(filter, ServiceResource.class);
@@ -74,6 +74,8 @@ public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
 
     @Override
     public ServiceResource findResource(ServiceResource resource) throws ArangoDaoException, ResourceNotFoundException {
+        String aql = " for doc in `" + resource.getDomain().getServices() + "` filter ";
+        Map<String, Object> bindVars = new HashMap<>();
         try {
             //
             // Pensar no Lock Manager aqui, ou subir para o manager
@@ -86,10 +88,7 @@ public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
                 throw new ArangoDaoException("Missing Domain Information for Resource");
             }
 
-            String aql = " for doc in `" + resource.getDomain().getServices() + "` filter ";
-
-            Map<String, Object> bindVars = new HashMap<>();
-            aql += " doc.domainName == @domainName";
+            aql += " doc.domainName == @domainName ";
 
             bindVars.put("domainName", resource.getDomain().getDomainName());
 
@@ -117,9 +116,16 @@ public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
                 // Ugly fix.
                 //
                 if (resource.getAttributeSchemaName().equalsIgnoreCase("default")) {
-                    resource.setAttributeSchemaName("resource.default");
+                    /**
+                     * não vou colocar o schema, se ele tiver id ou key, por ser
+                     * mais especifico
+                     */
+                    if (resource.getId() == null && resource.getKey() == null) {
+                        resource.setAttributeSchemaName("service.default");
+                        bindVars.put("attributeSchemaName", resource.getAttributeSchemaName());
+                    }
                 }
-                bindVars.put("attributeSchemaName", resource.getAttributeSchemaName());
+
             }
 
 //            if (resource.getOperationalStatus() != null) {
@@ -128,7 +134,7 @@ public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
             //
             // Creates AQL
             //
-            aql = this.buildAqlFromBindings(aql, bindVars, true);
+            aql = this.buildAqlFromBindings(aql, bindVars, false);
             FilterDTO filter = new FilterDTO(aql, bindVars);
             GraphList<ServiceResource> result = this.query(filter, ServiceResource.class);
             if (result.isEmpty()) {
@@ -142,7 +148,10 @@ public class ServiceResourceDao extends AbstractArangoDao<ServiceResource> {
             }
             return result.getOne();
         } catch (Exception ex) {
-            throw new ArangoDaoException(ex);
+            ArangoDaoException aex = new ArangoDaoException(ex);
+            aex.addDetails("aql", aql);
+            aex.addDetails("bindings", bindVars);
+            throw aex;
         } finally {
             //
             // Liberar o Lock manager Aqui,  ou subir para o manager
