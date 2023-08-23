@@ -503,16 +503,28 @@ public class DomainManager extends Manager {
     }
 
     /**
-     * Get the domain name from the full collection name;
+     * Get the domain name from the full collection name; O problema aqui é o
+     * seguinte o id pode ser domain_sub_sub_sub_nodes/123123 onde
+     * domain_sub_sub_sub é o domain o método anteior não previa mais de um _ no
+     * nome e estava extraindo o nome errado
      *
      * @param id
      * @return
      */
-    public String getDomainNameFromId(String id) {
-        String[] payLoad = id.split("/");
-        String collectionName = payLoad[0];
-        payLoad = collectionName.split("_");
-        return payLoad[0];
+    public String getDomainNameFromId(String input) {
+
+        // Separando a string pelo caractere '/'
+        String[] splitBySlash = input.split("/");
+
+        // Pegando a primeira parte antes do '/'
+        String firstPart = splitBySlash[0];
+
+        // Encontrando o índice do último '_'
+        int lastIndex = firstPart.lastIndexOf("_");
+
+        // Extraindo a string desejada
+        String result = firstPart.substring(0, lastIndex);
+        return result;
     }
 
 }

@@ -75,7 +75,9 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
                     if (eventQueue.size() > 950) {
                         logger.warn("Event Queue Size:[{}]", eventQueue.size());
                     } else {
-                        logger.debug("Event Queue Size:[{}]", eventQueue.size());
+                        if (!eventQueue.isEmpty()) {
+                            logger.debug("Event Queue Size:[{}]", eventQueue.size());
+                        }
                     }
                     if (jobManager != null) {
                         List<DBJobInstance> runningJobs = jobManager.getRunningJobs();
