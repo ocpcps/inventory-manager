@@ -350,7 +350,7 @@ public class FilterViewSession {
     public ThreeJsViewResponse expandNodeById(ExpandNodeRequest request) throws DomainNotFoundException,
             ArangoDaoException, ResourceNotFoundException, InvalidRequestException, InvalidGraphException {
         Domain domain = this.domainManager.getDomain(request.getRequestDomain());
-        DBJobInstance job = dbJobManager.createJobInstance();
+        DBJobInstance job = dbJobManager.createJobInstance("Expand Node:");
         dbJobManager.notifyJobStart(job);
         ManagedResource resource = new ManagedResource(domain, request.getPayLoad().getNodeId());
         //

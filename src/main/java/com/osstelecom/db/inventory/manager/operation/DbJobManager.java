@@ -85,9 +85,10 @@ public class DbJobManager extends Manager {
      *
      * @return
      */
-    public DBJobInstance createJobInstance() {
+    public DBJobInstance createJobInstance(String name) {
         String uuid = UUID.randomUUID().toString();
         DBJobInstance instance = new DBJobInstance(uuid);
+
         return instance;
     }
 

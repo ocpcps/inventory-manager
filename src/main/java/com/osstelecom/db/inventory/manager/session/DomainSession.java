@@ -201,7 +201,7 @@ public class DomainSession {
         /**
          * Now for each Node, wi will update
          */
-        DBJobInstance job = this.jobManager.createJobInstance();
+        DBJobInstance job = this.jobManager.createJobInstance("Reconciliation JOB:[" + domainName + "]");
         try {
             jobManager.notifyJobStart(job);
             try (GraphList<ManagedResource> resources = this.managedResourceManager.findAll(domain)) {

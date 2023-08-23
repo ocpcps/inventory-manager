@@ -106,6 +106,11 @@ public class ServiceResource extends BasicResource {
         super(domain);
     }
 
+    
+      public ServiceResource(Domain domain,String id) {
+        super(domain);
+        this.setId(id);
+    }
     public ServiceResource() {
     }
 
