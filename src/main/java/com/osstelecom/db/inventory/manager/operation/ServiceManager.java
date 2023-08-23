@@ -706,8 +706,8 @@ public class ServiceManager extends Manager {
 
         //
         // Actually Update on DB
-        //
-        this.evaluateServiceStateTransition(this.serviceDao.updateResource(service));
+        //  
+        //this.evaluateServiceStateTransition(this.serviceDao.updateResource(service));
 
         /**
          * Verifica se este serviço é necessário para algum outro, ou seja, do
