@@ -43,6 +43,8 @@ import com.osstelecom.db.inventory.manager.response.DeleteServiceResponse;
 import com.osstelecom.db.inventory.manager.response.FilterResponse;
 import com.osstelecom.db.inventory.manager.response.GetServiceResponse;
 import com.osstelecom.db.inventory.manager.response.PatchServiceResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -57,6 +59,8 @@ public class ServiceSession {
 
     @Autowired
     private DomainManager domainManager;
+
+    private Logger logger = LoggerFactory.getLogger(ServiceSession.class);
 
     public GetServiceResponse getServiceById(GetServiceRequest request) throws ResourceNotFoundException, DomainNotFoundException, ArangoDaoException, InvalidRequestException {
         if (request.getPayLoad().getId() == null) {
@@ -133,42 +137,148 @@ public class ServiceSession {
         //
         // Aqui resolve os circuitos e recursos.
         //
-        payload = serviceManager.resolveService(payload);
+        payload = serviceManager.resolveCircuitsAndServices(payload);
 
         return new CreateServiceResponse(serviceManager.createService(payload));
     }
 
-    public PatchServiceResponse updateService(PatchServiceRequest request) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
-        if (request.getPayLoad().getId() == null && request.getPayLoad().getNodeAddress() == null && request.getPayLoad().getDomain() == null) {
-            throw new InvalidRequestException("ID Field Missing");
-        }
+    public PatchServiceResponse updateService(PatchServiceRequest patchRequest) throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
 
-        if (request.getRequestDomain() == null) {
-            throw new DomainNotFoundException("Domain With Name:[" + request.getRequestDomain() + "] not found");
-        }
-        request.getPayLoad().setDomain(domainManager.getDomain(request.getRequestDomain()));
+        //
+        //
+        //
+        ServiceResource requestedPatch = patchRequest.getPayLoad();
+        ServiceResource searchObj = null;
+        //
+        // Arruma o domain para funcionar certinho
+        //
+        requestedPatch.setDomain(this.domainManager.getDomain(patchRequest.getRequestDomain()));
+        requestedPatch.setDomainName(requestedPatch.getDomain().getDomainName());
 
-        ServiceResource payload = request.getPayLoad();
-        if (payload == null) {
-            throw new InvalidRequestException("Payload not found");
-        }
-        ServiceResource old = null;
-        if (payload.getId() != null) {
-            old = serviceManager.getServiceById(payload);
+        //
+        // Garante que vamos priorizar o ID ou, o KEY ( FUTURO )
+        //
+        if (requestedPatch.getId() != null && !requestedPatch.getId().trim().equals("")) {
+            //
+            // Temos um ID, sanitiza para ficar bom
+            //
+            searchObj = new ServiceResource(domainManager.getDomain(requestedPatch.getDomainName()), requestedPatch.getId());
         } else {
-            old = serviceManager.getService(payload);
+            searchObj = requestedPatch;
         }
-        payload.setKey(old.getKey());
 
-        if ((payload.getCircuits() == null || payload.getCircuits().isEmpty()) && (payload.getDependencies() == null || payload.getDependencies().isEmpty())) {
+        ServiceResource fromDBResource = this.findServiceResource(searchObj);
+
+        //
+        // Se chegamos aqui, temos coisas para atualizar...
+        // @ Todo, comparar para ver se houve algo que realmente mudou..
+        //
+        if (requestedPatch.getName() != null) {
+            fromDBResource.setName(requestedPatch.getName());
+        }
+
+        if (requestedPatch.getNodeAddress() != null) {
+            fromDBResource.setNodeAddress(requestedPatch.getNodeAddress());
+        }
+
+        if (requestedPatch.getClassName() != null && !requestedPatch.getClassName().equals("Default")) {
+            fromDBResource.setClassName(requestedPatch.getClassName());
+        }
+
+        if (requestedPatch.getOperationalStatus() != null) {
+            fromDBResource.setOperationalStatus(requestedPatch.getOperationalStatus());
+        }
+
+        //
+        // Pode atualizar o AtributeSchemaModel ? isso é bem custosooo vamos tratar isso
+        // em outro lugar...
+        //
+        if (requestedPatch.getAdminStatus() != null) {
+            fromDBResource.setAdminStatus(requestedPatch.getAdminStatus());
+        }
+
+        //
+        // Atualiza os atributos
+        //
+        if (requestedPatch.getAttributes() != null && !requestedPatch.getAttributes().isEmpty()) {
+            if (fromDBResource.getAttributes().isEmpty()) {
+                fromDBResource.getAttributes().putAll(requestedPatch.getAttributes());
+            } else {
+                requestedPatch.getAttributes().forEach((name, value) -> {
+                    if (fromDBResource.getAttributes().containsKey(name)) {
+                        logger.debug("Update Key:[{}] With Value:[{}]", name, value);
+                        fromDBResource.getAttributes().replace(name, value);
+                    } else {
+                        fromDBResource.getAttributes().put(name, value);
+                    }
+                });
+            }
+        }
+
+        if (requestedPatch.getDescription() != null && !requestedPatch.getDescription().trim().equals("")) {
+            if (!requestedPatch.getDescription().equals(fromDBResource.getDescription())) {
+                fromDBResource.setDescription(requestedPatch.getDescription());
+            }
+        }
+
+        if (requestedPatch.getResourceType() != null && !requestedPatch.getResourceType().trim().equals("")) {
+            if (!requestedPatch.getResourceType().equals(fromDBResource.getResourceType())) {
+                fromDBResource.setResourceType(requestedPatch.getResourceType());
+            }
+        }
+
+        if (requestedPatch.getCategory() != null && !requestedPatch.getCategory().trim().equals("")) {
+            if (!requestedPatch.getCategory().equals("default")) {
+                if (!requestedPatch.getCategory().equals(fromDBResource.getCategory())) {
+                    fromDBResource.setCategory(requestedPatch.getCategory());
+                }
+            }
+        }
+
+        if (requestedPatch.getBusinessStatus() != null && !requestedPatch.getBusinessStatus().trim().equals("")) {
+            if (!requestedPatch.getBusinessStatus().equals(fromDBResource.getBusinessStatus())) {
+                fromDBResource.setBusinessStatus(requestedPatch.getBusinessStatus());
+            }
+        }
+
+        //
+        // Atualiza os atributos de rede
+        //
+        if (requestedPatch.getDiscoveryAttributes() != null && !requestedPatch.getDiscoveryAttributes().isEmpty()) {
+            requestedPatch.getDiscoveryAttributes().forEach((name, attribute) -> {
+                if (fromDBResource.getDiscoveryAttributes() != null) {
+                    if (fromDBResource.getDiscoveryAttributes().containsKey(name)) {
+                        fromDBResource.getDiscoveryAttributes().replace(name, attribute);
+                    } else {
+                        fromDBResource.getDiscoveryAttributes().put(name, attribute);
+                    }
+                }
+            });
+        }
+
+        fromDBResource.setConsumableMetric(requestedPatch.getConsumableMetric());
+        fromDBResource.setConsumerMetric(requestedPatch.getConsumerMetric());
+
+        /**
+         * Agora vamos lidar de resolver os circuitos e services
+         */
+        if (requestedPatch.getDependencies() != null) {
+            fromDBResource.setDependencies(requestedPatch.getDependencies());
+        }
+        if (requestedPatch.getCircuits() != null) {
+            fromDBResource.setCircuits(requestedPatch.getCircuits());
+        }
+
+        ServiceResource result = serviceManager.resolveCircuitsAndServices(fromDBResource);
+        if ((result.getCircuits() == null || result.getCircuits().isEmpty()) && (result.getDependencies() == null || result.getDependencies().isEmpty())) {
             throw new InvalidRequestException("Please give at least one circuit or dependency");
         }
+        result = this.serviceManager.updateService(fromDBResource);
+
         //
         // Resolveu aqui, será que não faz sentido ir para o manager inteiro ?
         //
-        payload = serviceManager.resolveService(payload);
-
-        return new PatchServiceResponse(serviceManager.updateService(payload));
+        return new PatchServiceResponse(serviceManager.updateService(result));
     }
 
     public FilterResponse findServiceByFilter(FilterRequest filter) throws InvalidRequestException, ArangoDaoException, DomainNotFoundException, ResourceNotFoundException {
@@ -197,7 +307,7 @@ public class ServiceSession {
     }
 
     public ServiceResource findServiceResource(ServiceResource resource)
-        throws ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
+            throws ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
         return this.serviceManager.findServiceResource(resource);
     }
 

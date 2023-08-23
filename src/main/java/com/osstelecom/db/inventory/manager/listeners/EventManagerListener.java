@@ -115,7 +115,7 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
         //
         // the queue is limited to 1000 Events, after that will be blocking...
         //
-        DBJobInstance job = jobManager.createJobInstance();
+        DBJobInstance job = jobManager.createJobInstance(event.getClass().getName());
         event.setRelatedJob(job);
         return eventQueue.offer(event);
     }
@@ -129,7 +129,7 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
      */
     @Override
     public synchronized boolean notifyGenericEvent(BasicEvent genericEvent) {
-        DBJobInstance job = jobManager.createJobInstance();
+        DBJobInstance job = jobManager.createJobInstance("GenericEvent");
         genericEvent.setRelatedJob(job);
         return eventQueue.offer(genericEvent);
     }
@@ -144,7 +144,7 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
      */
     @Override
     public synchronized boolean notifyGenericEvent(BasicUpdateEvent updateEvent) {
-        DBJobInstance job = jobManager.createJobInstance();
+        DBJobInstance job = jobManager.createJobInstance(updateEvent.getClass().getName());
         updateEvent.setRelatedJob(job);
         return eventQueue.offer(updateEvent);
     }
