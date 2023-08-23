@@ -33,7 +33,9 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 /**
- * Gerencia as jobs de update que possam estar rodando no banco
+ * Gerencia as jobs de update que possam estar rodando no banco Note que os
+ * métodos desta classe são todos protegidos para não deixar as exceptions
+ * vazarem
  *
  * @author Lucas Nishimura
  * @created 26.01.2023
@@ -44,6 +46,7 @@ public class DbJobManager extends Manager {
     private Logger logger = LoggerFactory.getLogger(DbJobManager.class);
 
     private Map<String, DBJobInstance> runningJobs = new ConcurrentHashMap<>();
+    private Map<String, DBJobInstance> pendingJobs = new ConcurrentHashMap<>();
 
     private AtomicLong totalJobsDone = new AtomicLong(0);
 
@@ -53,8 +56,13 @@ public class DbJobManager extends Manager {
      * @param job
      */
     public void notifyJobStart(DBJobInstance job) {
-        logger.debug("Job:[{}] Started", job.getJobId());
-        this.runningJobs.put(job.getJobId(), job);
+        try {
+            logger.debug("Job:[{}] Started", job.getJobId());
+            this.pendingJobs.remove(job.getJobId());
+            this.runningJobs.put(job.getJobId(), job);
+        } catch (Exception ex) {
+        } finally {
+        }
     }
 
     /**
@@ -63,20 +71,24 @@ public class DbJobManager extends Manager {
      * @param job
      */
     public void notifyJobEnd(DBJobInstance job) {
-        if (job.getJobEnded() == null) {
-            job.setJobEnded(new Date());
-            job = this.runningJobs.remove(job.getJobId());
-            if (job != null) {
-                if (job.getJobStarted() != null) {
-                    Long took = job.getJobEnded().getTime() - job.getJobStarted().getTime();
-                    this.totalJobsDone.incrementAndGet();
-                    logger.debug("JOB:[{}] Done: And Took:[{}] ms", job.getJobId(), took);
+        try {
+            if (job.getJobEnded() == null) {
+                job.setJobEnded(new Date());
+                job = this.runningJobs.remove(job.getJobId());
+                if (job != null) {
+                    if (job.getJobStarted() != null) {
+                        Long took = job.getJobEnded().getTime() - job.getJobStarted().getTime();
+                        this.totalJobsDone.incrementAndGet();
+                        logger.debug("JOB:[{}] Done: And Took:[{}] ms", job.getJobId(), took);
+                    }
+                } else {
+                    logger.warn("JOB:[{}] Not Found", job.getJobId());
                 }
             } else {
-                logger.warn("JOB:[{}] Not Found", job.getJobId());
+                logger.warn("JOB:[{}] Already Done", job.getJobId());
             }
-        } else {
-            logger.warn("JOB:[{}] Already Done", job.getJobId());
+        } catch (Exception ex) {
+        } finally {
         }
     }
 
@@ -88,7 +100,7 @@ public class DbJobManager extends Manager {
     public DBJobInstance createJobInstance(String name) {
         String uuid = UUID.randomUUID().toString();
         DBJobInstance instance = new DBJobInstance(uuid);
-
+        pendingJobs.put(uuid, instance);
         return instance;
     }
 

@@ -285,6 +285,7 @@ public class ServiceSession {
         //
         // Validação para evitar abusos de uso da API
         //
+      
         if (filter.getPayLoad() != null) {
             if (filter.getPayLoad().getLimit() != null) {
                 if (filter.getPayLoad().getLimit() > 1000) {
