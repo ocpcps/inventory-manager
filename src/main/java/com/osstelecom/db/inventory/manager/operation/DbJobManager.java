@@ -125,6 +125,25 @@ public class DbJobManager extends Manager {
             }
 
         });
+
+        /**
+         * JOB Time out
+         */
+        cal.setTime(new Date());
+        cal.add(Calendar.HOUR, -1);
+        this.runningJobs.forEach((k, v) -> {
+            if (v.getJobStarted() != null) {
+                if (v.getJobStarted().before(cal.getTime())) {
+                    //
+                    // Já passou 15 minutos, manda embora..
+                    //
+                    logger.warn("Job Timed OUT, marked to remove:[{}]", v.getJobId());
+                    idsToRemove.add(k);
+                }
+            }
+
+        });
+
         if (!idsToRemove.isEmpty()) {
             logger.debug("Found: [{}] ids to remove:", idsToRemove.size());
             idsToRemove.forEach(i -> {

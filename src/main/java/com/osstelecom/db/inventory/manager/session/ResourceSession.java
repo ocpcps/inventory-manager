@@ -941,9 +941,6 @@ public class ResourceSession {
             response.setArangoStats(nodesGraph.getStats());
         } else if (filter.getPayLoad().getObjects().contains("connections")
                 || filter.getPayLoad().getObjects().contains("connection")) {
-            // response.getPayLoad().setConnections(resourceConnectionManager.getConnectionsByFilter(filter.getPayLoad(),
-            // filter.getRequestDomain()).toList());
-
             GraphList<ResourceConnection> connectionsGraph = resourceConnectionManager
                     .getConnectionsByFilter(filter.getPayLoad(), filter.getRequestDomain());
             List<ResourceConnection> connections = connectionsGraph.toList();

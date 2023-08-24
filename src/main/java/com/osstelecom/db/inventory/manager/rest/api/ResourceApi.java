@@ -55,7 +55,6 @@ import com.osstelecom.db.inventory.manager.response.TypedListResponse;
 import com.osstelecom.db.inventory.manager.security.model.AuthenticatedCall;
 import com.osstelecom.db.inventory.manager.session.ResourceSession;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Deals with resource API
@@ -212,6 +211,19 @@ public class ResourceApi extends BaseApi {
         this.setUserDetails(filter);
         filter.setRequestDomain(domain);
         httpRequest.setAttribute("request", filter);
+        return resourceSession.findManagedResourceByFilter(filter);
+    }
+
+    @AuthenticatedCall(role = {"user"})
+    @PostMapping(path = {"/{domain}/connection/filter", "/{domain}/resource/connection/filter"}, produces = "application/json", consumes = "application/json")
+    @Operation(description = "Realiza uma busca por recursos gerenciados (ManagedResource) no sistema Netcompass com base em um filtro específico. Este método permite aos usuários filtrarem os recursos com critérios definidos no objeto FilterRequest passado no corpo da requisição. A busca é realizada no domínio especificado na URL da requisição (domain). O método configura o detalhe do usuário (user details) com base nas informações fornecidas no objeto FilterRequest antes de prosseguir com a busca dos recursos. O objeto FilterResponse contém a resposta da busca, incluindo uma lista de recursos que correspondem ao filtro definido. Caso a busca não retorne resultados ou ocorra algum erro durante o processo, serão lançadas exceções específicas, tais como ArangoDaoException, ResourceNotFoundException, DomainNotFoundException e InvalidRequestException. Os detalhes da requisição podem ser obtidos através do objeto HttpServletRequest passado como parâmetro.")
+    public FilterResponse findResourceConnectionByFilter(@RequestBody FilterRequest filter, @PathVariable("domain") String domain, HttpServletRequest httpRequest) throws ArangoDaoException, ResourceNotFoundException, DomainNotFoundException, InvalidRequestException {
+        this.setUserDetails(filter);
+        filter.setRequestDomain(domain);
+        httpRequest.setAttribute("request", filter);
+        if (filter.getPayLoad() != null) {
+            filter.getPayLoad().getObjects().add("connection");
+        }
         return resourceSession.findManagedResourceByFilter(filter);
     }
 

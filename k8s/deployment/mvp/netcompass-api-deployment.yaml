@@ -17,7 +17,7 @@ spec:
         metadata:
           labels:
             app: netcompass-api
-        image: quay.apps.mgmt.telcostack.br.telefonica.com/netcompass/netcompass-server/netcompass-api:latest
+        image: quay.apps.mgmt.telcostack.br.telefonica.com/netcompass/netcompass-server/netcompass-api:latest        
         resources:
           requests:
             memory: "24576Mi"
@@ -43,6 +43,12 @@ spec:
             value: inventory-manager-1.0.0-alpha.jar
           - name: SPRING_PROFILES_DEFAULT
             value: mvp
+          - name: JWT_ISSUER_URI
+            value: https://ui-netcompass.apps.mvp.telcostackmvp.br.telefonica.com/auth/realms/netcompass
+          - name: JWT_JWK_SET_URI
+            value: https://ui-netcompass.apps.mvp.telcostackmvp.br.telefonica.com/auth/realms/netcompass/protocol/openid-connect/certs
+      imagePullSecrets:
+        - name: netcompass-pull-secret
       volumes:
         - name: netcompass-app-volume
           persistentVolumeClaim:

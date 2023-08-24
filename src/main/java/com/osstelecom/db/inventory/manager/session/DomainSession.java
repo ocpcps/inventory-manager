@@ -169,14 +169,19 @@ public class DomainSession {
         return new UpdateDomainResponse(domainRequest.getPayLoad());
     }
 
-    public StringResponse reconcileDomain(GetRequest req) {
+    public StringResponse reconcileDomain(GetRequest req) throws DomainNotFoundException, ArangoDaoException {
         if (runningReconcilations.containsKey(req.getRequestDomain())) {
             return new StringResponse("Already Running");
         } else {
+            /**
+             * This will Trigger a massive update in the system, use with
+             * caution
+             */
+            Domain domain = this.domainManager.getDomain(req.getRequestDomain());
             logger.debug("Starting Reconciliation Thread");
             new Thread(() -> {
                 try {
-                    this.reconcileDomain(req.getRequestDomain(), true);
+                    this.reconcileDomain(domain, true);
                 } catch (DomainNotFoundException | ArangoDaoException | InvalidRequestException ex) {
                     logger.error("Failed Reconcile", ex);
                 } finally {
@@ -193,21 +198,18 @@ public class DomainSession {
      * all crossed references if withinDomain is true, it will reconcile only in
      * the specified domain
      */
-    private void reconcileDomain(String domainName, Boolean withinDomain) throws DomainNotFoundException, ArangoDaoException, InvalidRequestException {
-        /**
-         * This will Trigger a massive update in the system, use with caution
-         */
-        Domain domain = this.domainManager.getDomain(domainName);
+    private void reconcileDomain(Domain domain, Boolean withinDomain) throws DomainNotFoundException, ArangoDaoException, InvalidRequestException {
+
         /**
          * Now for each Node, wi will update
          */
-        DBJobInstance job = this.jobManager.createJobInstance("Reconciliation JOB:[" + domainName + "]");
+        DBJobInstance job = this.jobManager.createJobInstance("Reconciliation JOB:[" + domain.getDomainName() + "]");
         try {
             jobManager.notifyJobStart(job);
             try (GraphList<ManagedResource> resources = this.managedResourceManager.findAll(domain)) {
 
-                DbJobStage updateResourcesStage = job.createJobStage("UPDATE_RESOURCES", domainName);
-                updateResourcesStage.setJobDescription("Update All Resources in The Domain, Forcing Cascade Update");
+                DbJobStage updateResourcesStage = job.createJobStage("UPDATE_RESOURCES", domain.getDomainName());
+                updateResourcesStage.setJobDescription("Update All Resources in The Domain[" + domain.getDomainName() + "], Forcing Cascade Update");
                 updateResourcesStage.setTotalRecords(resources.size());
                 logger.debug("Found: [{}] Resources to update:", resources.size());
                 resources.forEach(resource -> {
@@ -241,7 +243,7 @@ public class DomainSession {
         try {
             try (GraphList<CircuitResource> circuits = this.circuitManager.findAll(domain)) {
 
-                DbJobStage updateResourcesStage = job.createJobStage("UPDATE_CIRCUITS", domainName);
+                DbJobStage updateResourcesStage = job.createJobStage("UPDATE_CIRCUITS", domain.getDomainName());
                 updateResourcesStage.setJobDescription("Update All Circuits in The Domain, Forcing Cascade Update");
                 updateResourcesStage.setTotalRecords(circuits.size());
                 if (!circuits.isEmpty()) {
@@ -336,7 +338,7 @@ public class DomainSession {
 
             } finally {
                 jobManager.notifyJobEnd(job);
-                runningReconcilations.remove(domainName);
+                runningReconcilations.remove(domain.getDomainName());
             }
         } catch (Exception ex) {
             logger.error("Generic Exception 2", ex);
