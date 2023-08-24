@@ -18,7 +18,6 @@ package com.osstelecom.db.inventory.manager.resources;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-
 /**
  * This class represents the Resource that needs to be managed
  *
@@ -28,9 +27,13 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 public class ManagedResource extends AbsRelatedResource {
 
+    public ManagedResource(String domainName, String id) {
+        super(domainName, id);
+    }
+
     public ManagedResource(String attributeSchema, Domain domain) {
         super(attributeSchema, domain);
-        
+
     }
 
     public ManagedResource(Domain domain, String uid, String id) {
@@ -62,9 +65,7 @@ public class ManagedResource extends AbsRelatedResource {
     }
 
     public ManagedResource() {
-        
+
     }
-    
-    
 
 }

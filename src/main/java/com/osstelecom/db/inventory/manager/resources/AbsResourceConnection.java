@@ -68,6 +68,10 @@ public class AbsResourceConnection<T extends BasicResource> extends AbsRelatedRe
         return toResource;
     }
 
+    public AbsResourceConnection(String domainName, String id) {
+        super(domainName, id);
+    }
+
     public AbsResourceConnection(String attributeSchema, Domain domain) {
         super(attributeSchema, domain);
 
@@ -150,7 +154,7 @@ public class AbsResourceConnection<T extends BasicResource> extends AbsRelatedRe
 
     /**
      * @param bidirectionalConsuptions the bidirectionalConsuptions toResource
-     *                                 set
+     * set
      */
     public void setBidirectionalConsuptions(Boolean bidirectionalConsuption) {
         this.bidirectionalConsuption = bidirectionalConsuption;

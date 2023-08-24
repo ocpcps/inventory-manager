@@ -301,6 +301,11 @@ public class BasicResource {
         this.id = id;
     }
 
+    public BasicResource(String domainName, String id) {
+        this.domainName = domainName;
+        this.id = id;
+    }
+
     public BasicResource() {
 
     }
