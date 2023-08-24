@@ -43,6 +43,7 @@ import com.osstelecom.db.inventory.manager.operation.ResourceConnectionManager;
 import com.osstelecom.db.inventory.manager.operation.ServiceManager;
 import com.osstelecom.db.inventory.manager.request.CreateCircuitPathRequest;
 import com.osstelecom.db.inventory.manager.request.CreateCircuitRequest;
+import com.osstelecom.db.inventory.manager.request.DeleteCircuitPathRequest;
 import com.osstelecom.db.inventory.manager.request.DeleteCircuitRequest;
 import com.osstelecom.db.inventory.manager.request.FilterRequest;
 import com.osstelecom.db.inventory.manager.request.GetCircuitPathRequest;
@@ -698,5 +699,46 @@ public class CircuitSession {
             return new DeleteCircuitResponse(circuit);
         }
 
+    }
+
+    public DeleteCircuitResponse deleteConnctionFromCircuitPath(DeleteCircuitPathRequest deleteRequest) throws InvalidRequestException, ResourceNotFoundException, ArangoDaoException, DomainNotFoundException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
+        if (deleteRequest.getPayLoad() == null) {
+            throw new InvalidRequestException("Payload is null");
+        }
+        if (deleteRequest.getPayLoad().getCircuit() == null) {
+            throw new InvalidRequestException("Circuit is null");
+        }
+
+        if (deleteRequest.getPayLoad().getPaths() == null) {
+            throw new InvalidRequestException("Paths is null");
+        } else if (deleteRequest.getPayLoad().getPaths().isEmpty()) {
+            throw new InvalidRequestException("Paths is Empty");
+        }
+
+        CircuitResource circuit = deleteRequest.getPayLoad().getCircuit();
+        Domain domain = this.domainManager.getDomain(deleteRequest.getRequestDomain());
+        circuit.setDomain(domain);
+
+        circuit = this.findCircuitResource(circuit);
+
+        /**
+         * Agora que temos o circuito vamos procurar as conexões
+         */
+        List<ResourceConnection> connectionsToDelete = new ArrayList<>();
+
+        for (ResourceConnection connection : deleteRequest.getPayLoad().getPaths()) {
+            connection.setDomain(domain);
+            ResourceConnection resolvedConnection = this.resourceConnectionManager.findResourceConnection(connection);
+            connectionsToDelete.add(resolvedConnection);
+        }
+
+        for (ResourceConnection connection : connectionsToDelete) {
+            circuit.getCircuitPath().remove(connection.getId());
+            connection.getCircuits().remove(circuit.getId());
+            this.resourceConnectionManager.updateResourceConnection(connection);
+        }
+
+        circuit = this.circuitResourceManager.updateCircuitPath(circuit);
+        return new DeleteCircuitResponse(circuit);
     }
 }
