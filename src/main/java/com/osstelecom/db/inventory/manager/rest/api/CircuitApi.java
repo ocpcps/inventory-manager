@@ -17,6 +17,7 @@
  */
 package com.osstelecom.db.inventory.manager.rest.api;
 
+import com.osstelecom.db.inventory.manager.dto.CircuitPathDTO;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
@@ -26,11 +27,13 @@ import com.osstelecom.db.inventory.manager.exception.SchemaNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.ScriptRuleException;
 import com.osstelecom.db.inventory.manager.request.CreateCircuitPathRequest;
 import com.osstelecom.db.inventory.manager.request.CreateCircuitRequest;
+import com.osstelecom.db.inventory.manager.request.DeleteCircuitPathRequest;
 import com.osstelecom.db.inventory.manager.request.DeleteCircuitRequest;
 import com.osstelecom.db.inventory.manager.request.FilterRequest;
 import com.osstelecom.db.inventory.manager.request.GetCircuitPathRequest;
 import com.osstelecom.db.inventory.manager.request.PatchCircuitResourceRequest;
 import com.osstelecom.db.inventory.manager.resources.CircuitResource;
+import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstraintViolationException;
 import com.osstelecom.db.inventory.manager.response.CreateCircuitPathResponse;
 import com.osstelecom.db.inventory.manager.response.CreateCircuitResponse;
@@ -226,6 +229,24 @@ public class CircuitApi extends BaseApi {
         this.setUserDetails(request);
         httpRequest.setAttribute("request", request);
         return this.circuitSession.deleteCircuitById(request);
+
+    }
+
+    @AuthenticatedCall(role = {"user"})
+    @DeleteMapping(path = "/{domain}/circuit/{circuitId}/path/{connectionId}", produces = "application/json")
+    public DeleteCircuitResponse deletePathFromCircuitById(
+            @PathVariable("domain") String domain,
+            @PathVariable("circuitId") String circuitId,
+            @PathVariable("connectionId") String connectionId,
+            HttpServletRequest httpRequest) throws DomainNotFoundException, ArangoDaoException, InvalidRequestException, ResourceNotFoundException, SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
+        DeleteCircuitPathRequest request = new DeleteCircuitPathRequest(circuitId, domain);
+        request.setPayLoad(new CircuitPathDTO(domain));
+        request.setRequestDomain(domain);
+        request.getPayLoad().addPath(new ResourceConnection(domain, connectionId));
+        request.getPayLoad().setCircuit(new CircuitResource(domain, circuitId));
+        this.setUserDetails(request);
+        httpRequest.setAttribute("request", request);
+        return this.circuitSession.deleteConnctionFromCircuitPath(request);
 
     }
 }

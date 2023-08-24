@@ -135,6 +135,11 @@ public class CircuitResource extends BasicResource {
         super(domain, id);
     }
 
+    public CircuitResource(String domainName, String id) {
+        super(domainName, id);
+    }
+
+    
     public CircuitResource() {
     }
 

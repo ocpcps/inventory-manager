@@ -29,6 +29,10 @@ public abstract class AbsRelatedResource extends BasicResource {
     //
     private ServiceResource dependentService;
 
+    public AbsRelatedResource(String domainName, String id) {
+        super(domainName, id);
+    }
+
     public AbsRelatedResource(String attributeSchema, Domain domain) {
         super(attributeSchema, domain);
     }
@@ -65,7 +69,5 @@ public abstract class AbsRelatedResource extends BasicResource {
     public void setDependentService(ServiceResource dependentService) {
         this.dependentService = dependentService;
     }
-
-    
 
 }

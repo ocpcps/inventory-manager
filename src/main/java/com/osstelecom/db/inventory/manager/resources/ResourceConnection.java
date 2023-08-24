@@ -25,6 +25,10 @@ package com.osstelecom.db.inventory.manager.resources;
  */
 public class ResourceConnection extends AbsResourceConnection<ManagedResource> {
 
+    public ResourceConnection(String domainName, String id) {
+        super(domainName, id);
+    }
+
     public ResourceConnection(String attributeSchema, Domain domain) {
         super(attributeSchema, domain);
     }

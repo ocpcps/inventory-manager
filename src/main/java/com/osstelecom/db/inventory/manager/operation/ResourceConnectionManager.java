@@ -1,7 +1,6 @@
 package com.osstelecom.db.inventory.manager.operation;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -14,11 +13,11 @@ import com.arangodb.entity.DocumentCreateEntity;
 import com.arangodb.entity.DocumentDeleteEntity;
 import com.arangodb.entity.DocumentUpdateEntity;
 import com.arangodb.entity.MultiDocumentEntity;
-import com.google.common.collect.Lists;
 import com.google.common.eventbus.Subscribe;
 import com.osstelecom.db.inventory.manager.dao.LocationConnectionDao;
 import com.osstelecom.db.inventory.manager.dao.ResourceConnectionDao;
 import com.osstelecom.db.inventory.manager.dto.FilterDTO;
+import com.osstelecom.db.inventory.manager.events.CircuitResourceUpdatedEvent;
 import com.osstelecom.db.inventory.manager.events.ManagedResourceUpdatedEvent;
 import com.osstelecom.db.inventory.manager.events.ResourceConnectionCreatedEvent;
 import com.osstelecom.db.inventory.manager.events.ResourceConnectionDeletedEvent;
@@ -32,7 +31,7 @@ import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.SchemaNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.ScriptRuleException;
 import com.osstelecom.db.inventory.manager.listeners.EventManagerListener;
-import com.osstelecom.db.inventory.manager.resources.BasicResource;
+import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.GraphList;
 import com.osstelecom.db.inventory.manager.resources.LocationConnection;
@@ -456,6 +455,72 @@ public class ResourceConnectionManager extends Manager {
             endTimer(timerId);
         }
     }
+
+//    @Subscribe
+//    public void onCircuitResourceUpdatedEvent(CircuitResourceUpdatedEvent event) throws ResourceNotFoundException, ArangoDaoException, IOException, DomainNotFoundException {
+//        logger.debug("onCircuitResourceUpdatedEvent, Computing Connections Circuit dependencies..");
+//        CircuitResource newCircuit = event.getNewResource();
+//        CircuitResource oldCircuit = event.getNewResource();
+//        if (oldCircuit.getCircuitPath().isEmpty() && !newCircuit.getCircuitPath().isEmpty()) {
+//            for (String newConnection : newCircuit.getCircuitPath()) {
+//                try {
+//                    ResourceConnection connection = this.findResourceConnection(new ResourceConnection(newCircuit.getDomain(), newConnection));
+//                    if (!connection.getCircuits().contains(newCircuit.getId())) {
+//                        connection.getCircuits().add(newCircuit.getId());
+//                        this.updateResourceConnection(connection);
+//                    }
+//                } catch (AttributeConstraintViolationException | ArangoDaoException | InvalidRequestException | ResourceNotFoundException ex) {
+//                    logger.warn("Error update crossreference in circuit:[{}] / connection::[{}]", newCircuit.getId(), newConnection);
+//                }
+//            }
+//        } else {
+//            newCircuit.getCircuitPath().forEach(newConnectionId -> {
+//                if (oldCircuit != null) {
+//                    if (!oldCircuit.getCircuitPath().isEmpty()) {
+//                        if (!oldCircuit.getCircuitPath().contains(newConnectionId)) {
+//                            //
+//                            // Circuito Novo
+//                            //
+//                            try {
+//                                ResourceConnection connection = this.findResourceConnection(new ResourceConnection(newCircuit.getDomain(), newConnectionId));
+//                                if (!connection.getCircuits().contains(newCircuit.getId())) {
+//                                    connection.getCircuits().add(newCircuit.getId());
+//                                    this.updateResourceConnection(connection);
+//                                }
+//                            } catch (AttributeConstraintViolationException | ArangoDaoException | InvalidRequestException | ResourceNotFoundException ex) {
+//                                logger.warn(" Error update cross reference adding in circuit:[{}] / connection::[{}] ", newCircuit.getId(), newConnectionId, ex);
+//                            }
+//
+//                        }
+//                    }
+//                }
+//            });
+//        }
+//
+//        if (!oldCircuit.getCircuitPath().isEmpty()) {
+//            oldCircuit.getCircuitPath().forEach(oldConnectionId -> {
+//                if (!newCircuit.getCircuitPath().contains(oldConnectionId)) {
+//                    /**
+//                     * Aqui aconteceu uma exclusão
+//                     */
+//                    try {
+//                        ResourceConnection connection = this.findResourceConnection(new ResourceConnection(oldCircuit.getDomain(), oldConnectionId));
+//                        if (connection.getCircuits().contains(oldCircuit.getId())) {
+//                            connection.getCircuits().remove(oldCircuit.getId());
+//                            logger.debug("Removing Connection:[{}] From Circuit:[{}]", oldConnectionId, oldCircuit.getId());
+//                            this.updateResourceConnection(connection);
+//
+//                        }
+//                    } catch (AttributeConstraintViolationException | ArangoDaoException | InvalidRequestException | ResourceNotFoundException ex) {
+//                        logger.warn("Error update cross reference removing in circuit:[{}] / connection::[{}]", newCircuit.getId(), oldConnectionId, ex);
+//                    }
+//
+//                }
+//            });
+//
+//        }
+//
+//    }
 
     /**
      * Recebi uma notificação de que um recurso foi atualizado, vou procurar as
