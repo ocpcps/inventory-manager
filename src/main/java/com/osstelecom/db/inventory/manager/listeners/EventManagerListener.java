@@ -53,6 +53,9 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
 
     private Logger logger = LoggerFactory.getLogger(EventManagerListener.class);
 
+    /**
+     * Avaliar de colocarmos essa queue em algum lugar persistente
+     */
     private LinkedBlockingQueue<Object> eventQueue = new LinkedBlockingQueue<>(1000);
 
     @Autowired
@@ -68,7 +71,8 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
             thread.start();
 
             /**
-             * Vamos criar um simples Stats Thread..
+             * Vamos criar um simples Stats Thread..penso que isso deveria estar
+             * no job manager
              */
             new Thread(() -> {
                 while (running) {

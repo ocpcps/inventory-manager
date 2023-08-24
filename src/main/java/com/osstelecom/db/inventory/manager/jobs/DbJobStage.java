@@ -98,7 +98,7 @@ public class DbJobStage {
 
         if (this.getTotalRecords() != null && this.getTotalRecords() > 0L) {
             if (this.doneRecords <= this.getTotalRecords()) {
-                if (this.getDoneRecords() > 0) {
+                if (this.getDoneRecords() > 0L) {
                     this.percDone = (this.getDoneRecords() / this.getTotalRecords()) * 100D;
                 }
             }
