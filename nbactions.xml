@@ -12,7 +12,7 @@
             <properties>
                 <exec.vmArgs>-Djavax.net.ssl.trustStore=/home/lucas/NetBeansProjects/inventory-manager/ssl/truststore.jks -Djavax.net.ssl.trustStorePassword=password -Dcom.sun.jndi.ldap.object.disableEndpointIdentification=true -Dhttps.protocols=TLSv1.2,TLSv1.1,TLSv1</exec.vmArgs>
                 <exec.args>${exec.vmArgs} -classpath %classpath ${exec.mainClass} ${exec.appArgs}</exec.args>
-                <exec.appArgs></exec.appArgs>
+                <exec.appArgs>dont-upload</exec.appArgs>
                 <exec.mainClass>${packageClassName}</exec.mainClass>
                 <exec.executable>java</exec.executable>
             </properties>
@@ -29,7 +29,7 @@
             <properties>
                 <exec.vmArgs>-Djavax.net.ssl.trustStore=/home/lucas/NetBeansProjects/inventory-manager/ssl/truststore.jks -Djavax.net.ssl.trustStorePassword=password -Dcom.sun.jndi.ldap.object.disableEndpointIdentification=true -Dhttps.protocols=TLSv1.2,TLSv1.1,TLSv1 -agentlib:jdwp=transport=dt_socket,server=n,address=${jpda.address}</exec.vmArgs>
                 <exec.args>${exec.vmArgs} -classpath %classpath ${exec.mainClass} ${exec.appArgs}</exec.args>
-                <exec.appArgs></exec.appArgs>
+                <exec.appArgs>dont-upload</exec.appArgs>
                 <exec.mainClass>${packageClassName}</exec.mainClass>
                 <exec.executable>java</exec.executable>
                 <jpda.listen>true</jpda.listen>
@@ -49,7 +49,7 @@
                 <exec.args>${exec.vmArgs} -classpath %classpath ${exec.mainClass} ${exec.appArgs}</exec.args>
                 <exec.mainClass>${packageClassName}</exec.mainClass>
                 <exec.executable>java</exec.executable>
-                <exec.appArgs></exec.appArgs>
+                <exec.appArgs>dont-upload</exec.appArgs>
             </properties>
         </action>
     </actions>

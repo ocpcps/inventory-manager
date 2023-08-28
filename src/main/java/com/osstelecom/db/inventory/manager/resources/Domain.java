@@ -20,6 +20,7 @@ package com.osstelecom.db.inventory.manager.resources;
 import com.arangodb.entity.DocumentField;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.io.Serializable;
 import java.util.Date;
 
 /**
@@ -28,7 +29,7 @@ import java.util.Date;
  * @created 15.12.2021
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class Domain {
+public class Domain implements Serializable{
 
     @DocumentField(DocumentField.Type.KEY)
     @Schema(example = "network")

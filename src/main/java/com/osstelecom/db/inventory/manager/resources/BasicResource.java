@@ -26,6 +26,7 @@ import com.osstelecom.db.inventory.manager.resources.exception.MetricConstraintE
 import com.osstelecom.db.inventory.manager.resources.exception.NoResourcesAvailableException;
 import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -41,7 +42,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Lucas Nishimura
  */
 @JsonInclude(Include.NON_NULL)
-public class BasicResource {
+public class BasicResource implements Serializable{
 
     /**
      * Mandatory
