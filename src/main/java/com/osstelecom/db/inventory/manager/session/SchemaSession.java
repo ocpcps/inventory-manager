@@ -62,6 +62,8 @@ import com.osstelecom.db.inventory.manager.response.GetSchemasResponse;
 import com.osstelecom.db.inventory.manager.response.ListSchemasResponse;
 import com.osstelecom.db.inventory.manager.response.PatchResourceSchemaModelResponse;
 import com.osstelecom.db.inventory.manager.response.ResourceSchemaResponse;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.stream.Collectors;
@@ -1106,29 +1108,37 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
             } else if (model.getVariableType().equalsIgnoreCase("Date")) {
 
                 if (value != null && !value.toString().equals("")) {
-                    SimpleDateFormat sdf = new SimpleDateFormat(
-                            configurationManager.loadConfiguration().getDateFormat());
-                    sdf.setLenient(false);
+
                     if (model.getIsList() && value instanceof List) {
                         //
                         // lista de string deveria ser de date!
                         // @todo arrumar o type cast
+                        //
                         List list = (List) value;
-                        return list;
+
+                        if (list != null) {
+                            if (!list.isEmpty()) {
+                                List<Date> dates = new ArrayList<>();
+                                for (Object o : list) {
+                                    if (o != null) {
+                                        String dateValue = o.toString();
+                                        dates.add(this.getDateFromStringFormat(dateValue, configurationManager.loadConfiguration().getDateFormat()));
+                                    }
+                                }
+                                return dates;
+                            } else {
+                                return null;
+                            }
+
+                        } else {
+                            return null;
+                        }
+
                     } else {
                         String dateValue = value.toString();
                         if (!dateValue.trim().equals("")) {
-                            try {
-                                return sdf.parse(value.toString());
-                            } catch (ParseException ex) {
-                                throw new AttributeConstraintViolationException(
-                                        "Attribute [" + model.getName() + "] of type:"
-                                        + model.getVariableType() + " Cannot Parse Date Value : [" + value
-                                        + "] With Mask: ["
-                                        + configurationManager.loadConfiguration().getDateFormat() + "]",
-                                        ex);
-                            }
-                        }else{
+                            return this.getDateFromStringFormat(dateValue, configurationManager.loadConfiguration().getDateFormat());
+                        } else {
                             return null;
                         }
                     }
@@ -1852,6 +1862,33 @@ public class SchemaSession implements RemovalListener<String, ResourceSchemaMode
             this.clearSchemaCache();
         } else {
             throw new InvalidRequestException("Resource Schema Model [" + model.getSchemaName() + "] Already Exists");
+        }
+    }
+
+    private Date getDateFromStringFormat(String value, String preferedFormat) throws AttributeConstraintViolationException {
+        SimpleDateFormat sdf = new SimpleDateFormat(
+                preferedFormat);
+        sdf.setLenient(false);
+
+        try {
+            return sdf.parse(value);
+        } catch (ParseException ex) {
+            /**
+             * Deu ruim, vamos tentar outro jeito
+             */
+            SimpleDateFormat sdf1 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
+            try {
+                return sdf1.parse(value);
+            } catch (ParseException ex1) {
+                try {
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSX");
+                    // Parsear a string para um objeto Instant.
+                    Instant instant = Instant.from(formatter.parse(value));
+                    return Date.from(instant);
+                } catch (Exception ex2) {
+                    throw new AttributeConstraintViolationException("Cant Parse Date from Value:[" + value + "] Prefered Format:[" + preferedFormat + "]");
+                }
+            }
         }
     }
 
