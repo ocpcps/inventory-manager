@@ -34,7 +34,7 @@ public class ResourceConnection extends AbsResourceConnection<ManagedResource> {
     }
 
     public ResourceConnection(Domain domain) {
-        super(domain);
+        super(domain);        
     }
 
     public ResourceConnection(Domain domain, String id) {

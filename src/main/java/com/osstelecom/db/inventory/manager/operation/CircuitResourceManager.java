@@ -112,9 +112,12 @@ public class CircuitResourceManager extends Manager {
             }
 
             circuit.setAtomId(domain.addAndGetId());
-            ResourceSchemaModel schemaModel = schemaSession.loadSchema(circuit.getAttributeSchemaName());
+            ResourceSchemaModel schemaModel = schemaSession.loadSchema(circuit.getAttributeSchemaName());            
             circuit.setSchemaModel(schemaModel);
+            
             schemaSession.validateResourceSchema(circuit);
+            
+          
             dynamicRuleSession.evalResource(circuit, "I", this);
             DocumentCreateEntity<CircuitResource> result;
             if (useUpsert) {
