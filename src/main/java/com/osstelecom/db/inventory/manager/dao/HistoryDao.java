@@ -62,4 +62,16 @@ public class HistoryDao {
         return null;
     }
 
+    public History findConnection(History history) {
+        return null;
+    }
+
+    public History findCircuit(History history) {
+        return null;
+    }
+
+    public History findService(History history) {
+        return null;
+    }
+
 }

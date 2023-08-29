@@ -55,9 +55,7 @@ public class HistoryManager extends Manager {
     @Autowired
     private HistoryDao historyDao;
 
-
-
-        /**
+    /**
      * Search for a History Manager
      *
      * @param history
@@ -74,6 +72,39 @@ public class HistoryManager extends Manager {
         }
 
         return this.historyDao.findResource(history);
+    }
+
+    public History getHistoryConnectionById(History history)
+            throws ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
+        if (history.getId() != null) {
+            if (!history.getId().contains("/")) {
+                history.setId(history.getId());
+            }
+        }
+
+        return this.historyDao.findConnection(history);
+    }
+
+    public History getHistoryCircuitById(History history)
+            throws ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
+        if (history.getId() != null) {
+            if (!history.getId().contains("/")) {
+                history.setId(history.getId());
+            }
+        }
+
+        return this.historyDao.findCircuit(history);
+    }
+
+    public History getHistoryServiceById(History history)
+            throws ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
+        if (history.getId() != null) {
+            if (!history.getId().contains("/")) {
+                history.setId(history.getId());
+            }
+        }
+
+        return this.historyDao.findService(history);
     }
 
 }

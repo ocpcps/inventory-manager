@@ -25,29 +25,29 @@ import com.osstelecom.db.inventory.manager.resources.ManagedResource;
  * @author Lucas Nishimura
  * @created 08.07.2022
  */
-public class FindHistoryResourceRequest extends BasicRequest<History> {
+public class FindHistoryCircuitRequest extends BasicRequest<History> {
 
       
-    private String resourceId;
+    private String circuitId;
     private String domainName;
     
-    public FindHistoryResourceRequest(String resourceId, String domainName) {
-        this.resourceId = resourceId;
+    public FindHistoryCircuitRequest(String circuitId, String domainName) {
+        this.circuitId = circuitId;
         this.domainName = domainName;
     }
 
     /**
-     * @return the resourceId
+     * @return the circuitId
      */
-    public String getResourceId() {
-        return resourceId;
+    public String getCircuitId() {
+        return circuitId;
     }
 
     /**
-     * @param resourceId the resourceId to set
+     * @param circuitId the circuitId to set
      */
-    public void setResourceId(String resourceId) {
-        this.resourceId = resourceId;
+    public void setCircuitId(String circuitId) {
+        this.circuitId = circuitId;
     }
 
     /**

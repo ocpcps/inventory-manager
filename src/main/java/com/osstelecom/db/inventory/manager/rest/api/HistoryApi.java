@@ -21,7 +21,10 @@ import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
+import com.osstelecom.db.inventory.manager.request.FindHistoryCircuitRequest;
+import com.osstelecom.db.inventory.manager.request.FindHistoryConnectionRequest;
 import com.osstelecom.db.inventory.manager.request.FindHistoryResourceRequest;
+import com.osstelecom.db.inventory.manager.request.FindHistoryServiceRequest;
 import com.osstelecom.db.inventory.manager.response.GetHistoryResponse;
 import com.osstelecom.db.inventory.manager.security.model.AuthenticatedCall;
 import com.osstelecom.db.inventory.manager.session.HistorySession;
@@ -35,8 +38,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * @changelog -------------------------------------------------- 25-11-2022:
- * Lucas Nishimura <lucas.nishimura at telefonica.com> Revisado so métodos de
- * insert update delete
+ *            Lucas Nishimura <lucas.nishimura at telefonica.com> Revisado so
+ *            métodos de
+ *            insert update delete
  * @author Lucas Nishimura
  * @created 08.08.2022
  */
@@ -47,15 +51,48 @@ public class HistoryApi extends BaseApi {
     @Autowired
     private HistorySession historySession;
 
-    @AuthenticatedCall(role = {"user"})
+    @AuthenticatedCall(role = { "user" })
     @GetMapping(path = "/{domain}/history/resource/{id}", produces = "application/json")
     public GetHistoryResponse getHistoryResourceById(@PathVariable("domain") String domain,
-            @PathVariable("id") String id, HttpServletRequest httpRequest) throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
-                FindHistoryResourceRequest request = new FindHistoryResourceRequest(id, domain); // mudr para history
+            @PathVariable("id") String id, HttpServletRequest httpRequest)
+            throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
+        FindHistoryResourceRequest request = new FindHistoryResourceRequest(id, domain);
         this.setUserDetails(request);
         httpRequest.setAttribute("request", request);
         return historySession.getHistoryResourceById(request);
-    } 
+    }
 
+    @AuthenticatedCall(role = { "user" })
+    @GetMapping(path = "/{domain}/history/connection/{id}", produces = "application/json")
+    public GetHistoryResponse getHistoryConnectionById(@PathVariable("domain") String domain,
+            @PathVariable("id") String id, HttpServletRequest httpRequest)
+            throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
+        FindHistoryConnectionRequest request = new FindHistoryConnectionRequest(id, domain);
+        this.setUserDetails(request);
+        httpRequest.setAttribute("request", request);
+        return historySession.getHistoryConnectionById(request);
+    }
+
+    @AuthenticatedCall(role = { "user" })
+    @GetMapping(path = "/{domain}/history/circuit/{id}", produces = "application/json")
+    public GetHistoryResponse getHistoryCircuitById(@PathVariable("domain") String domain,
+            @PathVariable("id") String id, HttpServletRequest httpRequest)
+            throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
+        FindHistoryCircuitRequest request = new FindHistoryCircuitRequest(id, domain);
+        this.setUserDetails(request);
+        httpRequest.setAttribute("request", request);
+        return historySession.getHistoryCircuitById(request);
+    }
+
+    @AuthenticatedCall(role = { "user" })
+    @GetMapping(path = "/{domain}/history/service/{id}", produces = "application/json")
+    public GetHistoryResponse getHistoryServicenById(@PathVariable("domain") String domain,
+            @PathVariable("id") String id, HttpServletRequest httpRequest)
+            throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
+        FindHistoryServiceRequest request = new FindHistoryServiceRequest(id, domain);
+        this.setUserDetails(request);
+        httpRequest.setAttribute("request", request);
+        return historySession.getHistoryServiceById(request);
+    }
 
 }
