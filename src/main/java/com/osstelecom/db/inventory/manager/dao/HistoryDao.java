@@ -17,37 +17,26 @@
  */
 package com.osstelecom.db.inventory.manager.dao;
 
-import java.util.HashMap;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import com.arangodb.ArangoCollection;
 import com.arangodb.ArangoCursor;
-import com.arangodb.ArangoDBException;
 import com.arangodb.ArangoDatabase;
-import com.arangodb.entity.DocumentCreateEntity;
-import com.arangodb.entity.DocumentDeleteEntity;
-import com.arangodb.entity.DocumentUpdateEntity;
-import com.arangodb.entity.MultiDocumentEntity;
-import com.arangodb.model.DocumentCreateOptions;
-import com.arangodb.model.DocumentDeleteOptions;
-import com.arangodb.model.DocumentUpdateOptions;
-import com.arangodb.model.OverwriteMode;
-import com.osstelecom.db.inventory.manager.dto.FilterDTO;
-import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
-import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
-import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
+import com.arangodb.model.AqlQueryOptions;
 import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 import com.osstelecom.db.inventory.manager.resources.Domain;
-import com.osstelecom.db.inventory.manager.resources.GraphList;
 import com.osstelecom.db.inventory.manager.resources.History;
 import com.osstelecom.db.inventory.manager.resources.ManagedResource;
+import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import com.osstelecom.db.inventory.manager.resources.ServiceResource;
-
-import java.io.IOException;
 
 /**
  * Representa a Dao do Circuito
@@ -58,20 +47,90 @@ import java.io.IOException;
 @Component
 public class HistoryDao {
 
-    public History findResource(History history) {
+    @Autowired
+    private ArangoDatabase arangoDatabase;
+
+    protected Logger logger = LoggerFactory.getLogger(HistoryDao.class);
+
+    public ArangoDatabase getDb() {
+        return this.arangoDatabase;
+    }
+
+    public List<History> list(History history) {
+        String collectionName = this.getCollectionName(history);
+        String reference = history.getReference();
+
+        String aql = "FOR doc IN `" + collectionName + "` FILTER ";
+        aql += " doc.reference == '" + reference + "' sort doc.sequence desc ";
+
+        return this.query(aql, null);
+    }
+
+    private String getCollectionName(History history) {
+
+        String type = history.getType();
+        Domain domain = history.getContent().getDomain();
+
+        if (type.contentEquals(ManagedResource.class.getSimpleName())) {
+            return domain.getDomainName() + "_nodes_hist";
+        } else if (type.contentEquals(ResourceConnection.class.getSimpleName())) {
+            return domain.getDomainName() + "_connections_hist";
+        } else if (type.contentEquals(CircuitResource.class.getSimpleName())) {
+            return domain.getDomainName() + "_circuits_hist";
+        } else if (type.contentEquals(ServiceResource.class.getSimpleName())) {
+            return domain.getDomainName() + "_services_hist";
+        }
+
         return null;
     }
 
-    public History findConnection(History history) {
-        return null;
-    }
+    public List<History> query(String aql, Map<String, Object> bindVars) {
+        Long start = System.currentTimeMillis();
+        String uid = UUID.randomUUID().toString();
+        List<History> result = new ArrayList<>();
 
-    public History findCircuit(History history) {
-        return null;
-    }
+        ArangoCursor<History> cursor = null;
+        if (bindVars != null) {
+            bindVars.forEach((k, v) -> {
+                logger.info("\t  [@{}]=[{}]", k, v);
+            });
 
-    public History findService(History history) {
-        return null;
+            aql = aql + " return doc";
+
+            logger.info("(query) - [{}] - RUNNING: AQL:[{}]", uid, aql);
+            bindVars.forEach((k, v) -> {
+                logger.info("\t  [@{}]=[{}]", k, v);
+            });
+            cursor = this.getDb().query(aql, bindVars,
+                    new AqlQueryOptions().fullCount(true).count(true), History.class);
+
+            Long end = System.currentTimeMillis();
+            Long took = end - start;
+            //
+            // Se for maior que 100ms, avaliar
+            //
+            if (took > 100) {
+                logger.warn("(query) - [{}] - Took: [{}] ms", uid, took);
+            } else {
+                logger.info("(query) - [{}] - Took: [{}] ms", uid, took);
+            }
+
+        } else {
+            cursor = this.getDb().query(aql, new AqlQueryOptions().fullCount(true).count(true), History.class);
+        }
+
+        if (cursor != null && cursor.hasNext()) {
+            result = cursor.asListRemaining();
+        }
+
+        try {
+            if (cursor != null)
+                cursor.close();
+        } catch (IOException ex) {
+            logger.error("Failed to close Cursor");
+        }
+
+        return result;
     }
 
 }

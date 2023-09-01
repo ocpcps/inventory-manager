@@ -1,56 +1,27 @@
 package com.osstelecom.db.inventory.manager.operation;
 
-import java.util.Date;
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
-import com.arangodb.entity.DocumentCreateEntity;
-import com.arangodb.entity.DocumentDeleteEntity;
-import com.arangodb.entity.DocumentUpdateEntity;
-import com.google.common.eventbus.Subscribe;
-import com.osstelecom.db.inventory.manager.dao.CircuitResourceDao;
-import com.osstelecom.db.inventory.manager.dao.GraphDao;
+import com.osstelecom.db.inventory.manager.configuration.KafkaConfiguration;
 import com.osstelecom.db.inventory.manager.dao.HistoryDao;
-import com.osstelecom.db.inventory.manager.dao.ResourceConnectionDao;
-import com.osstelecom.db.inventory.manager.dto.FilterDTO;
-import com.osstelecom.db.inventory.manager.events.CircuitPathUpdatedEvent;
-import com.osstelecom.db.inventory.manager.events.CircuitResourceCreatedEvent;
-import com.osstelecom.db.inventory.manager.events.CircuitResourceUpdatedEvent;
-import com.osstelecom.db.inventory.manager.events.ManagedResourceUpdatedEvent;
-import com.osstelecom.db.inventory.manager.events.ResourceConnectionUpdatedEvent;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
-import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
-import com.osstelecom.db.inventory.manager.exception.GenericException;
 import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
-import com.osstelecom.db.inventory.manager.exception.SchemaNotFoundException;
-import com.osstelecom.db.inventory.manager.exception.ScriptRuleException;
-import com.osstelecom.db.inventory.manager.listeners.EventManagerListener;
-import com.osstelecom.db.inventory.manager.resources.CircuitResource;
-import com.osstelecom.db.inventory.manager.resources.Domain;
-import com.osstelecom.db.inventory.manager.resources.GraphList;
+import com.osstelecom.db.inventory.manager.resources.BasicResource;
 import com.osstelecom.db.inventory.manager.resources.History;
-import com.osstelecom.db.inventory.manager.resources.ManagedResource;
-import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
-import com.osstelecom.db.inventory.manager.resources.exception.AttributeConstraintViolationException;
-import com.osstelecom.db.inventory.manager.resources.model.ResourceSchemaModel;
-import com.osstelecom.db.inventory.manager.session.DynamicRuleSession;
-import com.osstelecom.db.inventory.manager.session.SchemaSession;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 @Service
 public class HistoryManager extends Manager {
 
     @Autowired
     private LockManager lockManager;
+
+    @Autowired
+    private KafkaTemplate<String, History> kafkaTemplate;
 
     @Autowired
     private HistoryDao historyDao;
@@ -63,48 +34,30 @@ public class HistoryManager extends Manager {
      * @throws ResourceNotFoundException
      * @throws ArangoDaoException
      */
-    public History getHistoryResourceById(History history)
+    public List<History> getHistoryResourceById(History history)
             throws ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
-        if (history.getId() != null) {
-            if (!history.getId().contains("/")) {
-                history.setId(history.getId());
-            }
-        }
-
-        return this.historyDao.findResource(history);
+        return this.historyDao.list(history);
     }
 
-    public History getHistoryConnectionById(History history)
+    public List<History> getHistoryConnectionById(History history)
             throws ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
-        if (history.getId() != null) {
-            if (!history.getId().contains("/")) {
-                history.setId(history.getId());
-            }
-        }
-
-        return this.historyDao.findConnection(history);
+        return this.historyDao.list(history);
     }
 
-    public History getHistoryCircuitById(History history)
+    public List<History> getHistoryCircuitById(History history)
             throws ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
-        if (history.getId() != null) {
-            if (!history.getId().contains("/")) {
-                history.setId(history.getId());
-            }
-        }
-
-        return this.historyDao.findCircuit(history);
+        return this.historyDao.list(history);
     }
 
-    public History getHistoryServiceById(History history)
+    public List<History> getHistoryServiceById(History history)
             throws ResourceNotFoundException, ArangoDaoException, InvalidRequestException {
-        if (history.getId() != null) {
-            if (!history.getId().contains("/")) {
-                history.setId(history.getId());
-            }
-        }
+        return this.historyDao.list(history);
+    }
 
-        return this.historyDao.findService(history);
+
+    public void saveHistory(BasicResource resource) {
+        History history = new History(resource);
+        kafkaTemplate.send(KafkaConfiguration.TOPIC_ID, history);
     }
 
 }

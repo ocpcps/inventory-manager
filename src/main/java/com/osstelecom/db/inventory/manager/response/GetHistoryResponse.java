@@ -17,6 +17,8 @@
  */
 package com.osstelecom.db.inventory.manager.response;
 
+import java.util.List;
+
 import com.osstelecom.db.inventory.manager.resources.History;
 
 /**
@@ -24,9 +26,9 @@ import com.osstelecom.db.inventory.manager.resources.History;
  * @author Lucas Nishimura
  * @created 06.12.2022
  */
-public class GetHistoryResponse extends BasicResponse<History> {
+public class GetHistoryResponse extends BasicResponse<List<History>> {
     
-    public GetHistoryResponse(History obj) {
+    public GetHistoryResponse(List<History> obj) {
         super(obj);
     }
     

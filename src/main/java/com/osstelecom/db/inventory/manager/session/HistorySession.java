@@ -17,8 +17,11 @@
  */
 package com.osstelecom.db.inventory.manager.session;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
@@ -29,8 +32,12 @@ import com.osstelecom.db.inventory.manager.request.FindHistoryCircuitRequest;
 import com.osstelecom.db.inventory.manager.request.FindHistoryConnectionRequest;
 import com.osstelecom.db.inventory.manager.request.FindHistoryResourceRequest;
 import com.osstelecom.db.inventory.manager.request.FindHistoryServiceRequest;
+import com.osstelecom.db.inventory.manager.resources.CircuitResource;
 import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.History;
+import com.osstelecom.db.inventory.manager.resources.ManagedResource;
+import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
+import com.osstelecom.db.inventory.manager.resources.ServiceResource;
 import com.osstelecom.db.inventory.manager.response.GetHistoryResponse;
 
 /**
@@ -50,36 +57,32 @@ public class HistorySession {
     public GetHistoryResponse getHistoryResourceById(FindHistoryResourceRequest request)
             throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
         Domain domain = this.domainManager.getDomain(request.getDomainName());
-        History resource = new History(domain, null);
-        resource.setId(request.getResourceId());
-        resource = this.manager.getHistoryResourceById(resource);
-        return new GetHistoryResponse(resource);
+        History history = new History(request.getResourceId(), ManagedResource.class.getSimpleName(),domain);
+        List<History> result = this.manager.getHistoryResourceById(history);
+        return new GetHistoryResponse(result);
     }
 
     public GetHistoryResponse getHistoryConnectionById(FindHistoryConnectionRequest request)
             throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
         Domain domain = this.domainManager.getDomain(request.getDomainName());
-        History connection = new History(domain, null);
-        connection.setId(request.getConnectionId());
-        connection = this.manager.getHistoryConnectionById(connection);
-        return new GetHistoryResponse(connection);
+        History history = new History(request.getConnectionId(), ResourceConnection.class.getSimpleName(),domain);
+        List<History> result = this.manager.getHistoryConnectionById(history);
+        return new GetHistoryResponse(result);
     }
 
-        public GetHistoryResponse getHistoryCircuitById(FindHistoryCircuitRequest request)
+    public GetHistoryResponse getHistoryCircuitById(FindHistoryCircuitRequest request)
             throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
         Domain domain = this.domainManager.getDomain(request.getDomainName());
-        History circuit = new History(domain, null);
-        circuit.setId(request.getCircuitId());
-        circuit = this.manager.getHistoryCircuitById(circuit);
-        return new GetHistoryResponse(circuit);
+        History history = new History(request.getCircuitId(), CircuitResource.class.getSimpleName(),domain);
+        List<History> result = this.manager.getHistoryCircuitById(history);
+        return new GetHistoryResponse(result);
     }
     
     public GetHistoryResponse getHistoryServiceById(FindHistoryServiceRequest request)
             throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
         Domain domain = this.domainManager.getDomain(request.getDomainName());
-        History service = new History(domain, null);
-        service.setId(request.getServiceId());
-        service = this.manager.getHistoryServiceById(service);
-        return new GetHistoryResponse(service);
+        History history = new History(request.getServiceId(), ServiceResource.class.getSimpleName(), domain);
+        List<History> result = this.manager.getHistoryServiceById(history);
+        return new GetHistoryResponse(result);
     }
 }

@@ -17,12 +17,10 @@
  */
 package com.osstelecom.db.inventory.manager.resources;
 
+import java.time.LocalDateTime;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
-
-import io.swagger.v3.oas.annotations.media.Schema;
-
-import java.sql.Date;
 
 /**
  *
@@ -32,18 +30,30 @@ import java.sql.Date;
 @JsonInclude(Include.NON_NULL)
 public class History {
 
-    @Schema(example = "id do metodo")
     private String id;
+    private String key;
+    private String reference;
+    private LocalDateTime time;
+    private Long sequency;
+    private Domain domain;
+    private String type;
+    private BasicResource content;
 
-    @Schema(example = "dominio")
-    private String domain;
-
-    public String getDomain() {
-        return domain;
+    public History() {
     }
 
-    public void setDomain(String domain) {
+    public History(BasicResource content) {
+        this.reference = content.getId();
+        this.time = LocalDateTime.now();
+        this.domain = content.getDomain();
+        this.type = content.getClass().getSimpleName();
+        this.content = content;
+    }
+
+    public History(String reference, String type, Domain domain) {
+        this.reference = reference;
         this.domain = domain;
+        this.type = type;
     }
 
     public String getId() {
@@ -54,19 +64,29 @@ public class History {
         this.id = id;
     }
 
-    @Schema(example = "data e hora da modificacao")
-    private Date time;
+    public String getKey() {
+        return key;
+    }
 
-    public Date getTime() {
+    public void setKey(String key) {
+        this.key = key;
+    }
+
+    public String getReference() {
+        return reference;
+    }
+
+    public void setReference(String reference) {
+        this.reference = reference;
+    }
+
+    public LocalDateTime getTime() {
         return time;
     }
 
-    public void setTime(Date time) {
+    public void setTime(LocalDateTime time) {
         this.time = time;
     }
-
-    @Schema(example = "quantidade de registros")
-    private Long sequency;
 
     public Long getSequency() {
         return sequency;
@@ -76,8 +96,21 @@ public class History {
         this.sequency = sequency;
     }
 
-    @Schema(example = "conteudo do resource/conenctions/circuit/service")
-    private BasicResource content;
+    public Domain getDomain() {
+        return domain;
+    }
+
+    public void setDomain(Domain domain) {
+        this.domain = domain;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
 
     public BasicResource getContent() {
         return content;
@@ -86,17 +119,5 @@ public class History {
     public void setContent(BasicResource content) {
         this.content = content;
     }
-
-    public History(String id, String domain, Date time, Long sequency, BasicResource content) {
-        this.id = id;
-        this.domain = domain;
-        this.time = time;
-        this.sequency = sequency;
-        this.content = content;
-    }
-
-    public History(Domain domain2, Object object) {
-    }
-
 
 }
