@@ -293,16 +293,16 @@ public class ManagedResourceDao extends AbstractArangoDao<ManagedResource> {
 
     }
 
-    public GraphList<BasicResource> findParentsByAttributeSchemaName(String from, String domain, String attributeSchemaName, String attributeName) {
-        String aql = "FOR v, e, p IN 1..16 INBOUND '" + from + "' GRAPH '" + domain + "_connections_layer' ";
+    public GraphList<BasicResource> findParentsByAttributeSchemaName(ManagedResource from, String attributeSchemaName, String attributeName) {
+        String aql = "FOR v, e, p IN 1..16 INBOUND '" + from.getId() + "' GRAPH '" + from.getDomain().getConnectionLayer() + "' ";
         aql += "FILTER v.attributeSchemaName == '" + attributeSchemaName + "' and v.attributes." + attributeName + " != null ";
         aql += "RETURN distinct v ";
         return new GraphList<>(
                 getDb().query(aql, new HashMap<>(), new AqlQueryOptions().fullCount(true).count(true), BasicResource.class));
     }
 
-    public GraphList<ManagedResource> findChildrenByAttributeSchemaName(String from, String domain, String attributeSchemaName) {
-        String aql = "FOR v, e, p IN 1..16 OUTBOUND '" + from + "' GRAPH '" + domain + "_connections_layer' ";
+    public GraphList<ManagedResource> findChildrenByAttributeSchemaName(BasicResource from, String attributeSchemaName) {
+        String aql = "FOR v, e, p IN 1..16 OUTBOUND '" + from.getId() + "' GRAPH '" + from.getDomain().getConnectionLayer() + "' ";
         aql += "FILTER v.attributeSchemaName == '" + attributeSchemaName + "' ";
         aql += "RETURN distinct v ";
         return new GraphList<>(

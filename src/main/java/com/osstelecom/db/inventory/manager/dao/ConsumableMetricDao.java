@@ -41,10 +41,12 @@ import com.osstelecom.db.inventory.manager.dto.FilterDTO;
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
+import com.osstelecom.db.inventory.manager.operation.GraphTraverser;
 import com.osstelecom.db.inventory.manager.resources.BasicResource;
 import com.osstelecom.db.inventory.manager.resources.ConsumableMetric;
 import com.osstelecom.db.inventory.manager.resources.Domain;
 import com.osstelecom.db.inventory.manager.resources.GraphList;
+import java.util.logging.Level;
 
 /**
  * Representa a dao do Consumable Metric
@@ -229,9 +231,18 @@ public class ConsumableMetricDao {
     }
 
     public GraphList<BasicResource> findParentsWithMetrics(BasicResource from) {
+
         String aql = "FOR v, e, p IN 1..16 INBOUND '" + from.getId() + "' GRAPH '" + from.getDomainName() + "_connections_layer' ";
         aql += "FILTER v.consumableMetric != null ";
         aql += "RETURN distinct v ";
+
+        try {
+            GraphTraverser tr = new GraphTraverser(arangoDatabase);
+            tr.findAllPaths(from, null, 16, p -> p.getConsumableMetric() != null, "INBOUND");
+        } catch (Exception ex) {
+            logger.error("Fail Graph Traverser", ex);
+        }
+
         return new GraphList<>(
                 getDb().query(aql, new HashMap<>(), new AqlQueryOptions().fullCount(true).count(true), BasicResource.class));
     }
@@ -240,6 +251,17 @@ public class ConsumableMetricDao {
         String aql = "FOR v, e, p IN 1..16 OUTBOUND '" + to.getId() + "' GRAPH '" + to.getDomainName() + "_connections_layer' ";
         aql += "FILTER v.consumerMetric != null ";
         aql += "RETURN distinct v ";
+
+        try {
+            /**
+             * Está aqui para testar
+             */
+            GraphTraverser tr = new GraphTraverser(arangoDatabase);
+            tr.findAllPaths(to, null, 16, p -> p.getConsumableMetric() != null, "OUTBOUND");
+        } catch (Exception ex) {
+            logger.error("Fail Graph Traverser", ex);
+        }
+
         return new GraphList<>(
                 getDb().query(aql, new HashMap<>(), new AqlQueryOptions().fullCount(true).count(true), BasicResource.class));
     }
