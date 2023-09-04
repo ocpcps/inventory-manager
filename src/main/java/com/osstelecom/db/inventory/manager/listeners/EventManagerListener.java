@@ -36,6 +36,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.DependsOn;
 
@@ -122,6 +123,7 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
         // the queue is limited to 1000 Events, after that will be blocking...
         //
         DBJobInstance job = jobManager.createJobInstance(event.getClass().getName());
+        event.setMdcId(MDC.get("x-netcompass-requestId"));
         event.setRelatedJob(job);
         return eventQueue.offer(event);
     }
@@ -136,6 +138,7 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
     @Override
     public synchronized boolean notifyGenericEvent(BasicEvent genericEvent) {
         DBJobInstance job = jobManager.createJobInstance("GenericEvent");
+        genericEvent.setMdcId(MDC.get("x-netcompass-requestId"));
         genericEvent.setRelatedJob(job);
         return eventQueue.offer(genericEvent);
     }
@@ -151,6 +154,7 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
     @Override
     public synchronized boolean notifyGenericEvent(BasicUpdateEvent updateEvent) {
         DBJobInstance job = jobManager.createJobInstance(updateEvent.getClass().getName());
+        updateEvent.setMdcId(MDC.get("x-netcompass-requestId"));
         updateEvent.setRelatedJob(job);
         return eventQueue.offer(updateEvent);
     }
@@ -176,25 +180,40 @@ public class EventManagerListener implements SubscriberExceptionHandler, Runnabl
         logger.debug("Event Processor Thread Started");
         while (running) {
             try {
-                Object event = eventQueue.poll(5, TimeUnit.SECONDS);
-                if (event != null) {
-                    //
-                    // Precisa Notificar o Job Manager que uma Job de Atualização está em curso
-                    //
-                    if (event instanceof IEvent) {
-                        DBJobInstance job = ((IEvent) event).getRelatedJob();
-                        jobManager.notifyJobStart(job);
-                    }
+                Object eventObject = eventQueue.poll(5, TimeUnit.SECONDS);
+                if (eventObject != null) {
+                    try {
+                        //
+                        // Precisa Notificar o Job Manager que uma Job de Atualização está em curso
+                        //
+                        String eventProcessindInstanceId = UUID.randomUUID().toString();
+                        if (eventObject instanceof IEvent) {
+                            DBJobInstance job = ((IEvent) eventObject).getRelatedJob();
+                            String mdcID = ((IEvent) eventObject).getMdcId();
+                            if (mdcID != null) {
+                                MDC.put("x-netcompass-requestId", mdcID);
+                            } else {
+                                MDC.put("x-netcompass-requestId", "LT-" + job.getJobId());
+                            }
+                            jobManager.notifyJobStart(job);
 
-                    String eventProcessindInstanceId = UUID.randomUUID().toString();
-                    Long start = System.currentTimeMillis();
-                    eventBus.post(event);
-                    Long end = System.currentTimeMillis();
-                    Long took = end - start;
-                    logger.debug("End Processing Event: [{}] Done ID:[{}] Took:[{}]ms Queue Size:[{}]", event.getClass().getCanonicalName(), eventProcessindInstanceId, took, eventQueue.size());
-                    if (event instanceof IEvent) {
-                        DBJobInstance job = ((IEvent) event).getRelatedJob();
-                        jobManager.notifyJobEnd(job);
+                        } else {
+                            logger.warn("Processing Instance Of:[{}]", eventObject.getClass().getName());
+                            MDC.put("x-netcompass-requestId", "GEN-" + eventProcessindInstanceId);
+                        }
+
+                        Long start = System.currentTimeMillis();
+                        eventBus.post(eventObject);
+                        Long end = System.currentTimeMillis();
+                        Long took = end - start;
+                        logger.debug("End Processing Event: [{}] Done ID:[{}] Took:[{}]ms Queue Size:[{}]", eventObject.getClass().getCanonicalName(), eventProcessindInstanceId, took, eventQueue.size());
+
+                        if (eventObject instanceof IEvent) {
+                            DBJobInstance job = ((IEvent) eventObject).getRelatedJob();
+                            jobManager.notifyJobEnd(job);
+                        }
+                    } finally {
+                        MDC.clear();
                     }
                 }
             } catch (InterruptedException ex) {
