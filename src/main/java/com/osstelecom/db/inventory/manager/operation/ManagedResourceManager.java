@@ -522,7 +522,7 @@ public class ManagedResourceManager extends Manager {
                  * Passa o id do novo recurso, o que recebeu atualização o
                  * dominio, e a lista de schamas relacionados, que podem ser pai
                  */
-                updateRelatedChildResources(newResource.getId(), newResource.getDomainName(), schemaModel.getRelatedSchemas());
+                updateRelatedChildResources(newResource, schemaModel.getRelatedSchemas());
             }
         }
     }
@@ -714,8 +714,7 @@ public class ManagedResourceManager extends Manager {
 //                        }
 //                    }
                     // se for uma expressão, sempre recalcula
-                    Object value = calculateDefaultAttributeValue(managedResource.getId(),
-                            managedResource.getDomain().getDomainName(), attribute.getValue().getDefaultValue());
+                    Object value = calculateDefaultAttributeValue(managedResource, attribute.getValue().getDefaultValue());
                     if (value == null) {
                         result.remove(attribute.getKey());
                         if (attribute.getValue().getRequired().booleanValue()) {
@@ -742,7 +741,7 @@ public class ManagedResourceManager extends Manager {
         return result;
     }
 
-    private Object calculateDefaultAttributeValue(String nodeId, String domain, String defaultValue)
+    private Object calculateDefaultAttributeValue(ManagedResource resource, String defaultValue)
             throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
 
         // remover cifrão e parenteses.
@@ -754,7 +753,7 @@ public class ManagedResourceManager extends Manager {
         String attributeSchemaName = value.substring(0, pointer);
         String attributeName = value.substring(pointer + 1, value.length());
 
-        GraphList<BasicResource> result = managedResourceDao.findParentsByAttributeSchemaName(nodeId, domain,
+        GraphList<BasicResource> result = managedResourceDao.findParentsByAttributeSchemaName(resource,
                 attributeSchemaName, attributeName);
 
         BasicResource parentResource = null;
@@ -767,9 +766,9 @@ public class ManagedResourceManager extends Manager {
             return null;
         }
 
-        ManagedResource resource = managedResourceDao
+        ManagedResource resourceFromDb = managedResourceDao
                 .findResource(new ManagedResource(parentResource.getDomain(), parentResource.getId()));
-        return resource.getAttributes().get(attributeName);
+        return resourceFromDb.getAttributes().get(attributeName);
     }
 
     /**
@@ -787,7 +786,7 @@ public class ManagedResourceManager extends Manager {
      * @throws GenericException
      * @throws AttributeNotFoundException
      */
-    private void updateRelatedChildResources(String nodeId, String domain, List<String> relatedSchemas)
+    private void updateRelatedChildResources(ManagedResource sourceResource, List<String> relatedSchemas)
             throws ArangoDaoException, ResourceNotFoundException, InvalidRequestException,
             AttributeConstraintViolationException, ScriptRuleException, SchemaNotFoundException, GenericException,
             AttributeNotFoundException {
@@ -798,8 +797,7 @@ public class ManagedResourceManager extends Manager {
                  * dele, e relateSchema é um dos schemas que apontam para alguma
                  * referencia dele.
                  */
-                GraphList<ManagedResource> result = managedResourceDao.findChildrenByAttributeSchemaName(nodeId, domain,
-                        relatedSchema);
+                GraphList<ManagedResource> result = managedResourceDao.findChildrenByAttributeSchemaName(sourceResource, relatedSchema);
                 /**
                  * Se encotrou é porque na lista de filhos do node id, tem algum
                  * schema dependente....
