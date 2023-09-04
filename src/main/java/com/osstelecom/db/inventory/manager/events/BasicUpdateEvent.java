@@ -29,6 +29,15 @@ public abstract class BasicUpdateEvent<T> implements IEvent {
     private T oldData;
     private T newData;
 
+    private String mdcId;
+
+    public String getMdcId() {
+        return mdcId;
+    }
+
+    public void setMdcId(String mdcId) {
+        this.mdcId = mdcId;
+    }
     private DBJobInstance relatedJob;
 
     public BasicUpdateEvent(T oldData, T newData) {
