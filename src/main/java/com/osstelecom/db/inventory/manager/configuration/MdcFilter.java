@@ -24,6 +24,7 @@ import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletResponse;
 import org.slf4j.MDC;
 
 /**
@@ -39,7 +40,16 @@ public class MdcFilter implements Filter {
             // Gerar um ID de requisição único
             String requestId = UUID.randomUUID().toString();
             // Adicionar ao MDC
-            MDC.put("x-requestId", requestId);
+            MDC.put("x-netcompass-requestId", requestId);
+            try {
+                // Adicionar o ID da requisição ao header do response
+                HttpServletResponse httpServletResponse = (HttpServletResponse) response;
+                httpServletResponse.addHeader("x-netcompass-requestId", requestId);
+            } catch (Exception ex) {
+                //
+                // Omite
+                //
+            }
 
             // Continue o processamento da requisição
             chain.doFilter(request, response);

@@ -26,6 +26,9 @@ import com.osstelecom.db.inventory.manager.resources.ConsumableMetric;
  */
 public class ConsumableMetricCreatedEvent extends BasicEvent<ConsumableMetric> {
 
+   
+    
+    
     public ConsumableMetricCreatedEvent(ConsumableMetric eventData) {
         super(eventData);
     }

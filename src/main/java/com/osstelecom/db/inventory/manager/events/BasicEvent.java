@@ -26,6 +26,15 @@ import com.osstelecom.db.inventory.manager.jobs.DBJobInstance;
  */
 public abstract class BasicEvent<T> implements IEvent {
 
+    private String mdcId;
+
+    public String getMdcId() {
+        return mdcId;
+    }
+
+    public void setMdcId(String mdcId) {
+        this.mdcId = mdcId;
+    }
     private T eventData;
 
     private DBJobInstance relatedJob;

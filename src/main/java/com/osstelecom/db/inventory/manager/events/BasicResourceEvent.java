@@ -32,7 +32,7 @@ import java.util.Map;
  * @param <T>
  * @created 10.04.2022
  */
-public abstract class BasicResourceEvent<T extends BasicResource> {
+public abstract class BasicResourceEvent<T extends BasicResource> implements IEvent{
 
     private Date eventDate;
 
@@ -44,6 +44,15 @@ public abstract class BasicResourceEvent<T extends BasicResource> {
 
     public BasicResourceEvent(T resource) {
         this.newResource = resource;
+    }
+    private String mdcId;
+
+    public String getMdcId() {
+        return mdcId;
+    }
+
+    public void setMdcId(String mdcId) {
+        this.mdcId = mdcId;
     }
 
     public BasicResourceEvent(DocumentUpdateEntity<T> entity) {
@@ -85,10 +94,12 @@ public abstract class BasicResourceEvent<T extends BasicResource> {
         this.details.put(key, value);
     }
 
+    @Override
     public DBJobInstance getRelatedJob() {
         return relatedJob;
     }
 
+    @Override
     public void setRelatedJob(DBJobInstance relatedJob) {
         this.relatedJob = relatedJob;
     }
