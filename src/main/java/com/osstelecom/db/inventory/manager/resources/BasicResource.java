@@ -42,7 +42,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Lucas Nishimura
  */
 @JsonInclude(Include.NON_NULL)
-public class BasicResource implements Serializable{
+public class BasicResource implements Serializable {
 
     /**
      * Mandatory

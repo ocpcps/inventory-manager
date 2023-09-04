@@ -22,6 +22,7 @@ import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
 import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
+import com.osstelecom.db.inventory.manager.exception.LockWaitTimeOutException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.SchemaNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.ScriptRuleException;
@@ -144,7 +145,7 @@ public class CircuitApi extends BaseApi {
     @AuthenticatedCall(role = {"user"})
     @PutMapping(path = "/{domain}/circuit/path", produces = "application/json", consumes = "application/json")
     public CreateCircuitPathResponse createCircuitPath(@RequestBody CreateCircuitPathRequest request,
-            @PathVariable("domain") String domain, HttpServletRequest httpRequest) throws ArangoDaoException, ResourceNotFoundException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, AttributeConstraintViolationException, DomainNotFoundException, InvalidRequestException {
+            @PathVariable("domain") String domain, HttpServletRequest httpRequest) throws ArangoDaoException, ResourceNotFoundException, GenericException, SchemaNotFoundException, AttributeConstraintViolationException, ScriptRuleException, AttributeConstraintViolationException, DomainNotFoundException, InvalidRequestException, LockWaitTimeOutException {
         request.setRequestDomain(domain);
         this.setUserDetails(request);
         httpRequest.setAttribute("request", request);

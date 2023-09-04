@@ -34,7 +34,7 @@ public class ResourceConnection extends AbsResourceConnection<ManagedResource> {
     }
 
     public ResourceConnection(Domain domain) {
-        super(domain);        
+        super(domain);
     }
 
     public ResourceConnection(Domain domain, String id) {
@@ -42,6 +42,14 @@ public class ResourceConnection extends AbsResourceConnection<ManagedResource> {
     }
 
     public ResourceConnection() {
+    }
+
+    public BasicResource getOther(BasicResource resource) {
+        if (this.getFromResource().equals(resource)) {
+            return this.getToResource();
+        } else {
+            return this.getFromResource();
+        }
     }
 
 }

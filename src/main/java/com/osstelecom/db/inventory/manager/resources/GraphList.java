@@ -41,6 +41,7 @@ public class GraphList<T> implements AutoCloseable {
     private Long endTime = 0L;
     private Long tookTime = 0L;
     private Long totalRecordsFetched = 0L;
+    private List<T> list = new ArrayList<>();
 
     public Boolean isClosed() {
         return this.closedCursor;
@@ -97,7 +98,7 @@ public class GraphList<T> implements AutoCloseable {
      *
      * @param action
      */
-    public void forEach(Consumer<? super T> action) throws  IllegalStateException {
+    public void forEach(Consumer<? super T> action) throws IllegalStateException {
         Objects.requireNonNull(action);
         if (!this.closedCursor) {
             try {
@@ -148,11 +149,14 @@ public class GraphList<T> implements AutoCloseable {
     }
 
     public List<T> toList() {
-        List<T> list = new ArrayList<>();
+
         if (!this.closedCursor) {
             list.addAll(cursor.asListRemaining());
+
+        } else if (!list.isEmpty()) {
+            return this.list;
         }
-        return list;
+        return this.list;
     }
 
     /**

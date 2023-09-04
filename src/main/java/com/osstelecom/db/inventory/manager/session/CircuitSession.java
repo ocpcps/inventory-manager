@@ -17,6 +17,7 @@
  */
 package com.osstelecom.db.inventory.manager.session;
 
+import com.google.common.util.concurrent.Striped;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -32,6 +33,7 @@ import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.GenericException;
 import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
+import com.osstelecom.db.inventory.manager.exception.LockWaitTimeOutException;
 import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.SchemaNotFoundException;
 import com.osstelecom.db.inventory.manager.exception.ScriptRuleException;
@@ -63,6 +65,10 @@ import com.osstelecom.db.inventory.manager.response.GetCircuitPathResponse;
 import com.osstelecom.db.inventory.manager.response.GetCircuitResponse;
 import com.osstelecom.db.inventory.manager.response.PatchCircuitResourceResponse;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
 
 /**
  *
@@ -89,6 +95,11 @@ public class CircuitSession {
 
     @Autowired
     private GraphManager graphManager;
+
+    /**
+     * Vamos tentar resolver o problema de concorrencia do Roger
+     */
+    private final Striped<Lock> circuitConnectionPathLock = Striped.lock(255); // <-- Este número deve ser maior ou igual ao número de worker threads do server
 
     private Logger logger = LoggerFactory.getLogger(CircuitSession.class);
 
@@ -478,7 +489,7 @@ public class CircuitSession {
      */
     public CreateCircuitPathResponse createCircuitPath(CreateCircuitPathRequest request)
             throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException,
-            SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException {
+            SchemaNotFoundException, GenericException, AttributeConstraintViolationException, ScriptRuleException, LockWaitTimeOutException {
         CreateCircuitPathResponse r = new CreateCircuitPathResponse(request.getPayLoad());
         //
         // Valida se temos paths...na request
@@ -504,16 +515,16 @@ public class CircuitSession {
         circuit = circuitResourceManager.findCircuitResource(circuit);
         request.getPayLoad().setCircuit(circuit);
         if (!request.getPayLoad().getPaths().isEmpty()) {
-            List<ResourceConnection> resolved = new ArrayList<>();
+            Map<Lock, ResourceConnection> resolved = new HashMap<>();
             logger.debug("Paths Size: {}", request.getPayLoad().getPaths().size());
             for (ResourceConnection requestedPath : request.getPayLoad().getPaths()) {
-
                 if (requestedPath.getDomainName() == null) {
                     requestedPath.setDomain(domain);
                     requestedPath.setDomainName(domain.getDomainName());
                 } else {
                     requestedPath.setDomain(domainManager.getDomain(requestedPath.getDomainName()));
                 }
+
                 logger.debug("Path In Domain : {}", requestedPath.getDomainName());
                 //
                 // Valida se dá para continuar
@@ -548,25 +559,31 @@ public class CircuitSession {
                     requestedPath.setDomain(domain);
                 }
 
-                ResourceConnection b = resourceConnectionManager.findResourceConnection(requestedPath);
-                if (!b.getCircuits().contains(circuit.getId())) {
-                    //
-                    // Garante que a Conexão vai ter uma referencia ao circuito
-                    //
-                    b.getCircuits().add(circuit.getId());
-                } else {
-                    // logger.warn("Connection: [{}] Already Has Circuit: {}", b.getId(),
-                    // circuit.getId());
-                }
+                ResourceConnection fromDbConnection = resourceConnectionManager.findResourceConnection(requestedPath);
+                Lock connectionLock = this.circuitConnectionPathLock.get(fromDbConnection.getId());
+                try {
+                    if (connectionLock.tryLock(60, TimeUnit.SECONDS)) {
+                        if (!fromDbConnection.getCircuits().contains(circuit.getId())) {
+                            //
+                            // Garante que a Conexão vai ter uma referencia ao circuito
+                            //
+                            fromDbConnection.getCircuits().add(circuit.getId());
+                        } else {
+                            // logger.warn("Connection: [{}] Already Has Circuit: {}", b.getId(),
+                            // circuit.getId());
+                        }
 
-                //
-                // Se o Circuito não tem a conexão adciona a conexão no circuito
-                //
-                if (!circuit.getCircuitPath().contains(b.getId())) {
-                    circuit.getCircuitPath().add(b.getId());
+                        //
+                        // Se o Circuito não tem a conexão adciona a conexão no circuito
+                        //
+                        if (!circuit.getCircuitPath().contains(fromDbConnection.getId())) {
+                            circuit.getCircuitPath().add(fromDbConnection.getId());
+                        }
+                        resolved.put(connectionLock, fromDbConnection);
+                    }
+                } catch (InterruptedException ex) {
+                    throw new LockWaitTimeOutException("Timed out waiting for lock on connection:[" + fromDbConnection.getId() + "]");
                 }
-                resolved.add(b);
-
             }
             //
             // Melhorar esta validação!
@@ -577,21 +594,38 @@ public class CircuitSession {
             // Vai lançar um ResourceNotFoundException, impedindo a criação
             // do circuito MAS nesse ponto as conexões já foram parcialmente atualizadas
             //
-            if (resolved.size() == request.getPayLoad().getPaths().size()) {
+            try {
+                if (resolved.size() == request.getPayLoad().getPaths().size()) {
 
-                //
-                // Valida se funciona, mas batch update é muito mais rápido xD
-                //
-                resolved = resourceConnectionManager.updateResourceConnections(resolved, circuit.getDomain());
-                request.getPayLoad().getPaths().clear();
-                request.getPayLoad().getPaths().addAll(resolved);
-                circuit = circuitResourceManager.updateCircuitPath(circuit);
+                    for (ResourceConnection c : resolved.values()) {
+                        if (!c.getCircuits().contains(circuit.getId())) {
+                            c.getCircuits().add(circuit.getId());
+                        }
 
-            } else {
-                //
-                // Aqui temos um problema que precisamos ver se precisamos tratar.
-                //
-                logger.warn("Resolved Path Differs from Request: {}", resolved.size());
+                    }
+
+                    //
+                    // Valida se funciona, mas batch update é muito mais rápido xD mas ficou feio que é dói
+                    //
+                    List<ResourceConnection> savedConnections = resourceConnectionManager.updateResourceConnections(new ArrayList<>(resolved.values()), circuit.getDomain());
+                    request.getPayLoad().getPaths().clear();
+                    request.getPayLoad().getPaths().addAll(savedConnections);
+                    circuit = circuitResourceManager.updateCircuitPath(circuit);
+
+                } else {
+                    //
+                    // Aqui temos um problema que precisamos ver se precisamos tratar.
+                    //
+
+                    logger.warn("Resolved Path Differs from Request: {}", resolved.size());
+                }
+            } finally {
+                /**
+                 * Garante que vai excluir os locks;
+                 */
+                resolved.forEach((l, c) -> {
+                    l.unlock();
+                });
             }
         } else {
             logger.warn("Empty Paths, creating Empty Circuit");
