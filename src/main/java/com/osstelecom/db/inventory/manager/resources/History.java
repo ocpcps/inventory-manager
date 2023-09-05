@@ -18,6 +18,7 @@
 package com.osstelecom.db.inventory.manager.resources;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -33,7 +34,7 @@ public class History {
     private String id;
     private String key;
     private String reference;
-    private LocalDateTime time;
+    private Date time;
     private Long sequency;
     private Domain domain;
     private String type;
@@ -44,7 +45,7 @@ public class History {
 
     public History(BasicResource content) {
         this.reference = content.getId();
-        this.time = LocalDateTime.now();
+        this.time = new Date();
         this.domain = content.getDomain();
         this.type = content.getClass().getSimpleName();
         this.content = content;
@@ -80,11 +81,11 @@ public class History {
         this.reference = reference;
     }
 
-    public LocalDateTime getTime() {
+    public Date getTime() {
         return time;
     }
 
-    public void setTime(LocalDateTime time) {
+    public void setTime(Date time) {
         this.time = time;
     }
 
