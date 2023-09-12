@@ -17,7 +17,6 @@
  */
 package com.osstelecom.db.inventory.manager.resources;
 
-import java.time.LocalDateTime;
 import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -29,7 +28,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
  * @created 04.01.2022
  */
 @JsonInclude(Include.NON_NULL)
-public class History {
+public class History<T> {
 
     private String id;
     private String key;
@@ -38,15 +37,19 @@ public class History {
     private Long sequency;
     private Domain domain;
     private String type;
-    private BasicResource content;
+    private T content;
 
     public History() {
     }
 
-    public History(BasicResource content) {
-        this.reference = content.getId();
+    public History(T content) {
+        if(content instanceof BasicResource){
+            BasicResource resource = (BasicResource) content;
+            this.reference = resource.getKey();
+            this.domain = resource.getDomain();
+        }
+
         this.time = new Date();
-        this.domain = content.getDomain();
         this.type = content.getClass().getSimpleName();
         this.content = content;
     }
@@ -113,11 +116,11 @@ public class History {
         this.type = type;
     }
 
-    public BasicResource getContent() {
+    public T getContent() {
         return content;
     }
 
-    public void setContent(BasicResource content) {
+    public void setContent(T content) {
         this.content = content;
     }
 

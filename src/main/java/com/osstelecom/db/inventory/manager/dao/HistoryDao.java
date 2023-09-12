@@ -69,7 +69,7 @@ public class HistoryDao {
     private String getCollectionName(History history) {
 
         String type = history.getType();
-        Domain domain = history.getContent().getDomain();
+        Domain domain = history.getDomain();
 
         if (type.contentEquals(ManagedResource.class.getSimpleName())) {
             return domain.getDomainName() + "_nodes_hist";
@@ -89,13 +89,13 @@ public class HistoryDao {
         String uid = UUID.randomUUID().toString();
         List<History> result = new ArrayList<>();
 
+        aql = aql + " return doc";
+
         ArangoCursor<History> cursor = null;
         if (bindVars != null) {
             bindVars.forEach((k, v) -> {
                 logger.info("\t  [@{}]=[{}]", k, v);
             });
-
-            aql = aql + " return doc";
 
             logger.info("(query) - [{}] - RUNNING: AQL:[{}]", uid, aql);
             bindVars.forEach((k, v) -> {

@@ -24,8 +24,6 @@ import org.springframework.stereotype.Service;
 
 import com.osstelecom.db.inventory.manager.exception.ArangoDaoException;
 import com.osstelecom.db.inventory.manager.exception.DomainNotFoundException;
-import com.osstelecom.db.inventory.manager.exception.InvalidRequestException;
-import com.osstelecom.db.inventory.manager.exception.ResourceNotFoundException;
 import com.osstelecom.db.inventory.manager.operation.DomainManager;
 import com.osstelecom.db.inventory.manager.operation.HistoryManager;
 import com.osstelecom.db.inventory.manager.request.FindHistoryCircuitRequest;
@@ -55,7 +53,7 @@ public class HistorySession {
     private HistoryManager manager;
 
     public GetHistoryResponse getHistoryResourceById(FindHistoryResourceRequest request)
-            throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
+            throws DomainNotFoundException, ArangoDaoException {
         Domain domain = this.domainManager.getDomain(request.getDomainName());
         History history = new History(request.getResourceId(), ManagedResource.class.getSimpleName(),domain);
         List<History> result = this.manager.getHistoryResourceById(history);
@@ -63,7 +61,7 @@ public class HistorySession {
     }
 
     public GetHistoryResponse getHistoryConnectionById(FindHistoryConnectionRequest request)
-            throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
+            throws DomainNotFoundException, ArangoDaoException {
         Domain domain = this.domainManager.getDomain(request.getDomainName());
         History history = new History(request.getConnectionId(), ResourceConnection.class.getSimpleName(),domain);
         List<History> result = this.manager.getHistoryConnectionById(history);
@@ -71,15 +69,15 @@ public class HistorySession {
     }
 
     public GetHistoryResponse getHistoryCircuitById(FindHistoryCircuitRequest request)
-            throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
+            throws DomainNotFoundException, ArangoDaoException {
         Domain domain = this.domainManager.getDomain(request.getDomainName());
         History history = new History(request.getCircuitId(), CircuitResource.class.getSimpleName(),domain);
         List<History> result = this.manager.getHistoryCircuitById(history);
         return new GetHistoryResponse(result);
-    }
+    } 
     
     public GetHistoryResponse getHistoryServiceById(FindHistoryServiceRequest request)
-            throws DomainNotFoundException, ArangoDaoException, ResourceNotFoundException, InvalidRequestException {
+            throws DomainNotFoundException, ArangoDaoException {
         Domain domain = this.domainManager.getDomain(request.getDomainName());
         History history = new History(request.getServiceId(), ServiceResource.class.getSimpleName(), domain);
         List<History> result = this.manager.getHistoryServiceById(history);
