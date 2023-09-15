@@ -22,8 +22,8 @@ import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 
 /**
  *
- * @author Lucas Nishimura
- * @created 08.07.2022
+ * @author Leonardo Rodrigues
+ * @created 28.08.2023
  */
 public class FindHistoryServiceRequest extends BasicRequest<History> {
 

@@ -18,12 +18,11 @@
 package com.osstelecom.db.inventory.manager.request;
 
 import com.osstelecom.db.inventory.manager.resources.History;
-import com.osstelecom.db.inventory.manager.resources.ManagedResource;
 
 /**
  *
- * @author Lucas Nishimura
- * @created 08.07.2022
+ * @author Leonardo Rodrigues
+ * @created 28.08.2023
  */
 public class FindHistoryResourceRequest extends BasicRequest<History> {
 

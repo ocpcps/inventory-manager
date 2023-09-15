@@ -37,12 +37,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * @changelog -------------------------------------------------- 25-11-2022:
- *            Lucas Nishimura <lucas.nishimura at telefonica.com> Revisado so
- *            métodos de
- *            insert update delete
- * @author Lucas Nishimura
- * @created 08.08.2022
+ * @author Leonardo Rodrigues
+ * @created 16.08.2023
  */
 @RestController
 @RequestMapping("inventory/v1")

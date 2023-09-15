@@ -23,8 +23,8 @@ import com.osstelecom.db.inventory.manager.resources.History;
 
 /**
  *
- * @author Lucas Nishimura
- * @created 06.12.2022
+ * @author Leonardo Rodrigues
+ * @created 28.08.2023
  */
 public class GetHistoryResponse extends BasicResponse<List<History>> {
     

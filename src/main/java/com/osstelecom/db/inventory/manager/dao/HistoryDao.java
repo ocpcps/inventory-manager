@@ -39,10 +39,9 @@ import com.osstelecom.db.inventory.manager.resources.ResourceConnection;
 import com.osstelecom.db.inventory.manager.resources.ServiceResource;
 
 /**
- * Representa a Dao do Circuito
  *
- * @author Lucas Nishimura
- * @created 31.08.2022
+ * @author Leonardo Rodrigues
+ * @created 28.08.2023
  */
 @Component
 public class HistoryDao {
