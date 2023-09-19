@@ -153,6 +153,10 @@
             <version>2.3.5.RELEASE</version>
         </dependency>
 
+		<dependency>
+			<groupId>org.springframework.kafka</groupId>
+			<artifactId>spring-kafka</artifactId>
+		</dependency>
         
         <dependency>
             <groupId>com.arangodb</groupId>
