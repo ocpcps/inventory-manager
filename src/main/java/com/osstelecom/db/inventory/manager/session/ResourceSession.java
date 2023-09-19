@@ -185,24 +185,32 @@ public class ResourceSession {
      *
      * <p>
      * Se nenhuma das condições acima for atendida, uma
-     * {@link InvalidRequestException} é lançada.</p>
+     * {@link InvalidRequestException} é lançada.
+     * </p>
      *
      * @param request A solicitação contendo as informações necessárias para
-     * criar a conexão de recurso.
+     *                criar a conexão de recurso.
      * @return Uma resposta contendo a conexão de recurso criada.
-     * @throws ResourceNotFoundException Se o recurso não for encontrado.
-     * @throws ConnectionAlreadyExistsException Se a conexão já existir.
-     * @throws MetricConstraintException Se houver uma violação de restrição
-     * métrica.
-     * @throws NoResourcesAvailableException Se não houver recursos disponíveis.
-     * @throws GenericException Para exceções genéricas.
-     * @throws SchemaNotFoundException Se o esquema não for encontrado.
+     * @throws ResourceNotFoundException             Se o recurso não for
+     *                                               encontrado.
+     * @throws ConnectionAlreadyExistsException      Se a conexão já existir.
+     * @throws MetricConstraintException             Se houver uma violação de
+     *                                               restrição
+     *                                               métrica.
+     * @throws NoResourcesAvailableException         Se não houver recursos
+     *                                               disponíveis.
+     * @throws GenericException                      Para exceções genéricas.
+     * @throws SchemaNotFoundException               Se o esquema não for
+     *                                               encontrado.
      * @throws AttributeConstraintViolationException Se houver uma violação de
-     * restrição de atributo.
-     * @throws ScriptRuleException Se houver uma exceção de regra de script.
-     * @throws InvalidRequestException Se a solicitação for inválida.
-     * @throws DomainNotFoundException Se o domínio não for encontrado.
-     * @throws ArangoDaoException Para exceções relacionadas ao ArangoDB.
+     *                                               restrição de atributo.
+     * @throws ScriptRuleException                   Se houver uma exceção de regra
+     *                                               de script.
+     * @throws InvalidRequestException               Se a solicitação for inválida.
+     * @throws DomainNotFoundException               Se o domínio não for
+     *                                               encontrado.
+     * @throws ArangoDaoException                    Para exceções relacionadas ao
+     *                                               ArangoDB.
      *
      * @since 08-08-2022: Prioriza os iDS aos Nomes
      */
@@ -462,17 +470,18 @@ public class ResourceSession {
      * Após a validação inicial, o método busca a conexão de recurso para
      * garantir que ela exista. Em seguida, verifica se há algum circuito que
      * dependa dessa conexão. Se houver dependências, a conexão não pode ser
-     * deletada e uma exceção é lançada.</p>
+     * deletada e uma exceção é lançada.
+     * </p>
      *
      * @param request A solicitação contendo as informações necessárias para
-     * deletar a conexão de recurso.
+     *                deletar a conexão de recurso.
      * @return Uma resposta contendo detalhes da conexão de recurso deletada.
-     * @throws InvalidRequestException Se a solicitação for inválida ou se
-     * houver dependências que impedem a deleção.
-     * @throws DomainNotFoundException Se o domínio não for encontrado.
-     * @throws ArangoDaoException Para exceções relacionadas ao ArangoDB.
+     * @throws InvalidRequestException   Se a solicitação for inválida ou se
+     *                                   houver dependências que impedem a deleção.
+     * @throws DomainNotFoundException   Se o domínio não for encontrado.
+     * @throws ArangoDaoException        Para exceções relacionadas ao ArangoDB.
      * @throws ResourceNotFoundException Se o recurso ou a conexão não for
-     * encontrado.
+     *                                   encontrado.
      */
     public DeleteResourceConnectionResponse deleteResourceConnection(DeleteResourceConnectionRequest request)
             throws InvalidRequestException, DomainNotFoundException, ArangoDaoException, ResourceNotFoundException {
@@ -534,17 +543,19 @@ public class ResourceSession {
      * Após a validação inicial, o método busca o recurso gerenciado para
      * garantir que ele exista. Em seguida, verifica se há alguma conexão ou
      * circuito que dependa desse recurso. Se houver dependências, o recurso não
-     * pode ser deletado e uma exceção é lançada.</p>
+     * pode ser deletado e uma exceção é lançada.
+     * </p>
      *
      * @param request A solicitação contendo as informações necessárias para
-     * deletar o recurso gerenciado.
+     *                deletar o recurso gerenciado.
      * @return Uma resposta contendo detalhes do recurso gerenciado deletado.
-     * @throws InvalidRequestException Se a solicitação for inválida ou se
-     * houver dependências que impedem a deleção.
-     * @throws DomainNotFoundException Se o domínio não for encontrado.
-     * @throws ArangoDaoException Para exceções relacionadas ao ArangoDB.
+     * @throws InvalidRequestException   Se a solicitação for inválida ou se
+     *                                   houver dependências que impedem a deleção.
+     * @throws DomainNotFoundException   Se o domínio não for encontrado.
+     * @throws ArangoDaoException        Para exceções relacionadas ao ArangoDB.
      * @throws ResourceNotFoundException Se o recurso gerenciado ou alguma
-     * dependência (conexão ou circuito) não for encontrada.
+     *                                   dependência (conexão ou circuito) não for
+     *                                   encontrada.
      */
     public DeleteManagedResourceResponse deleteManagedResource(DeleteManagedResourceRequest request)
             throws InvalidRequestException, DomainNotFoundException, ArangoDaoException, ResourceNotFoundException {
@@ -614,7 +625,8 @@ public class ResourceSession {
      * <p>
      * Este método é responsável por buscar um recurso gerenciado com base no ID
      * ou domínio fornecidos na solicitação (request). Ele realiza as seguintes
-     * etapas:</p>
+     * etapas:
+     * </p>
      *
      * <ol>
      * <li>Verifica se o campo resourceId na solicitação não é nulo. Se for
@@ -637,17 +649,19 @@ public class ResourceSession {
      * </ol>
      *
      * @param request A solicitação contendo o resourceId e/ou o requestDomain
-     * para buscar o recurso gerenciado.
+     *                para buscar o recurso gerenciado.
      * @return Uma resposta contendo o recurso gerenciado encontrado encapsulado
-     * em FindManagedResourceResponse.
-     * @throws InvalidRequestException Se resourceId e requestDomain forem ambos
-     * vazios ou nulos, ou se o resourceId fornecido for inválido.
-     * @throws DomainNotFoundException Se o domínio associado ao requestDomain
-     * não for encontrado.
+     *         em FindManagedResourceResponse.
+     * @throws InvalidRequestException   Se resourceId e requestDomain forem ambos
+     *                                   vazios ou nulos, ou se o resourceId
+     *                                   fornecido for inválido.
+     * @throws DomainNotFoundException   Se o domínio associado ao requestDomain
+     *                                   não for encontrado.
      * @throws ResourceNotFoundException Se o recurso gerenciado não for
-     * encontrado com base nos parâmetros fornecidos.
-     * @throws ArangoDaoException Se ocorrer um erro ao buscar o recurso
-     * gerenciado na camada de acesso aos dados.
+     *                                   encontrado com base nos parâmetros
+     *                                   fornecidos.
+     * @throws ArangoDaoException        Se ocorrer um erro ao buscar o recurso
+     *                                   gerenciado na camada de acesso aos dados.
      */
     public FindManagedResourceResponse findManagedResourceById(FindManagedResourceRequest request)
             throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException {
@@ -718,7 +732,8 @@ public class ResourceSession {
      * <p>
      * Este método é responsável por criar um novo recurso gerenciado com base
      * nos parâmetros fornecidos na solicitação (request). Ele realiza as
-     * seguintes etapas:</p>
+     * seguintes etapas:
+     * </p>
      *
      * <ol>
      * <li>Verifica se a solicitação (request) não é nula. Se for nula, lança
@@ -771,27 +786,41 @@ public class ResourceSession {
      * </ol>
      *
      * @param request A solicitação contendo os parâmetros necessários para
-     * criar o recurso gerenciado.
+     *                criar o recurso gerenciado.
      * @return Uma resposta contendo o novo recurso gerenciado criado
-     * encapsulado em CreateManagedResourceResponse.
-     * @throws SchemaNotFoundException Se o esquema associado ao recurso
-     * gerenciado não for encontrado.
+     *         encapsulado em CreateManagedResourceResponse.
+     * @throws SchemaNotFoundException               Se o esquema associado ao
+     *                                               recurso
+     *                                               gerenciado não for encontrado.
      * @throws AttributeConstraintViolationException Se ocorrer uma violação de
-     * restrição de atributo ao criar o recurso gerenciado.
-     * @throws GenericException Se ocorrer um erro genérico durante a criação do
-     * recurso gerenciado.
-     * @throws ScriptRuleException Se ocorrer um erro ao aplicar uma regra de
-     * script durante a criação do recurso gerenciado.
-     * @throws InvalidRequestException Se a solicitação for nula, se o campo
-     * payLoad for nulo ou se os campos obrigatórios estiverem vazios ou nulos.
-     * @throws DomainNotFoundException Se o domínio associado ao recurso
-     * gerenciado não for encontrado.
-     * @throws ArangoDaoException Se ocorrer um erro ao acessar a camada de
-     * dados ArangoDB durante a criação do recurso gerenciado.
-     * @throws ResourceNotFoundException Se o recurso gerenciado não for
-     * encontrado com base nos parâmetros fornecidos.
-     * @throws AttributeNotFoundException Se um atributo não for encontrado
-     * durante a criação do recurso gerenciado.
+     *                                               restrição de atributo ao criar
+     *                                               o recurso gerenciado.
+     * @throws GenericException                      Se ocorrer um erro genérico
+     *                                               durante a criação do
+     *                                               recurso gerenciado.
+     * @throws ScriptRuleException                   Se ocorrer um erro ao aplicar
+     *                                               uma regra de
+     *                                               script durante a criação do
+     *                                               recurso gerenciado.
+     * @throws InvalidRequestException               Se a solicitação for nula, se o
+     *                                               campo
+     *                                               payLoad for nulo ou se os
+     *                                               campos obrigatórios estiverem
+     *                                               vazios ou nulos.
+     * @throws DomainNotFoundException               Se o domínio associado ao
+     *                                               recurso
+     *                                               gerenciado não for encontrado.
+     * @throws ArangoDaoException                    Se ocorrer um erro ao acessar a
+     *                                               camada de
+     *                                               dados ArangoDB durante a
+     *                                               criação do recurso gerenciado.
+     * @throws ResourceNotFoundException             Se o recurso gerenciado não for
+     *                                               encontrado com base nos
+     *                                               parâmetros fornecidos.
+     * @throws AttributeNotFoundException            Se um atributo não for
+     *                                               encontrado
+     *                                               durante a criação do recurso
+     *                                               gerenciado.
      */
     public CreateManagedResourceResponse createManagedResource(CreateManagedResourceRequest request)
             throws SchemaNotFoundException, AttributeConstraintViolationException, GenericException,
@@ -886,27 +915,31 @@ public class ResourceSession {
      * <p>
      * Este método realiza a filtragem dos recursos gerenciados com base nos
      * critérios definidos na solicitação. Ele pode filtrar os nós (nodes) e/ou
-     * as conexões (connections) presentes no domínio especificado.</p>
+     * as conexões (connections) presentes no domínio especificado.
+     * </p>
      *
      * <p>
      * A solicitação de filtro pode conter parâmetros como limite de resultados
      * e objetos a serem filtrados. O limite de resultados é limitado para não
-     * exceder 1000 para evitar abusos da API.</p>
+     * exceder 1000 para evitar abusos da API.
+     * </p>
      *
      * <p>
      * O método também verifica a necessidade de computar links fracos (weak
      * links) entre os recursos, mas essa funcionalidade pode estar desabilitada
-     * no sistema.</p>
+     * no sistema.
+     * </p>
      *
      * @param filter A solicitação de filtro contendo os critérios de filtragem.
      * @return Uma resposta contendo os recursos gerenciados que atendem aos
-     * critérios de filtragem.
-     * @throws InvalidRequestException Se a solicitação for inválida ou se
-     * houver algum parâmetro inválido, como limite de resultados muito alto.
-     * @throws ArangoDaoException Para exceções relacionadas ao ArangoDB.
-     * @throws DomainNotFoundException Se o domínio não for encontrado.
+     *         critérios de filtragem.
+     * @throws InvalidRequestException   Se a solicitação for inválida ou se
+     *                                   houver algum parâmetro inválido, como
+     *                                   limite de resultados muito alto.
+     * @throws ArangoDaoException        Para exceções relacionadas ao ArangoDB.
+     * @throws DomainNotFoundException   Se o domínio não for encontrado.
      * @throws ResourceNotFoundException Se algum recurso gerenciado não for
-     * encontrado.
+     *                                   encontrado.
      */
     public FilterResponse findManagedResourceByFilter(FilterRequest filter)
             throws InvalidRequestException, ArangoDaoException, DomainNotFoundException, ResourceNotFoundException {
@@ -1142,25 +1175,32 @@ public class ResourceSession {
      * </ul>
      *
      * @param patchRequest Objeto PatchManagedResourceRequest contendo o recurso
-     * a ser atualizado e suas informações de atualização.
+     *                     a ser atualizado e suas informações de atualização.
      * @return Objeto PatchManagedResourceResponse contendo o recurso
-     * atualizado.
-     * @throws DomainNotFoundException Se o domínio do recurso não for
-     * encontrado.
-     * @throws ResourceNotFoundException Se o recurso original não for
-     * encontrado.
-     * @throws ArangoDaoException Se ocorrer algum erro ao interagir com o banco
-     * de dados ArangoDB.
-     * @throws InvalidRequestException Se ocorrerem problemas relacionados a
-     * requisições inválidas.
+     *         atualizado.
+     * @throws DomainNotFoundException               Se o domínio do recurso não for
+     *                                               encontrado.
+     * @throws ResourceNotFoundException             Se o recurso original não for
+     *                                               encontrado.
+     * @throws ArangoDaoException                    Se ocorrer algum erro ao
+     *                                               interagir com o banco
+     *                                               de dados ArangoDB.
+     * @throws InvalidRequestException               Se ocorrerem problemas
+     *                                               relacionados a
+     *                                               requisições inválidas.
      * @throws AttributeConstraintViolationException Se alguma restrição de
-     * atributo for violada durante a atualização.
-     * @throws ScriptRuleException Se ocorrer um erro relacionado a alguma regra
-     * de script durante a atualização.
-     * @throws SchemaNotFoundException Se o esquema do recurso não for
-     * encontrado durante a atualização.
-     * @throws GenericException Se ocorrer algum outro erro não especificado
-     * durante a execução do método.
+     *                                               atributo for violada durante a
+     *                                               atualização.
+     * @throws ScriptRuleException                   Se ocorrer um erro relacionado
+     *                                               a alguma regra
+     *                                               de script durante a
+     *                                               atualização.
+     * @throws SchemaNotFoundException               Se o esquema do recurso não for
+     *                                               encontrado durante a
+     *                                               atualização.
+     * @throws GenericException                      Se ocorrer algum outro erro não
+     *                                               especificado
+     *                                               durante a execução do método.
      */
     public PatchManagedResourceResponse patchManagedResource(PatchManagedResourceRequest patchRequest)
             throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException,
@@ -1228,7 +1268,7 @@ public class ResourceSession {
                     if (fromDBResource.getAttributes().containsKey(name)) {
                         fromDBResource.getAttributes().replace(name, attribute);
                     } else {
-//                        fromDBResource.getAttributes().put(name, attribute);
+                        // fromDBResource.getAttributes().put(name, attribute);
                         fromDBResource.getAttributes().remove(name);
                     }
                 }
@@ -1399,19 +1439,24 @@ public class ResourceSession {
      * </ul>
      *
      * @param request Objeto PatchResourceConnectionRequest contendo a conexão
-     * de recurso a ser atualizada e suas informações de atualização.
+     *                de recurso a ser atualizada e suas informações de atualização.
      * @return Objeto PatchResourceConnectionResponse contendo a conexão de
-     * recurso atualizada.
-     * @throws DomainNotFoundException Se o domínio da conexão de recurso não
-     * for encontrado.
-     * @throws ResourceNotFoundException Se a conexão de recurso original não
-     * for encontrada.
-     * @throws ArangoDaoException Se ocorrer algum erro ao interagir com o banco
-     * de dados ArangoDB.
-     * @throws InvalidRequestException Se ocorrerem problemas relacionados a
-     * requisições inválidas.
+     *         recurso atualizada.
+     * @throws DomainNotFoundException               Se o domínio da conexão de
+     *                                               recurso não
+     *                                               for encontrado.
+     * @throws ResourceNotFoundException             Se a conexão de recurso
+     *                                               original não
+     *                                               for encontrada.
+     * @throws ArangoDaoException                    Se ocorrer algum erro ao
+     *                                               interagir com o banco
+     *                                               de dados ArangoDB.
+     * @throws InvalidRequestException               Se ocorrerem problemas
+     *                                               relacionados a
+     *                                               requisições inválidas.
      * @throws AttributeConstraintViolationException Se alguma restrição de
-     * atributo for violada durante a atualização.
+     *                                               atributo for violada durante a
+     *                                               atualização.
      */
     public PatchResourceConnectionResponse patchResourceConnection(PatchResourceConnectionRequest request)
             throws DomainNotFoundException, ResourceNotFoundException, ArangoDaoException, InvalidRequestException,
@@ -1449,6 +1494,10 @@ public class ResourceSession {
 
         if (requestedPatch.getOperationalStatus() != null) {
             fromDBResource.setOperationalStatus(requestedPatch.getOperationalStatus());
+        }
+
+        if (requestedPatch.getBusinessStatus() != null) {
+            fromDBResource.setBusinessStatus(requestedPatch.getBusinessStatus());
         }
 
         //
@@ -1595,19 +1644,24 @@ public class ResourceSession {
      * </ul>
      *
      * @param request Objeto UpdateBatchAttributeRequest contendo os atributos a
-     * serem atualizados e as condições de filtro para selecionar os recursos a
-     * serem atualizados.
+     *                serem atualizados e as condições de filtro para selecionar os
+     *                recursos a
+     *                serem atualizados.
      * @return Objeto UpdateBatchAttributeResponse contendo informações sobre a
-     * atualização em lote.
-     * @throws InvalidRequestException Se o filtro fornecido for nulo.
-     * @throws DomainNotFoundException Se o domínio do recurso não for
-     * encontrado durante o processo de obtenção dos recursos.
+     *         atualização em lote.
+     * @throws InvalidRequestException   Se o filtro fornecido for nulo.
+     * @throws DomainNotFoundException   Se o domínio do recurso não for
+     *                                   encontrado durante o processo de obtenção
+     *                                   dos recursos.
      * @throws ResourceNotFoundException Se algum recurso original não for
-     * encontrado com base nas informações de filtro.
-     * @throws ArangoDaoException Se ocorrer algum erro ao interagir com o banco
-     * de dados ArangoDB.
-     * @throws GenericException Se ocorrer algum outro erro não especificado
-     * durante a execução do método.
+     *                                   encontrado com base nas informações de
+     *                                   filtro.
+     * @throws ArangoDaoException        Se ocorrer algum erro ao interagir com o
+     *                                   banco
+     *                                   de dados ArangoDB.
+     * @throws GenericException          Se ocorrer algum outro erro não
+     *                                   especificado
+     *                                   durante a execução do método.
      */
     public UpdateBatchAttributeResponse updateBatchAttribute(UpdateBatchAttributeRequest request)
             throws InvalidRequestException, DomainNotFoundException, ResourceNotFoundException, ArangoDaoException,
