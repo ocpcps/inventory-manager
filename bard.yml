@@ -1,0 +1,14 @@
+name: Bard Analysis
+on:
+  push:
+    branches:
+      - main
+jobs:
+  bard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: bard/bard-action@v1
+        with:
+          token: ${{ secrets.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 }}
+          repo: ${{ github.inventory-manager }}
+          branch: ${{ github.main }}
