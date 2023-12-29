@@ -44,6 +44,14 @@ O projeto possui uma estrutura bem organizada, com arquivos separados para as di
 
 O aplicativo possui uma interface de usuário simples e intuitiva, permitindo que os usuários adicionem, editem e excluam itens do inventário. Também é possível visualizar todos os itens do inventário em uma tabela e pesquisar por itens específicos.
 
+
+O diretório "src/main/java/com/osstelecom/db/inventory" contém arquivos Java que implementam a camada de acesso a dados do sistema. Essa camada é responsável por realizar operações de leitura e escrita no banco de dados, permitindo que as funcionalidades do sistema possam armazenar e recuperar informações do inventário e dos usuários.
+
+O projeto utiliza o framework Flask em Python para implementar a camada de apresentação do sistema, ou seja, as rotas, templates e funcionalidades de autenticação de usuários. Já a camada de acesso a dados é implementada em Java, utilizando o framework Spring Data JPA, que é uma implementação do padrão JPA (Java Persistence API) para acesso a bancos de dados relacionais.
+
+Dessa forma, o projeto utiliza duas linguagens de programação diferentes (Python e Java) para implementar diferentes partes do sistema, cada uma com suas respectivas vantagens e desvantagens. O uso do Spring Data JPA em Java permite uma implementação mais robusta e escalável da camada de acesso a dados, enquanto o uso do Flask em Python permite uma implementação mais ágil e flexível da camada de apresentação do sistema.
+
+
 O projeto inclui testes automatizados para garantir que o aplicativo esteja funcionando corretamente, Além disso, o projeto possui uma documentação clara e concisa, que explica como instalar e executar o aplicativo.
 
 Em geral, o projeto parece ser bem estruturado e bem documentado, tornando-o fácil de entender e modificar.
